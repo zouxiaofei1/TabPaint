@@ -1,0 +1,124 @@
+﻿<!-- 定义部分 -->
+<Window x:Class="SodiumPaint.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="SodiumPaint"
+        Height="900" Width="1250"
+        Top=" 100" Left="100"
+        SizeToContent="Manual"
+        MouseWheel="OnMouseWheelZoom">
+
+
+
+
+
+
+    <DockPanel LastChildFill="True">
+        <!-- 顶部菜单栏 -->
+
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="文件">
+                <MenuItem Header="新建" Click="OnNewClick" InputGestureText="Ctrl+N"/>
+                <MenuItem Header="打开" Click="OnOpenClick" InputGestureText="Ctrl+O"/>
+                <Separator/>
+                <MenuItem Header="保存" Click="OnSaveClick" InputGestureText="Ctrl+S"/>
+                <MenuItem Header="另存为..." Click="OnSaveAsClick"/>
+            </MenuItem>
+        </Menu>
+
+
+        <!-- 工具栏 -->
+        <ToolBar DockPanel.Dock="Top">
+            <Button Content="打开图片" Click="OnOpenClick"/>
+            <Button Content="铅笔" Click="OnPenClick"/>
+            <Button Content="取颜色" Click="OnPickColorClick"/>
+            <Button Content="橡皮擦" Click="OnEraserClick"/>
+            <Button Content="选择" Click="OnSelectClick"/>
+            <Button Content="撤销" Click="OnUndoClick"/>
+            <Button Content="重做" Click="OnRedoClick"/>
+
+            <Separator/>
+            <Label Content="颜色:"/>
+            <ComboBox SelectedItem="{Binding SelectedColor}" Width="100">
+                <ComboBoxItem Content="Black"/>
+                <ComboBoxItem Content="Red"/>
+                <ComboBoxItem Content="Blue"/>
+                <ComboBoxItem Content="Green"/>
+            </ComboBox>
+        </ToolBar>
+
+
+        <!-- 顶部文件栏 待添加 -->
+
+        <!-- 底部状态栏 -->
+        <StatusBar DockPanel.Dock="Bottom">
+
+            <!-- 当前鼠标位置 -->
+            <StatusBarItem Content="{Binding MousePosition}" Width="150"/>
+
+            <!-- 图片尺寸 -->
+            <StatusBarItem Content="{Binding ImageSize}" Width="100"/>
+
+            <!-- 框选区域大小 -->
+            <StatusBarItem Content="{Binding SelectionSize}" Width="120"/>
+
+            <Separator/>
+
+            <StatusBarItem Content="{Binding ZoomLevel}" Width="80"/>
+
+            <StatusBarItem>
+                <Slider Name="ZoomSlider" Minimum="0.1" Maximum="8.0"
+                Value="{Binding ZoomScale, Mode=TwoWay}"
+                Width="120" TickFrequency="0.1" SmallChange="0.1"
+                IsSnapToTickEnabled="True"/>
+            </StatusBarItem>
+        </StatusBar>
+
+   
+      
+        <!-- 可缩放滚动区域 -->
+        <ScrollViewer Name="ScrollContainer"
+              HorizontalScrollBarVisibility="Auto"
+              VerticalScrollBarVisibility="Auto"
+              PreviewMouseWheel="OnMouseWheelZoom"
+                      Background="#f0f0f0">
+
+  
+      
+
+            <Grid Name="CanvasWrapper"
+      HorizontalAlignment="Center"
+      VerticalAlignment="Center"
+      SnapsToDevicePixels="True"
+      UseLayoutRounding="True"
+      RenderOptions.EdgeMode="Aliased">
+
+                <Grid.LayoutTransform>
+                    <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1" />
+                </Grid.LayoutTransform>
+
+                <!-- 背景图片（最近邻缩放） -->
+                <Image Name="BackgroundImage"
+       Stretch="None"
+       HorizontalAlignment="Left"
+       VerticalAlignment="Top"
+       SnapsToDevicePixels="True"
+       RenderOptions.BitmapScalingMode="NearestNeighbor" />
+
+
+                <!-- 选区预览层 -->
+                <Image Name="SelectionPreview"
+           Stretch="None"
+           HorizontalAlignment="Left"
+           VerticalAlignment="Top"
+           IsHitTestVisible="False"
+           RenderOptions.BitmapScalingMode="NearestNeighbor"
+           Visibility="Collapsed" />
+            </Grid>
+
+
+
+            </ScrollViewer>
+        
+    </DockPanel>
+</Window>
