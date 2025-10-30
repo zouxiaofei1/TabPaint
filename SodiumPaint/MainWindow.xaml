@@ -39,12 +39,48 @@
 
             <Separator/>
             <Label Content="颜色:"/>
-            <ComboBox SelectedItem="{Binding SelectedColor}" Width="100">
-                <ComboBoxItem Content="Black"/>
-                <ComboBoxItem Content="Red"/>
-                <ComboBoxItem Content="Blue"/>
-                <ComboBoxItem Content="Green"/>
-            </ComboBox>
+
+            <!-- 颜色按钮列表 -->
+            <ItemsControl ItemsSource="{Binding ColorItems}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Width="20" Height="20"
+                    Margin="1"
+                    Click="OnColorButtonClick"
+                    Background="{Binding}">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Ellipse Fill="{TemplateBinding Background}"
+                                 Stroke="Gray" StrokeThickness="1"/>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- 自定义颜色按钮 -->
+            <Button Width="20" Height="20" Margin="1"
+        ToolTip="自定义颜色"
+        Click="OnCustomColorClick">
+                <Ellipse>
+                    <Ellipse.Fill>
+                        <RadialGradientBrush>
+                            <GradientStop Color="Red" Offset="0.0"/>
+                            <GradientStop Color="Orange" Offset="0.25"/>
+                            <GradientStop Color="Yellow" Offset="0.5"/>
+                            <GradientStop Color="Green" Offset="0.75"/>
+                            <GradientStop Color="Blue" Offset="1.0"/>
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
+            </Button>
         </ToolBar>
 
 
@@ -74,8 +110,8 @@
             </StatusBarItem>
         </StatusBar>
 
-   
-      
+
+
         <!-- 可缩放滚动区域 -->
         <ScrollViewer Name="ScrollContainer"
               HorizontalScrollBarVisibility="Auto"
@@ -83,28 +119,27 @@
               PreviewMouseWheel="OnMouseWheelZoom"
                       Background="#f0f0f0">
 
-  
-      
+
+
 
             <Grid Name="CanvasWrapper"
       HorizontalAlignment="Center"
       VerticalAlignment="Center"
       SnapsToDevicePixels="True"
       UseLayoutRounding="True"
-      RenderOptions.EdgeMode="Aliased">
+    >
 
                 <Grid.LayoutTransform>
                     <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1" />
                 </Grid.LayoutTransform>
 
-                <!-- 背景图片（最近邻缩放） -->
+                <!-- 背景图片 -->
                 <Image Name="BackgroundImage"
-       Stretch="None"
-       HorizontalAlignment="Left"
-       VerticalAlignment="Top"
-       SnapsToDevicePixels="True"
-       RenderOptions.BitmapScalingMode="NearestNeighbor" />
-
+           Stretch="None"
+           HorizontalAlignment="Left"
+           VerticalAlignment="Top"
+           SnapsToDevicePixels="True"
+           RenderOptions.BitmapScalingMode="NearestNeighbor" />
 
                 <!-- 选区预览层 -->
                 <Image Name="SelectionPreview"
@@ -114,11 +149,18 @@
            IsHitTestVisible="False"
            RenderOptions.BitmapScalingMode="NearestNeighbor"
            Visibility="Collapsed" />
+
+                <!-- 选区边框 & 句柄层 -->
+                <Canvas Name="SelectionOverlayCanvas"
+            Visibility="Collapsed"
+            IsHitTestVisible="False"
+            Background="Transparent">
+                </Canvas>
             </Grid>
 
 
 
-            </ScrollViewer>
-        
+        </ScrollViewer>
+    
     </DockPanel>
 </Window>

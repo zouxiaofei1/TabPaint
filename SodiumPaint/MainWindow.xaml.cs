@@ -1,5 +1,6 @@
 ﻿using Microsoft.Win32;
 using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -13,6 +14,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Forms;
 
 
 
@@ -64,22 +66,22 @@ namespace SodiumPaint
         public interface ITool
         {
             string Name { get; }
-            Cursor Cursor { get; }
-
+            System.Windows.Input.Cursor Cursor { get; }
+           
             void OnPointerDown(ToolContext ctx, Point viewPos);
             void OnPointerMove(ToolContext ctx, Point viewPos);
             void OnPointerUp(ToolContext ctx, Point viewPos);
-            void OnKeyDown(ToolContext ctx, KeyEventArgs e);
+            void OnKeyDown(ToolContext ctx, System.Windows.Input.KeyEventArgs e);
         }
 
         public abstract class ToolBase : ITool
         {
             public abstract string Name { get; }
-            public virtual Cursor Cursor => Cursors.Arrow;
+            public virtual System.Windows.Input.Cursor Cursor => System.Windows.Input.Cursors.Arrow;
             public virtual void OnPointerDown(ToolContext ctx, Point viewPos) { }
             public virtual void OnPointerMove(ToolContext ctx, Point viewPos) { }
             public virtual void OnPointerUp(ToolContext ctx, Point viewPos) { }
-            public virtual void OnKeyDown(ToolContext ctx, KeyEventArgs e) { }
+            public virtual void OnKeyDown(ToolContext ctx, System.Windows.Input.KeyEventArgs e) { }
         }
 
 
@@ -94,17 +96,20 @@ namespace SodiumPaint
             public Image ViewElement { get; } // 例如 DrawImage
             public WriteableBitmap Bitmap => Surface.Bitmap;
             public Image SelectionPreview { get; } // 预览层
+            public Canvas SelectionOverlay { get; }
+
 
             // 文档状态
             public string CurrentFilePath { get; set; } = string.Empty;
             public bool IsDirty { get; set; } = false;
 
-            public ToolContext(CanvasSurface surface, UndoRedoManager undo, Image viewElement, Image previewElement)
+            public ToolContext(CanvasSurface surface, UndoRedoManager undo, Image viewElement, Image previewElement, Canvas overlayElement)
             {
                 Surface = surface;
                 Undo = undo;
                 ViewElement = viewElement;
                 SelectionPreview = previewElement;
+                SelectionOverlay = overlayElement; // ← 保存引用
             }
 
             // 视图坐标 -> 像素坐标
@@ -337,7 +342,7 @@ namespace SodiumPaint
         public class PenTool : ToolBase
         {
             public override string Name => "Pen";
-            public override Cursor Cursor => Cursors.Pen;
+            public override System.Windows.Input.Cursor Cursor => System.Windows.Input.Cursors.Pen;
 
             private bool _drawing = false;
             private Point _lastPixel;
@@ -382,7 +387,7 @@ namespace SodiumPaint
         public class EraserTool : PenTool
         {
             public override string Name => "Eraser";
-            public override Cursor Cursor => Cursors.Cross;
+            public override System.Windows.Input.Cursor Cursor => System.Windows.Input.Cursors.Cross;
             // 可覆写绘制颜色，或者在 PenTool 里读 ctx.PenColor，调用前把它设为 ctx.EraserColor
         }
 
@@ -390,7 +395,7 @@ namespace SodiumPaint
         public class EyedropperTool : ToolBase
         {
             public override string Name => "Eyedropper";
-            public override Cursor Cursor => Cursors.IBeam;
+            public override System.Windows.Input.Cursor Cursor => System.Windows.Input.Cursors.IBeam;
 
             public override void OnPointerDown(ToolContext ctx, Point viewPos)
             {
@@ -402,7 +407,7 @@ namespace SodiumPaint
         public class FillTool : ToolBase
         {
             public override string Name => "Fill";
-            public override Cursor Cursor => Cursors.Hand;
+            public override System.Windows.Input.Cursor Cursor => System.Windows.Input.Cursors.Hand;
 
 
             public override void OnPointerDown(ToolContext ctx, Point viewPos)
@@ -466,7 +471,7 @@ namespace SodiumPaint
         public class SelectTool : ToolBase
         {
             public override string Name => "Select";
-            public override Cursor Cursor => Cursors.Cross;
+            public override System.Windows.Input.Cursor Cursor => System.Windows.Input.Cursors.Cross;
 
             private bool _selecting = false;
             private bool _draggingSelection = false;
@@ -477,6 +482,132 @@ namespace SodiumPaint
             private Int32Rect _originalRect;
             private byte[]? _selectionData;
 
+
+
+
+
+
+
+            private ResizeAnchor _currentAnchor = ResizeAnchor.None;
+            private bool _resizing = false;
+            private Point _startMouse;
+            private double _startW, _startH, _startX, _startY;
+
+            // 句柄尺寸
+            private const double HandleSize = 6;
+
+            public enum ResizeAnchor
+            {
+                None,
+                TopLeft, TopMiddle, TopRight,
+                LeftMiddle, RightMiddle,
+                BottomLeft, BottomMiddle, BottomRight
+            }
+
+
+
+
+
+            private void DrawOverlay(ToolContext ctx, Int32Rect rect)
+            {
+                 double invScale = 1 / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale;
+                //s(invScale);
+                //ctx.SelectionOverlay.IsHitTestVisible = true;
+                var overlay = ctx.SelectionOverlay;
+                overlay.Children.Clear();
+                
+                // 虚线框
+                var outline = new System.Windows.Shapes.Rectangle
+                {
+                    Stroke = Brushes.Black,
+                    StrokeDashArray = new DoubleCollection { 8,4},
+                    StrokeThickness = invScale*1.5,
+                    Width = rect.Width,
+                    Height = rect.Height
+                };
+                RenderOptions.SetEdgeMode(outline, EdgeMode.Unspecified);  // 开抗锯齿混合
+                outline.SnapsToDevicePixels = false; // 让虚线自由落在亚像素
+                Canvas.SetLeft(outline, rect.X);
+                Canvas.SetTop(outline, rect.Y);
+                overlay.Children.Add(outline);
+
+                // 8个句柄
+                foreach (var p in GetHandlePositions(rect))
+                {
+                    var handle = new System.Windows.Shapes.Rectangle
+                    {
+                        Width = HandleSize* invScale,
+                        Height = HandleSize* invScale,
+                        Fill = Brushes.White,
+                        Stroke = Brushes.Black,
+                        StrokeThickness = invScale
+                    };
+                    RenderOptions.SetEdgeMode(handle, EdgeMode.Unspecified);  // 开抗锯齿混合
+                    outline.SnapsToDevicePixels = false; // 让虚线自由落在亚像素
+                    Canvas.SetLeft(handle, p.X - HandleSize * invScale / 2);
+                    Canvas.SetTop(handle, p.Y - HandleSize / 2);
+                    overlay.Children.Add(handle);
+                }
+                ctx.SelectionOverlay.IsHitTestVisible = false;
+
+                ctx.SelectionOverlay.Visibility = Visibility.Visible;
+         
+            }
+
+
+
+
+
+            private ResizeAnchor HitTestHandle(Point px, Int32Rect rect)
+            {
+                double size = 12 / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale; // 句柄大小
+                //s(size);
+                double x1 = rect.X;
+                double y1 = rect.Y;
+                double x2 = rect.X + rect.Width;
+                double y2 = rect.Y + rect.Height;
+                double mx = (x1 + x2) / 2;
+                double my = (y1 + y2) / 2;
+
+                if (Math.Abs(px.X - x1) <= size && Math.Abs(px.Y - y1) <= size) return ResizeAnchor.TopLeft;
+                if (Math.Abs(px.X - mx) <= size && Math.Abs(px.Y - y1) <= size) return ResizeAnchor.TopMiddle;
+                if (Math.Abs(px.X - x2) <= size && Math.Abs(px.Y - y1) <= size) return ResizeAnchor.TopRight;
+                if (Math.Abs(px.X - x1) <= size && Math.Abs(px.Y - my) <= size) return ResizeAnchor.LeftMiddle;
+                if (Math.Abs(px.X - x2) <= size && Math.Abs(px.Y - my) <= size) return ResizeAnchor.RightMiddle;
+                if (Math.Abs(px.X - x1) <= size && Math.Abs(px.Y - y2) <= size) return ResizeAnchor.BottomLeft;
+                if (Math.Abs(px.X - mx) <= size && Math.Abs(px.Y - y2) <= size) return ResizeAnchor.BottomMiddle;
+                if (Math.Abs(px.X - x2) <= size && Math.Abs(px.Y - y2) <= size) return ResizeAnchor.BottomRight;
+
+                return ResizeAnchor.None;
+            }
+
+            private List<Point> GetHandlePositions(Int32Rect rect)
+            {
+                var handles = new List<Point>();
+                double x1 = rect.X;
+                double y1 = rect.Y;
+                double x2 = rect.X + rect.Width;
+                double y2 = rect.Y + rect.Height;
+                double mx = (x1 + x2) / 2;
+                double my = (y1 + y2) / 2;
+
+                handles.Add(new Point(x1, y1)); // TL
+                handles.Add(new Point(mx, y1)); // TM
+                handles.Add(new Point(x2, y1)); // TR
+                handles.Add(new Point(x1, my)); // LM
+                handles.Add(new Point(x2, my)); // RM
+                handles.Add(new Point(x1, y2)); // BL
+                handles.Add(new Point(mx, y2)); // BM
+                handles.Add(new Point(x2, y2)); // BR
+
+                return handles;
+            }
+
+
+
+
+
+
             public override void OnPointerDown(ToolContext ctx, Point viewPos)
             {
                 // 位图初始化检查
@@ -484,11 +615,16 @@ namespace SodiumPaint
                     return;
 
                 var px = ctx.ToPixel(viewPos);
+
+                // 如果当前有选区并且点到句柄则进入缩放
+ 
+
                 if (_selectionData != null && !IsPointInSelection(ctx.ToPixel(viewPos)))
-                {
+                {// 在选区外点击：提交当前选区
                     CommitSelection(ctx);
                     return;
                 }
+
                 if (_selectionData != null && IsPointInSelection(px))
                 {
                     // 在已有选区内：进入拖动模式
@@ -505,8 +641,30 @@ namespace SodiumPaint
                     HidePreview(ctx);
                 }
 
+                if (_selectionData != null)
+                {
+                   // s(1);
+                    _currentAnchor = HitTestHandle(px, _selectionRect);
+                    if (_currentAnchor != ResizeAnchor.None)
+                    {
+                        _resizing = true;
+                        _startMouse = px;
+                        _startW = _selectionRect.Width;
+                        _startH = _selectionRect.Height;
+                        _startX = _selectionRect.X;
+                        _startY = _selectionRect.Y;
+                        return; // 不进选新矩形逻辑
+                    }
+                }
+                if (_selectionRect.Width != 0 && _selectionRect.Height != 0)
+                {
+                    //s(_selectionRect.Width.ToString());
+                    DrawOverlay(ctx, _selectionRect);
+                }
 
             }
+
+
             private void SetPreviewPosition(ToolContext ctx, int pixelX, int pixelY)
             {
                 // 背景图左上角位置（UI坐标）
@@ -526,10 +684,96 @@ namespace SodiumPaint
             public override void OnPointerMove(ToolContext ctx, Point viewPos)
             {
                 var px = ctx.ToPixel(viewPos);
+                if (_selectionData != null)
+                {
+                    var anchor = HitTestHandle(px, _selectionRect);
+
+                    switch (anchor)
+                    {
+                        case ResizeAnchor.TopLeft:
+                        case ResizeAnchor.BottomRight:
+                            Mouse.OverrideCursor = System.Windows.Input.Cursors.SizeNWSE;
+                            break;
+
+                        case ResizeAnchor.TopRight:
+                        case ResizeAnchor.BottomLeft:
+                            Mouse.OverrideCursor = System.Windows.Input.Cursors.SizeNESW;
+                            break;
+
+                        case ResizeAnchor.LeftMiddle:
+                        case ResizeAnchor.RightMiddle:
+                            Mouse.OverrideCursor = System.Windows.Input.Cursors.SizeWE;
+                            break;
+
+                        case ResizeAnchor.TopMiddle:
+                        case ResizeAnchor.BottomMiddle:
+                            Mouse.OverrideCursor = System.Windows.Input.Cursors.SizeNS;
+                            break;
+
+                        default:
+                            Mouse.OverrideCursor = System.Windows.Input.Cursors.Arrow;
+                            break;
+                    }
+                }
+
+                if (_resizing)
+                {
+                    double dx = px.X - _startMouse.X;
+                    double dy = px.Y - _startMouse.Y;
+
+                    switch (_currentAnchor)
+                    {
+                        case ResizeAnchor.TopLeft:
+                            _selectionRect.X = (int)(_startX + dx);
+                            _selectionRect.Y = (int)(_startY + dy);
+                            _selectionRect.Width = (int)Math.Max(1, _startW - dx);
+                            _selectionRect.Height = (int)Math.Max(1, _startH - dy);
+                            break;
+
+                        case ResizeAnchor.TopMiddle:
+                            _selectionRect.Y = (int)(_startY + dy);
+                            _selectionRect.Height = (int)Math.Max(1, _startH - dy);
+                            break;
+
+                        case ResizeAnchor.TopRight:
+                            _selectionRect.Y = (int)(_startY + dy);
+                            _selectionRect.Width = (int)Math.Max(1, _startW + dx);
+                            _selectionRect.Height = (int)Math.Max(1, _startH - dy);
+                            break;
+
+                        case ResizeAnchor.LeftMiddle:
+                            _selectionRect.X = (int)(_startX + dx);
+                            _selectionRect.Width = (int)Math.Max(1, _startW - dx);
+                            break;
+
+                        case ResizeAnchor.RightMiddle:
+                            _selectionRect.Width = (int)Math.Max(1, _startW + dx);
+                            break;
+
+                        case ResizeAnchor.BottomLeft:
+                            _selectionRect.X = (int)(_startX + dx);
+                            _selectionRect.Width = (int)Math.Max(1, _startW - dx);
+                            _selectionRect.Height = (int)Math.Max(1, _startH + dy);
+                            break;
+
+                        case ResizeAnchor.BottomMiddle:
+                            _selectionRect.Height = (int)Math.Max(1, _startH + dy);
+                            break;
+
+                        case ResizeAnchor.BottomRight:
+                            _selectionRect.Width = (int)Math.Max(1, _startW + dx);
+                            _selectionRect.Height = (int)Math.Max(1, _startH + dy);
+                            break;
+                    }
+
+                    DrawOverlay(ctx, _selectionRect);
+                    return;
+                }
 
                 if (_selecting)
                 {
                     _selectionRect = MakeRect(_startPixel, px);
+                    DrawOverlay(ctx, _selectionRect);
                     // 此时仅记录框选，不预览
                 }
                 else if (_draggingSelection)
@@ -538,10 +782,16 @@ namespace SodiumPaint
                     int newX = (int)(px.X - _clickOffset.X);
                     int newY = (int)(px.Y - _clickOffset.Y);
                     SetPreviewPosition(ctx, newX, newY);
+                    Int32Rect tmprc;
+                    tmprc.X = newX;
+                    tmprc.Y = newY;
+                    tmprc.Width = _selectionRect.Width;
+                    tmprc.Height = _selectionRect.Height;
+                    DrawOverlay(ctx, tmprc);
                 }
-                Application.Current.Dispatcher.Invoke(() =>
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    ((MainWindow)Application.Current.MainWindow).SelectionSize = $"{_selectionRect.Width}×{_selectionRect.Height}";
+                    ((MainWindow)System.Windows.Application.Current.MainWindow).SelectionSize = $"{_selectionRect.Width}×{_selectionRect.Height}";
                 });
 
             }
@@ -594,6 +844,18 @@ namespace SodiumPaint
 
 
                 }
+                if (_resizing)
+                {
+                    _resizing = false;
+                    _currentAnchor = ResizeAnchor.None;
+                    // 缩放完成后，可更新 SelectionPreview 尺寸或等待用户确认提交
+                    return;
+                }
+                if (_selectionRect.Width != 0 && _selectionRect.Height != 0)
+                {
+                   //s(_selectionRect.Width.ToString());
+                    DrawOverlay(ctx, _selectionRect); }
+
             }
 
             public void CommitSelection(ToolContext ctx)
@@ -693,7 +955,7 @@ namespace SodiumPaint
                 _ctx.ViewElement.MouseUp += (s, e) => CurrentTool.OnPointerUp(_ctx, e.GetPosition(_ctx.ViewElement));
             }
 
-            private void ViewElement_MouseMove(object sender, MouseEventArgs e)
+            private void ViewElement_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
             {
                
 
@@ -702,19 +964,18 @@ namespace SodiumPaint
                 {
 
                     Point px = _ctx.ToPixel(position);
-                    ((MainWindow)Application.Current.MainWindow).MousePosition = $"X:{(int)px.X} Y:{(int)px.Y}";
+                    ((MainWindow)System.Windows.Application.Current.MainWindow).MousePosition = $"X:{(int)px.X} Y:{(int)px.Y}";
                 }
                 CurrentTool.OnPointerMove(_ctx, position);
             }
 
             public void SetTool(ITool tool)
             {
-                //msgbox(tool.ToString());
                 CurrentTool = tool;
                 Mouse.OverrideCursor = tool.Cursor;
             }
 
-            public void OnPreviewKeyDown(object sender, KeyEventArgs e)
+            public void OnPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
                 => CurrentTool.OnKeyDown(_ctx, e);
         }
 
@@ -728,21 +989,102 @@ namespace SodiumPaint
             //public ITool Text { get; } = new TextTool();
         }
 
+        // 当前画笔颜色属性，可供工具使用
+        public SolidColorBrush SelectedBrush { get; set; } = new SolidColorBrush(Colors.Black);
 
+        // 绑定到 ItemsControl 的预设颜色集合
+        public ObservableCollection<SolidColorBrush> ColorItems { get; set; }
+            = new ObservableCollection<SolidColorBrush>
+            {
+                new SolidColorBrush(Colors.Black),
+                new SolidColorBrush(Colors.Gray),
+                new SolidColorBrush(Colors.Red),
+                new SolidColorBrush(Colors.Orange),
+                new SolidColorBrush(Colors.Yellow),
+                new SolidColorBrush(Colors.Green),
+                new SolidColorBrush(Colors.Cyan),
+                new SolidColorBrush(Colors.Blue),
+                new SolidColorBrush(Colors.Purple),
+                new SolidColorBrush(Colors.Brown),
+                new SolidColorBrush(Colors.Pink),
+                new SolidColorBrush(Colors.White)
+            };
 
+        private void OnColorButtonClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button btn && btn.Background is SolidColorBrush brush)
+            {
+                SelectedBrush = new SolidColorBrush(brush.Color);
 
+                // 如果你有 ToolContext，可同步笔颜色，例如：
+                // _ctx.PenColor = brush.Color;
+
+                HighlightSelectedButton(btn);
+            }
+        }
+
+        // 点击彩虹按钮自定义颜色
+        private void OnCustomColorClick(object sender, RoutedEventArgs e)
+        {
+            var dlg = new ColorDialog();
+            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                var color = Color.FromArgb(255, dlg.Color.R, dlg.Color.G, dlg.Color.B);
+                var brush = new SolidColorBrush(color);
+                SelectedBrush = brush;
+                HighlightSelectedButton(null);
+
+                // 同步到绘图上下文
+                // _ctx.PenColor = color;
+            }
+        }
+
+        // 简易高亮 - 给选中的颜色加外框
+        private void HighlightSelectedButton(System.Windows.Controls.Button? selected)
+        {
+            foreach (var item in FindVisualChildren<System.Windows.Controls.Button>(this))
+            {
+                if (item.ToolTip != null && item.ToolTip.ToString() == "自定义颜色")
+                    continue; // 跳过彩虹按钮
+                if (selected != null && item == selected)
+                    item.BorderBrush = Brushes.DeepSkyBlue;
+                else
+                    item.BorderBrush = Brushes.Gray;
+            }
+        }
+
+        // 工具函数 - 查找所有子元素
+        private static IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject
+        {
+            if (depObj != null)
+            {
+                for (int i = 0; i < VisualTreeHelper.GetChildrenCount(depObj); i++)
+                {
+                    DependencyObject child = VisualTreeHelper.GetChild(depObj, i);
+                    if (child != null && child is T)
+                    {
+                        yield return (T)child;
+                    }
+
+                    foreach (T childOfChild in FindVisualChildren<T>(child))
+                    {
+                        yield return childOfChild;
+                    }
+                }
+            }
+        }
 
 
 
 
         static void s<T>(T a)
         {
-            Console.WriteLine(a);
+            System.Windows.MessageBox.Show(a.ToString(), "标题", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         static void msgbox<T>(T a)
         {
-            MessageBox.Show(a.ToString(), "标题", MessageBoxButton.OK, MessageBoxImage.Information);
+            System.Windows.MessageBox.Show(a.ToString(), "标题", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         public MainWindow()
@@ -764,7 +1106,7 @@ namespace SodiumPaint
 
             _surface = new CanvasSurface(_bitmap);
             _undo = new UndoRedoManager(_surface);
-            _ctx = new ToolContext(_surface, _undo, BackgroundImage,SelectionPreview);
+            _ctx = new ToolContext(_surface, _undo, BackgroundImage,SelectionPreview,SelectionOverlayCanvas);
             _tools = new ToolRegistry();
 
             _router = new InputRouter(_ctx, _tools.Pen); // 默认画笔
@@ -780,10 +1122,10 @@ namespace SodiumPaint
             this.Focus();
         }
 
-        private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
+        private void MainWindow_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (Keyboard.Modifiers == ModifierKeys.Control)
-            {
+            { 
                 switch (e.Key)
                 {
                     case Key.Z:
@@ -1068,7 +1410,7 @@ namespace SodiumPaint
             // 维持鼠标相对画布位置不变的平移公式
             double newOffsetX = (offsetX + mouseInScroll.X) * (newScale / oldScale) - mouseInScroll.X;
             double newOffsetY = (offsetY + mouseInScroll.Y) * (newScale / oldScale) - mouseInScroll.Y;
-
+            //DrawOverlay()
             ScrollContainer.ScrollToHorizontalOffset(newOffsetX);
             ScrollContainer.ScrollToVerticalOffset(newOffsetY);
         }
@@ -1200,19 +1542,12 @@ namespace SodiumPaint
         {
             if (!File.Exists(filePath))
             {
-                MessageBox.Show($"找不到图片文件: {filePath}");
+                System.Windows.MessageBox.Show($"找不到图片文件: {filePath}");
                 return;
             }
 
             try
             {
-
-                //var bitmap = new BitmapImage(new Uri(filePath, UriKind.Absolute));
-                //_bmpWidth = bitmap.PixelWidth;
-                //_bmpHeight = bitmap.PixelHeight;
-
-                //bitmap.CacheOption = BitmapCacheOption.OnLoad; // 一次性读完整像素
-                //bitmap.CreateOptions = BitmapCreateOptions.None; // 不延迟创建
                 _bitmap = LoadBitmapWith96Dpi(filePath);
                 BackgroundImage.Source = _bitmap;
                 if (_surface == null)
@@ -1262,7 +1597,7 @@ namespace SodiumPaint
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"加载图片失败: {ex.Message}");
+                System.Windows.MessageBox.Show($"加载图片失败: {ex.Message}");
             }
         }
 
