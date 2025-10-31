@@ -13,19 +13,7 @@ namespace SodiumPaint.ViewModels
 {
     public class MainWindowViewModel : INotifyPropertyChanged
     {
-        private string _mousePosition = "0,0";
-        public string MousePosition
-        {
-            get => _mousePosition;
-            set { _mousePosition = value; OnPropertyChanged(); }
-        }
 
-        private string _zoomLevel = "100%";
-        public string ZoomLevel
-        {
-            get => _zoomLevel;
-            set { _zoomLevel = value; OnPropertyChanged(); }
-        }
 
         public string SelectedColor { get; set; } = "Black";
 
@@ -48,23 +36,6 @@ namespace SodiumPaint.ViewModels
         private void OnPropertyChanged([CallerMemberName] string? name = null)
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
-
- 
-
-        private double _zoomScale = 1.0;
-        public double ZoomScale
-        {
-            get => _zoomScale;
-            set
-            {
-                if (_zoomScale != value)
-                {
-                    _zoomScale = value;
-                    ZoomLevel = $"{_zoomScale * 100:F0}%";
-                    OnPropertyChanged();
-                }
-            }
-        }
 
    
 

@@ -7,7 +7,20 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <ApplicationIcon>Resources\SodiumPaint.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\colorwheel_64x64.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Resources\SodiumPaint.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\colorwheel_64x64.png" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Drawing.Common" Version="9.0.10" />

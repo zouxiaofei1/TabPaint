@@ -8,112 +8,307 @@
         SizeToContent="Manual"
         MouseWheel="OnMouseWheelZoom">
 
+    <Window.Resources>
+        <!-- 这里可以插入你的菜单样式 -->
+
+        <!-- 扁平菜单样式 -->
+        <Style x:Key="ModernMenuItemStyle" TargetType="MenuItem">
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Border x:Name="Border"
+                            CornerRadius="6"
+                            Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <ContentPresenter Grid.Column="0"
+                                              ContentSource="Icon"
+                                              Margin="0,0,8,0"
+                                              VerticalAlignment="Center"/>
+                            <ContentPresenter Grid.Column="1"
+                                              ContentSource="Header"
+                                              VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Border" Property="Background" Value="#303030"/>
+                        </Trigger>
+                        <Trigger Property="IsSubmenuOpen" Value="True">
+                            <Setter TargetName="Border" Property="Background" Value="#404040"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+        <Style TargetType="Button" x:Key="ToolButton">
+            <Setter Property="Background" Value="#ccc"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                        CornerRadius="6"
+                        Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#333"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 菜单弹出窗口的圆角与阴影效果 -->
+    <Style TargetType="ContextMenu">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border Background="#222"
+                        BorderBrush="#444"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="2">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="10"
+                                          ShadowDepth="3"
+                                          Color="#66000000"/>
+                        </Border.Effect>
+                        <StackPanel>
+                            <ItemsPresenter/>
+                        </StackPanel>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+        <ContextMenu x:Key="RotateContextMenu"
+                 Background="#ccc"
+                 BorderBrush="#aaa"
+                 BorderThickness="1"
+                 
+                 Padding="4">
+            <ContextMenu.Effect>
+                <DropShadowEffect BlurRadius="10"
+                              ShadowDepth="3"
+                              Color="#66000000"/>
+            </ContextMenu.Effect>
+
+            <MenuItem Header="旋转 90° 向左" Foreground="White" Click="OnRotateLeftClick"/>
+            <MenuItem Header="旋转 90° 向右" Foreground="White" Click="OnRotateRightClick"/>
+            <MenuItem Header="旋转 180°" Foreground="White" Click="OnRotate180Click"/>
+            <Separator/>
+            <MenuItem Header="垂直翻转" Foreground="White" Click="OnFlipVerticalClick"/>
+            <MenuItem Header="水平翻转" Foreground="White" Click="OnFlipHorizontalClick"/>
+        </ContextMenu>
+    </Window.Resources>
+
+    <Grid>
+        <DockPanel LastChildFill="True">
+            <!-- 顶部菜单栏 -->
+           <Menu DockPanel.Dock="Top"
+      ItemContainerStyle="{x:Null}">
+                <MenuItem Header="文件">
+                    <MenuItem Header="新建" Click="OnNewClick" InputGestureText="Ctrl+N"/>
+                    <MenuItem Header="打开" Click="OnOpenClick" InputGestureText="Ctrl+O"/>
+                    <Separator/>
+                    <MenuItem Header="保存" Click="OnSaveClick" InputGestureText="Ctrl+S"/>
+                    <MenuItem Header="另存为..." Click="OnSaveAsClick"/>
+                </MenuItem>
+            </Menu>
+ 
 
 
 
 
 
-    <DockPanel LastChildFill="True">
-        <!-- 顶部菜单栏 -->
+            <!-- 工具栏 -->
+            <ToolBarTray DockPanel.Dock="Top" >
+                <ToolBar  >
+                    <Button Content="打开图片" Click="OnOpenClick"/>
+                <Button Content="铅笔" Click="OnPenClick"/>
+                <Button Content="取颜色" Click="OnPickColorClick"/>
+                <Button Content="橡皮擦" Click="OnEraserClick"/>
+                <Button Content="选择" Click="OnSelectClick"/>
+                <Button Content="撤销" Click="OnUndoClick"/>
+                <Button Content="重做" Click="OnRedoClick"/>
+                <Button Content="填充" Click="OnFillClick"/>
 
-        <Menu DockPanel.Dock="Top">
-            <MenuItem Header="文件">
-                <MenuItem Header="新建" Click="OnNewClick" InputGestureText="Ctrl+N"/>
-                <MenuItem Header="打开" Click="OnOpenClick" InputGestureText="Ctrl+O"/>
                 <Separator/>
-                <MenuItem Header="保存" Click="OnSaveClick" InputGestureText="Ctrl+S"/>
-                <MenuItem Header="另存为..." Click="OnSaveAsClick"/>
-            </MenuItem>
-        </Menu>
 
 
-        <!-- 工具栏 -->
-        <ToolBar DockPanel.Dock="Top">
-            <Button Content="打开图片" Click="OnOpenClick"/>
-            <Button Content="铅笔" Click="OnPenClick"/>
-            <Button Content="取颜色" Click="OnPickColorClick"/>
-            <Button Content="橡皮擦" Click="OnEraserClick"/>
-            <Button Content="选择" Click="OnSelectClick"/>
-            <Button Content="撤销" Click="OnUndoClick"/>
-            <Button Content="重做" Click="OnRedoClick"/>
+                    <Button x:Name="RotateMenuButton"
+                Background="#222"
+                             Style="{StaticResource ToolButton}"
+                Foreground="White"
+                FontWeight="Bold"
+                Padding="10,6"
+                Margin="4,2"
+                Click="ShowRotateMenu">
+                        <StackPanel Orientation="Horizontal">
+                            <!--<Image Source="pack://application:,,,/Resources/rotate_icon.png"
+                       Width="16" Height="16" Margin="0,0,6,0"/>-->
+                            <TextBlock Text="旋转 / 翻转"/>
+                        </StackPanel>
+                    </Button>
 
-            <Separator/>
-            <Label Content="颜色:"/>
+                    
+                    
+                    <Label Content="画笔样式:"/>
 
-            <!-- 颜色按钮列表 -->
-            <ItemsControl ItemsSource="{Binding ColorItems}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Button Width="20" Height="20"
-                    Margin="1"
-                    Click="OnColorButtonClick"
-                    Background="{Binding}">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Ellipse Fill="{TemplateBinding Background}"
-                                 Stroke="Gray" StrokeThickness="1"/>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-
-            <!-- 自定义颜色按钮 -->
-            <Button Width="20" Height="20" Margin="1"
-        ToolTip="自定义颜色"
-        Click="OnCustomColorClick">
-                <Ellipse>
-                    <Ellipse.Fill>
-                        <RadialGradientBrush>
-                            <GradientStop Color="Red" Offset="0.0"/>
-                            <GradientStop Color="Orange" Offset="0.25"/>
-                            <GradientStop Color="Yellow" Offset="0.5"/>
-                            <GradientStop Color="Green" Offset="0.75"/>
-                            <GradientStop Color="Blue" Offset="1.0"/>
-                        </RadialGradientBrush>
-                    </Ellipse.Fill>
-                </Ellipse>
-            </Button>
-        </ToolBar>
+                <ToggleButton Content="圆形笔" Width="60" Margin="2"
+              Click="OnBrushStyleClick" Tag="Round"/>
+                <ToggleButton Content="方形笔" Width="60" Margin="2"
+              Click="OnBrushStyleClick" Tag="Square"/>
+                <ToggleButton Content="毛刷" Width="60" Margin="2"
+              Click="OnBrushStyleClick" Tag="Brush"/>
+                <ToggleButton Content="喷枪" Width="60" Margin="2"
+              Click="OnBrushStyleClick" Tag="Spray"/>
 
 
-        <!-- 顶部文件栏 待添加 -->
 
-        <!-- 底部状态栏 -->
-        <StatusBar DockPanel.Dock="Bottom">
 
-            <!-- 当前鼠标位置 -->
-            <StatusBarItem Content="{Binding MousePosition}" Width="150"/>
+                <Separator/>
+                <Label Content="颜色:"/>
 
-            <!-- 图片尺寸 -->
-            <StatusBarItem Content="{Binding ImageSize}" Width="100"/>
 
-            <!-- 框选区域大小 -->
-            <StatusBarItem Content="{Binding SelectionSize}" Width="120"/>
 
-            <Separator/>
 
-            <StatusBarItem Content="{Binding ZoomLevel}" Width="80"/>
+                <!-- 前景色按钮 -->
+                <Button Width="30" Height="30" Margin="2"
+            ToolTip="前景色"
+            Click="OnForegroundColorClick"
+            Background="{Binding ForegroundBrush, Mode=TwoWay}">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Ellipse Fill="{TemplateBinding Background}"
+                         Stroke="Gray"
+                         StrokeThickness="1"/>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
 
-            <StatusBarItem>
-                <Slider Name="ZoomSlider" Minimum="0.1" Maximum="8.0"
+                <!-- 背景色按钮（可选） -->
+                <Button Width="30" Height="30" Margin="2"
+            ToolTip="背景色"
+            Click="OnBackgroundColorClick"
+            Background="{Binding BackgroundBrush, Mode=TwoWay}">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Ellipse Fill="{TemplateBinding Background}"
+                         Stroke="Gray"
+                         StrokeThickness="1"/>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+
+                <!-- 颜色按钮列表 -->
+                <ItemsControl ItemsSource="{Binding ColorItems}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+
+
+
+
+
+
+
+
+
+                            <Button Width="20" Height="20"
+        Margin="1"
+                                
+                            Click="OnColorButtonClick"
+        Background="{Binding}">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Ellipse x:Name="circle"
+                     Fill="{TemplateBinding Background}"
+                     Stroke="Transparent"
+                     StrokeThickness="1"/>
+
+                                        <ControlTemplate.Triggers>
+                                            <!-- 鼠标悬浮时 -->
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="circle" Property="Stroke" Value="Gray"/>
+                                            </Trigger>
+
+                                            <!-- 按下去时（可选） -->
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter TargetName="circle" Property="Stroke" Value="DarkGray"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+
+
+
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- 自定义颜色按钮 -->
+                <Button Width="20" Height="20" Margin="1"
+        ToolTip="自定义颜色" Click="OnCustomColorClick"
+        Background="Transparent" BorderThickness="0">
+                    <Image Source="pack://application:,,,/Resources/colorwheel_64x64.png"
+           Stretch="UniformToFill"/>
+                </Button>
+
+                </ToolBar>
+            </ToolBarTray>
+
+
+            <!-- 顶部文件栏 待添加 -->
+
+            <!-- 底部状态栏 -->
+            <StatusBar DockPanel.Dock="Bottom">
+
+                <!-- 当前鼠标位置 -->
+                <StatusBarItem Content="{Binding MousePosition}" Width="150"/>
+
+                <!-- 图片尺寸 -->
+                <StatusBarItem Content="{Binding ImageSize}" Width="100"/>
+
+                <!-- 框选区域大小 -->
+                <StatusBarItem Content="{Binding SelectionSize}" Width="120"/>
+
+                <Separator/>
+
+                <StatusBarItem Content="{Binding ZoomLevel}" Width="80"/>
+
+                <StatusBarItem>
+                    <Slider Name="ZoomSlider" Minimum="0.1" Maximum="8.0"
                 Value="{Binding ZoomScale, Mode=TwoWay}"
                 Width="120" TickFrequency="0.1" SmallChange="0.1"
                 IsSnapToTickEnabled="True"/>
-            </StatusBarItem>
-        </StatusBar>
+                </StatusBarItem>
+            </StatusBar>
 
 
 
-        <!-- 可缩放滚动区域 -->
-        <ScrollViewer Name="ScrollContainer"
+            <!-- 可缩放滚动区域 -->
+            <ScrollViewer Name="ScrollContainer"
               HorizontalScrollBarVisibility="Auto"
               VerticalScrollBarVisibility="Auto"
               PreviewMouseWheel="OnMouseWheelZoom"
@@ -122,27 +317,27 @@
 
 
 
-            <Grid Name="CanvasWrapper"
+                <Grid Name="CanvasWrapper"
       HorizontalAlignment="Center"
       VerticalAlignment="Center"
       SnapsToDevicePixels="True"
       UseLayoutRounding="True"
     >
 
-                <Grid.LayoutTransform>
-                    <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1" />
-                </Grid.LayoutTransform>
+                    <Grid.LayoutTransform>
+                        <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1" />
+                    </Grid.LayoutTransform>
 
-                <!-- 背景图片 -->
-                <Image Name="BackgroundImage"
+                    <!-- 背景图片 -->
+                    <Image Name="BackgroundImage"
            Stretch="None"
            HorizontalAlignment="Left"
            VerticalAlignment="Top"
            SnapsToDevicePixels="True"
            RenderOptions.BitmapScalingMode="NearestNeighbor" />
 
-                <!-- 选区预览层 -->
-                <Image Name="SelectionPreview"
+                    <!-- 选区预览层 -->
+                    <Image Name="SelectionPreview"
            Stretch="None"
            HorizontalAlignment="Left"
            VerticalAlignment="Top"
@@ -150,17 +345,88 @@
            RenderOptions.BitmapScalingMode="NearestNeighbor"
            Visibility="Collapsed" />
 
-                <!-- 选区边框 & 句柄层 -->
-                <Canvas Name="SelectionOverlayCanvas"
+                    <!-- 选区边框 & 句柄层 -->
+                    <Canvas Name="SelectionOverlayCanvas"
             Visibility="Collapsed"
             IsHitTestVisible="False"
             Background="Transparent">
-                </Canvas>
+                    </Canvas>
+                </Grid>
+
+
+
+            </ScrollViewer>
+
+        </DockPanel>
+
+
+        <!-- 悬浮笔刷半径调节条 -->
+        <Border x:Name="ThicknessPanel"
+            Width="60"
+            Height="220"
+            CornerRadius="8"
+            Background="#222"
+            BorderBrush="#444"
+            BorderThickness="1"
+            VerticalAlignment="Center"
+            HorizontalAlignment="Left"
+            Margin="10"
+           >
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="12"
+                          ShadowDepth="4"
+                          Color="#80000000"/>
+            </Border.Effect>
+            <Grid x:Name="SliderContainer" ClipToBounds="False">
+                <Slider x:Name="ThicknessSlider"
+                    Orientation="Vertical"
+                    Minimum="1" Maximum="250"
+                    Value="{Binding PenThickness, Mode=TwoWay}"
+                    Width="20"
+                    Margin="8"
+                    TickFrequency="1"
+                    SmallChange="1"
+                    IsSnapToTickEnabled="True"
+                    Background="#333"
+                    Foreground="MediumPurple"
+                    Thumb.DragStarted="ThicknessSlider_DragStarted"
+                    Thumb.DragCompleted="ThicknessSlider_DragCompleted"
+                    ValueChanged="ThicknessSlider_ValueChanged" >
+                <!-- 数字提示 -->
+                <!-- 数字提示 -->
+
+                </Slider>
             </Grid>
+        </Border>
+        
+        
+        
+        <Border x:Name="ThicknessTip"
+        Background="#333"
+        CornerRadius="4"
+        Padding="6,2" 
+        HorizontalAlignment="Left"
+        VerticalAlignment="Top"
+        Margin="30,0,0,0"
+                    Visibility="Collapsed">
+            <TextBlock x:Name="ThicknessTipText"
+               Foreground="White"
+               FontSize="12"
+               TextWrapping="NoWrap" 
+               TextAlignment="Center"/>
+        </Border>
 
-
-
-        </ScrollViewer>
-    
-    </DockPanel>
+        <!-- 预览圆形（显示当前粗细） -->
+        <Ellipse x:Name="ThicknessPreview"
+         Fill="Transparent"
+         Stroke="MediumPurple"
+         StrokeThickness="2"
+         Width="40"
+         Height="40"
+         Visibility="Collapsed"
+         Opacity="0.6"
+         StrokeDashArray="3 2"
+         HorizontalAlignment="Center"
+         VerticalAlignment="Center"/>
+    </Grid>
 </Window>

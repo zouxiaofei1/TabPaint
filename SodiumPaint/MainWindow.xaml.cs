@@ -4,17 +4,20 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
+using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using System.Windows.Forms;
 
 
 
@@ -34,6 +37,20 @@ namespace SodiumPaint
         private ToolContext _ctx;
         private InputRouter _router;
         private ToolRegistry _tools;
+        private double zoomscale = 1;
+        private byte[]? _preDrawSnapshot = null;
+
+        private WriteableBitmap _bitmap;
+        private int _bmpWidth, _bmpHeight;
+        private Color _penColor = Colors.Black;
+        private bool _isDrawing = false;
+        private Point _lastPoint;
+        private List<string> _imageFiles = new List<string>();
+        private int _currentImageIndex = -1;
+        private bool _isEdited = false; // 标记当前画布是否被修改
+        private string _currentFileName = "未命名";
+        private string _programVersion = "v0.1"; // 可以从 Assembly 读取
+        private bool _isFileSaved = true; // 是否有未保存修改
 
         private string _mousePosition = "X:0, Y:0";
         public string MousePosition
@@ -57,17 +74,31 @@ namespace SodiumPaint
         }
 
 
-    public event PropertyChangedEventHandler? PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string? name = null)
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
+        private double _penThickness = 5;
+        public double PenThickness
+        {
+            get => _penThickness;
+            set
+            {
+                if (_penThickness != value)
+                {
+                    _penThickness = value;
+                    OnPropertyChanged(nameof(PenThickness));
+                    if (_ctx != null) _ctx.PenThickness = value;
+                }
+            }
+        }
 
 
         public interface ITool
         {
             string Name { get; }
             System.Windows.Input.Cursor Cursor { get; }
-           
+
             void OnPointerDown(ToolContext ctx, Point viewPos);
             void OnPointerMove(ToolContext ctx, Point viewPos);
             void OnPointerUp(ToolContext ctx, Point viewPos);
@@ -91,12 +122,14 @@ namespace SodiumPaint
             public UndoRedoManager Undo { get; }
             public Color PenColor { get; set; } = Colors.Black;
             public Color EraserColor { get; set; } = Colors.White;
-            public double PenThickness { get; set; } = 1.0;
+            public double PenThickness { get; set; } = 5.0;
 
             public Image ViewElement { get; } // 例如 DrawImage
             public WriteableBitmap Bitmap => Surface.Bitmap;
             public Image SelectionPreview { get; } // 预览层
             public Canvas SelectionOverlay { get; }
+
+            public BrushStyle PenStyle { get; set; } = BrushStyle.Pencil;
 
 
             // 文档状态
@@ -203,6 +236,45 @@ namespace SodiumPaint
                 return data;
             }
 
+            public void FillRectangle(Int32Rect rect, Color color)
+            {
+                // 检查合法区域，防止越界
+                if (rect.X < 0 || rect.Y < 0) return;
+                if (rect.X + rect.Width > Bitmap.PixelWidth) rect.Width = Bitmap.PixelWidth - rect.X;
+                if (rect.Y + rect.Height > Bitmap.PixelHeight) rect.Height = Bitmap.PixelHeight - rect.Y;
+                if (rect.Width <= 0 || rect.Height <= 0) return;
+
+                Bitmap.Lock();
+
+                unsafe
+                {
+                    byte* basePtr = (byte*)Bitmap.BackBuffer;
+                    int stride = Bitmap.BackBufferStride;
+                    int x0 = rect.X;
+                    int y0 = rect.Y;
+                    int w = rect.Width;
+                    int h = rect.Height;
+
+                    for (int y = y0; y < y0 + h; y++)
+                    {
+                        byte* rowPtr = basePtr + y * stride + x0 * 4;
+                        for (int x = 0; x < w; x++)
+                        {
+                            // BGRA 顺序
+                            rowPtr[0] = color.B;
+                            rowPtr[1] = color.G;
+                            rowPtr[2] = color.R;
+                            rowPtr[3] = color.A;
+                            rowPtr += 4;
+                        }
+                    }
+                }
+
+                Bitmap.AddDirtyRect(rect);
+                Bitmap.Unlock();
+            }
+
+
             public void WriteRegion(Int32Rect rect, byte[] data)
             {
                 if (data == null || data.Length == 0) return;
@@ -224,7 +296,7 @@ namespace SodiumPaint
                 int srcOffsetX = dstX0 - rect.X;
                 int srcOffsetY = dstY0 - rect.Y;
                 int srcStride = rect.Width * 4;
-                
+
                 Bitmap.Lock();
                 try
                 {
@@ -252,8 +324,20 @@ namespace SodiumPaint
         }
 
 
+        public enum UndoActionType
+        {
+            Draw,         // 普通绘图
+            Transform,    // 旋转/翻转
+            CanvasResize, // 画布拉伸或缩放
+            ReplaceImage  // 整图替换（打开新图）
+        }
 
-        public record UndoAction(Int32Rect Rect, byte[] Pixels);
+        public record UndoAction(
+              Int32Rect Rect,
+              byte[] UndoPixels,
+              byte[]? RedoPixelsBefore,
+            UndoActionType ActionType
+            );
 
         public class UndoRedoManager
         {
@@ -261,13 +345,22 @@ namespace SodiumPaint
             private readonly Stack<UndoAction> _undo = new();
             private readonly Stack<UndoAction> _redo = new();
 
-            private byte[]? _preStrokeSnapshot;     // 全图快照（绘制前）
-            private List<Int32Rect> _strokeRects = new(); // 本笔所有脏区
+            private byte[]? _preStrokeSnapshot;
+            private readonly List<Int32Rect> _strokeRects = new();
 
-            public UndoRedoManager(CanvasSurface surface) => _surface = surface;
+            public UndoRedoManager(CanvasSurface surface)
+            {
+                _surface = surface;
+            }
 
+            public bool CanUndo => _undo.Count > 0;
+            public bool CanRedo => _redo.Count > 0;
+
+            // ---------- 绘制操作 ----------
             public void BeginStroke()
             {
+                if (_surface?.Bitmap == null) return;
+
                 int bytes = _surface.Bitmap.BackBufferStride * _surface.Height;
                 _preStrokeSnapshot = new byte[bytes];
                 _surface.Bitmap.Lock();
@@ -280,44 +373,93 @@ namespace SodiumPaint
 
             public void AddDirtyRect(Int32Rect rect) => _strokeRects.Add(rect);
 
-            public void CommitStroke()
+            public void CommitStroke()//一般绘画
             {
-                if (_preStrokeSnapshot == null || _strokeRects.Count == 0) { _preStrokeSnapshot = null; return; }
+                if (_preStrokeSnapshot == null || _strokeRects.Count == 0 || _surface?.Bitmap == null)
+                {
+                    _preStrokeSnapshot = null;
+                    return;
+                }
 
                 var combined = CombineRects(_strokeRects);
                 byte[] region = ExtractRegionFromSnapshot(_preStrokeSnapshot, combined, _surface.Bitmap.BackBufferStride);
-                _undo.Push(new UndoAction(combined, region));
+                _undo.Push(new UndoAction(combined, region, null, UndoActionType.Draw));
 
                 _preStrokeSnapshot = null;
             }
 
-            public bool CanUndo => _undo.Count > 0;
-            public bool CanRedo => _redo.Count > 0;
-
+            // ---------- 撤销 / 重做 ----------
             public void Undo()
             {
-                if (_undo.Count == 0) return;
+                if (!CanUndo || _surface?.Bitmap == null) return;
+
                 var action = _undo.Pop();
 
-                // 保存当前区域到 redo
-                var redoData = _surface.ExtractRegion(action.Rect);
-                _redo.Push(new UndoAction(action.Rect, redoData));
+                // 不再去新的位图上取 redo 像素，直接使用操作对象里保存的 RedoPixelsBefore
+                var redoData = action.RedoPixelsBefore;
+                if (redoData == null)
+                {
+                    // 若没有提前记录，则取当前位图的合法部分作为退化方案
+                    redoData = SafeExtractRegion(action.Rect);
+                }
 
-                _surface.WriteRegion(action.Rect, action.Pixels);
+                _redo.Push(new UndoAction(action.Rect, redoData, null, action.ActionType));
+
+                if (action.ActionType == UndoActionType.Transform)
+                {
+                    var wb = new WriteableBitmap(action.Rect.Width, action.Rect.Height,
+                            ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Surface.Bitmap.DpiX, ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32, null);
+
+                    // 替换主位图
+                    ((MainWindow)System.Windows.Application.Current.MainWindow)._bitmap = wb;
+                    ((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundImage.Source = ((MainWindow)System.Windows.Application.Current.MainWindow)._bitmap;
+
+                    // 让 CanvasSurface 附加新位图
+                    _surface.Attach(((MainWindow)System.Windows.Application.Current.MainWindow)._bitmap);
+
+                    // 🟢 Step 3：居中显示
+                    ((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundImage.Dispatcher.BeginInvoke(
+                        new Action(() => ((MainWindow)System.Windows.Application.Current.MainWindow).CenterImage()),
+                        System.Windows.Threading.DispatcherPriority.Loaded
+                    );
+                }
+
+                _surface.WriteRegion(action.Rect, action.UndoPixels);
+
+
             }
 
             public void Redo()
             {
-                if (_redo.Count == 0) return;
+                if (!CanRedo || _surface?.Bitmap == null) return;
+
                 var action = _redo.Pop();
 
-                // 保存当前区域到 undo
-                var undoData = _surface.ExtractRegion(action.Rect);
-                _undo.Push(new UndoAction(action.Rect, undoData));
+                // 把当前区域存入 undo 栈
+                var undoData = SafeExtractRegion(action.Rect);
+                _undo.Push(new UndoAction(action.Rect, undoData, null, UndoActionType.Draw));
 
-                _surface.WriteRegion(action.Rect, action.Pixels);
+                _surface.WriteRegion(action.Rect, action.UndoPixels);
             }
 
+            // ---------- 供整图操作调用 ----------
+            /// <summary>
+            /// 在整图变换(旋转/翻转/新建)之前，准备一个完整快照并保存redo像素
+            /// </summary>
+            public void PushFullImageUndo()
+            {
+                if (_surface?.Bitmap == null) return;
+
+                var rect = new Int32Rect(0, 0,
+                    _surface.Bitmap.PixelWidth,
+                    _surface.Bitmap.PixelHeight);
+
+                var currentPixels = SafeExtractRegion(rect);
+                _undo.Push(new UndoAction(rect, currentPixels, currentPixels, UndoActionType.Draw));
+                _redo.Clear();
+            }
+
+            // ---------- 辅助 ----------
             private static Int32Rect CombineRects(List<Int32Rect> rects)
             {
                 int minX = rects.Min(r => r.X);
@@ -337,7 +479,51 @@ namespace SodiumPaint
                 }
                 return region;
             }
+
+            private byte[] SafeExtractRegion(Int32Rect rect)
+            {
+                // 检查合法范围，防止尺寸变化导致越界
+                if (rect.X < 0 || rect.Y < 0 ||
+                    rect.X + rect.Width > _surface.Bitmap.PixelWidth ||
+                    rect.Y + rect.Height > _surface.Bitmap.PixelHeight ||
+                    rect.Width <= 0 || rect.Height <= 0)
+                {
+                    // 返回当前整图快照（安全退化）
+                    int bytes = _surface.Bitmap.BackBufferStride * _surface.Bitmap.PixelHeight;
+                    byte[] data = new byte[bytes];
+                    _surface.Bitmap.Lock();
+                    System.Runtime.InteropServices.Marshal.Copy(_surface.Bitmap.BackBuffer, data, 0, bytes);
+                    _surface.Bitmap.Unlock();
+                    return data;
+                }
+
+                return _surface.ExtractRegion(rect);
+            }
+            // 将整图数据压入 Undo 栈
+            public void PushUndoRegion(Int32Rect rect, byte[] pixels)
+            {
+                _undo.Push(new UndoAction(rect, pixels, null, UndoActionType.Draw));
+            }
+
+            public void PushUndoRegionTransform(Int32Rect rect, byte[] pixels)
+            {
+                _undo.Push(new UndoAction(rect, pixels, null, UndoActionType.Transform));
+            }
+
+            // 清空重做链
+            public void ClearRedo()
+            {
+                _redo.Clear();
+            }
+            public void ClearUndo()
+            {
+                _undo.Clear();
+            }
         }
+
+
+
+
 
         public class PenTool : ToolBase
         {
@@ -357,13 +543,86 @@ namespace SodiumPaint
                 ctx.Undo.AddDirtyRect(new Int32Rect((int)px.X, (int)px.Y, 1, 1));
             }
 
+
+            private void DrawContinuousStroke(ToolContext ctx, Point from, Point to)
+            {
+                // 线段长度
+                double dx = to.X - from.X;
+                double dy = to.Y - from.Y;
+                double length = Math.Sqrt(dx * dx + dy * dy);
+                if (length < 0.5) { DrawBrushAt(ctx, to); return; }
+
+                int steps = 1;
+                switch (ctx.PenStyle)
+                {
+                    case BrushStyle.Round:
+                        steps = (int)(length / (ctx.PenThickness)); // 毛刷和喷枪更密集一些
+                        if (length < ctx.PenThickness) return;
+                        break;
+                    case BrushStyle.Square:
+                        steps = (int)(length / (ctx.PenThickness / 2));
+                        break;
+                    case BrushStyle.Pencil:
+                        steps = (int)(length);
+                        break;
+                    case BrushStyle.Brush:
+                        steps = (int)(length / (5 / 2));
+                        if (length < (5 / 2)) return;
+                        break;
+                    case BrushStyle.Spray:
+                        steps = (int)(length / (ctx.PenThickness));
+                        if (length < ctx.PenThickness) return;
+                        break;
+                }
+                double xStep = dx / steps;
+                double yStep = dy / steps;
+
+                double x = from.X;
+                double y = from.Y;
+
+                for (int i = 0; i <= steps; i++)
+                {
+                    DrawBrushAt(ctx, new Point(x, y));
+                    x += xStep;
+                    y += yStep;
+                }
+            }
+
+
+            private void DrawBrushAt(ToolContext ctx, Point px)
+            {
+                switch (ctx.PenStyle)
+                {
+                    case BrushStyle.Round:
+                        DrawRoundStroke(ctx, _lastPixel, px); ctx.Undo.AddDirtyRect(LineBounds(_lastPixel, px));
+                        break;
+                    case BrushStyle.Square:
+                        DrawSquareStroke(ctx, _lastPixel, px); ctx.Undo.AddDirtyRect(LineBounds(_lastPixel, px, (int)ctx.PenThickness));
+                        break;
+                    case BrushStyle.Brush:
+                        DrawBrushStroke(ctx, _lastPixel, px);
+                        ctx.Undo.AddDirtyRect(LineBounds(_lastPixel, px, 5));
+                        break;
+                    case BrushStyle.Spray:
+                        DrawSprayStroke(ctx, px);
+                        ctx.Undo.AddDirtyRect(LineBounds(_lastPixel, px, (int)ctx.PenThickness * 2));
+                        break;
+                    case BrushStyle.Pencil:
+                        ctx.Surface.DrawLine(_lastPixel, px, ctx.PenColor);
+                        ctx.Undo.AddDirtyRect(LineBounds(_lastPixel, px));
+                        break;
+                }
+                _lastPixel = px;
+
+            }
             public override void OnPointerMove(ToolContext ctx, Point viewPos)
             {
                 if (!_drawing) return;
                 var px = ctx.ToPixel(viewPos);
-                ctx.Surface.DrawLine(_lastPixel, px, ctx.PenColor);
-                ctx.Undo.AddDirtyRect(LineBounds(_lastPixel, px));
-                _lastPixel = px;
+
+                DrawContinuousStroke(ctx, _lastPixel, px);
+
+
             }
 
             public override void OnPointerUp(ToolContext ctx, Point viewPos)
@@ -374,6 +633,27 @@ namespace SodiumPaint
                 ctx.IsDirty = true;
             }
 
+            private static Int32Rect ClampRect(Int32Rect rect, int maxWidth, int maxHeight)
+            {
+                int x = Math.Max(0, rect.X);
+                int y = Math.Max(0, rect.Y);
+                int w = Math.Min(rect.Width, maxWidth - x);
+                int h = Math.Min(rect.Height, maxHeight - y);
+                return new Int32Rect(x, y, w, h);
+            }
+
+            private static Int32Rect LineBounds(Point p1, Point p2, int penRadius)
+            {
+                int expand = penRadius + 2; // 在笔粗半径基础上多扩2像素留余量
+                int x = (int)Math.Min(p1.X, p2.X) - expand;
+                int y = (int)Math.Min(p1.Y, p2.Y) - expand;
+                int w = (int)Math.Abs(p1.X - p2.X) + expand * 2;
+                int h = (int)Math.Abs(p1.Y - p2.Y) + expand * 2;
+                return ClampRect(new Int32Rect(x, y, w, h), ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelWidth, ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelHeight);
+            }
+
+            //(MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.Height
+
             private static Int32Rect LineBounds(Point p1, Point p2)
             {
                 int x = (int)Math.Min(p1.X, p2.X);
@@ -382,7 +662,175 @@ namespace SodiumPaint
                 int h = (int)Math.Abs(p1.Y - p2.Y) + 2;
                 return new Int32Rect(x, y, w, h);
             }
+            private void DrawRoundStroke(ToolContext ctx, Point p1, Point p2)
+            {
+                int r = (int)ctx.PenThickness;
+                Color c = ctx.PenColor;
+
+                ctx.Surface.Bitmap.Lock();
+                unsafe
+                {
+                    byte* basePtr = (byte*)ctx.Surface.Bitmap.BackBuffer;
+                    int stride = ctx.Surface.Bitmap.BackBufferStride;
+
+                    double dx = p2.X - p1.X;
+                    double dy = p2.Y - p1.Y;
+                    double len = Math.Sqrt(dx * dx + dy * dy);
+                    if (len < 0.5)
+                    {
+                        FillCircle(ctx, (int)p2.X, (int)p2.Y, r, c);
+                        ctx.Surface.Bitmap.Unlock();
+                        return;
+                    }
+
+                    double ux = dx / len;
+                    double uy = dy / len;
+
+                    // 法线
+                    double nx = -uy, ny = ux;
+
+                    int xmin = (int)Math.Min(p1.X, p2.X) - r;
+                    int ymin = (int)Math.Min(p1.Y, p2.Y) - r;
+                    int xmax = (int)Math.Max(p1.X, p2.X) + r;
+                    int ymax = (int)Math.Max(p1.Y, p2.Y) + r;
+
+                    for (int y = ymin; y <= ymax; y++)
+                    {
+                        for (int x = xmin; x <= xmax; x++)
+                        {
+                            // 点到线段距离
+                            double vx = x - p1.X;
+                            double vy = y - p1.Y;
+                            double t = (vx * dx + vy * dy) / (dx * dx + dy * dy);
+                            t = Math.Max(0, Math.Min(1, t));
+                            double projx = p1.X + t * dx;
+                            double projy = p1.Y + t * dy;
+                            double dist2 = (x - projx) * (x - projx) + (y - projy) * (y - projy);
+                            if (dist2 <= r * r)
+                            {
+                                if (x >= 0 && x < ctx.Surface.Width && y >= 0 && y < ctx.Surface.Height)
+                                {
+                                    byte* p = basePtr + y * stride + x * 4;
+                                    p[0] = c.B; p[1] = c.G; p[2] = c.R; p[3] = c.A;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                ctx.Surface.Bitmap.AddDirtyRect(ClampRect(new Int32Rect(
+                    (int)Math.Min(p1.X, p2.X) - r,
+                    (int)Math.Min(p1.Y, p2.Y) - r,
+                    (int)Math.Abs(p2.X - p1.X) + r * 2,
+                    (int)Math.Abs(p2.Y - p1.Y) + r * 2), ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelWidth, ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelHeight));
+                ctx.Surface.Bitmap.Unlock();
+            }
+
+            // 单独封装圆
+            private void FillCircle(ToolContext ctx, int cx, int cy, int r, Color c)
+            {
+                unsafe
+                {
+                    byte* basePtr = (byte*)ctx.Surface.Bitmap.BackBuffer;
+                    int stride = ctx.Surface.Bitmap.BackBufferStride;
+                    for (int y = -r; y <= r; y++)
+                    {
+                        int yy = cy + y;
+                        if (yy < 0 || yy >= ctx.Surface.Height) continue;
+                        int dx = (int)Math.Sqrt(r * r - y * y);
+                        for (int x = -dx; x <= dx; x++)
+                        {
+                            int xx = cx + x;
+                            if (xx >= 0 && xx < ctx.Surface.Width)
+                            {
+                                byte* p = basePtr + yy * stride + xx * 4;
+                                p[0] = c.B; p[1] = c.G; p[2] = c.R; p[3] = c.A;
+                            }
+                        }
+                    }
+                }
+            }
+
+
+
+
+            private void DrawSquareStroke(ToolContext ctx, Point p1, Point p2)
+            {
+                // 方形笔就是画粗一点的正方形块
+                int size = (int)ctx.PenThickness;
+                ctx.Surface.FillRectangle(new Int32Rect((int)p2.X, (int)p2.Y, size, size), ctx.PenColor);
+            }
+
+            private void DrawBrushStroke(ToolContext ctx, Point p1, Point p2)
+            {
+                // 模拟毛刷：在中心周围加随机微扰
+                Random rnd = new Random();
+                for (int i = 0; i < 20; i++)
+                {
+                    int dx = rnd.Next(-2, 3);
+                    int dy = rnd.Next(-2, 3);
+                    ctx.Surface.SetPixel((int)p2.X + dx, (int)p2.Y + dy, ctx.PenColor);
+                }
+            }
+
+
+            // 喷枪 pattern 集合
+            private static List<Point[]> _sprayPatterns;
+            private static int _patternIndex = 0; // 当前使用索引
+
+            // 生成一组喷枪 pattern
+            private static Point[] GenerateSprayPattern(int count)
+            {
+                Random r = new Random();
+                Point[] pts = new Point[count];
+                for (int i = 0; i < count; i++)
+                {
+                    double a = r.NextDouble() * 2 * Math.PI;
+                    double d = Math.Sqrt(r.NextDouble()); // 均匀分布
+                    pts[i] = new Point(d * Math.Cos(a), d * Math.Sin(a));
+                }
+                return pts;
+            }
+
+            // 一次生成多组 pattern（例如5组）
+            private static void InitializeSprayPatterns()
+            {
+                if (_sprayPatterns != null) return; // 已生成则跳过
+
+                _sprayPatterns = new List<Point[]>();
+                for (int i = 0; i < 5; i++)
+                    _sprayPatterns.Add(GenerateSprayPattern(200));
+            }
+            private void DrawSprayStroke(ToolContext ctx, Point p)
+            {
+                // 初始化喷点模式（只在第一次调用时生成）
+                InitializeSprayPatterns();
+
+                int radius = (int)ctx.PenThickness * 2;
+                int count = 80;
+
+                // 当前 pattern
+                var pattern = _sprayPatterns[_patternIndex];
+
+                // 每次使用后递增索引，循环回头
+                _patternIndex = (_patternIndex + 1) % _sprayPatterns.Count;
+
+                for (int i = 0; i < count && i < pattern.Length; i++)
+                {
+                    int x = (int)(p.X + pattern[i].X * radius);
+                    int y = (int)(p.Y + pattern[i].Y * radius);
+                    ctx.Surface.SetPixel(x, y, ctx.PenColor);
+                }
+            }
+
+
+
         }
+
+
+
+
+
 
         public class EraserTool : PenTool
         {
@@ -411,7 +859,7 @@ namespace SodiumPaint
 
 
             public override void OnPointerDown(ToolContext ctx, Point viewPos)
-            {            
+            {
                 var start = ctx.ToPixel(viewPos);
                 // 记录绘制前
                 ctx.Undo.BeginStroke();
@@ -510,18 +958,18 @@ namespace SodiumPaint
 
             private void DrawOverlay(ToolContext ctx, Int32Rect rect)
             {
-                 double invScale = 1 / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale;
+                double invScale = 1 / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale;
                 //s(invScale);
                 //ctx.SelectionOverlay.IsHitTestVisible = true;
                 var overlay = ctx.SelectionOverlay;
                 overlay.Children.Clear();
-                
+
                 // 虚线框
                 var outline = new System.Windows.Shapes.Rectangle
                 {
                     Stroke = Brushes.Black,
-                    StrokeDashArray = new DoubleCollection { 8,4},
-                    StrokeThickness = invScale*1.5,
+                    StrokeDashArray = new DoubleCollection { 8, 4 },
+                    StrokeThickness = invScale * 1.5,
                     Width = rect.Width,
                     Height = rect.Height
                 };
@@ -536,8 +984,8 @@ namespace SodiumPaint
                 {
                     var handle = new System.Windows.Shapes.Rectangle
                     {
-                        Width = HandleSize* invScale,
-                        Height = HandleSize* invScale,
+                        Width = HandleSize * invScale,
+                        Height = HandleSize * invScale,
                         Fill = Brushes.White,
                         Stroke = Brushes.Black,
                         StrokeThickness = invScale
@@ -551,7 +999,7 @@ namespace SodiumPaint
                 ctx.SelectionOverlay.IsHitTestVisible = false;
 
                 ctx.SelectionOverlay.Visibility = Visibility.Visible;
-         
+
             }
 
 
@@ -617,7 +1065,7 @@ namespace SodiumPaint
                 var px = ctx.ToPixel(viewPos);
 
                 // 如果当前有选区并且点到句柄则进入缩放
- 
+
 
                 if (_selectionData != null && !IsPointInSelection(ctx.ToPixel(viewPos)))
                 {// 在选区外点击：提交当前选区
@@ -643,7 +1091,7 @@ namespace SodiumPaint
 
                 if (_selectionData != null)
                 {
-                   // s(1);
+                    // s(1);
                     _currentAnchor = HitTestHandle(px, _selectionRect);
                     if (_currentAnchor != ResizeAnchor.None)
                     {
@@ -822,21 +1270,21 @@ namespace SodiumPaint
                         previewBmp.AddDirtyRect(new Int32Rect(0, 0, _selectionRect.Width, _selectionRect.Height));
                         previewBmp.Unlock();
 
-                       // var imgPos = ctx.ViewElement.TranslatePoint(new Point(0, 0), ctx.SelectionPreview.Parent as UIElement);
+                        // var imgPos = ctx.ViewElement.TranslatePoint(new Point(0, 0), ctx.SelectionPreview.Parent as UIElement);
                         ctx.SelectionPreview.Source = previewBmp;
                         //ctx.SelectionPreview.RenderTransform = new TranslateTransform(_selectionRect.X, _selectionRect.Y);
                         SetPreviewPosition(ctx, _selectionRect.X, _selectionRect.Y);
 
                         ctx.SelectionPreview.Visibility = Visibility.Visible;
-                        
+
                     }
                 }
                 else if (_draggingSelection)
                 {
                     _draggingSelection = false;
-                    
+
                     // 应用到主图：先清空原位置
-                    
+
                     int finalX = (int)((TranslateTransform)ctx.SelectionPreview.RenderTransform).X;
                     int finalY = (int)((TranslateTransform)ctx.SelectionPreview.RenderTransform).Y;
 
@@ -853,8 +1301,9 @@ namespace SodiumPaint
                 }
                 if (_selectionRect.Width != 0 && _selectionRect.Height != 0)
                 {
-                   //s(_selectionRect.Width.ToString());
-                    DrawOverlay(ctx, _selectionRect); }
+                    //s(_selectionRect.Width.ToString());
+                    DrawOverlay(ctx, _selectionRect);
+                }
 
             }
 
@@ -957,7 +1406,7 @@ namespace SodiumPaint
 
             private void ViewElement_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
             {
-               
+
 
                 var position = e.GetPosition(_ctx.ViewElement);
                 if (_ctx.Surface.Bitmap != null)
@@ -977,6 +1426,76 @@ namespace SodiumPaint
 
             public void OnPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
                 => CurrentTool.OnKeyDown(_ctx, e);
+        }
+
+        public SolidColorBrush ForegroundBrush { get; set; } = new SolidColorBrush(Colors.Black);
+        public SolidColorBrush BackgroundBrush { get; set; } = new SolidColorBrush(Colors.White);
+
+        private void OnForegroundColorClick(object sender, RoutedEventArgs e)
+        {
+            var dlg = new System.Windows.Forms.ColorDialog();
+            dlg.Color = System.Drawing.Color.FromArgb(ForegroundBrush.Color.A,
+                                                      ForegroundBrush.Color.R,
+                                                      ForegroundBrush.Color.G,
+                                                      ForegroundBrush.Color.B);
+            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                ForegroundBrush = new SolidColorBrush(
+                    Color.FromArgb(255, dlg.Color.R, dlg.Color.G, dlg.Color.B));
+                DataContext = this; // 刷新绑定
+
+                _ctx.PenColor = ForegroundBrush.Color;
+                UpdateForegroundButtonColor(ForegroundBrush.Color);
+
+            }
+        }
+
+        private void OnBackgroundColorClick(object sender, RoutedEventArgs e)
+        {
+            var dlg = new System.Windows.Forms.ColorDialog();
+            dlg.Color = System.Drawing.Color.FromArgb(BackgroundBrush.Color.A,
+                                                      BackgroundBrush.Color.R,
+                                                      BackgroundBrush.Color.G,
+                                                      BackgroundBrush.Color.B);
+            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                BackgroundBrush = new SolidColorBrush(
+                    Color.FromArgb(255, dlg.Color.R, dlg.Color.G, dlg.Color.B));
+                DataContext = this; // 刷新绑定
+                UpdateBackgroundButtonColor(BackgroundBrush.Color);
+            }
+        }
+
+
+        private void OnColorButtonClick(object sender, RoutedEventArgs e)
+        {
+
+            //s(1);
+            if (sender is System.Windows.Controls.Button btn && btn.Background is SolidColorBrush brush)
+            {
+                SelectedBrush = new SolidColorBrush(brush.Color);
+
+                // 如果你有 ToolContext，可同步笔颜色，例如：
+                _ctx.PenColor = brush.Color;
+                UpdateForegroundButtonColor(_ctx.PenColor);
+                // HighlightSelectedButton(btn);
+            }
+        }
+
+        // 更新前景色按钮颜色
+        public void UpdateForegroundButtonColor(Color color)
+        {
+            ForegroundBrush = new SolidColorBrush(color);
+            DataContext = null;             // 断开绑定
+            DataContext = this;             // 重新绑定，强制刷新 UI
+        }
+
+        // 更新背景色按钮颜色（可选）
+        public void UpdateBackgroundButtonColor(Color color)
+        {
+            BackgroundBrush = new SolidColorBrush(color);
+            DataContext = null;
+            DataContext = this;
         }
 
         public class ToolRegistry
@@ -1010,32 +1529,23 @@ namespace SodiumPaint
                 new SolidColorBrush(Colors.White)
             };
 
-        private void OnColorButtonClick(object sender, RoutedEventArgs e)
-        {
-            if (sender is System.Windows.Controls.Button btn && btn.Background is SolidColorBrush brush)
-            {
-                SelectedBrush = new SolidColorBrush(brush.Color);
 
-                // 如果你有 ToolContext，可同步笔颜色，例如：
-                // _ctx.PenColor = brush.Color;
-
-                HighlightSelectedButton(btn);
-            }
-        }
 
         // 点击彩虹按钮自定义颜色
         private void OnCustomColorClick(object sender, RoutedEventArgs e)
         {
+            // s(1);
             var dlg = new ColorDialog();
             if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 var color = Color.FromArgb(255, dlg.Color.R, dlg.Color.G, dlg.Color.B);
                 var brush = new SolidColorBrush(color);
                 SelectedBrush = brush;
-                HighlightSelectedButton(null);
+                //HighlightSelectedButton(null);
 
                 // 同步到绘图上下文
-                // _ctx.PenColor = color;
+                _ctx.PenColor = color;
+                UpdateForegroundButtonColor(color);
             }
         }
 
@@ -1049,7 +1559,7 @@ namespace SodiumPaint
                 if (selected != null && item == selected)
                     item.BorderBrush = Brushes.DeepSkyBlue;
                 else
-                    item.BorderBrush = Brushes.Gray;
+                    item.BorderBrush = Brushes.Red;
             }
         }
 
@@ -1074,6 +1584,234 @@ namespace SodiumPaint
             }
         }
 
+        public enum BrushStyle { Round, Square, Brush, Spray, Pencil }
+
+        // private BrushStyle _currentBrushStyle = BrushStyle.Round;
+        private void ShowRotateMenu(object sender, RoutedEventArgs e)
+        {
+            var menu = (System.Windows.Controls.ContextMenu)FindResource("RotateContextMenu");
+            menu.PlacementTarget = RotateMenuButton;
+            menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            menu.IsOpen = true; // 弹出菜单
+        }
+
+        private void OnBrushStyleClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is ToggleButton btn && Enum.TryParse(btn.Tag.ToString(), out BrushStyle style))
+            {
+                //   _currentBrushStyle = style;
+                _ctx.PenStyle = style;
+                // 可选：取消其它按钮的选中状态
+                var toolbar = (btn.Parent as System.Windows.Controls.ToolBar);
+                foreach (var child in toolbar.Items.OfType<ToggleButton>())
+                    if (!ReferenceEquals(child, btn)) child.IsChecked = false;
+            }
+        }
+
+        private void ThicknessSlider_DragStarted(object sender, DragStartedEventArgs e)
+        {
+            ThicknessPreview.Visibility = Visibility.Visible;
+            UpdateThicknessPreviewPosition(); // 初始定位
+
+            ThicknessTip.Visibility = Visibility.Visible;
+            SetThicknessSlider_Pos(0);
+        }
+
+        private void ThicknessSlider_DragCompleted(object sender, DragCompletedEventArgs e)
+        {
+            ThicknessPreview.Visibility = Visibility.Collapsed;
+
+            ThicknessTip.Visibility = Visibility.Collapsed;
+        }
+
+        private void ThicknessSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            PenThickness = e.NewValue;
+            UpdateThicknessPreviewPosition();
+
+            if (ThicknessTip == null || ThicknessTipText == null || ThicknessSlider == null)
+                return;
+
+            PenThickness = e.NewValue;
+            ThicknessTipText.Text = $"{(int)PenThickness} 像素";
+
+            // 让提示显示出来
+            ThicknessTip.Visibility = Visibility.Visible;
+            SetThicknessSlider_Pos(e.NewValue);
+
+        }
+
+        private void SetThicknessSlider_Pos(double newValue)
+        {
+            // 根据 Slider 高度和当前值，计算提示位置
+            Rect rect = new Rect(
+     ThicknessSlider.TransformToAncestor(this).Transform(new Point(0, 0)),
+     new Size(ThicknessSlider.ActualWidth, ThicknessSlider.ActualHeight));
+            double trackHeight = ThicknessSlider.ActualHeight;
+            double relativeValue = (ThicknessSlider.Maximum - newValue) / (ThicknessSlider.Maximum - ThicknessSlider.Minimum);
+            double offsetY = relativeValue * trackHeight;
+
+            ThicknessTip.Margin = new Thickness(80, offsetY + rect.Top - 10, 0, 0);
+        }
+
+        private void UpdateThicknessPreviewPosition()
+        {
+            if (ThicknessPreview == null)
+                return;
+
+            // 图像缩放比例
+            double zoom = ZoomTransform.ScaleX;   // or ScaleY，通常两者相等
+            double size = PenThickness * 2 * zoom; // 半径→界面直径 * 缩放
+
+            ThicknessPreview.Width = size;
+            ThicknessPreview.Height = size;
+
+            ThicknessPreview.Fill = Brushes.Transparent;
+            ThicknessPreview.StrokeThickness = 2;
+
+            // 确保居中
+            //ThicknessPreview.HorizontalAlignment = HorizontalAlignment.Center;
+            //ThicknessPreview.VerticalAlignment = VerticalAlignment.Center;
+        }
+        private void OnRotateLeftClick(object sender, RoutedEventArgs e)
+        {
+            RotateBitmap(-90);
+        }
+
+        private void OnRotateRightClick(object sender, RoutedEventArgs e)
+        {
+            RotateBitmap(90);
+        }
+
+        private void OnRotate180Click(object sender, RoutedEventArgs e)
+        {
+            RotateBitmap(180);
+        }
+
+
+        private void CenterImage()
+        {
+            if (_bitmap == null || BackgroundImage == null)
+                return;
+
+            BackgroundImage.Width = _bitmap.PixelWidth;
+            BackgroundImage.Height = _bitmap.PixelHeight;
+
+            // 如果在 ScrollViewer 中，自动滚到中心
+            if (ScrollContainer != null)
+            {
+                ScrollContainer.ScrollToHorizontalOffset(
+                    (BackgroundImage.Width - ScrollContainer.ViewportWidth) / 2);
+                ScrollContainer.ScrollToVerticalOffset(
+                    (BackgroundImage.Height - ScrollContainer.ViewportHeight) / 2);
+            }
+
+            // 如果是 Grid 居中，直接用布局居中属性
+            //BackgroundImage.HorizontalAlignment = HorizontalAlignment.Center;
+            BackgroundImage.VerticalAlignment = VerticalAlignment.Center;
+        }
+        private void OnFlipVerticalClick(object sender, RoutedEventArgs e)
+        {
+            FlipBitmap(flipVertical: true);
+        }
+
+        private void OnFlipHorizontalClick(object sender, RoutedEventArgs e)
+        {
+            FlipBitmap(flipVertical: false);
+        }
+
+
+        private void ApplyTransform(System.Windows.Media.Transform transform)
+        {
+            if (BackgroundImage.Source is not BitmapSource src || _surface?.Bitmap == null)
+                return;
+
+            // 🟢 Step 1：在替换前保存旧图到撤销栈
+            var rect = new Int32Rect(0, 0,
+                                     _surface.Bitmap.PixelWidth,
+                                     _surface.Bitmap.PixelHeight);
+
+            // 提取旧的像素数据
+            var oldPixels = _surface.ExtractRegion(rect);
+
+            // 压入撤销栈（整图作为一次步骤）
+            _undo?.PushUndoRegionTransform(rect, oldPixels);
+
+            // 新操作截断重做链
+            _undo?.ClearRedo();
+
+            // 🟢 Step 2：生成旋转/翻转后的新图
+            var tb = new TransformedBitmap(src, transform);
+            var wb = new WriteableBitmap(tb);
+
+            // 替换主位图
+            _bitmap = wb;
+            BackgroundImage.Source = _bitmap;
+
+            // 让 CanvasSurface 附加新位图
+            _surface.Attach(_bitmap);
+
+            // 🟢 Step 3：居中显示
+            BackgroundImage.Dispatcher.BeginInvoke(
+                new Action(() => CenterImage()),
+                System.Windows.Threading.DispatcherPriority.Loaded
+            );
+        }
+
+
+
+        private void RotateBitmap(int angle)
+        {
+            ApplyTransform(new RotateTransform(angle));
+        }
+
+        private void FlipBitmap(bool flipVertical)
+        {
+            double cx = _bitmap.PixelWidth / 2.0;
+            double cy = _bitmap.PixelHeight / 2.0;
+            ApplyTransform(flipVertical ? new ScaleTransform(1, -1, cx, cy) : new ScaleTransform(-1, 1, cx, cy));
+        }
+
+        private void UpdateWindowTitle()
+        {
+            // 如果有未保存的修改，加上 '*'
+            string dirtyMark = _isFileSaved ? "" : "*";
+            this.Title = $"{dirtyMark}{_currentFileName} - SodiumPaint {_programVersion}";
+        }
+
+
+
+
+
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+        private double _zoomScale = 1.0;
+        public double ZoomScale
+        {
+            get => _zoomScale;
+            set
+            {
+                if (_zoomScale != value)
+                {
+                    _zoomScale = value;
+                    ZoomLevel = $"{Math.Round(_zoomScale * 100)}%";
+                    ZoomTransform.ScaleX = ZoomTransform.ScaleY = _zoomScale;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private string _zoomLevel = "100%";
+        public string ZoomLevel
+        {
+            get => _zoomLevel;
+            set { _zoomLevel = value; OnPropertyChanged(); }
+        }
 
 
 
@@ -1091,22 +1829,20 @@ namespace SodiumPaint
         {
             _currentFilePath = @"E:\dev\106117173_p12.jpg";
             InitializeComponent();
-           // DataContext = new ViewModels.MainWindowViewModel();
+            // DataContext = new ViewModels.MainWindowViewModel();
             DataContext = this;
             LoadImage(_currentFilePath);
-            
+
 
 
             ZoomSlider.ValueChanged += (s, e) =>
             {
-                double scale = ((ViewModels.MainWindowViewModel)DataContext).ZoomScale;
-                ZoomTransform.ScaleX = ZoomTransform.ScaleY = scale;
+                ZoomScale = ZoomSlider.Value; // 更新属性而不是直接访问 zoomscale
             };
-
 
             _surface = new CanvasSurface(_bitmap);
             _undo = new UndoRedoManager(_surface);
-            _ctx = new ToolContext(_surface, _undo, BackgroundImage,SelectionPreview,SelectionOverlayCanvas);
+            _ctx = new ToolContext(_surface, _undo, BackgroundImage, SelectionPreview, SelectionOverlayCanvas);
             _tools = new ToolRegistry();
 
             _router = new InputRouter(_ctx, _tools.Pen); // 默认画笔
@@ -1125,7 +1861,7 @@ namespace SodiumPaint
         private void MainWindow_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (Keyboard.Modifiers == ModifierKeys.Control)
-            { 
+            {
                 switch (e.Key)
                 {
                     case Key.Z:
@@ -1173,7 +1909,7 @@ namespace SodiumPaint
         private List<Int32Rect> _currentDrawRegions = new List<Int32Rect>(); // 当前笔的区域记录
         private Stack<UndoAction> _redoStack = new Stack<UndoAction>();
 
-     
+
 
         private byte[] ExtractRegionFromSnapshot(byte[] fullData, Int32Rect rect, int stride)
         {
@@ -1204,7 +1940,7 @@ namespace SodiumPaint
             byte[] regionData = ExtractRegionFromSnapshot(
                 _preDrawSnapshot, combined, _bitmap.BackBufferStride);
 
-            _undoStack.Push(new UndoAction(combined, regionData));
+            _undoStack.Push(new UndoAction(combined, regionData, null, UndoActionType.Draw));
 
             _preDrawSnapshot = null; // 清除快照引用
             _redoStack.Clear();
@@ -1232,7 +1968,7 @@ namespace SodiumPaint
         }
         private void Undo() { _undo.Undo(); _ctx.IsDirty = true; }
         private void Redo() { _undo.Redo(); _ctx.IsDirty = true; }
-       
+
 
         private byte[] ExtractRegionFromBitmap(WriteableBitmap bmp, Int32Rect rect)
         {
@@ -1323,7 +2059,7 @@ namespace SodiumPaint
             }
             _bitmap.Unlock();
 
-            _undoStack.Push(new UndoAction(new Int32Rect(x, y, width, height), data));
+            _undoStack.Push(new UndoAction(new Int32Rect(x, y, width, height), data, null, UndoActionType.Draw));
 
             // 可选：限制最大撤销次数
             if (_undoStack.Count > 1000) _undoStack = new Stack<UndoAction>(_undoStack.Take(1000));
@@ -1430,24 +2166,14 @@ namespace SodiumPaint
 
         }
 
-        private double zoomscale=1;
-        private byte[]? _preDrawSnapshot = null;
 
-        private WriteableBitmap _bitmap;
-        private int _bmpWidth, _bmpHeight;
-        private Color _penColor = Colors.Black;
-        private bool _isDrawing = false;
-        private Point _lastPoint;
-        private List<string> _imageFiles = new List<string>();
-        private int _currentImageIndex = -1;
-        private bool _isEdited = false; // 标记当前画布是否被修改
 
 
 
         private void ShowNextImage()
         {
             if (_imageFiles.Count == 0 || _currentImageIndex < 0) return;
-            
+
             // 自动保存已编辑图片
             //if (_isEdited && !string.IsNullOrEmpty(_currentFilePath))
             //{
@@ -1549,13 +2275,18 @@ namespace SodiumPaint
             try
             {
                 _bitmap = LoadBitmapWith96Dpi(filePath);
+                _currentFileName = System.IO.Path.GetFileName(_currentFilePath);
                 BackgroundImage.Source = _bitmap;
                 if (_surface == null)
                     _surface = new CanvasSurface(_bitmap);
                 else
                     _surface.Attach(_bitmap);
 
-                
+                if (_undo != null)
+                {
+                    _undo.ClearUndo();
+                    _undo.ClearRedo();
+                }
 
                 // BackgroundImage.Source = _bitmap;
 
@@ -1584,16 +2315,14 @@ namespace SodiumPaint
                 BackgroundImage.Height = imgHeight;
 
                 // 根据屏幕情况（最多占 90%）
-                double maxWidth = SystemParameters.WorkArea.Width ;
+                double maxWidth = SystemParameters.WorkArea.Width;
                 double maxHeight = SystemParameters.WorkArea.Height;
 
                 _imageSize = $"{_surface.Width}×{_surface.Height}";
                 OnPropertyChanged(nameof(ImageSize));
+                UpdateWindowTitle();
 
-
-                SetZoomAndOffset(Math.Min(SystemParameters.WorkArea.Width / imgWidth, SystemParameters.WorkArea.Height / imgHeight) * 0.7 , 10, 10);
-                // Width = Math.Min(imgWidth + 100, maxWidth);
-                //Height = Math.Min(imgHeight + 150, maxHeight);
+                SetZoomAndOffset(Math.Min(SystemParameters.WorkArea.Width / imgWidth, SystemParameters.WorkArea.Height / imgHeight) * 0.7, 10, 10);
             }
             catch (Exception ex)
             {
@@ -1655,6 +2384,17 @@ namespace SodiumPaint
 
             // 填充白色背景
             _bitmap.Lock();
+
+            if (_undo != null)
+            {
+                _undo.ClearUndo();
+                _undo.ClearRedo();
+            }
+
+            if (_surface == null)
+                _surface = new CanvasSurface(_bitmap);
+            else
+                _surface.Attach(_bitmap);
             unsafe
             {
                 IntPtr pBackBuffer = _bitmap.BackBuffer;
@@ -1673,17 +2413,38 @@ namespace SodiumPaint
             }
             _bitmap.AddDirtyRect(new Int32Rect(0, 0, _bmpWidth, _bmpHeight));
             _bitmap.Unlock();
+
+            // 调整窗口和画布大小
+            double imgWidth = _bitmap.Width;
+            double imgHeight = _bitmap.Height;
+
+
+
+            BackgroundImage.Width = imgWidth;
+            BackgroundImage.Height = imgHeight;
+
+            // 根据屏幕情况（最多占 90%）
+            double maxWidth = SystemParameters.WorkArea.Width;
+            double maxHeight = SystemParameters.WorkArea.Height;
+
+            _imageSize = $"{_surface.Width}×{_surface.Height}";
+            OnPropertyChanged(nameof(ImageSize));
+            UpdateWindowTitle();
+
+            SetZoomAndOffset(Math.Min(SystemParameters.WorkArea.Width / imgWidth, SystemParameters.WorkArea.Height / imgHeight) * 0.7, 10, 10);
+
         }
 
         private void OnNewClick(object sender, RoutedEventArgs e)
         {
             // 可以弹出对话框让用户输入宽高，也可以用默认尺寸
-            _bmpWidth = 800;
-            _bmpHeight = 600;
-
+            _bmpWidth = 1200;
+            _bmpHeight = 900;
+            _currentFilePath = string.Empty; // 新建后没有路径
+            _currentFileName = "未命名";
             Clean_bitmap(_bmpWidth, _bmpHeight);
 
-            _currentFilePath = string.Empty; // 新建后没有路径
+
         }
 
     }
