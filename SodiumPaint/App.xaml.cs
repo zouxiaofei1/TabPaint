@@ -30,7 +30,7 @@ namespace SodiumPaint
             else
             {
                 // Visual Studio 调试默认打开
-                filePath = @"E:\dev\h.jpg";
+                filePath = @"E:\dev\1.png";
             }
 
             var window = new MainWindow(filePath);

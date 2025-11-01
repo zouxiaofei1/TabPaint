@@ -146,8 +146,9 @@
                 <Button Content="撤销" Click="OnUndoClick"/>
                 <Button Content="重做" Click="OnRedoClick"/>
                 <Button Content="填充" Click="OnFillClick"/>
+                 <Button Content="文字" Click="OnTextClick"/>
 
-                <Separator/>
+                    <Separator/>
 
 
                     <Button x:Name="RotateMenuButton"
@@ -351,15 +352,61 @@
             IsHitTestVisible="False"
             Background="Transparent">
                     </Canvas>
+
+                    <Canvas Name="EditorOverlayCanvas"
+            Background="Transparent"
+            IsHitTestVisible="False"
+            Visibility="Visible"/>
                 </Grid>
 
 
 
             </ScrollViewer>
-
+         
         </DockPanel>
 
+        <Border x:Name="TextEditBar"
+            Background="#F5F5F5"
+            CornerRadius="6"
+            Padding="8"
+            Opacity="0.95"
+                
+            Visibility="Collapsed"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Top"
+            Margin="0,80,0,0"
+            Effect="{DynamicResource DropShadowEffect}">
+            <StackPanel Orientation="Horizontal" >
+                <!-- 字体选择 -->
+                <ComboBox x:Name="FontFamilyBox"
+                      Width="140"
+                      ItemsSource="{x:Static Fonts.SystemFontFamilies}"
+                      DisplayMemberPath="Source"
+                      SelectedItem="Segoe UI"/>
+                <!-- 字号 -->
+                <ComboBox x:Name="FontSizeBox"
+                      Width="60"
+                      SelectedIndex="6">
+                    <ComboBoxItem>8</ComboBoxItem>
+                    <ComboBoxItem>10</ComboBoxItem>
+                    <ComboBoxItem>12</ComboBoxItem>
+                    <ComboBoxItem>14</ComboBoxItem>
+                    <ComboBoxItem>18</ComboBoxItem>
+                    <ComboBoxItem>24</ComboBoxItem>
+                    <ComboBoxItem>36</ComboBoxItem>
+                    <ComboBoxItem>48</ComboBoxItem>
+                    <ComboBoxItem>72</ComboBoxItem>
+                </ComboBox>
 
+                <!-- 样式按钮 -->
+                <ToggleButton x:Name="BoldBtn" FontWeight="Bold" Width="30" Content="B"/>
+                <ToggleButton x:Name="ItalicBtn" FontStyle="Italic" Width="30" Content="I"/>
+                <ToggleButton x:Name="UnderlineBtn" Width="30" Content="U"
+                        />
+                <!-- 留空 -->
+                <Separator Width="20"/>
+            </StackPanel>
+        </Border>
         <!-- 悬浮笔刷半径调节条 -->
         <Border x:Name="ThicknessPanel"
             Width="60"
