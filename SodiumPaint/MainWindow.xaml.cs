@@ -1873,7 +1873,7 @@ namespace SodiumPaint
 
 
 
-            
+
             public void DrawTextboxOverlay(ToolContext ctx)
             {
                 if (_textBox == null) return;
@@ -2034,7 +2034,7 @@ namespace SodiumPaint
 
             public override void OnPointerDown(ToolContext ctx, Point viewPos)
             {
-               // Debug.Print("1123245");
+                // Debug.Print("1123245");
                 if (_textBox != null)
                 {
                     Point p = viewPos;
@@ -2057,7 +2057,7 @@ namespace SodiumPaint
                         // 点击外部 → 提交到画布
 
 
-                        
+
                         CommitText(ctx);
                         DeselectCurrentBox(ctx);
                         ctx.EditorOverlay.IsHitTestVisible = false;
@@ -2094,7 +2094,7 @@ namespace SodiumPaint
                                px.Y >= y + borderThickness &&
                                px.Y <= y + h - borderThickness;
 
-               
+
 
                 // 必须在外矩形内 && 不在内矩形内 → 才是边框区域
                 return inOuter && !inInner;
@@ -2179,7 +2179,7 @@ namespace SodiumPaint
                             // 点击边框区域时启用拖动整个 TextBox
                             if (IsInsideBorder(ctx.ToPixel(pos)))
                             {
-                               
+
                                 _dragging = true;
                                 _startMouse = ctx.ToPixel(viewPos);
                                 _startX = Canvas.GetLeft(_textBox);
@@ -2188,7 +2188,7 @@ namespace SodiumPaint
                             else
                                 OnPointerDown(ctx, pos);
                         }
-                        
+
 
                     };
 
@@ -2695,7 +2695,9 @@ namespace SodiumPaint
         {
             // 如果有未保存的修改，加上 '*'
             string dirtyMark = _isFileSaved ? "" : "*";
-            this.Title = $"{dirtyMark}{_currentFileName} - SodiumPaint {_programVersion}";
+            //_currentImageIndex = 0;
+            //_imageFiles.Count();
+            this.Title = $"{dirtyMark}{_currentFileName} ({_currentImageIndex + 1}/{_imageFiles.Count})- SodiumPaint {_programVersion}";
         }
 
         private void OnTextClick(object sender, RoutedEventArgs e)
@@ -2753,45 +2755,6 @@ namespace SodiumPaint
             }
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>
-        /// /////////////////////
-        /// 
-        /// </summary>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         private System.Windows.Controls.TextBox? _activeTextBox;
         public void ShowTextToolbarFor(System.Windows.Controls.TextBox tb)
         {
@@ -2837,14 +2800,45 @@ namespace SodiumPaint
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /// <summary>
+        /// 临时测试代码段
+        /// 
+        /// </summary>
+        /// 
+
+
+
+        /// <summary>
+        //
+        /// </summary>
+        /// <param name="startFilePath"></param>
+
         public MainWindow(string startFilePath)
         {
             //if (startFilePath == null) return;
             _currentFilePath = startFilePath;
+
+
+
             InitializeComponent();
             // DataContext = new ViewModels.MainWindowViewModel();
             DataContext = this;
-            LoadImage(_currentFilePath);
+            OpenImageAndTabs(_currentFilePath, true);
+            // LoadAllFilePaths(basepath);
+
+
             Select = new SelectTool();
 
             // 初始化字体大小事件
@@ -3157,7 +3151,7 @@ namespace SodiumPaint
             ScrollContainer.ScrollToVerticalOffset(newOffsetY);
         }
 
-
+        String PicFilterString = "图像文件|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp";
         // Ctrl + 滚轮 缩放事件
         private void OnMouseWheelZoom(object sender, MouseWheelEventArgs e)
         {
@@ -3192,37 +3186,28 @@ namespace SodiumPaint
         {
             var dlg = new Microsoft.Win32.OpenFileDialog
             {
-                Filter = "图像文件|*.png;*.jpg;*.jpeg;*.bmp"
+                Filter = PicFilterString
             };
             if (dlg.ShowDialog() == true)
             {
                 _currentFilePath = dlg.FileName;
-                LoadImage(_currentFilePath);
+                OpenImageAndTabs(_currentFilePath, true);
                 // Clean_bitmap(_bmpWidth, _bmpHeight);
             }
 
         }
 
 
-
-
-
         private void ShowNextImage()
         {
             if (_imageFiles.Count == 0 || _currentImageIndex < 0) return;
 
-            // 自动保存已编辑图片
-            //if (_isEdited && !string.IsNullOrEmpty(_currentFilePath))
-            //{
-            //    SaveBitmap(_currentFilePath);
-            //    _isEdited = false;
-            //}
 
             _currentImageIndex++;
             if (_currentImageIndex >= _imageFiles.Count)
                 _currentImageIndex = 0; // 循环到第一张
 
-            LoadImage(_imageFiles[_currentImageIndex]);
+            OpenImageAndTabs(_imageFiles[_currentImageIndex]);
         }
 
         private void ShowPrevImage()
@@ -3240,7 +3225,7 @@ namespace SodiumPaint
             if (_currentImageIndex < 0)
                 _currentImageIndex = _imageFiles.Count - 1; // 循环到最后一张
 
-            LoadImage(_imageFiles[_currentImageIndex]);
+            OpenImageAndTabs(_imageFiles[_currentImageIndex]);
         }
         private void ClearRect(ToolContext ctx, Int32Rect rect, Color color)
         {
@@ -3302,8 +3287,413 @@ namespace SodiumPaint
 
 
 
-        private async Task LoadImage(string filePath)
+
+        public class FileTabItem : INotifyPropertyChanged
         {
+            public string FilePath { get; }
+            public string FileName => System.IO.Path.GetFileName(FilePath);
+            public string DisplayName => System.IO.Path.GetFileNameWithoutExtension(FilePath);
+            private bool _isSelected;
+            public bool IsSelected
+            {
+                get => _isSelected;
+                set { _isSelected = value; OnPropertyChanged(nameof(IsSelected)); }
+            }
+            private bool _isLoading;
+            public bool IsLoading
+            {
+                get => _isLoading;
+                set { _isLoading = value; OnPropertyChanged(nameof(IsLoading)); }
+            }
+
+            private BitmapSource? _thumbnail;
+            public BitmapSource? Thumbnail
+            {
+                get => _thumbnail;
+                set
+                {
+                    _thumbnail = value;
+                    OnPropertyChanged(nameof(Thumbnail));
+                }
+            }
+
+            public FileTabItem(string path)
+            {
+                FilePath = path;
+
+            }
+
+            // 异步加载缩略图（调用时自动更新UI）
+            public async Task LoadThumbnailAsync(int size)
+            {
+                await Task.Run(() =>
+                {
+                    try
+                    {
+                        var bmp = new BitmapImage();
+                        bmp.BeginInit();
+                        bmp.CacheOption = BitmapCacheOption.OnLoad;
+                        bmp.DecodePixelWidth = size;
+                        bmp.UriSource = new Uri(FilePath);
+                        bmp.EndInit();
+                        bmp.Freeze();
+
+                        Thumbnail = bmp;
+                    }
+                    catch
+                    {
+                    }
+                });
+            }
+
+            public event PropertyChangedEventHandler? PropertyChanged;
+            protected void OnPropertyChanged(string name)
+                => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
+
+        // 所有文件路径（仅索引，不加载图片）
+        //private List<string> _allImagePaths = new();
+        private const int PageSize = 10; // 每页标签数量（可调整）
+
+        public ObservableCollection<FileTabItem> FileTabs { get; }
+            = new ObservableCollection<FileTabItem>();
+
+        private int _currentIndex; // 当前打开图片索引
+
+        // 打开文件夹
+
+
+        // 加载当前页 + 前后页文件到显示区
+        private async Task LoadTabPageAsync(int centerIndex)
+        {//全部清空并重新加载!!!
+            if (_imageFiles == null || _imageFiles.Count == 0) return;
+
+
+            FileTabs.Clear();
+            int start = Math.Max(0, centerIndex - PageSize);
+            int end = Math.Min(_imageFiles.Count - 1, centerIndex + PageSize);
+            //s(centerIndex);
+            foreach (var path in _imageFiles.Skip(start).Take(end - start + 1))
+                FileTabs.Add(new FileTabItem(path));
+
+            foreach (var tab in FileTabs)
+                if (tab.Thumbnail == null && !tab.IsLoading)
+                {
+                    tab.IsLoading = true;
+                    _ = tab.LoadThumbnailAsync(100);
+                }
+        }
+        private async Task RefreshTabPageAsync(int centerIndex, bool refresh = false)
+        {
+            if (_imageFiles == null || _imageFiles.Count == 0)
+                return;
+
+            if (refresh)
+                await LoadTabPageAsync(centerIndex);
+
+            // 计算当前选中图片在 FileTabs 中的索引
+            var currentTab = FileTabs.FirstOrDefault(t => t.FilePath == _imageFiles[centerIndex]);
+            if (currentTab == null)
+                return;
+
+            int selectedIndex = FileTabs.IndexOf(currentTab);
+            if (selectedIndex < 0)
+                return;
+
+            double itemWidth = 124;                   // 与 Button 实际宽度一致
+            double viewportWidth = FileTabsScroller.ViewportWidth;
+            double targetOffset = selectedIndex * itemWidth - viewportWidth / 2 + itemWidth / 2;
+
+            targetOffset = Math.Max(0, targetOffset); // 防止负数偏移
+            double maxOffset = Math.Max(0, FileTabs.Count * itemWidth - viewportWidth);
+            targetOffset = Math.Min(targetOffset, maxOffset); // 防止超出范围
+
+            // s($"scroll target {targetOffset}");
+            FileTabsScroller.ScrollToHorizontalOffset(targetOffset);
+        }
+
+        // 文件总数绑定属性
+        public int ImageFilesCount;
+
+        // Slider 拖动事件 -> 滚动缩略图栏
+
+
+        // 缩略图栏滚动事件 -> 更新 Slider 位置
+
+        private async void OnFileTabsScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            double itemWidth = 124;
+            int firstIndex = (int)(FileTabsScroller.HorizontalOffset / itemWidth);
+            int visibleCount = (int)(FileTabsScroller.ViewportWidth / itemWidth) + 2;
+            int lastIndex = firstIndex + visibleCount;
+            PreviewSlider.Value = firstIndex;
+            bool needload = false;
+
+            // 尾部加载
+            if (lastIndex >= FileTabs.Count - 10 && FileTabs.Count < _imageFiles.Count)
+            {
+                int currentFirstIndex = _imageFiles.IndexOf(FileTabs[FileTabs.Count - 1].FilePath);
+                if (currentFirstIndex > 0)
+                {
+                    //_imageFiles.IndexOf(FileTabs[FileTabs.Count - 1].FilePath).ToString();
+                    int start = Math.Min(_imageFiles.Count - 1, currentFirstIndex);
+                    //s()
+                    foreach (var path in _imageFiles.Skip(start).Take(PageSize))
+                        FileTabs.Add(new FileTabItem(path));
+                    needload = true;
+                }
+            }
+
+            // 前端加载
+            if (FileTabs.Count > 0 && firstIndex < 10 && FileTabs[0].FilePath != _imageFiles[0])
+            {
+                int currentFirstIndex = _imageFiles.IndexOf(FileTabs[0].FilePath);
+                if (currentFirstIndex > 0)
+                {
+                    int start = Math.Min(0, currentFirstIndex - PageSize);
+                    //  var prevPaths = _imageFiles.Skip(start).Take(currentFirstIndex - start).ToList();
+                    double offsetBefore = FileTabsScroller.HorizontalOffset;
+
+                    var prevPaths = _imageFiles.Skip(start).Take(currentFirstIndex - start);
+
+                    foreach (var path in prevPaths.Reverse())
+                        FileTabs.Insert(0, new FileTabItem(path));
+                    FileTabsScroller.ScrollToHorizontalOffset(offsetBefore + prevPaths.Count() * itemWidth);
+                    // s("prev" + firstIndex.ToString());
+                    needload = true;
+                }
+            }
+
+            // 懒加载缩略图，仅当有新增或明显滚动时触发
+            if (needload || e.HorizontalChange != 0)
+            {
+                int end = Math.Min(lastIndex, FileTabs.Count);
+                for (int i = firstIndex; i < end; i++)
+                {
+                    var tab = FileTabs[i];
+                    if (tab.Thumbnail == null && !tab.IsLoading)
+                    {
+                        tab.IsLoading = true;
+                        _ = tab.LoadThumbnailAsync(100);
+                    }
+                }
+            }
+        }
+
+        // 点击标签打开图片
+        private async void OnFileTabClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button btn && btn.DataContext is FileTabItem item)
+            {
+                //s("1");
+                await OpenImageAndTabs(item.FilePath);
+            }
+        }
+
+        // 鼠标滚轮横向滑动标签栏
+        private void OnFileTabsWheelScroll(object sender, MouseWheelEventArgs e)
+        {
+            double offset = FileTabsScroller.HorizontalOffset - e.Delta / 2;
+            FileTabsScroller.ScrollToHorizontalOffset(offset);
+            e.Handled = true;
+        }
+
+        private bool _isDragging = false;
+        // string basepath = @"E:\Data\m3u8\Extras\bocchi\pic\";
+        string basepath = @"E:\dev\";
+        private void Slider_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            // 如果点击的目标是 Thumb 本身或其子元素，则不作任何处理。
+            // 让 Slider 的默认 Thumb 拖动逻辑去工作。
+            if (IsMouseOverThumb(e))
+            {
+                return;
+            }
+
+            // 如果点击的是轨道部分
+            _isDragging = true;
+            var slider = (Slider)sender;
+
+            // 捕获鼠标，这样即使鼠标移出 Slider 范围，我们也能继续收到 MouseMove 事件
+            slider.CaptureMouse();
+
+            // 更新 Slider 的值到当前点击的位置
+            UpdateSliderValueFromPoint(slider, e.GetPosition(slider));
+
+            // 标记事件已处理，防止其他控件响应
+            e.Handled = true;
+        }
+
+        private void Slider_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            // 仅当我们通过点击轨道开始拖动时，才处理 MouseMove 事件
+            if (_isDragging)
+            {
+                var slider = (Slider)sender;
+                // 持续更新 Slider 的值
+                UpdateSliderValueFromPoint(slider, e.GetPosition(slider));
+            }
+        }
+
+        private void Slider_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            // 如果我们正在拖动
+            if (_isDragging)
+            {
+                _isDragging = false;
+                var slider = (Slider)sender;
+
+                // 释放鼠标捕获
+                slider.ReleaseMouseCapture();
+                e.Handled = true;
+            }
+        }
+
+        private void Slider_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            var slider = (Slider)sender;
+
+            // 根据滚轮方向调整值
+            double change = slider.LargeChange; // 使用 LargeChange 作为滚动步长
+            if (e.Delta < 0)
+            {
+                change = -change;
+            }
+
+            slider.Value += change;
+            e.Handled = true;
+        }
+
+        // --- 辅助方法 ---
+
+        /// <summary>
+        /// 根据给定的点（相对于Slider）来计算并更新Slider的值。
+        /// </summary>
+        private async void UpdateSliderValueFromPoint(Slider slider, Point position)
+        {
+            // 计算点击位置在总高度中的比例
+            // 对于垂直滑块，Y=0 在顶部，对应 Maximum；Y=ActualHeight 在底部，对应 Minimum
+            double ratio = position.Y / slider.ActualHeight;
+
+            // 将比例转换为滑块的值范围
+            // 注意：垂直滑块的值是反向的（顶部是最大值）
+            double value = slider.Minimum + (slider.Maximum - slider.Minimum) * (1 - ratio);
+
+            // 确保值在有效范围内
+            value = Math.Max(slider.Minimum, Math.Min(slider.Maximum, value));
+
+            slider.Value = value;
+            //   s(value.ToString());
+            Debug.Print("111");
+            await OpenImageAndTabs(_imageFiles[(int)value], true);
+            //OpenImageAndTabs()
+        }
+
+        /// <summary>
+        /// 检查鼠标事件的原始源是否是 Thumb 或其内部的任何元素。
+        /// </summary>
+        private bool IsMouseOverThumb(MouseButtonEventArgs e)
+        {
+            var slider = (Slider)e.Source;
+            var track = slider.Template.FindName("PART_Track", slider) as Track;
+            if (track == null) return false;
+
+            return track.Thumb.IsMouseOver;
+        }
+        private void PreviewSlider_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            // 检查点击的原始来源是否已经是 Thumb。如果是，则什么都不做，让默认行为发生。
+            if (e.OriginalSource is Thumb)
+            {
+                return;
+            }
+           //s("11");
+            var slider = sender as Slider;
+            if (slider == null)
+            {
+                return;
+            }
+
+            // 找到 Slider 内部的 Track 控件
+            var track = FindVisualChild<Track>(slider);
+            if (track == null)
+            {
+                return;
+            }
+
+            // 找到 Track 内部的 Thumb 控件
+            var thumb = track.Thumb;
+            if (thumb != null)
+            {
+                thumb.Focus();
+                thumb.CaptureMouse();
+                e.Handled = true;
+            }
+        }
+
+        // 这是一个通用的辅助方法，用于在可视化树中查找特定类型的子控件
+        public static T FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+        {
+            if (parent == null) return null;
+
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                DependencyObject child = VisualTreeHelper.GetChild(parent, i);
+                if (child != null && child is T)
+                {
+                    return (T)child;
+                }
+                else
+                {
+                    T childOfChild = FindVisualChild<T>(child);
+                    if (childOfChild != null)
+                    {
+                        return childOfChild;
+                    }
+                }
+            }
+            return null;
+        }
+
+
+        public async Task OpenImageAndTabs(string filePath, bool refresh = false)
+        {
+            foreach (var tab in FileTabs)
+                tab.IsSelected = false;
+
+            // 找到当前点击的标签并选中
+            var current = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
+            if (current != null)
+                current.IsSelected = true;
+
+            // 加载对应图片
+            await LoadImage(filePath);
+          //  UpdatePreviewSlider();
+            // 刷新标签栏（邻页）
+            await RefreshTabPageAsync(_currentImageIndex, refresh);
+
+            // 标签栏刷新后，重新选中对应项
+            var reopened = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
+            if (reopened != null)
+                reopened.IsSelected = true;
+        }
+
+
+
+        private void SetPreviewSlider()
+        {
+            if (_imageFiles == null || _imageFiles.Count == 0) return;
+            PreviewSlider.Minimum = 0;
+            PreviewSlider.Maximum = _imageFiles.Count - 1;
+            PreviewSlider.Value = _currentImageIndex;
+            //if(_imageFiles.Count < 30)
+            //    PreviewSlider.Visibility= Visibility.Collapsed;
+            //else
+            //    PreviewSlider.Visibility = Visibility.Visible;
+        }
+
+        private async Task LoadImage(string filePath)
+        {//已不推荐使用
             if (!File.Exists(filePath))
             {
                 s($"找不到图片文件: {filePath}");
@@ -3380,12 +3770,19 @@ namespace SodiumPaint
                         .Where(f => f.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
                                     f.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
                                     f.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
+                                    f.EndsWith(".tif", StringComparison.OrdinalIgnoreCase) ||
+                                    f.EndsWith(".gif", StringComparison.OrdinalIgnoreCase) ||
+                                    f.EndsWith(".webp", StringComparison.OrdinalIgnoreCase) ||
+                                    f.EndsWith(".tiff", StringComparison.OrdinalIgnoreCase) ||
                                     f.EndsWith(".bmp", StringComparison.OrdinalIgnoreCase))
                         .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
                         .ToList();
 
                     _currentImageIndex = _imageFiles.IndexOf(filePath);
-
+                    //ImageFilesCount = _currentImageIndex - 1;
+                    // s(_currentImageIndex);
+                    SetPreviewSlider();
+                    
                     // 窗口调整逻辑
                     double imgWidth = _bitmap.Width;
                     double imgHeight = _bitmap.Height;
@@ -3403,6 +3800,7 @@ namespace SodiumPaint
                     SetZoomAndOffset(
                         Math.Min(maxWidth / imgWidth, maxHeight / imgHeight) * 0.65,
                         10, 10);
+
                 }, System.Windows.Threading.DispatcherPriority.Background);
             }
             catch (Exception ex)
@@ -3430,7 +3828,7 @@ namespace SodiumPaint
         {
             var dlg = new Microsoft.Win32.SaveFileDialog
             {
-                Filter = "PNG 图像|*.png|JPEG 图像|*.jpg;*.jpeg|BMP 图像|*.bmp",
+                Filter = PicFilterString,
                 FileName = "image.png"
             };
             if (dlg.ShowDialog() == true)
@@ -3530,4 +3928,5 @@ namespace SodiumPaint
         }
 
     }
+
 }
