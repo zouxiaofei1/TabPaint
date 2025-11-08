@@ -539,30 +539,36 @@
 
                         <!-- 编辑菜单 -->
                         <MenuItem Header="编辑" Style="{StaticResource ModernMenuItemStyle}">
-                            <MenuItem Header="撤销" Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+Z" Click="OnUndoClick">
+                            <MenuItem Header="撤销    " Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+Z" Click="OnUndoClick">
                                 <MenuItem.Icon>
                                     <Image Source="{StaticResource Undo_Image}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="重做" Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+Y" Click="OnRedoClick">
+                            <MenuItem Header="重做    " Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+Y" Click="OnRedoClick">
                                 <MenuItem.Icon>
                                     <Image Source="{StaticResource Redo_Image}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                             <Separator Style="{StaticResource MenuSeparator}"/>
-                            <MenuItem Header="复制"  Style="{StaticResource SubMenuItemStyle}"  InputGestureText="Ctrl+C" Click="EmptyClick">
+                            <MenuItem Header="复制    "  Style="{StaticResource SubMenuItemStyle}"  InputGestureText="Ctrl+C" Click="OnCopyClick">
                                 <MenuItem.Icon>
                                     <Image Source="{StaticResource Copy_Image}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="剪切"  Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+X" Click="EmptyClick">
+                            <MenuItem Header="剪切    "  Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+X" Click="OnCutClick">
                                 <MenuItem.Icon>
                                     <Image Source="{StaticResource Cut_Image}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="粘贴"  Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+V" Click="EmptyClick">
+                            <MenuItem Header="粘贴    "  Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+V" Click="OnPasteClick">
                                 <MenuItem.Icon>
                                     <Image Source="{StaticResource Paste_Image}" Width="16" Height="16"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <Separator Style="{StaticResource MenuSeparator}"/>
+                            <MenuItem Header="调整大小"  Style="{StaticResource SubMenuItemStyle}"  Click="OnResizeCanvasClick">
+                                <MenuItem.Icon>
+                                    <Image Source="{StaticResource Resize_Image}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                         </MenuItem>
@@ -575,13 +581,13 @@
                                     <Image Source="{StaticResource Brightness_Image}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="色温/色调/饱和度"  Style="{StaticResource SubMenuItemStyle}" Click="EmptyClick">
+                            <MenuItem Header="色温/色调/饱和度"  Style="{StaticResource SubMenuItemStyle}" Click="OnColorTempTintSaturationClick">
                                 <MenuItem.Icon>
                                     <Image Source="{StaticResource Color_Temperature_Image}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            
-                            <MenuItem Header="黑白"  Style="{StaticResource SubMenuItemStyle}" Click="EmptyClick">
+
+                            <MenuItem Header="黑白"  Style="{StaticResource SubMenuItemStyle}" Click="OnConvertToBlackAndWhiteClick">
                                 <MenuItem.Icon>
                                     <Image Source="{StaticResource Black_And_White_Image}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
@@ -640,7 +646,7 @@
                         <Image x:Name="PenIcon"      Source="{StaticResource Pencil_Image}" Width="16" Height="16"/>
                     </Button>-->
                     <!--取颜色-->
-                    <Button Margin="2,0"  Name="PickColorButton" Click="OnPickColorClick"  Style="{StaticResource RoundedMenuButtonStyle}" >
+                    <Button Margin="6,0,2,0"  Name="PickColorButton" Click="OnPickColorClick" Style="{StaticResource RoundedMenuButtonStyle}" >
                         <Image x:Name="PickColorIcon"      Source="{StaticResource Pick_Colour_Image}" Width="16" Height="16"/>
                     </Button>
                     <!--橡皮擦-->
@@ -650,6 +656,10 @@
                     <!--选择-->
                     <Button Margin="2,0"  Name="SelectButton" Click="OnSelectClick"  Style="{StaticResource RoundedMenuButtonStyle}" >
                         <Image x:Name="SelectIcon"      Source="{StaticResource Select_Image}" Width="16" Height="16"/>
+                    </Button>
+                    <!--裁剪选区-->
+                    <Button Margin="2,0"  Name="CutImage" Click="CropMenuItem_Click"  Style="{StaticResource RoundedMenuButtonStyle}" >
+                        <Image x:Name="CutImageIcon"      Source="{StaticResource Cut_Selection_Image}" Width="16" Height="16"/>
                     </Button>
                     <!--填充-->
                     <Button Margin="2,0"  Name="FillButton" Click="OnFillClick" Style="{StaticResource RoundedMenuButtonStyle}" >
@@ -1014,28 +1024,62 @@
             <!-- 绑定文件总数 -->
 
             <!-- 底部状态栏 -->
-            <StatusBar DockPanel.Dock="Bottom">
-
-                <!-- 当前鼠标位置 -->
+            <StatusBar DockPanel.Dock="Bottom" Background="#44FFFFFF">
                 <StatusBarItem Content="{Binding MousePosition}" Width="150"/>
-
-                <!-- 图片尺寸 -->
                 <StatusBarItem Content="{Binding ImageSize}" Width="100"/>
-
-                <!-- 框选区域大小 -->
                 <StatusBarItem Content="{Binding SelectionSize}" Width="120"/>
 
-                <Separator/>
-
-                <StatusBarItem Content="{Binding ZoomLevel}" Width="80"/>
-
+                <!-- 这个弹性控件会把后面的元素推到右侧 -->
                 <StatusBarItem>
-                    <Slider Name="ZoomSlider" Minimum="0.1" Maximum="8.0"
-                Value="{Binding ZoomScale, Mode=TwoWay}"
-                Width="120" TickFrequency="0.1" SmallChange="0.1"
-                IsSnapToTickEnabled="True"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                    </Grid>
+                </StatusBarItem>
+
+                <!-- 右边的部分 -->
+                <StatusBarItem HorizontalAlignment="Right">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Width="24" Height="24" ToolTip="适应窗口大小" Padding="2,0"
+                    Style="{StaticResource RoundedMenuButtonStyle}"
+                    Click="FitToWindow_Click">
+                            <Image Source="{StaticResource FitToWindow_Image}" Width="16" Height="16"/>
+                        </Button>
+
+                        <ComboBox x:Name="ZoomMenu" Width="80" SelectionChanged="ZoomMenu_SelectionChanged" IsEditable="True">
+                            <ComboBoxItem Content="25%" Tag="0.25"/>
+                            <ComboBoxItem Content="50%" Tag="0.5"/>
+                            <ComboBoxItem Content="75%" Tag="0.75"/>
+                            <ComboBoxItem Content="100%" Tag="1.0"/>
+                            <ComboBoxItem Content="125%" Tag="1.25"/>
+                            <ComboBoxItem Content="150%" Tag="1.5"/>
+                            <ComboBoxItem Content="200%" Tag="2.0"/>
+                            <ComboBoxItem Content="400%" Tag="4.0"/>
+                            <ComboBoxItem Content="600%" Tag="6.0"/>
+                            <ComboBoxItem Content="800%" Tag="8.0"/>
+                        </ComboBox>
+
+                        <Button Width="24" Height="24" ToolTip="缩小"
+                    Style="{StaticResource RoundedMenuButtonStyle}"
+                    Click="ZoomOut_Click" Padding="2,0">
+                            <Image Source="{StaticResource Zoom_Out_Image}" Width="16" Height="16"/>
+                        </Button>
+
+                        <Slider Name="ZoomSlider" Minimum="0.1" Maximum="8.0"
+                    Value="{Binding ZoomScale, Mode=TwoWay}"
+                    Width="120" TickFrequency="0.1" SmallChange="0.1"
+                    IsSnapToTickEnabled="True"/>
+
+                        <Button Width="24" Height="24" ToolTip="放大"
+                    Style="{StaticResource RoundedMenuButtonStyle}"
+                    Click="ZoomIn_Click" Padding="2,0">
+                            <Image Source="{StaticResource Zoom_In_Image}" Width="16" Height="16"/>
+                        </Button>
+                    </StackPanel>
                 </StatusBarItem>
             </StatusBar>
+
 
 
 
@@ -1139,43 +1183,49 @@
             </StackPanel>
         </Border>
         <!-- 悬浮笔刷半径调节条 -->
+        <!-- 白色背景适配版本 -->
         <Border x:Name="ThicknessPanel"
-            Width="40"
-            Height="220"
-            CornerRadius="8"
-            Background="#222"
-            BorderBrush="#444"
+        Width="40"
+        Height="220"
+        CornerRadius="8"
+        Background="#FFF"          
+            BorderBrush="#CCC"
             BorderThickness="1"
-            VerticalAlignment="Center"
-            HorizontalAlignment="Left"
-            Margin="10"
-           >
+        VerticalAlignment="Center"
+        HorizontalAlignment="Left"
+        Margin="10">
             <Border.Effect>
-                <DropShadowEffect BlurRadius="12"
-                          ShadowDepth="4"
-                          Color="#80000000"/>
+                <DropShadowEffect BlurRadius="8"
+                          ShadowDepth="1"
+                          Color="#55000000"/>
+                <!-- 半透明灰色阴影，柔和一点 -->
             </Border.Effect>
+
             <Grid x:Name="SliderContainer" ClipToBounds="False">
                 <Slider x:Name="ThicknessSlider"
-                    Orientation="Vertical"
-                    Minimum="1" Maximum="250"
-                    Value="{Binding PenThickness, Mode=TwoWay}"
-                    Width="20"
-                    Margin="8"
-                    TickFrequency="1"
-                    SmallChange="1"
-                    IsSnapToTickEnabled="True"
-                    Background="#333"
-                    Foreground="MediumPurple"
+                Orientation="Vertical"
+                Minimum="1" Maximum="250"
+                Value="{Binding PenThickness, Mode=TwoWay}"
+                Width="20"
+                Margin="8"
+                TickFrequency="1"
+                SmallChange="1"
+                IsSnapToTickEnabled="True"
+                Background="#afff"       
+                    Foreground="#444"
                     Thumb.DragStarted="ThicknessSlider_DragStarted"
-                    Thumb.DragCompleted="ThicknessSlider_DragCompleted"
-                    ValueChanged="ThicknessSlider_ValueChanged" >
-                    <!-- 数字提示 -->
-                    <!-- 数字提示 -->
-
+                Thumb.DragCompleted="ThicknessSlider_DragCompleted"
+                ValueChanged="ThicknessSlider_ValueChanged">
+                    <Slider.ToolTip>
+                        <ToolTip Background="#FFF" Foreground="#444">
+                            <TextBlock Text="{Binding Value, ElementName=ThicknessSlider}" 
+                               FontWeight="Bold"/>
+                        </ToolTip>
+                    </Slider.ToolTip>
                 </Slider>
             </Grid>
         </Border>
+
 
 
 

@@ -660,6 +660,142 @@
             </GeometryDrawing>
         </DrawingImage.Drawing>
     </DrawingImage>
+    <DrawingImage x:Key="Zoom_In_Image" >
+        <DrawingImage.Drawing>
+            <DrawingGroup >
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#FF2CA9BC" Thickness="2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M10,7L10,13 M7,10L13,10" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#FF000000" Thickness="2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M17,10A7,7,0,1,1,10,3A7,7,0,0,1,17,10z M21,21L15,15" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup.Children>
+                <DrawingGroup.ClipGeometry>
+                    <RectangleGeometry Rect="0,0,24,24" />
+                </DrawingGroup.ClipGeometry>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="Zoom_Out_Image">
+        <DrawingImage.Drawing>
+            <DrawingGroup >
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#FF2CA9BC" Thickness="2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <LineGeometry StartPoint="7,10" EndPoint="13,10" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#FF000000" Thickness="2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M17,10A7,7,0,1,1,10,3A7,7,0,0,1,17,10z M21,21L15,15" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup.Children>
+                <DrawingGroup.ClipGeometry>
+                    <RectangleGeometry Rect="0,0,24,24" />
+                </DrawingGroup.ClipGeometry>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="FitToWindow_Image">
+        <DrawingImage.Drawing>
+            <GeometryDrawing Brush="#FF000000">
+                <GeometryDrawing.Geometry>
+                    <PathGeometry FillRule="Nonzero" Figures="M1764.3199462890625,1349.18994140625L1920,1349.18994140625 1920,1686.489990234375C1920,1815.449951171875,1815.449951171875,1920,1686.489990234375,1920L1349.18994140625,1920 1349.18994140625,1764.3199462890625 1686.489990234375,1764.3199462890625C1729.47998046875,1764.3199462890625,1764.3199462890625,1729.47998046875,1764.3199462890625,1686.489990234375L1764.3199462890625,1349.18994140625z M0,1349.18994140625L155.6759796142578,1349.18994140625 155.6759796142578,1686.489990234375C155.67599487304688,1729.47998046875,190.52499389648438,1764.3199462890625,233.51400756835938,1764.3199462890625L570.8109741210938,1764.3199462890625 570.8109741210938,1920 233.51400756835938,1920C104.5479965209961,1920,0,1815.449951171875,0,1686.489990234375L0,1349.18994140625z M960,544.864990234375C1189.27001953125,544.864990234375 1375.1400146484375,730.7269897460938 1375.1400146484375,960 1375.1400146484375,1189.27001953125 1189.27001953125,1375.1400146484375 960,1375.1400146484375 730.7269897460938,1375.1400146484375 544.864990234375,1189.27001953125 544.864990234375,960 544.864990234375,730.7269897460938 730.7269897460938,544.864990234375 960,544.864990234375z M1349.18994140625,0L1686.489990234375,0C1815.449951171875,0,1920,104.5479965209961,1920,233.51400756835938L1920,570.8109741210938 1764.3199462890625,570.8109741210938 1764.3199462890625,233.51400756835938C1764.3199462890625,190.52499389648438,1729.47998046875,155.67599487304688,1686.489990234375,155.6759796142578L1349.18994140625,155.6759796142578 1349.18994140625,0z M233.51400756835938,0L570.8109741210938,0 570.8109741210938,155.6759796142578 233.51400756835938,155.6759796142578C190.52499389648438,155.67599487304688,155.67599487304688,190.52499389648438,155.6759796142578,233.51400756835938L155.6759796142578,570.8109741210938 0,570.8109741210938 0,233.51400756835938C0,104.5479965209961,104.5479965209961,0,233.51400756835938,0z" />
+                </GeometryDrawing.Geometry>
+            </GeometryDrawing>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+    <DrawingImage x:Key="Cut_Selection_Image">
+        <DrawingImage.Drawing>
+            <GeometryDrawing Brush="#FF000000">
+                <GeometryDrawing.Geometry>
+                    <PathGeometry FillRule="Nonzero" Figures="M-42.00001907348633,-142.99996948242188L-39.99997329711914,-142.99996948242188 -39.99997329711914,-140 -42.00001907348633,-140 -42.00001907348633,-142.99996948242188z M-51.99998092651367,-153L-50,-153 -50,-146 -42.00001907348633,-146 -39.99997329711914,-146 -36.00001525878906,-146 -36.00001525878906,-144.00003051757812 -39.99997329711914,-144.00003051757812 -42.00001907348633,-144.00003051757812 -50,-144.00003051757812 -51.99998092651367,-144.00003051757812 -51.99998092651367,-146 -51.99998092651367,-153z M-56.000003814697266,-156.00003051757812L-51.99998092651367,-156.00003051757812 -50,-156.00003051757812 -42.00001907348633,-156.00003051757812 -39.99997329711914,-156.00003051757812 -39.99997329711914,-153.99998474121094 -39.99997329711914,-147 -42.00001907348633,-147 -42.00001907348633,-153.99998474121094 -50,-153.99998474121094 -51.99998092651367,-153.99998474121094 -56.000003814697266,-153.99998474121094 -56.000003814697266,-156.00003051757812z M-51.99998092651367,-159.99998474121094L-50,-159.99998474121094 -50,-157.00001525878906 -51.99998092651367,-157.00001525878906 -51.99998092651367,-159.99998474121094z" />
+                </GeometryDrawing.Geometry>
+            </GeometryDrawing>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="Resize_Image" >
+        <DrawingImage.Drawing>
+            <DrawingGroup >
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#FF000000" Thickness="2" StartLineCap="Flat" EndLineCap="Flat" LineJoin="Miter" MiterLimit="10" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <LineGeometry StartPoint="6,26" EndPoint="26,6" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#FF000000" Thickness="2" StartLineCap="Flat" EndLineCap="Flat" LineJoin="Miter" MiterLimit="10" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M13,27L13,27 5,27 5,19" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#FF000000" Thickness="2" StartLineCap="Flat" EndLineCap="Flat" LineJoin="Miter" MiterLimit="10" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M19,5L19,5 27,5 27,13" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#FF000000" Thickness="2" StartLineCap="Flat" EndLineCap="Flat" LineJoin="Miter" MiterLimit="10" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <LineGeometry StartPoint="6,6" EndPoint="26,26" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#FF000000" Thickness="2" StartLineCap="Flat" EndLineCap="Flat" LineJoin="Miter" MiterLimit="10" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M5,13L5,13 5,5 13,5" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#FF000000" Thickness="2" StartLineCap="Flat" EndLineCap="Flat" LineJoin="Miter" MiterLimit="10" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M27,19L27,19 27,27 19,27" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup.Children>
+                <DrawingGroup.ClipGeometry>
+                    <RectangleGeometry Rect="0,0,32,32" />
+                </DrawingGroup.ClipGeometry>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+
 
 
 

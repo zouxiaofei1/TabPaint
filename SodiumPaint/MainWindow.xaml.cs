@@ -23,6 +23,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using static SodiumPaint.MainWindow;
+using static System.Collections.Specialized.BitVector32;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
@@ -36,12 +37,13 @@ namespace SodiumPaint
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
         private const double ZoomStep = 0.1; // 每次滚轮缩放步进
-        private const double MinZoom = 0.1;
-        private const double MaxZoom = 8.0;
+        private const double ZoomTimes = 1.1;
+        private const double MinZoom = 0.05;
+        private const double MaxZoom = 16.0;
 
         private CanvasSurface _surface;
         private UndoRedoManager _undo;
-        private ToolContext _ctx;
+        public ToolContext _ctx;
         private InputRouter _router;
         private ToolRegistry _tools;
         private double zoomscale = 1;
@@ -55,7 +57,7 @@ namespace SodiumPaint
         private int _currentImageIndex = -1;
         private bool _isEdited = false; // 标记当前画布是否被修改
         private string _currentFileName = "未命名";
-        private string _programVersion = "v0.4"; // 可以从 Assembly 读取
+        private string _programVersion = "v0.5"; // 可以从 Assembly 读取
         private bool _isFileSaved = true; // 是否有未保存修改
 
         private string _mousePosition = "X:0, Y:0";
@@ -199,7 +201,18 @@ namespace SodiumPaint
                     return c;
                 }
             }
+            public void ReplaceBitmap(WriteableBitmap newBitmap)
+            {
+                if (newBitmap == null) return;
 
+                // 更新内部的位图引用
+                this.Bitmap = newBitmap;
+                ((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundImage.Source = newBitmap;
+                // 更新UI上Image控件的源
+                // 如果你的UI布局依赖于Image的尺寸，可能还需要更新尺寸
+                ((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundImage.Width = newBitmap.PixelWidth;
+                ((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundImage.Height = newBitmap.PixelHeight;
+            }
             public void SetPixel(int x, int y, Color c)
             {
                 if (x < 0 || y < 0 || x >= Width || y >= Height) return;
@@ -414,13 +427,38 @@ namespace SodiumPaint
             ReplaceImage  // 整图替换（打开新图）
         }
 
-        public record UndoAction(
-              Int32Rect Rect,
-              byte[] UndoPixels,
-              byte[]? RedoPixelsBefore,
-            UndoActionType ActionType
-            );
+        public class UndoAction
+        {
+            // --- For Draw operations ---
+            public Int32Rect Rect { get; }
+            public byte[] Pixels { get; }
 
+            // --- For Transform operations ---
+            public Int32Rect UndoRect { get; }      // 撤销时恢复的尺寸
+            public byte[] UndoPixels { get; }       // 撤销时恢复的像素
+            public Int32Rect RedoRect { get; }      // 重做时恢复的尺寸
+            public byte[] RedoPixels { get; }       // 重做时恢复的像素
+
+            public UndoActionType ActionType { get; }
+
+            // Constructor for Draw actions
+            public UndoAction(Int32Rect rect, byte[] pixels)
+            {
+                ActionType = UndoActionType.Draw;
+                Rect = rect;
+                Pixels = pixels;
+            }
+
+            // Constructor for Transform actions
+            public UndoAction(Int32Rect undoRect, byte[] undoPixels, Int32Rect redoRect, byte[] redoPixels)
+            {
+                ActionType = UndoActionType.Transform;
+                UndoRect = undoRect;
+                UndoPixels = undoPixels;
+                RedoRect = redoRect;
+                RedoPixels = redoPixels;
+            }
+        }
         public class UndoRedoManager
         {
             private readonly CanvasSurface _surface;
@@ -437,7 +475,12 @@ namespace SodiumPaint
 
             public bool CanUndo => _undo.Count > 0;
             public bool CanRedo => _redo.Count > 0;
-
+            public void PushTransformAction(Int32Rect undoRect, byte[] undoPixels, Int32Rect redoRect, byte[] redoPixels)
+            {//自动SetUndoRedoButtonState和_redo.Clear()
+                _undo.Push(new UndoAction(undoRect, undoPixels, redoRect, redoPixels));
+                _redo.Clear(); // 新操作截断重做链
+                ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
+            }
             // ---------- 绘制操作 ----------
             public void BeginStroke()
             {
@@ -466,7 +509,7 @@ namespace SodiumPaint
                 var combined = ClampRect(CombineRects(_strokeRects), ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelWidth, ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelHeight);
 
                 byte[] region = ExtractRegionFromSnapshot(_preStrokeSnapshot, combined, _surface.Bitmap.BackBufferStride);
-                _undo.Push(new UndoAction(combined, region, null, UndoActionType.Draw));
+                _undo.Push(new UndoAction(combined, region));
                 ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
                 _preStrokeSnapshot = null;
             }
@@ -478,38 +521,44 @@ namespace SodiumPaint
 
                 var action = _undo.Pop();
 
-                // 不再去新的位图上取 redo 像素，直接使用操作对象里保存的 RedoPixelsBefore
-                var redoData = action.RedoPixelsBefore;
-                if (redoData == null)
-                {
-                    // 若没有提前记录，则取当前位图的合法部分作为退化方案
-                    redoData = SafeExtractRegion(action.Rect);
-                }
-
-                _redo.Push(new UndoAction(action.Rect, redoData, null, action.ActionType));
-
                 if (action.ActionType == UndoActionType.Transform)
                 {
-                    var wb = new WriteableBitmap(action.Rect.Width, action.Rect.Height,
+                    //s(action.UndoRect);
+                    // 1. 准备对应的 Redo Action
+                    // Redo action 需要知道如何从当前状态返回到 action.RedoRect/Pixels
+                    var currentRect = new Int32Rect(0, 0, _surface.Bitmap.PixelWidth, _surface.Bitmap.PixelHeight);
+                    var currentPixels = _surface.ExtractRegion(currentRect);
+
+                    // 创建一个反向的 Transform Action
+                    _redo.Push(new UndoAction(
+                        currentRect,       // 撤销这个 Redo 会回到当前状态
+                        currentPixels,
+                        action.RedoRect,   // 执行这个 Redo 会回到裁剪后的状态
+                        action.RedoPixels
+                    ));
+
+                    // 2. 执行 Undo 操作 (恢复到变换前的状态)
+                    var wb = new WriteableBitmap(action.UndoRect.Width, action.UndoRect.Height,
                             ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Surface.Bitmap.DpiX, ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32, null);
 
+                    wb.WritePixels(action.UndoRect, action.UndoPixels, wb.BackBufferStride, 0);
+
                     // 替换主位图
-                    ((MainWindow)System.Windows.Application.Current.MainWindow)._bitmap = wb;
-                    ((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundImage.Source = ((MainWindow)System.Windows.Application.Current.MainWindow)._bitmap;
+                    _surface.ReplaceBitmap(wb); // 假设你有这个方法
+                }
+                else // Draw Action
+                {
+                    // 准备 Redo Action
+                    var redoPixels = _surface.ExtractRegion(action.Rect);
+                    _redo.Push(new UndoAction(action.Rect, redoPixels));
 
-                    // 让 CanvasSurface 附加新位图
-                    _surface.Attach(((MainWindow)System.Windows.Application.Current.MainWindow)._bitmap);
-
-                    // 🟢 Step 3：居中显示
-                    ((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundImage.Dispatcher.BeginInvoke(
-                        new Action(() => ((MainWindow)System.Windows.Application.Current.MainWindow).CenterImage()),
-                        System.Windows.Threading.DispatcherPriority.Loaded
-                    );
+                    // 执行 Undo
+                    _surface.WriteRegion(action.Rect, action.Pixels);
                 }
 
-                _surface.WriteRegion(action.Rect, action.UndoPixels);
-
-
+     ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
+                // 触发UI更新，如居中等
+                ((MainWindow)System.Windows.Application.Current.MainWindow).CenterImage();
             }
 
             public void Redo()
@@ -518,12 +567,40 @@ namespace SodiumPaint
 
                 var action = _redo.Pop();
 
-                // 把当前区域存入 undo 栈
-                var undoData = SafeExtractRegion(action.Rect);
-                _undo.Push(new UndoAction(action.Rect, undoData, null, UndoActionType.Draw));
+                if (action.ActionType == UndoActionType.Transform)
+                {
+                    // 1. 准备对应的 Undo Action
+                    var currentRect = new Int32Rect(0, 0, _surface.Bitmap.PixelWidth, _surface.Bitmap.PixelHeight);
+                    var currentPixels = _surface.ExtractRegion(currentRect);
 
-                _surface.WriteRegion(action.Rect, action.UndoPixels);
+                    _undo.Push(new UndoAction(
+                        currentRect,       // 撤销这个 Redo 会回到当前状态
+                        currentPixels,
+                        action.RedoRect,   // 执行这个 Redo 会回到裁剪后的状态
+                        action.RedoPixels
+                    ));
+                    
+                    // 2. 执行 Redo 操作 (恢复到变换后的状态)
+                    var wb = new WriteableBitmap(action.RedoRect.Width, action.RedoRect.Height,
+                            ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Surface.Bitmap.DpiX, ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32, null);
+                    wb.WritePixels(action.RedoRect, action.RedoPixels, wb.BackBufferStride, 0);
+                    // 替换主位图
+                    _surface.ReplaceBitmap(wb);
+                }
+                else // Draw Action
+                {
+                    // 准备 Undo Action
+                    var undoPixels = _surface.ExtractRegion(action.Rect);
+                    _undo.Push(new UndoAction(action.Rect, undoPixels));
+
+                    // 执行 Redo
+                    _surface.WriteRegion(action.Rect, action.Pixels);
+                }
+
+                ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
+                ((MainWindow)System.Windows.Application.Current.MainWindow).CenterImage();
             }
+
 
             // ---------- 供整图操作调用 ----------
             /// <summary>
@@ -538,7 +615,7 @@ namespace SodiumPaint
                     _surface.Bitmap.PixelHeight);
 
                 var currentPixels = SafeExtractRegion(rect);
-                _undo.Push(new UndoAction(rect, currentPixels, currentPixels, UndoActionType.Draw));
+                _undo.Push(new UndoAction(rect, currentPixels));
                 _redo.Clear();
             }
 
@@ -586,12 +663,12 @@ namespace SodiumPaint
             // 将整图数据压入 Undo 栈
             public void PushUndoRegion(Int32Rect rect, byte[] pixels)
             {
-                _undo.Push(new UndoAction(rect, pixels, null, UndoActionType.Draw));
+                _undo.Push(new UndoAction(rect, pixels));
             }
 
             public void PushUndoRegionTransform(Int32Rect rect, byte[] pixels)
             {
-                _undo.Push(new UndoAction(rect, pixels, null, UndoActionType.Transform));
+                _undo.Push(new UndoAction(rect, pixels));
             }
 
             // 清空重做链
@@ -1236,7 +1313,7 @@ namespace SodiumPaint
             private byte[]? _clipboardData;
             private int _clipboardWidth;
             private int _clipboardHeight;
-
+   
 
 
 
@@ -1265,14 +1342,61 @@ namespace SodiumPaint
                 ctx.SelectionOverlay.Children.Clear();
                 ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
                 // 清空状态
+                _originalRect = new Int32Rect();
                 _selecting = false;
                 _draggingSelection = false;
                 _resizing = false;
                 _currentAnchor = ResizeAnchor.None;
                 _selectionData = null;
             }
-            public void CutSelection(ToolContext ctx, bool paste)
+            private void CopyToSystemClipboard(ToolContext ctx)
             {
+                if (_selectionData == null) return;
+
+                // 确定要复制的图像的原始尺寸和数据
+                // 如果进行过缩放，_originalRect 存的是原始尺寸
+                int width = _originalRect.Width > 0 ? _originalRect.Width : _selectionRect.Width;
+                int height = _originalRect.Height > 0 ? _originalRect.Height : _selectionRect.Height;
+                byte[] data = _selectionData;
+
+                if (width == 0 || height == 0) return;
+
+                // 计算正确的步幅（stride）
+                // _selectionData 存储的是未经缩放的原始数据，其步幅应与原始宽度匹配
+                int stride = width * 4;
+
+                try
+                {
+                    // 从原始字节数据创建 BitmapSource
+                    var bitmapToCopy = BitmapSource.Create(
+                        width,
+                        height,
+                        ctx.Surface.Bitmap.DpiX,
+                        ctx.Surface.Bitmap.DpiY,
+                        PixelFormats.Bgra32,
+                        null,
+                        data,
+                        stride
+                    );
+
+                    // 将 BitmapSource 放入系统剪贴板
+                    System.Windows.Clipboard.SetImage(bitmapToCopy);
+                }
+                catch (Exception ex)
+                {
+                    // 最好有日志记录或错误提示
+                    System.Diagnostics.Debug.WriteLine("Failed to copy to clipboard: " + ex.Message);
+                }
+            }
+
+            public void CutSelection(ToolContext ctx, bool paste)
+
+            {//paste = false ->delete , true->cut
+                if (_selectionData == null)
+                {
+                   // s(1);
+                    SelectAll(ctx, true);
+                }
                 if (_selectionData == null) return;
                 int Clipwidth, Clipheight;
                 if (_originalRect.Width == 0 || _originalRect.Height == 0)
@@ -1288,6 +1412,7 @@ namespace SodiumPaint
                 // 复制到剪贴板
                 if (paste)
                 {
+                    CopyToSystemClipboard(ctx);
                     _clipboardWidth = Clipwidth;
                     _clipboardHeight = Clipheight;
 
@@ -1310,55 +1435,76 @@ namespace SodiumPaint
             }
             public void PasteSelection(ToolContext ctx, bool ins)
             {
-                if (_clipboardData == null) return;
-                //s(1);
-
-
-                int width = _clipboardWidth;
-                int height = _clipboardHeight;
-                int stride = width * 4;
-
-                var srcBmp = BitmapSource.Create(
-                    width, height,
-                    ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
-                    PixelFormats.Bgra32, null,
-                    _clipboardData, stride);
-
-                // 计算缩放比例（默认 1）
-                double scaleX = 1.0, scaleY = 1.0;
-                var tg = ctx.SelectionPreview.RenderTransform as TransformGroup;
-                var st = tg?.Children.OfType<ScaleTransform>().FirstOrDefault();
-                if (st != null)
+                // 在粘贴前，如果当前有选区，先提交它
+                if (_selectionData != null)
                 {
-                    scaleX = st.ScaleX;
-                    scaleY = st.ScaleY;
+                    CommitSelection(ctx);
                 }
 
-                // WPF 重采样
-                var transformedBmp = new TransformedBitmap(srcBmp, new ScaleTransform(scaleX, scaleY));
-                var previewBmp = new WriteableBitmap(transformedBmp);
+                BitmapSource? sourceBitmap = null;
 
-                // 更新数据
-                int newStride = previewBmp.PixelWidth * 4;
-                var newData = new byte[previewBmp.PixelHeight * newStride];
-                previewBmp.CopyPixels(newData, newStride, 0);
+                // 1. 优先从系统剪贴板获取图像
+                if (System.Windows.Clipboard.ContainsImage())
+                {
+                    try
+                    {
+                        sourceBitmap = System.Windows.Clipboard.GetImage();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Failed to get image from clipboard: " + ex.Message);
+                        sourceBitmap = null;
+                    }
+                }
 
+                // 2. 如果系统剪贴板没有图像，则尝试使用内部剪贴板
+                if (sourceBitmap == null && _clipboardData != null && _clipboardWidth > 0 && _clipboardHeight > 0)
+                {
+                    sourceBitmap = BitmapSource.Create(
+                        _clipboardWidth, _clipboardHeight,
+                        ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
+                        PixelFormats.Bgra32, null,
+                        _clipboardData, _clipboardWidth * 4);
+                }
+
+                // 3. 如果没有任何可粘贴的内容，则直接返回
+                if (sourceBitmap == null) return;
+
+                // 4. 将获取到的 BitmapSource (无论来源) 转换为我们需要的格式 (Bgra32)
+                // 这是为了确保兼容性，因为剪贴板里的图片可能是任何像素格式
+                if (sourceBitmap.Format != PixelFormats.Bgra32)
+                {
+                    sourceBitmap = new FormatConvertedBitmap(sourceBitmap, PixelFormats.Bgra32, null, 0);
+                }
+
+                // 5. 从处理后的 BitmapSource 提取像素数据
+                int width = sourceBitmap.PixelWidth;
+                int height = sourceBitmap.PixelHeight;
+                int stride = width * 4;
+                var newData = new byte[height * stride];
+                sourceBitmap.CopyPixels(newData, stride, 0);
+
+                // 6. 更新工具状态，准备进行拖动/缩放
                 _selectionData = newData;
-                _selectionRect = new Int32Rect(0, 0, previewBmp.PixelWidth, previewBmp.PixelHeight);
-                _originalRect = _selectionRect;
+                _selectionRect = new Int32Rect(0, 0, width, height);
+                _originalRect = _selectionRect; // 新粘贴的内容，原始尺寸就是当前尺寸
 
-                // 显示预览
+                // 7. 创建并显示预览图像 (这部分逻辑与你原有的类似)
+                var previewBmp = new WriteableBitmap(sourceBitmap);
                 ctx.SelectionPreview.Source = previewBmp;
 
-                if (ins) // 原位置粘贴
+                // 根据 ins 参数决定粘贴位置
+                if (ins) // 原位置粘贴 (这个逻辑可能需要根据你的应用场景调整)
                 {
-                    Canvas.SetLeft(ctx.SelectionPreview, _selectionRect.X);
-                    Canvas.SetTop(ctx.SelectionPreview, _selectionRect.Y);
-                    ctx.SelectionPreview.RenderTransform = new TranslateTransform(_selectionRect.X, _selectionRect.Y);
+                    // 通常外部粘贴没有“原位置”概念，所以也粘贴到左上角
+                    Canvas.SetLeft(ctx.SelectionPreview, 0);
+                    Canvas.SetTop(ctx.SelectionPreview, 0);
+                    ctx.SelectionPreview.RenderTransform = new TranslateTransform(0, 0);
+                    _selectionRect.X = 0;
+                    _selectionRect.Y = 0;
                 }
                 else // 左上角粘贴
                 {
-
                     Canvas.SetLeft(ctx.SelectionPreview, 0);
                     Canvas.SetTop(ctx.SelectionPreview, 0);
                     ctx.SelectionPreview.RenderTransform = new TranslateTransform(0, 0);
@@ -1366,7 +1512,9 @@ namespace SodiumPaint
 
                 ctx.SelectionPreview.Visibility = Visibility.Visible;
                 DrawOverlay(ctx, _selectionRect);
+                _transformStep = 0; // 重置变换步骤
             }
+
 
 
 
@@ -1375,8 +1523,11 @@ namespace SodiumPaint
 
             public void CopySelection(ToolContext ctx)
             {
-                if (_selectionData != null)
+                if (_selectionData == null)SelectAll(ctx,false);
+                
+                    if (_selectionData != null)
                 {
+                    CopyToSystemClipboard(ctx);
                     if (_originalRect.Width == 0 || _originalRect.Height == 0)
                     {
                         _clipboardWidth = _selectionRect.Width;
@@ -1403,7 +1554,7 @@ namespace SodiumPaint
             }
 
 
-            public void SelectAll(ToolContext ctx)
+            public void SelectAll(ToolContext ctx,bool cut=true)
             {
                 //  s(2);
                 // 检查画布是否有效
@@ -1424,7 +1575,7 @@ namespace SodiumPaint
                 ctx.Undo.AddDirtyRect(_selectionRect);
                 ctx.Undo.CommitStroke(); // 保存这部分像素到栈
 
-                ClearRect(ctx, _selectionRect, ctx.EraserColor);
+                if(cut)ClearRect(ctx, _selectionRect, ctx.EraserColor);
                 // 创建预览位图
                 var previewBmp = new WriteableBitmap(_selectionRect.Width, _selectionRect.Height,
                     ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32, null);
@@ -1443,7 +1594,97 @@ namespace SodiumPaint
                 // 绘制虚线框
                 DrawOverlay(ctx, _selectionRect);
             }
+            public void CropToSelection(ToolContext ctx)
+            {
+               // s(1);
+                // 1. 检查是否存在有效选区数据和尺寸
+                if (_selectionData == null || _selectionRect.Width <= 0 || _selectionRect.Height <= 0)return;
 
+                var undoRect = new Int32Rect(0, 0, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
+                var undoPixels = ctx.Surface.ExtractRegion(undoRect);
+
+
+
+                var wb = ctx.Surface.Bitmap;
+                int stride = wb.PixelWidth * (wb.Format.BitsPerPixel / 8);
+                byte[] pixels = new byte[wb.PixelHeight * stride];
+
+                // 将像素复制到数组
+                wb.CopyPixels(pixels, stride, 0);
+
+               
+
+
+
+                // 2. 获取最终的选区数据和尺寸
+                // 如果有缩放，需要先应用缩放变换
+                byte[] finalSelectionData;
+                int finalWidth = _selectionRect.Width;
+                int finalHeight = _selectionRect.Height;
+                int finalStride;
+
+                // 检查是否进行过缩放
+                if (_originalRect.Width > 0 && _originalRect.Height > 0 &&
+                    (_originalRect.Width != _selectionRect.Width || _originalRect.Height != _selectionRect.Height))
+                {
+                    // 应用缩放变换来获取最终的像素数据
+                    var src = BitmapSource.Create(
+                        _originalRect.Width, _originalRect.Height,
+                        ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
+                        PixelFormats.Bgra32, null, _selectionData, _originalRect.Width * 4);
+
+                    var transform = new TransformedBitmap(src, new ScaleTransform(
+                        (double)finalWidth / _originalRect.Width,
+                        (double)finalHeight / _originalRect.Height));
+
+                    var resized = new WriteableBitmap(transform);
+                    finalStride = resized.BackBufferStride;
+                    finalSelectionData = new byte[finalHeight * finalStride];
+                    resized.CopyPixels(finalSelectionData, finalStride, 0);
+                }
+                else
+                {
+                    // 没有缩放，直接使用原始数据
+                    finalSelectionData = _selectionData;
+                    finalStride = finalWidth * 4;
+                }
+
+                // 3. 创建一个新的、尺寸与选区相同的WriteableBitmap
+                var newBitmap = new WriteableBitmap(
+                    finalWidth,
+                    finalHeight,
+                    ctx.Surface.Bitmap.DpiX,
+                    ctx.Surface.Bitmap.DpiY,
+                    PixelFormats.Bgra32,
+                    null
+                );
+
+                // 4. 将选区数据写入新位图
+                newBitmap.WritePixels(
+                    new Int32Rect(0, 0, finalWidth, finalHeight),
+                    finalSelectionData,
+                    finalStride,
+                    0
+                );
+
+                var redoRect = new Int32Rect(0, 0, newBitmap.PixelWidth, newBitmap.PixelHeight);
+                int redoStride = newBitmap.BackBufferStride;
+                var redoPixels = new byte[redoStride * redoRect.Height];
+                newBitmap.CopyPixels(redoPixels, redoStride, 0);
+
+
+                ctx.Surface.ReplaceBitmap(newBitmap);
+
+                // 6. 清理选区状态
+                CleanUp(ctx); // 使用你已有的清理方法
+                ctx.Undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);
+               // s(red)
+                // 标记画布已修改
+                ctx.IsDirty = true;
+
+                // 更新UI（例如Undo/Redo按钮的状态）
+                ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
+            }
             //绘制端点和虚线框
             private void DrawOverlay(ToolContext ctx, Int32Rect rect)
             {
@@ -1489,9 +1730,6 @@ namespace SodiumPaint
                 ctx.SelectionOverlay.Visibility = Visibility.Visible;
 
             }
-
-
-
 
 
             private ResizeAnchor HitTestHandle(Point px, Int32Rect rect)
@@ -1601,6 +1839,7 @@ namespace SodiumPaint
                         _transformStep++;
                         _draggingSelection = true;
                         _clickOffset = new Point(px.X - _selectionRect.X, px.Y - _selectionRect.Y);
+                        ctx.ViewElement.CaptureMouse();
                         return;
                     }
                 }
@@ -1610,11 +1849,33 @@ namespace SodiumPaint
                 _startPixel = px;
                 _selectionRect = new Int32Rect((int)px.X, (int)px.Y, 0, 0);
                 HidePreview(ctx);
-
+                ctx.ViewElement.CaptureMouse();
                 if (_selectionRect.Width != 0 && _selectionRect.Height != 0)
                     DrawOverlay(ctx, _selectionRect);
             }
 
+            private Rect GetWindowBoundsInPhysicalPixels(System.Windows.Window window)
+            {
+                var source = PresentationSource.FromVisual(window);
+                if (source == null || source.CompositionTarget == null)
+                {
+                    // Fallback for cases where the window is not yet fully rendered
+                    return new Rect(window.Left, window.Top, window.ActualWidth, window.ActualHeight);
+                }
+
+                // Get the DPI scaling factor
+                Matrix transform = source.CompositionTarget.TransformToDevice;
+                double dpiX = transform.M11; // Horizontal scaling
+                double dpiY = transform.M22; // Vertical scaling
+
+                // Convert window bounds from DIUs to physical pixels
+                return new Rect(
+                    window.Left * dpiX,
+                    window.Top * dpiY,
+                    window.ActualWidth * dpiX,
+                    window.ActualHeight * dpiY
+                );
+            }
 
 
             private void SetPreviewPosition(ToolContext ctx, int pixelX, int pixelY)
@@ -1631,6 +1892,71 @@ namespace SodiumPaint
                 double uiY = imgPos.Y + pixelY * scaleY;
 
                 ctx.SelectionPreview.RenderTransform = new TranslateTransform(uiX, uiY);
+            }
+            private void StartDragDropOperation(ToolContext ctx)
+            {
+
+                if (_selectionData == null) return;
+
+                // We are now committed to a drag-drop, so prevent any further internal logic
+
+                // 1. Determine the source bitmap data and dimensions
+                int width = _originalRect.Width > 0 ? _originalRect.Width : _selectionRect.Width;
+                int height = _originalRect.Height > 0 ? _originalRect.Height : _selectionRect.Height;
+                byte[] data = _selectionData;
+                if (width == 0 || height == 0) return;
+                int stride = width * 4;
+                int expectedStride = _originalRect.Width * 4;
+                int actualStride = _selectionData.Length / _originalRect.Height;
+                int dataStride = Math.Min(expectedStride, actualStride);
+                var bitmapSource = BitmapSource.Create(
+                    width, height,
+                    ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
+                    PixelFormats.Bgra32, null,
+                    data, dataStride);
+
+                // 2. Create a temporary file
+                string tempFilePath = System.IO.Path.Combine(
+                    System.IO.Path.GetTempPath(),
+                    $"selection_{Guid.NewGuid()}.png"
+                );
+
+                try
+                {
+                    // 3. Encode the bitmap to the temporary PNG file
+                    using (var fileStream = new System.IO.FileStream(tempFilePath, System.IO.FileMode.Create))
+                    {
+                        PngBitmapEncoder encoder = new PngBitmapEncoder();
+                        encoder.Frames.Add(BitmapFrame.Create(bitmapSource));
+                        encoder.Save(fileStream);
+                    }
+
+                    // 4. Prepare the data object for drag-drop
+                    var dataObject = new System.Windows.DataObject();
+                    // The data is a string array containing the full path(s) to the file(s)
+                    dataObject.SetData(System.Windows.DataFormats.FileDrop, new string[] { tempFilePath });
+
+                    // Hide the selection preview during the external drag for a cleaner look
+                    HidePreview(ctx);
+                    ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
+
+                    // 5. Start the blocking drag-drop operation
+                    DragDrop.DoDragDrop(ctx.ViewElement, dataObject, System.Windows.DragDropEffects.Copy);
+                    _originalRect = new Int32Rect();
+                    _transformStep = 0;
+                    _selectionData = null;
+                    ctx.IsDirty = true;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Drag-drop operation failed: {ex.Message}");
+                }
+                finally
+                {
+                    // 6. Clean up: ALWAYS delete the temporary file
+                    if (System.IO.File.Exists(tempFilePath))System.IO.File.Delete(tempFilePath);
+                    
+                }
             }
 
             public override void OnPointerMove(ToolContext ctx, Point viewPos)
@@ -1758,7 +2084,23 @@ namespace SodiumPaint
                 // 拖动逻辑
                 else if (_draggingSelection)
                 {
+                    var mainWindow = System.Windows.Application.Current.MainWindow;
+                    if (mainWindow != null)
+                    {
+                        // 将鼠标位置从视图元素坐标系转换到屏幕坐标系
+                        Point mouseOnScreen = ctx.ViewElement.PointToScreen(viewPos);
+                        var windowBoundsInPixels = GetWindowBoundsInPhysicalPixels(mainWindow);
 
+                        // 检查鼠标是否在窗口边界之外
+                        if (!windowBoundsInPixels.Contains(mouseOnScreen))
+                        {
+                            
+                            // 用户正在向外拖动，启动文件拖放操作
+                            StartDragDropOperation(ctx);
+                            _draggingSelection = false; // 停止内部拖动
+                            return; // 退出事件处理器
+                        }
+                    }
                     int newX = (int)(px.X - _clickOffset.X);
                     int newY = (int)(px.Y - _clickOffset.Y);
 
@@ -1814,12 +2156,7 @@ namespace SodiumPaint
                         ctx.SelectionPreview.Clip = null;
                         ctx.SelectionPreview.Visibility = Visibility.Collapsed;
                     }
-
-
-
-                    DrawOverlay(ctx, tmprc);
-
-                    // 画布的尺寸
+                    DrawOverlay(ctx, tmprc);// 画布的尺寸
 
                 }
 
@@ -1868,6 +2205,7 @@ namespace SodiumPaint
 
             public override void OnPointerUp(ToolContext ctx, Point viewPos)
             {
+                ctx.ViewElement.ReleaseMouseCapture();
                 var px = ctx.ToPixel(viewPos);
 
                 if (_selecting)
@@ -1907,6 +2245,7 @@ namespace SodiumPaint
                     _draggingSelection = false;
 
                     double finalX = 0, finalY = 0;
+                    _selectionRect = new Int32Rect((int)finalX, (int)finalY, _selectionRect.Width, _selectionRect.Height);
 
                     if (ctx.SelectionPreview.RenderTransform is TranslateTransform t1)
                     {
@@ -2889,22 +3228,23 @@ namespace SodiumPaint
 
         private void CenterImage()
         {
-            if (_bitmap == null || BackgroundImage == null)
-                return;
+            return;
+            //if (_bitmap == null || BackgroundImage == null)
+            //    return;
 
-            BackgroundImage.Width = _bitmap.PixelWidth;
-            BackgroundImage.Height = _bitmap.PixelHeight;
+            //BackgroundImage.Width = _bitmap.PixelWidth;
+            //BackgroundImage.Height = _bitmap.PixelHeight;
 
-            // 如果在 ScrollViewer 中，自动滚到中心
-            if (ScrollContainer != null)
-            {
-                ScrollContainer.ScrollToHorizontalOffset(
-                    (BackgroundImage.Width - ScrollContainer.ViewportWidth) / 2);
-                ScrollContainer.ScrollToVerticalOffset(
-                    (BackgroundImage.Height - ScrollContainer.ViewportHeight) / 2);
-            }
+            //// 如果在 ScrollViewer 中，自动滚到中心
+            //if (ScrollContainer != null)
+            //{
+            //    ScrollContainer.ScrollToHorizontalOffset(
+            //        (BackgroundImage.Width - ScrollContainer.ViewportWidth) / 2);
+            //    ScrollContainer.ScrollToVerticalOffset(
+            //        (BackgroundImage.Height - ScrollContainer.ViewportHeight) / 2);
+            //}
 
-            BackgroundImage.VerticalAlignment = VerticalAlignment.Center;
+            //BackgroundImage.VerticalAlignment = VerticalAlignment.Center;
         }
         private void OnFlipVerticalClick(object sender, RoutedEventArgs e)
         {
@@ -2922,38 +3262,31 @@ namespace SodiumPaint
             if (BackgroundImage.Source is not BitmapSource src || _surface?.Bitmap == null)
                 return;
 
-            // 🟢 Step 1：在替换前保存旧图到撤销栈
-            var rect = new Int32Rect(0, 0,
-                                     _surface.Bitmap.PixelWidth,
-                                     _surface.Bitmap.PixelHeight);
-
+            // --- 1. 捕获变换前的状态 (for UNDO) ---
+            var undoRect = new Int32Rect(0, 0, _surface.Bitmap.PixelWidth, _surface.Bitmap.PixelHeight);
             // 提取旧的像素数据
-            var oldPixels = _surface.ExtractRegion(rect);
+            var undoPixels = _surface.ExtractRegion(undoRect);
+            if (undoPixels == null) return; // 如果提取失败则中止
 
-            // 压入撤销栈（整图作为一次步骤）
-            _undo?.PushUndoRegionTransform(rect, oldPixels);
+            // --- 2. 计算并生成变换后的新位图 (这是 REDO 的目标状态) ---
+            var transformedBmp = new TransformedBitmap(src, transform);
+            var newBitmap = new WriteableBitmap(transformedBmp);
 
-            // 新操作截断重做链
-            _undo?.ClearRedo();
+            // --- 3. 捕获变换后的状态 (for REDO) ---
+            var redoRect = new Int32Rect(0, 0, newBitmap.PixelWidth, newBitmap.PixelHeight);
+            int redoStride = newBitmap.BackBufferStride;
+            var redoPixels = new byte[redoStride * redoRect.Height];
+            newBitmap.CopyPixels(redoPixels, redoStride, 0);
 
-            // 🟢 Step 2：生成旋转/翻转后的新图
-            var tb = new TransformedBitmap(src, transform);
-            var wb = new WriteableBitmap(tb);
-
-            // 替换主位图
-            _bitmap = wb;
+            _bitmap = newBitmap;
             BackgroundImage.Source = _bitmap;
-
-            // 让 CanvasSurface 附加新位图
             _surface.Attach(_bitmap);
+            _surface.ReplaceBitmap(_bitmap);
+            // --- 5. 将完整的变换信息作为一个原子操作压入 Undo 栈 ---
+            _undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);
 
-            // 🟢 Step 3：居中显示
-            BackgroundImage.Dispatcher.BeginInvoke(
-                new Action(() => CenterImage()),
-                System.Windows.Threading.DispatcherPriority.Loaded
-            );
+            SetUndoRedoButtonState();
         }
-
 
 
         private void RotateBitmap(int angle)
@@ -3331,9 +3664,6 @@ namespace SodiumPaint
 
         private void OnCanvasMouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            // This is a good failsafe. If the mouse leaves while a button is pressed,
-            // and for some reason capture fails, this can stop the action.
-            // With pointer capture, this will only fire *after* the capture is released.
             _router.CurrentTool?.StopAction(_ctx);
         }
 
@@ -3342,7 +3672,18 @@ namespace SodiumPaint
         {
             Close();
         }
+        private void CropMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            // 假设你的当前工具存储在一个属性 CurrentTool 中
+            // 并且你的 SelectTool 实例是可访问的
+            if (_router.CurrentTool is SelectTool selectTool)
+            {
+                // 创建或获取当前的 ToolContext
+               // var toolContext = CreateToolContext(); // 你应该已经有类似的方法
 
+                selectTool.CropToSelection(_ctx);
+            }
+        }
         private void OnSourceInitialized(object? sender, EventArgs e)
         {
             var hwnd = new WindowInteropHelper(this).Handle;
@@ -3380,8 +3721,10 @@ namespace SodiumPaint
             };
             ZoomSlider.ValueChanged += (s, e) =>
             {
-                ZoomScale = ZoomSlider.Value; // 更新属性而不是直接访问 zoomscale
+                UpdateSliderBarValue(ZoomSlider.Value);
+                //ZoomScale = ZoomSlider.Value; // 更新属性而不是直接访问 zoomscale
             };
+
             CanvasWrapper.MouseDown += OnCanvasMouseDown;
             CanvasWrapper.MouseMove += OnCanvasMouseMove;
             CanvasWrapper.MouseUp += OnCanvasMouseUp;
@@ -3490,10 +3833,46 @@ namespace SodiumPaint
         {
             if (_bitmap == null) return;
 
-            var dlg = new AdjustBCEWindow(_bitmap, BackgroundImage); // BackgroundImage 是显示图片的控件
-            dlg.Owner = this;
-            dlg.ShowDialog();
-        }
+            // 1. (为Undo做准备) 保存当前图像的完整快照
+            var fullRect = new Int32Rect(0, 0, _bitmap.PixelWidth, _bitmap.PixelHeight);
+
+            // 使用您的 UndoRedoManager 的方法来准备一个整图撤销
+            // PushFullImageUndo 会自动截取当前快照并压入Undo栈
+            _undo.PushFullImageUndo();
+            // 2. 创建对话框，并传入主位图的一个克隆体用于预览
+            var dialog = new AdjustBCEWindow(_bitmap,BackgroundImage);
+
+            // 3. 显示对话框并根据结果操作
+            if (dialog.ShowDialog() == true)
+            {
+                // 用户点击了 "确定"
+                // 4. 从对话框获取处理后的位图
+                WriteableBitmap adjustedBitmap = dialog.FinalBitmap;
+
+                // 5. 将处理后的像素数据写回到主位图 (_bitmap) 中
+                int stride = adjustedBitmap.BackBufferStride;
+                int byteCount = adjustedBitmap.PixelHeight * stride;
+                byte[] pixelData = new byte[byteCount];
+                adjustedBitmap.CopyPixels(pixelData, stride, 0);
+                _bitmap.WritePixels(fullRect, pixelData, stride, 0);
+
+                // 因为我们直接修改了_bitmap的像素，而BackgroundImage.Source一直指向_bitmap,
+                // 所以UI会自动更新。绘图功能也因为操作的是同一个_bitmap而保持正常。
+
+                // 更新撤销/重做按钮的状态
+                SetUndoRedoButtonState();
+            }
+            else
+            {
+                // 用户点击了 "取消" 或关闭了窗口
+                // 我们需要撤销之前压入的Undo操作，因为它没有真正发生
+                _undo.Undo(); // 弹出刚刚压入的快照
+                _undo.ClearRedo(); // 清空因此产生的Redo项
+
+                // 更新撤销/重做按钮的状态
+                SetUndoRedoButtonState();
+            }
+            }
 
         private void OnUndoClick(object sender, RoutedEventArgs e) => Undo();
         private void OnRedoClick(object sender, RoutedEventArgs e) => Redo();
@@ -3529,7 +3908,7 @@ namespace SodiumPaint
             byte[] regionData = ExtractRegionFromSnapshot(
                 _preDrawSnapshot, combined, _bitmap.BackBufferStride);
 
-            _undoStack.Push(new UndoAction(combined, regionData, null, UndoActionType.Draw));
+            _undoStack.Push(new UndoAction(combined, regionData));
 
             _preDrawSnapshot = null; // 清除快照引用
             _redoStack.Clear();
@@ -3555,13 +3934,40 @@ namespace SodiumPaint
             int h = (int)Math.Abs(p1.Y - p2.Y) + 2;
             return new Int32Rect(x, y, w, h);
         }
-        private void SetUndoRedoButtonState()
+        public void SetUndoRedoButtonState()
         {
             UpdateBrushAndButton(UndoButton, UndoIcon, _undo.CanUndo);
             UpdateBrushAndButton(RedoButton, RedoIcon, _undo.CanRedo);
 
         }
+        private void OnCopyClick(object sender, RoutedEventArgs e)
+        {
+            // 确保 SelectTool 是当前工具
+            if (_router.CurrentTool != _tools.Select)
+                 _router.SetTool(_tools.Select); // 切换到选择工具
+           
+            if (_router.CurrentTool is SelectTool selectTool)
+                selectTool.CopySelection(_ctx);
+        }
 
+        private void OnCutClick(object sender, RoutedEventArgs e)
+        {
+            if (_router.CurrentTool != _tools.Select)
+                _router.SetTool(_tools.Select); // 切换到选择工具
+
+            if (_router.CurrentTool is SelectTool selectTool)
+                selectTool.CutSelection(_ctx,true);
+        }
+
+        private void OnPasteClick(object sender, RoutedEventArgs e)
+        {
+            if (_router.CurrentTool != _tools.Select)
+                _router.SetTool(_tools.Select); // 切换到选择工具
+
+            if (_router.CurrentTool is SelectTool selectTool)
+                selectTool.PasteSelection(_ctx, false);
+           
+        }
         private void UpdateBrushAndButton(System.Windows.Controls.Button button, Image image, bool isEnabled)
         {
             button.IsEnabled = isEnabled;
@@ -3697,7 +4103,7 @@ namespace SodiumPaint
             }
             _bitmap.Unlock();
 
-            _undoStack.Push(new UndoAction(new Int32Rect(x, y, width, height), data, null, UndoActionType.Draw));
+            _undoStack.Push(new UndoAction(new Int32Rect(x, y, width, height), data));
 
             // 可选：限制最大撤销次数
             if (_undoStack.Count > 1000) _undoStack = new Stack<UndoAction>(_undoStack.Take(1000));
@@ -3733,33 +4139,70 @@ namespace SodiumPaint
             }
         }
 
-        public void SetZoomAndOffset(double scaleFactor, double offsetX, double offsetY)
-        {
-            const double MinZoom = 0.1;
-            const double MaxZoom = 16.0; // 自设上限
-
-            scaleFactor = Math.Clamp(scaleFactor, MinZoom, MaxZoom);
-
-            // 更新ViewModel缩放比例
-            //var vm = (ViewModels.MainWindowViewModel)DataContext;
-            double oldScale = zoomscale;
-            zoomscale = scaleFactor;
-
-            // 更新缩放变换
-            ZoomTransform.ScaleX = ZoomTransform.ScaleY = scaleFactor;
-
-            // 计算新的滚动偏移
-            // 偏移要按当前比例转换：ScrollViewer 的偏移单位是可视区域像素，而非原图像素。
-            double newOffsetX = offsetX * scaleFactor;
-            double newOffsetY = offsetY * scaleFactor;
-
-            // 应用到滚动容器
-            ScrollContainer.ScrollToHorizontalOffset(newOffsetX);
-            ScrollContainer.ScrollToVerticalOffset(newOffsetY);
-        }
 
         String PicFilterString = "图像文件|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp";
         // Ctrl + 滚轮 缩放事件
+        private void FitToWindow()
+        {
+            if (BackgroundImage.Source != null)
+            {
+                double imgWidth = BackgroundImage.Source.Width;
+                double imgHeight = BackgroundImage.Source.Height;
+
+                double viewWidth = ScrollContainer.ViewportWidth;
+                double viewHeight = ScrollContainer.ViewportHeight;
+
+                double scaleX = viewWidth / imgWidth;
+                double scaleY = viewHeight / imgHeight;
+
+                double fitScale = Math.Min(scaleX, scaleY); // 保持纵横比适应
+                zoomscale = fitScale;
+
+                ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
+                UpdateSliderBarValue(zoomscale);
+            }
+        }
+        private void FitToWindow_Click(object sender, RoutedEventArgs e)
+        {
+            FitToWindow();
+        }
+
+        private void ZoomOut_Click(object sender, RoutedEventArgs e)
+        {
+            double newScale = zoomscale / ZoomTimes;
+            zoomscale = Math.Clamp(newScale, MinZoom, MaxZoom);
+            ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
+            UpdateSliderBarValue(zoomscale);
+        }
+
+        private void ZoomIn_Click(object sender, RoutedEventArgs e)
+        {
+            double newScale = zoomscale * ZoomTimes;
+            zoomscale = Math.Clamp(newScale, MinZoom, MaxZoom);
+            ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
+            UpdateSliderBarValue(zoomscale);
+        }
+
+        private void ZoomMenu_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.ComboBox combo && combo.SelectedItem is ComboBoxItem item && item.Tag != null)
+            {
+                double selectedScale = Convert.ToDouble(item.Tag);
+                zoomscale = Math.Clamp(selectedScale, MinZoom, MaxZoom);
+                ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
+               // s(zoomscale);
+                UpdateSliderBarValue(zoomscale);
+            }
+        }
+
+        private void UpdateSliderBarValue(double newScale)
+        {
+            ZoomSlider.Value = newScale;
+            ZoomLevel = newScale.ToString("P0");
+                ZoomMenu.Text = newScale.ToString("P0");
+    
+
+        }
         private void OnMouseWheelZoom(object sender, MouseWheelEventArgs e)
         {
 
@@ -3770,7 +4213,7 @@ namespace SodiumPaint
 
             //var vm = (ViewModels.MainWindowViewModel)DataContext;
             double oldScale = zoomscale;
-            double newScale = oldScale + (e.Delta > 0 ? ZoomStep : -ZoomStep);
+            double newScale = oldScale * (e.Delta > 0 ? ZoomTimes : 1/ ZoomTimes);
             newScale = Math.Clamp(newScale, MinZoom, MaxZoom);
             zoomscale = newScale;
             ZoomTransform.ScaleX = ZoomTransform.ScaleY = newScale;
@@ -3780,7 +4223,7 @@ namespace SodiumPaint
 
             double offsetX = ScrollContainer.HorizontalOffset;
             double offsetY = ScrollContainer.VerticalOffset;
-
+            UpdateSliderBarValue( zoomscale);
             // 维持鼠标相对画布位置不变的平移公式
             double newOffsetX = (offsetX + mouseInScroll.X) * (newScale / oldScale) - mouseInScroll.X;
             double newOffsetY = (offsetY + mouseInScroll.Y) * (newScale / oldScale) - mouseInScroll.Y;
@@ -3804,7 +4247,7 @@ namespace SodiumPaint
 
         }
 
-
+   
         private void ShowNextImage()
         {
             if (_imageFiles.Count == 0 || _currentImageIndex < 0) return;
@@ -3893,8 +4336,167 @@ namespace SodiumPaint
         }
 
 
+        private void OnColorTempTintSaturationClick(object sender, RoutedEventArgs e)
+        {
+            if (_bitmap == null) return;
+
+            // 1. (为Undo做准备) 保存当前图像的完整快照
+            _undo.PushFullImageUndo();
+
+            // 2. 创建对话框，并传入主位图的一个克隆体用于预览
+            // 注意：这里我们传入的是 _bitmap 本身，因为 AdjustTTSWindow 内部会自己克隆一个原始副本
+            // 并且会直接在传入的 _bitmap 上做预览修改，这样主窗口就能实时看到变化。
+            var dialog = new AdjustTTSWindow(_bitmap);
+
+            // 3. 显示对话框并根据结果操作
+            if (dialog.ShowDialog() == true)
+            {
+                // 更新撤销/重做按钮的状态
+                SetUndoRedoButtonState();
+            }
+            else
+            {
+                // 用户点击了 "取消"
+                // AdjustTTSWindow 的 Cancel_Click 事件已经负责将 _bitmap 恢复到初始状态。
+                // 我们只需要撤销之前压入的Undo操作。
+                _undo.Undo();
+                _undo.ClearRedo();
+
+                // 更新撤销/重做按钮的状态
+                SetUndoRedoButtonState();
+            }
+        }
+        private void OnConvertToBlackAndWhiteClick(object sender, RoutedEventArgs e)
+        {
+            // 1. 检查图像是否存在
+            if (_bitmap == null)
+            {
+                return;
+            }
+
+            _undo.PushFullImageUndo();
+            ConvertToBlackAndWhite(_bitmap);
+            SetUndoRedoButtonState();
+        }
+        private void ConvertToBlackAndWhite(WriteableBitmap bmp)
+        {
+            bmp.Lock();
+            unsafe
+            {
+                byte* basePtr = (byte*)bmp.BackBuffer;
+                int stride = bmp.BackBufferStride;
+                int height = bmp.PixelHeight;
+                int width = bmp.PixelWidth;
+
+                // 使用并行处理来加速计算，每个CPU核心处理一部分行
+                Parallel.For(0, height, y =>
+                {
+                    byte* row = basePtr + y * stride;
+                    // 像素格式为 BGRA (4 bytes per pixel)
+                    for (int x = 0; x < width; x++)
+                    {
+                        // 获取当前像素的 B, G, R 值
+                        byte b = row[x * 4];
+                        byte g = row[x * 4 + 1];
+                        byte r = row[x * 4 + 2];
+
+                        // 使用亮度公式计算灰度值
+                        // 这个公式比简单的 (R+G+B)/3 效果更符合人眼感知
+                        byte gray = (byte)(r * 0.2126 + g * 0.7152 + b * 0.0722);
+
+                        // 将计算出的灰度值写回所有三个颜色通道
+                        row[x * 4] = gray; // Blue
+                        row[x * 4 + 1] = gray; // Green
+                        row[x * 4 + 2] = gray; // Red
+                                               // Alpha 通道 (row[x * 4 + 3]) 保持不变
+                    }
+                });
+            }
+            // 标记整个图像区域已更新
+            bmp.AddDirtyRect(new Int32Rect(0, 0, bmp.PixelWidth, bmp.PixelHeight));
+            bmp.Unlock();
+        }
+
+        private void OnResizeCanvasClick(object sender, RoutedEventArgs e)
+        {
+            if (_surface?.Bitmap == null) return;
+
+            // 1. 创建并配置对话框
+            var dialog = new ResizeCanvasDialog(
+                _surface.Bitmap.PixelWidth,
+                _surface.Bitmap.PixelHeight
+            );
+            dialog.Owner = this; // 设置所有者，使对话框显示在主窗口中央
+
+            // 2. 显示对话框，并检查用户是否点击了“确定”
+            if (dialog.ShowDialog() == true)
+            {
+                // 3. 如果用户点击了“确定”，获取新尺寸并调用缩放方法
+                int newWidth = dialog.ImageWidth;
+                int newHeight = dialog.ImageHeight;
+                //s(newWidth);
+                ResizeCanvas(newWidth, newHeight);
+            }
+        }
+
+        private void ResizeCanvas(int newWidth, int newHeight)
+        {
+            var oldBitmap = _surface.Bitmap;
+            if (oldBitmap == null) return;
+
+            // 如果尺寸没有变化，则不执行任何操作
+            if (oldBitmap.PixelWidth == newWidth && oldBitmap.PixelHeight == newHeight)
+            {
+                return;
+            }
+
+            // --- 1. 捕获变换前的完整状态 (for UNDO) ---
+            var undoRect = new Int32Rect(0, 0, oldBitmap.PixelWidth, oldBitmap.PixelHeight);
+            var undoPixels = new byte[oldBitmap.PixelHeight * oldBitmap.BackBufferStride];
+            // 从旧位图复制像素
+            oldBitmap.CopyPixels(undoRect, undoPixels, oldBitmap.BackBufferStride, 0);
 
 
+            // --- 2. 创建新的、缩放后的位图 ---
+            // 创建一个变换，指定缩放比例
+            var transform = new ScaleTransform(
+                (double)newWidth / oldBitmap.PixelWidth,
+                (double)newHeight / oldBitmap.PixelHeight
+            );
+
+            // 应用变换
+            // 使用 NearestNeighbor 可以保持像素艺术的清晰度，如果需要平滑效果，可以使用 Bilinear 或 Fant
+            var transformedBitmap = new TransformedBitmap(oldBitmap, transform);
+            RenderOptions.SetBitmapScalingMode(transformedBitmap, BitmapScalingMode.NearestNeighbor);
+
+            // 将结果转换为一个新的 WriteableBitmap
+            var newFormatedBitmap = new FormatConvertedBitmap(transformedBitmap, PixelFormats.Bgra32, null, 0);
+            var newBitmap = new WriteableBitmap(newFormatedBitmap);
+
+
+            // --- 3. 捕获变换后的完整状态 (for REDO) ---
+            var redoRect = new Int32Rect(0, 0, newBitmap.PixelWidth, newBitmap.PixelHeight);
+            var redoPixels = new byte[newBitmap.PixelHeight * newBitmap.BackBufferStride];
+            // 从新创建的位图复制像素
+            newBitmap.CopyPixels(redoRect, redoPixels, newBitmap.BackBufferStride, 0);
+
+
+            // --- 4. 执行变换：用新的位图替换旧的画布 ---
+            _surface.ReplaceBitmap(newBitmap);
+
+
+            // --- 5. 将完整的变换信息压入 Undo 栈 ---
+            // 这是关键一步，替换掉旧的 PushUndoRegionTransform 调用
+            _ctx.Undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);
+
+
+            // --- 6. 更新UI状态 ---
+            //IsDirty = true;
+            SetUndoRedoButtonState();
+
+            // 变换后可能需要重新居中或调整视图
+            CenterImage();
+        }
 
 
         public class FileTabItem : INotifyPropertyChanged
@@ -4387,17 +4989,16 @@ namespace SodiumPaint
                     BackgroundImage.Width = imgWidth;
                     BackgroundImage.Height = imgHeight;
 
-                    double maxWidth = SystemParameters.WorkArea.Width;
-                    double maxHeight = SystemParameters.WorkArea.Height;
+                   // double maxWidth = SystemParameters.WorkArea.Width;
+                   // double maxHeight = SystemParameters.WorkArea.Height;
 
                     _imageSize = $"{_surface.Width}×{_surface.Height}";
                     OnPropertyChanged(nameof(ImageSize));
                     UpdateWindowTitle();
 
-                    SetZoomAndOffset(
-                        Math.Min(maxWidth / imgWidth, maxHeight / imgHeight) * 0.6,
-                        10, 10);
-
+                    FitToWindow();
+                  //  SetZoomAndOffset(Math.Min(maxWidth / imgWidth, maxHeight / imgHeight) * 0.6, 10, 10);
+                   
                 }, System.Windows.Threading.DispatcherPriority.Background);
             }
             catch (Exception ex)
@@ -4513,14 +5114,15 @@ namespace SodiumPaint
             BackgroundImage.Height = imgHeight;
 
             // 根据屏幕情况（最多占 90%）
-            double maxWidth = SystemParameters.WorkArea.Width;
-            double maxHeight = SystemParameters.WorkArea.Height;
+           // double maxWidth = SystemParameters.WorkArea.Width;
+           // double maxHeight = SystemParameters.WorkArea.Height;
 
             _imageSize = $"{_surface.Width}×{_surface.Height}";
             OnPropertyChanged(nameof(ImageSize));
             UpdateWindowTitle();
 
-            SetZoomAndOffset(Math.Min(SystemParameters.WorkArea.Width / imgWidth, SystemParameters.WorkArea.Height / imgHeight) * 0.65, 10, 10);
+            FitToWindow();
+           //SetZoomAndOffset(Math.Min(SystemParameters.WorkArea.Width / imgWidth, SystemParameters.WorkArea.Height / imgHeight) * 0.65, 10, 10);
             SetBrushStyle(BrushStyle.Round);
         }
 

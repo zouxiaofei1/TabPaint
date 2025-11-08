@@ -34,16 +34,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Page Remove="AdjustBCEWindow.xaml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="AdjustBCEWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
     <Resource Include="Resources\SodiumPaint.ico" />
   </ItemGroup>
 
@@ -60,6 +50,12 @@
     <Reference Include="System.Windows.Forms">
       <HintPath>C:\Windows\Microsoft.NET\Framework64\v4.0.30319\System.Windows.Forms.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="AdjustBCEWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
 </Project>
