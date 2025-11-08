@@ -34,6 +34,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Page Remove="AdjustBCEWindow.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="AdjustBCEWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
     <Resource Include="Resources\SodiumPaint.ico" />
   </ItemGroup>
 
