@@ -29,11 +29,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Resources\deprecated_functions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="Resources\colorwheel_64x64.png" />
+    <None Remove="Resources\Cursors\Eyedropper.cur" />
     <None Remove="Resources\SodiumPaint_64x64.png" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="OtherTools\deprecated_functions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\Cursors\Eyedropper.cur" />
     <Resource Include="Resources\SodiumPaint.ico" />
   </ItemGroup>
 
@@ -53,7 +63,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Page Update="AdjustBCEWindow.xaml">
+    <Page Update="UIHandlers\AdjustBCEWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>

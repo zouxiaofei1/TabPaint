@@ -1226,9 +1226,6 @@
             </Grid>
         </Border>
 
-
-
-
         <Border x:Name="ThicknessTip"
         Background="#333"
         CornerRadius="4"

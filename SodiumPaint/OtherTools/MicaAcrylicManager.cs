@@ -17,17 +17,6 @@ namespace SodiumPaint
             System.Windows.MessageBox.Show(a.ToString(), "标题", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        static void msgbox<T>(T a)
-        {
-            System.Windows.MessageBox.Show(a.ToString(), "标题", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        static void s2<T>(T a)
-        {
-            Debug.Print(a.ToString());
-        }
-
-
         // ===== DWM API（Win11 Mica） =====
         [DllImport("dwmapi.dll")]
         private static extern int DwmSetWindowAttribute(IntPtr hwnd, DWMWINDOWATTRIBUTE attribute, ref int pvAttribute, int cbAttribute);
@@ -99,12 +88,8 @@ namespace SodiumPaint
             }
         }
 
-        /// <summary>
-        /// 启用 Win11 Mica 效果
-        /// </summary>
-        private static void EnableMica(IntPtr hwnd)
+        private static void EnableMica(IntPtr hwnd)/// 启用 Win11 Mica 效果
         {
-           // var hwnd = new WindowInteropHelper(this).Handle;
             int cornerPref = 2; // 2 = rounded
             DwmSetWindowAttribute(hwnd, (DWMWINDOWATTRIBUTE)33, ref cornerPref, sizeof(int)); // DWMWA_WINDOW_CORNER_PREFERENCE
 
@@ -112,10 +97,7 @@ namespace SodiumPaint
             DwmSetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_SYSTEMBACKDROP_TYPE, ref backdropType, sizeof(int));
         }
 
-        /// <summary>
-        /// 启用 Win10 Acrylic（透明模糊）
-        /// </summary>
-        private static void EnableAcrylic(IntPtr hwnd)
+        private static void EnableAcrylic(IntPtr hwnd)   /// 启用 Win10 Acrylic（透明模糊）
         {
             var accent = new ACCENT_POLICY
             {
@@ -145,7 +127,6 @@ namespace SodiumPaint
             var version = Environment.OSVersion.Version.Build;
             return version >= 22000;
         }
-
         private static bool IsWin10OrLater()
         {
             var version = Environment.OSVersion.Version.Major;
