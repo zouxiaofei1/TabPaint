@@ -10,7 +10,7 @@
         WindowStyle="None"
         Background="#01000000" 
 
-    MouseWheel="OnMouseWheelZoom">
+ >
 
     <Window.Resources>
 
@@ -893,11 +893,16 @@
 
                     <!-- 左侧 ScrollViewer + ItemsControl -->
                     <ScrollViewer x:Name="FileTabsScroller"
-                      Grid.Column="0"
-                      HorizontalScrollBarVisibility="Hidden"
-                      VerticalScrollBarVisibility="Disabled"
-                      ScrollChanged="OnFileTabsScrollChanged"
-                      PreviewMouseWheel="OnFileTabsWheelScroll">
+              Grid.Column="0"
+              HorizontalScrollBarVisibility="Hidden"
+              VerticalScrollBarVisibility="Disabled"
+              PanningMode="HorizontalOnly"
+              Stylus.IsPressAndHoldEnabled="False"
+              Stylus.IsFlicksEnabled="False"
+              ScrollChanged="OnFileTabsScrollChanged"
+              PreviewMouseWheel="OnFileTabsWheelScroll"
+              ManipulationBoundaryFeedback="ScrollViewer_ManipulationBoundaryFeedback">
+
                         <ItemsControl x:Name="FileTabList" ItemsSource="{Binding FileTabs}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>

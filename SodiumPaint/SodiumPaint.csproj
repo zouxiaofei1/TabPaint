@@ -53,6 +53,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="MicaWPF" Version="6.3.0" />
     <PackageReference Include="System.Drawing.Common" Version="9.0.10" />
   </ItemGroup>
 

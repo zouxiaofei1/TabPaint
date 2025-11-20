@@ -107,15 +107,19 @@ namespace SodiumPaint
             {
                 new SolidColorBrush(Colors.Black),
                 new SolidColorBrush(Colors.Gray),
+                new SolidColorBrush(Colors.Brown),
                 new SolidColorBrush(Colors.Red),
                 new SolidColorBrush(Colors.Orange),
                 new SolidColorBrush(Colors.Yellow),
                 new SolidColorBrush(Colors.Green),
+                 new SolidColorBrush( (Color)ColorConverter.ConvertFromString("#B5E61D")),
                 new SolidColorBrush(Colors.Cyan),
                 new SolidColorBrush(Colors.Blue),
                 new SolidColorBrush(Colors.Purple),
-                new SolidColorBrush(Colors.Brown),
                 new SolidColorBrush(Colors.Pink),
+                new SolidColorBrush(Colors.BlueViolet),
+                 new SolidColorBrush(Colors.CornflowerBlue),
+                 new SolidColorBrush( (Color)ColorConverter.ConvertFromString("#C8BFE7")),
                 new SolidColorBrush(Colors.White)
             };
 
@@ -1094,8 +1098,8 @@ namespace SodiumPaint
         {
             if ((Keyboard.Modifiers & ModifierKeys.Control) != ModifierKeys.Control) return;
 
-            e.Handled = true; // 阻止默认滚动
-
+            e.Handled = false; // 阻止默认滚动
+           // s();
             double oldScale = zoomscale;
             double newScale = oldScale * (e.Delta > 0 ? ZoomTimes : 1 / ZoomTimes);
             newScale = Math.Clamp(newScale, MinZoom, MaxZoom);
@@ -1475,18 +1479,80 @@ namespace SodiumPaint
                 }
             }
         }
+        private void FileTabsScroller_ManipulationDelta(object sender, ManipulationDeltaEventArgs e)
+        {
+            if (sender is ScrollViewer scroller)
+            {
+                // ManipulationDelta.Translation 包含了手指在 X 和 Y 方向上的移动距离
+                // 我们只关心 X 方向的移动 (水平)
+                var offset = scroller.HorizontalOffset - e.DeltaManipulation.Translation.X;
+
+                // 滚动到新的位置
+                scroller.ScrollToHorizontalOffset(offset);
+
+                // 标记事件已处理，防止其他控件响应
+                e.Handled = true;
+            }
+        }
+        // 鼠标滚轮横向滚动
+        private void OnFileTabsWheelScroll(object sender, MouseWheelEventArgs e)
+        {
+            var scrollViewer = sender as ScrollViewer;
+            if (scrollViewer != null)
+            {
+                // 横向滚动
+                double offset = scrollViewer.HorizontalOffset - (e.Delta);
+                scrollViewer.ScrollToHorizontalOffset(offset);
+                e.Handled = true;
+            }
+        }
+
+        // 阻止边界反馈
+        private void ScrollViewer_ManipulationBoundaryFeedback(object sender, ManipulationBoundaryFeedbackEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        // 如果需要鼠标拖动滚动（模拟触摸）
+        private Point? _scrollMousePoint = null;
+        private double _scrollHorizontalOffset;
+
+        private void FileTabsScroller_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            _scrollMousePoint = e.GetPosition(FileTabsScroller);
+            _scrollHorizontalOffset = FileTabsScroller.HorizontalOffset;
+            FileTabsScroller.CaptureMouse();
+        }
+
+        private void FileTabsScroller_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (_scrollMousePoint.HasValue && e.LeftButton == MouseButtonState.Pressed)
+            {
+                var currentPoint = e.GetPosition(FileTabsScroller);
+                var offset = _scrollHorizontalOffset + (_scrollMousePoint.Value.X - currentPoint.X);
+                FileTabsScroller.ScrollToHorizontalOffset(offset);
+            }
+        }
+
+        private void FileTabsScroller_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            _scrollMousePoint = null;
+            FileTabsScroller.ReleaseMouseCapture();
+        }
+
         private async void OnFileTabClick(object sender, RoutedEventArgs e)// 点击标签打开图片
         {
             if (sender is System.Windows.Controls.Button btn && btn.DataContext is FileTabItem item) await OpenImageAndTabs(item.FilePath);
         }
 
         // 鼠标滚轮横向滑动标签栏
-        private void OnFileTabsWheelScroll(object sender, MouseWheelEventArgs e)
-        {
-            double offset = FileTabsScroller.HorizontalOffset - e.Delta / 2;
-            FileTabsScroller.ScrollToHorizontalOffset(offset);
-            e.Handled = true;
-        }
+        //private void OnFileTabsWheelScroll(object sender, MouseWheelEventArgs e)
+        //{
+        //    //s(1);
+        //    double offset = FileTabsScroller.HorizontalOffset - e.Delta / 2;
+        //    FileTabsScroller.ScrollToHorizontalOffset(offset);
+        //    e.Handled = true;
+        //}
 
         private bool _isDragging = false;
         private void Slider_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
