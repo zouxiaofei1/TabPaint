@@ -13,10 +13,10 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
-
 //
 //TabPaint主程序
 //
@@ -45,7 +45,7 @@ namespace TabPaint
         private int _currentImageIndex = -1;
         private bool _isEdited = false; // 标记当前画布是否被修改
         private string _currentFileName = "未命名";
-        private string _programVersion = "v0.6 alpha"; // 可以从 Assembly 读取
+        private string _programVersion = "v0.6.1 alpha"; // 可以从 Assembly 读取
         private bool _isFileSaved = true; // 是否有未保存修改
 
         private string _mousePosition = "X:0, Y:0";
@@ -151,7 +151,7 @@ namespace TabPaint
 
 
 
-        public void UpdateCurrentColor(Color color,bool secondColor=false) // 更新前景色按钮颜色
+        public void UpdateCurrentColor(Color color, bool secondColor = false) // 更新前景色按钮颜色
         {
             if (secondColor)
             {
@@ -166,9 +166,9 @@ namespace TabPaint
                 OnPropertyChanged(nameof(ForegroundBrush)); // 通知绑定刷新
                 ForegroundColor = color;
             }
-            
+
         }
-   
+
 
 
         private static IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject
@@ -297,7 +297,7 @@ namespace TabPaint
             _activeTextBox = null;
         }
 
- 
+
 
         private void SetRestoreIcon()
         {
@@ -346,10 +346,10 @@ namespace TabPaint
         }
         private void UpdateColorHighlight()
         {
-          
+
             // 假设你的两个颜色按钮在 XAML 里设置了 Name="ColorBtn1" 和 Name="ColorBtn2"
             ColorBtn1.Tag = !useSecondColor ? "True" : "False"; // 如果不是色2，那就是色1选中
-            ColorBtn2.Tag = useSecondColor ?"True" :"False";
+            ColorBtn2.Tag = useSecondColor ? "True" : "False";
         }
 
         private void OnSourceInitialized(object? sender, EventArgs e)
@@ -424,15 +424,151 @@ namespace TabPaint
                 _router.OnPreviewKeyDown(s, e);
             };
             SetBrushStyle(BrushStyle.Round);
+            SetCropButtonState();
             this.PreviewKeyDown += MainWindow_PreviewKeyDown;
 
             this.Focusable = true;
         }
+
+        // 在 MainWindow 类中处理 Drop 事件
+        private void OnCanvasDrop(object sender, System.Windows.DragEventArgs e)
+        {
+            //s(1);
+            if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop))
+            {
+                string[] files = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
+                if (files.Length > 0)
+                {
+                    string filePath = files[0];
+                    try
+                    {
+                        // 1. 加载图片文件
+                        BitmapImage bitmap = new BitmapImage();
+                        bitmap.BeginInit();
+                        bitmap.UriSource = new Uri(filePath);
+                        bitmap.CacheOption = BitmapCacheOption.OnLoad; // 必须 Load，否则文件会被占用
+                        bitmap.EndInit();
+
+                        // 2. 切换到选择工具 (假设你有一个切换工具的方法)
+                        // this.CurrentTool = this.Select; 
+                        _router.SetTool(_tools.Select);
+                        // 3. 调用我们刚才提取的逻辑
+                        // 注意：这里需要传入你的 ToolContext
+                       
+                        if (_tools.Select is SelectTool st) // 强转成 SelectTool
+                        {
+                            st.InsertImageAsSelection(_ctx, bitmap);
+                        }
+                        e.Handled = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Windows.MessageBox.Show("无法识别的图片格式: " + ex.Message);
+                    }
+                }
+            }
+        }
+        private void OnCanvasDragOver(object sender, System.Windows.DragEventArgs e)
+        {
+            // 检查拖动的是否是文件
+            if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop))
+            {
+                // 设置鼠标效果为“复制”图标，告知系统和用户这里可以放下
+                e.Effects = System.Windows.DragDropEffects.Copy;
+                e.Handled = true; // 标记事件已处理
+            }
+            else
+            {
+                e.Effects = System.Windows.DragDropEffects.None;
+            }
+        }
+
+        private void OnResizeDragDelta(object sender, DragDeltaEventArgs e)
+        {
+            var thumb = sender as Thumb;
+            var tag = thumb.Tag.ToString();
+
+            // 获取当前的缩放倍数
+            double zoom = ZoomTransform.ScaleX;
+
+            // 获取当前 UI 尺寸
+            double oldWidth = double.IsNaN(BackgroundImage.Width) ? BackgroundImage.ActualWidth : BackgroundImage.Width;
+            double oldHeight = double.IsNaN(BackgroundImage.Height) ? BackgroundImage.ActualHeight : BackgroundImage.Height;
+
+            double newWidth = oldWidth;
+            double newHeight = oldHeight;
+
+            // --- 水平方向处理 ---
+            if (tag.Contains("Left"))
+            {
+                // 拉左边：宽度增加，且滚动条向右偏移以抵消视觉位移
+                double deltaX = e.HorizontalChange;
+                double widthChange = -deltaX;
+
+                if (oldWidth + widthChange > 10) // 最小宽度限制
+                {
+                    newWidth = oldWidth + widthChange;
+                    // 补偿位移：由于 Grid 居中，增加宽度会向两边扩张，我们需要补偿滚动位置
+                    // 公式：新的偏移 = 当前偏移 + (变化量 * 缩放 / 2) 
+                    // 注意：如果是 Left，deltaX 是负数，这里逻辑需要根据你的具体布局微调
+                    ScrollContainer.ScrollToHorizontalOffset(ScrollContainer.HorizontalOffset + (deltaX * zoom));
+                }
+            }
+            else if (tag.Contains("Right"))
+            {
+                // 拉右边：简单增加宽度
+                newWidth = Math.Max(10, oldWidth + e.HorizontalChange);
+            }
+
+            // --- 垂直方向处理 ---
+            if (tag.Contains("Top"))
+            {
+                double deltaY = e.VerticalChange;
+                double heightChange = -deltaY;
+
+                if (oldHeight + heightChange > 10)
+                {
+                    newHeight = oldHeight + heightChange;
+                    ScrollContainer.ScrollToVerticalOffset(ScrollContainer.VerticalOffset + (deltaY * zoom));
+                }
+            }
+            else if (tag.Contains("Bottom"))
+            {
+                newHeight = Math.Max(10, oldHeight + e.VerticalChange);
+            }
+
+            // 更新 UI 尺寸
+            BackgroundImage.Width = newWidth;
+            BackgroundImage.Height = newHeight;
+
+            // 手动强制同步手柄层 Canvas 的尺寸，如果没用绑定的话
+            ResizeHandleCanvas.Width = newWidth;
+            ResizeHandleCanvas.Height = newHeight;
+        }
+        private void OnResizeDragCompleted(object sender, DragCompletedEventArgs e)
+        {
+            // 1. 获取 UI 最终拉伸后的尺寸
+            int finalWidth = (int)BackgroundImage.Width;
+            int finalHeight = (int)BackgroundImage.Height;
+
+            // 2. 创建一个新的 WriteableBitmap
+            // WriteableBitmap newBmp = new WriteableBitmap(finalWidth, finalHeight, 96, 96, ...);
+
+            // 3. 将旧位图绘制到新位图上
+            // 如果是拉右/下：旧图画在 (0,0)
+            // 如果是拉左/上：旧图画在 (offset, offset)
+
+            // 4. 更新核心数据源，重置 Image 控件的拉伸
+            // BackgroundImage.Source = newBmp;
+            // BackgroundImage.Width = double.NaN; // 恢复自动宽度
+            // BackgroundImage.Height = double.NaN;
+        }
+
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             this.Focus();
 
-           
+
 
             Task.Run(async () => // 在后台线程运行，不阻塞UI线程
             {
@@ -482,7 +618,7 @@ namespace TabPaint
                             e.Handled = true;
                         }
                         break;
-                       
+
 
                     case Key.A:
                         if (Keyboard.Modifiers == ModifierKeys.Control)
@@ -527,7 +663,7 @@ namespace TabPaint
             return region;
         }
 
-       
+
 
         private static Int32Rect ClampRect(Int32Rect rect, int maxWidth, int maxHeight)
         {
@@ -546,6 +682,12 @@ namespace TabPaint
             UpdateBrushAndButton(UndoButton, UndoIcon, _undo.CanUndo);
             UpdateBrushAndButton(RedoButton, RedoIcon, _undo.CanRedo);
 
+        }
+
+        public void SetCropButtonState()
+        {
+           // s(1);
+            UpdateBrushAndButton(CutImage, CutImageIcon, _tools.Select is SelectTool st && _ctx.SelectionOverlay.Visibility!=Visibility.Collapsed);
         }
 
         private void UpdateBrushAndButton(System.Windows.Controls.Button button, Image image, bool isEnabled)
@@ -573,7 +715,7 @@ namespace TabPaint
             // 替换 Image.Source，让 UI 用新的对象
             image.Source = modifiableDrawingImage;
         }
-    
+
         private void Undo()
         {
 
@@ -718,7 +860,7 @@ namespace TabPaint
 
 
 
-      
+
         private void UpdateSliderBarValue(double newScale)
         {
             ZoomSlider.Value = newScale;
@@ -756,13 +898,40 @@ namespace TabPaint
             }
         }
 
-      
+
+        private void ShowToast(string message)
+        {
+            InfoToastText.Text = message;
+
+            // 创建渐变动画
+            DoubleAnimation fadeIn = new DoubleAnimation(1, TimeSpan.FromMilliseconds(200));
+            DoubleAnimation fadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(500));
+            fadeOut.BeginTime = TimeSpan.FromSeconds(1); // 停留1.5秒后开始消失
+
+            // 播放动画
+            InfoToast.BeginAnimation(OpacityProperty, null); // 清除之前的动画
+            Storyboard sb = new Storyboard();
+            Storyboard.SetTarget(fadeIn, InfoToast);
+            Storyboard.SetTargetProperty(fadeIn, new PropertyPath(OpacityProperty));
+
+            Storyboard.SetTarget(fadeOut, InfoToast);
+            Storyboard.SetTargetProperty(fadeOut, new PropertyPath(OpacityProperty));
+
+            sb.Children.Add(fadeIn);
+            sb.Children.Add(fadeOut);
+            sb.Begin();
+        }
+
+
         private void ShowNextImage()
         {
             if (_imageFiles.Count == 0 || _currentImageIndex < 0) return;
             _currentImageIndex++;
             if (_currentImageIndex >= _imageFiles.Count)
+            {
                 _currentImageIndex = 0; // 循环到第一张
+                ShowToast("已回到第一张图片"); // 提示逻辑
+            }
 
             RequestImageLoad(_imageFiles[_currentImageIndex]);
         }
@@ -779,7 +948,10 @@ namespace TabPaint
             }
             _currentImageIndex--;
             if (_currentImageIndex < 0)
+            {
                 _currentImageIndex = _imageFiles.Count - 1; // 循环到最后一张
+                ShowToast("这是最后一张图片");
+            }
 
             RequestImageLoad(_imageFiles[_currentImageIndex]);
         }
@@ -806,7 +978,7 @@ namespace TabPaint
             ctx.Surface.Bitmap.AddDirtyRect(rect);
             ctx.Surface.Bitmap.Unlock();
         }
-      
+
         private void ConvertToBlackAndWhite(WriteableBitmap bmp)
         {
             bmp.Lock();
@@ -840,7 +1012,7 @@ namespace TabPaint
             bmp.AddDirtyRect(new Int32Rect(0, 0, bmp.PixelWidth, bmp.PixelHeight));
             bmp.Unlock();
         }
-      
+
         private void ResizeCanvas(int newWidth, int newHeight)
         {
             var oldBitmap = _surface.Bitmap;
@@ -930,8 +1102,20 @@ namespace TabPaint
             SetBrushStyle(BrushStyle.Round);
         }
 
-    
+
 
     }
+    public class HalfValueConverter : System.Windows.Data.IValueConverter
+    {
+        public object Convert(object value, System.Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        {
+            if (value is double d) return d / 2.0;
+            return 0.0;
+        }
 
+        public object ConvertBack(object value, System.Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        {
+            throw new System.NotImplementedException();
+        }
+    }
 }

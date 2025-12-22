@@ -326,3 +326,127 @@ using System.Windows;
 //}
 
 //_selectionRect = new Int32Rect((int)finalX, (int)finalY, _selectionRect.Width, _selectionRect.Height);
+
+//< !--< MenuItem Header = "撤销    " Style = "{StaticResource SubMenuItemStyle}" InputGestureText = "Ctrl+Z" Click = "OnUndoClick" >
+//    < MenuItem.Icon >
+//        < Image Source = "{StaticResource Undo_Image}" Width = "16" Height = "16" />
+//    </ MenuItem.Icon >
+//</ MenuItem >
+//< MenuItem Header = "重做    " Style = "{StaticResource SubMenuItemStyle}" InputGestureText = "Ctrl+Y" Click = "OnRedoClick" >
+//    < MenuItem.Icon >
+//        < Image Source = "{StaticResource Redo_Image}" Width = "16" Height = "16" />
+//    </ MenuItem.Icon >
+//</ MenuItem > -->
+//< !--< Separator Style = "{StaticResource MenuSeparator}" /> -->
+
+
+
+//private void SetPreviewPosition(ToolContext ctx, int pixelX, int pixelY)
+//{
+
+//    // 背景图左上角位置（UI坐标）
+//    var imgPos = ctx.ViewElement.TranslatePoint(new Point(0, 0), ctx.SelectionPreview.Parent as UIElement);
+
+//    // 缩放比例（像素 → UI）
+//    double scaleX = ctx.ViewElement.ActualWidth / ctx.Surface.Bitmap.PixelWidth;
+//    double scaleY = ctx.ViewElement.ActualHeight / ctx.Surface.Bitmap.PixelHeight;
+
+//    // 转换到 UI 平移
+//    double uiX = imgPos.X + pixelX * scaleX;
+//    double uiY = imgPos.Y + pixelY * scaleY;
+
+//    ctx.SelectionPreview.RenderTransform = new TranslateTransform(uiX, uiY);
+//    s(pixelX);
+//}
+
+
+//public void PasteSelection(ToolContext ctx, bool ins)
+//{
+//    // 1. 提交当前的选区（如果有）
+//    if (_selectionData != null) CommitSelection(ctx);
+
+//    BitmapSource? sourceBitmap = null;
+//    // ... (此处保持你原来的获取 sourceBitmap 的逻辑不变) ...
+//    if (System.Windows.Clipboard.ContainsImage()) { sourceBitmap = System.Windows.Clipboard.GetImage(); }
+//    if (sourceBitmap == null && _clipboardData != null) { /* 内部剪贴板逻辑 */ }
+//    if (sourceBitmap == null) return;
+
+//    if (sourceBitmap.Format != PixelFormats.Bgra32)
+//        sourceBitmap = new FormatConvertedBitmap(sourceBitmap, PixelFormats.Bgra32, null, 0);
+
+//    // --- 【新增逻辑：自动扩展画布】 ---
+//    int imgW = sourceBitmap.PixelWidth;
+//    int imgH = sourceBitmap.PixelHeight;
+//    int canvasW = ctx.Surface.Bitmap.PixelWidth;
+//    int canvasH = ctx.Surface.Bitmap.PixelHeight;
+
+//    if (imgW > canvasW || imgH > canvasH)
+//    {
+//        //  s("Auto-expanding canvas for paste operation.");
+//        // A. 记录调整前的全图状态 (用于 Undo)
+//        Int32Rect oldRect = new Int32Rect(0, 0, canvasW, canvasH);
+//        byte[] oldPixels = ctx.Surface.ExtractRegion(oldRect);
+
+//        // B. 计算新尺寸并创建新位图
+//        int newW = Math.Max(imgW, canvasW);
+//        int newH = Math.Max(imgH, canvasH);
+//        var newBmp = new WriteableBitmap(newW, newH,
+//            ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
+//            PixelFormats.Bgra32, null);
+//        // --- 【新增：快速填充白色】 ---
+//        newBmp.Lock();
+//        unsafe
+//        {
+//            byte* pBackBuffer = (byte*)newBmp.BackBuffer;
+//            int strides = newBmp.BackBufferStride;
+//            int heights = newBmp.PixelHeight;
+//            int totalBytes = strides * heights;
+//            for (int i = 0; i < totalBytes; i++)
+//            {
+//                pBackBuffer[i] = 255;
+//            }
+//        }
+//        newBmp.AddDirtyRect(new Int32Rect(0, 0, newW, newH));
+//        newBmp.Unlock();
+//        // C. 将旧画布内容写回新位图的左上角
+//        newBmp.WritePixels(oldRect, oldPixels, canvasW * 4, 0);
+
+//        // D. 替换 Surface 中的主位图
+//        ctx.Surface.ReplaceBitmap(newBmp);
+
+//        // E. 记录调整后的全图状态 (用于 Redo)
+//        Int32Rect redoRect = new Int32Rect(0, 0, newW, newH);
+//        byte[] redoPixels = ctx.Surface.ExtractRegion(redoRect);
+
+//        // F. 压入 Transform 撤销栈
+//        ctx.Undo.PushTransformAction(oldRect, oldPixels, redoRect, redoPixels);
+
+//        // G. 更新 MainWindow 的 UI 状态
+//        var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+//        mw.OnPropertyChanged("CanvasWidth"); // 假设你绑定了这些属性
+//        mw.OnPropertyChanged("CanvasHeight");
+//    }
+//    // --- 【自动扩展逻辑结束】 ---
+
+//    // 提取粘贴图片的像素数据
+//    int width = sourceBitmap.PixelWidth;
+//    int height = sourceBitmap.PixelHeight;
+//    int stride = width * 4;
+//    var newData = new byte[height * stride];
+//    sourceBitmap.CopyPixels(newData, stride, 0);
+
+//    // 更新工具状态，准备预览
+//    _selectionData = newData;
+//    _selectionRect = new Int32Rect(0, 0, width, height);
+//    _originalRect = _selectionRect;
+
+//    var previewBmp = new WriteableBitmap(sourceBitmap);
+//    ctx.SelectionPreview.Source = previewBmp;
+
+//    Canvas.SetLeft(ctx.SelectionPreview, 0);
+//    Canvas.SetTop(ctx.SelectionPreview, 0);
+//    ctx.SelectionPreview.RenderTransform = new TranslateTransform(0, 0);
+//    ctx.SelectionPreview.Visibility = Visibility.Visible;
+//    DrawOverlay(ctx, _selectionRect);
+//    _transformStep = 0;
+//}

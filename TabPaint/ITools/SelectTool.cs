@@ -19,7 +19,7 @@ namespace TabPaint
             public override string Name => "Select";
             public override System.Windows.Input.Cursor Cursor => System.Windows.Input.Cursors.Cross;
 
-            private bool _selecting = false;
+            public bool _selecting = false;
             public bool _draggingSelection = false;
 
             private Point _startPixel;

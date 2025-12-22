@@ -154,25 +154,6 @@ namespace TabPaint
                 );
             }
 
-
-            //private void SetPreviewPosition(ToolContext ctx, int pixelX, int pixelY)
-            //{
-
-            //    // 背景图左上角位置（UI坐标）
-            //    var imgPos = ctx.ViewElement.TranslatePoint(new Point(0, 0), ctx.SelectionPreview.Parent as UIElement);
-
-            //    // 缩放比例（像素 → UI）
-            //    double scaleX = ctx.ViewElement.ActualWidth / ctx.Surface.Bitmap.PixelWidth;
-            //    double scaleY = ctx.ViewElement.ActualHeight / ctx.Surface.Bitmap.PixelHeight;
-
-            //    // 转换到 UI 平移
-            //    double uiX = imgPos.X + pixelX * scaleX;
-            //    double uiY = imgPos.Y + pixelY * scaleY;
-
-            //    ctx.SelectionPreview.RenderTransform = new TranslateTransform(uiX, uiY);
-            //    s(pixelX);
-            //}
-
             private void SetPreviewPosition(ToolContext ctx, int pixelX, int pixelY)
             {
                 // 1. 获取缩放比例（像素到 UI 单位的转换）

@@ -86,21 +86,20 @@ namespace TabPaint
                 _selectionData = null;
 
             }
-            public void PasteSelection(ToolContext ctx, bool ins)
+
+            // 在 SelectTool 类中添加
+            public void InsertImageAsSelection(ToolContext ctx, BitmapSource sourceBitmap)
             {
                 // 1. 提交当前的选区（如果有）
                 if (_selectionData != null) CommitSelection(ctx);
 
-                BitmapSource? sourceBitmap = null;
-                // ... (此处保持你原来的获取 sourceBitmap 的逻辑不变) ...
-                if (System.Windows.Clipboard.ContainsImage()) { sourceBitmap = System.Windows.Clipboard.GetImage(); }
-                if (sourceBitmap == null && _clipboardData != null) { /* 内部剪贴板逻辑 */ }
                 if (sourceBitmap == null) return;
 
+                // 强制转换为 Bgra32
                 if (sourceBitmap.Format != PixelFormats.Bgra32)
                     sourceBitmap = new FormatConvertedBitmap(sourceBitmap, PixelFormats.Bgra32, null, 0);
 
-                // --- 【新增逻辑：自动扩展画布】 ---
+                // --- 【自动扩展画布逻辑】 ---
                 int imgW = sourceBitmap.PixelWidth;
                 int imgH = sourceBitmap.PixelHeight;
                 int canvasW = ctx.Surface.Bitmap.PixelWidth;
@@ -108,74 +107,128 @@ namespace TabPaint
 
                 if (imgW > canvasW || imgH > canvasH)
                 {
-                    //  s("Auto-expanding canvas for paste operation.");
-                    // A. 记录调整前的全图状态 (用于 Undo)
+                    int newW = Math.Max(imgW, canvasW);
+                    int newH = Math.Max(imgH, canvasH);
+
+                    // 记录旧状态用于撤销
                     Int32Rect oldRect = new Int32Rect(0, 0, canvasW, canvasH);
                     byte[] oldPixels = ctx.Surface.ExtractRegion(oldRect);
 
-                    // B. 计算新尺寸并创建新位图
-                    int newW = Math.Max(imgW, canvasW);
-                    int newH = Math.Max(imgH, canvasH);
-                    var newBmp = new WriteableBitmap(newW, newH,
-                        ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
-                        PixelFormats.Bgra32, null);
-                    // --- 【新增：快速填充白色】 ---
+                    // 创建新位图并填充白色
+                    var newBmp = new WriteableBitmap(newW, newH, ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32, null);
                     newBmp.Lock();
                     unsafe
                     {
-                        byte* pBackBuffer = (byte*)newBmp.BackBuffer;
-                        int strides = newBmp.BackBufferStride;
-                        int heights = newBmp.PixelHeight;
-                        int totalBytes = strides * heights;
-                        for (int i = 0; i < totalBytes; i++)
-                        {
-                            pBackBuffer[i] = 255;
-                        }
+                        byte* p = (byte*)newBmp.BackBuffer;
+                        int totalBytes = newBmp.BackBufferStride * newBmp.PixelHeight;
+                        // 快速填充白色 (B G R A)
+                        for (int i = 0; i < totalBytes; i++) p[i] = 255;
                     }
-                    newBmp.AddDirtyRect(new Int32Rect(0, 0, newW, newH));
                     newBmp.Unlock();
-                    // C. 将旧画布内容写回新位图的左上角
-                    newBmp.WritePixels(oldRect, oldPixels, canvasW * 4, 0);
 
-                    // D. 替换 Surface 中的主位图
+                    // 写回旧内容
+                    newBmp.WritePixels(oldRect, oldPixels, canvasW * 4, 0);
                     ctx.Surface.ReplaceBitmap(newBmp);
 
-                    // E. 记录调整后的全图状态 (用于 Redo)
+                    // 压入撤销栈
                     Int32Rect redoRect = new Int32Rect(0, 0, newW, newH);
                     byte[] redoPixels = ctx.Surface.ExtractRegion(redoRect);
-
-                    // F. 压入 Transform 撤销栈
                     ctx.Undo.PushTransformAction(oldRect, oldPixels, redoRect, redoPixels);
 
-                    // G. 更新 MainWindow 的 UI 状态
+                    // 通知 UI 更新
                     var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
-                    mw.OnPropertyChanged("CanvasWidth"); // 假设你绑定了这些属性
+                    mw.OnPropertyChanged("CanvasWidth");
                     mw.OnPropertyChanged("CanvasHeight");
                 }
-                // --- 【自动扩展逻辑结束】 ---
 
-                // 提取粘贴图片的像素数据
-                int width = sourceBitmap.PixelWidth;
-                int height = sourceBitmap.PixelHeight;
-                int stride = width * 4;
-                var newData = new byte[height * stride];
+                // --- 【初始化选区状态】 ---
+                int stride = imgW * 4;
+                var newData = new byte[imgH * stride];
                 sourceBitmap.CopyPixels(newData, stride, 0);
 
-                // 更新工具状态，准备预览
                 _selectionData = newData;
-                _selectionRect = new Int32Rect(0, 0, width, height);
+                _selectionRect = new Int32Rect(0, 0, imgW, imgH);
                 _originalRect = _selectionRect;
 
-                var previewBmp = new WriteableBitmap(sourceBitmap);
-                ctx.SelectionPreview.Source = previewBmp;
+                // 设置预览图源
+                ctx.SelectionPreview.Source = new WriteableBitmap(sourceBitmap);
 
+                // 默认放在左上角 (0,0)
                 Canvas.SetLeft(ctx.SelectionPreview, 0);
                 Canvas.SetTop(ctx.SelectionPreview, 0);
                 ctx.SelectionPreview.RenderTransform = new TranslateTransform(0, 0);
                 ctx.SelectionPreview.Visibility = Visibility.Visible;
+
+                // 绘制 8 个句柄和虚线框
                 DrawOverlay(ctx, _selectionRect);
                 _transformStep = 0;
             }
+
+            public void PasteSelection(ToolContext ctx, bool ins)
+            {
+                // 1. 提交当前的选区（如果有）
+                if (_selectionData != null) CommitSelection(ctx);
+
+                BitmapSource? sourceBitmap = null;
+
+                // --- 逻辑 A: 检查剪贴板是否直接包含位图 (如截图、浏览器右键复制图片) ---
+                if (System.Windows.Clipboard.ContainsImage())
+                {
+                    sourceBitmap = System.Windows.Clipboard.GetImage();
+                }
+                // --- 逻辑 B: 检查剪贴板是否包含文件 (如在资源管理器 Ctrl+C 复制的文件) ---
+                else if (System.Windows.Clipboard.ContainsData(System.Windows.DataFormats.FileDrop))
+                {
+                    var fileList = System.Windows.Clipboard.GetData(System.Windows.DataFormats.FileDrop) as string[];
+                    if (fileList != null && fileList.Length > 0)
+                    {
+                        string filePath = fileList[0]; // 取第一个文件
+                        sourceBitmap = LoadImageFromFile(filePath);
+                    }
+                }
+                // --- 逻辑 C: 检查应用内自定义剪贴板 ---
+                else if (_clipboardData != null)
+                {
+                    sourceBitmap = BitmapSource.Create(_clipboardWidth, _clipboardHeight,
+                        ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
+                        PixelFormats.Bgra32, null, _clipboardData, _clipboardWidth * 4);
+                }
+
+                // 统一处理获取到的位图
+                if (sourceBitmap != null)
+                {
+                    // 调用上一步建议中提取的统一插入逻辑
+                    InsertImageAsSelection(ctx, sourceBitmap);
+                }
+            }
+
+            // 安全加载文件的辅助方法
+            private BitmapSource? LoadImageFromFile(string path)
+            {
+                try
+                {
+                    // 检查扩展名过滤非图片文件
+                    string ext = System.IO.Path.GetExtension(path).ToLower();
+                    string[] allowed = { ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff" };
+                    if (!allowed.Contains(ext)) return null;
+
+                    BitmapImage bitmap = new BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.UriSource = new Uri(path);
+                    // 必须使用 OnLoad，否则粘贴后如果删除/移动原文件，程序会崩溃或锁定文件
+                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmap.EndInit();
+                    bitmap.Freeze(); // 跨线程安全
+                    return bitmap;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("Load file from clipboard failed: " + ex.Message);
+                    return null;
+                }
+            }
+
+
 
             public void CopySelection(ToolContext ctx)
             {
@@ -247,6 +300,7 @@ namespace TabPaint
 
                 // 绘制虚线框
                 DrawOverlay(ctx, _selectionRect);
+                ((MainWindow)System.Windows.Application.Current.MainWindow).SetCropButtonState();
             }
             public void CropToSelection(ToolContext ctx)
             {
@@ -390,6 +444,7 @@ namespace TabPaint
                 ctx.ViewElement.CaptureMouse();
                 if (_selectionRect.Width != 0 && _selectionRect.Height != 0)
                     DrawOverlay(ctx, _selectionRect);
+                ((MainWindow)System.Windows.Application.Current.MainWindow).SetCropButtonState();
             }
 
 
@@ -702,6 +757,7 @@ namespace TabPaint
                 {
                     DrawOverlay(ctx, _selectionRect);
                 }
+                ((MainWindow)System.Windows.Application.Current.MainWindow).SetCropButtonState();
 
             }
 

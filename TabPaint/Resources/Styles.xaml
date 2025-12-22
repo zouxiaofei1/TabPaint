@@ -1,0 +1,667 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+	
+    <!-- 把原本在 Window.Resources 里的 Style、ControlTemplate 剪切到这里 -->
+
+    <!-- Win11 风格 ContextMenu 样式 -->
+    <Style x:Key="Win11ContextMenuStyle" TargetType="ContextMenu">
+        <Setter Property="Background" Value="#F9F9F9"/>
+        <Setter Property="BorderBrush" Value="#E5E5E5"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="4"/>
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="Grid.IsSharedSizeScope" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border CornerRadius="8" 
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        Padding="{TemplateBinding Padding}">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="15" Opacity="0.2" ShadowDepth="2" Color="Black"/>
+                        </Border.Effect>
+                        <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Win11 风格 MenuItem 样式 -->
+    <Style x:Key="Win11MenuItemStyle" TargetType="MenuItem">
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="Foreground" Value="#1A1A1A"/>
+        <Setter Property="Padding" Value="10,0,10,0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Border x:Name="Bg" 
+                        Background="Transparent" 
+                        CornerRadius="4" 
+                        Margin="2,1" 
+                        SnapsToDevicePixels="True">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="30" SharedSizeGroup="IconGroup"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="ShortcutGroup"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- 图标区域 -->
+                            <ContentPresenter x:Name="Icon" ContentSource="Icon" Margin="5,0" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+
+                            <!-- 文字内容 -->
+                            <ContentPresenter Grid.Column="1" 
+                                          ContentSource="Header" 
+                                          VerticalAlignment="Center" 
+                                          Margin="5,0,20,0"/>
+
+                            <!-- 快捷键提示 -->
+                            <TextBlock Grid.Column="2" 
+                                   Text="{TemplateBinding InputGestureText}" 
+                                   VerticalAlignment="Center" 
+                                   Foreground="#808080" 
+                                   Margin="10,0,5,0" 
+                                   FontSize="11"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bg" Property="Background" Value="#10000000"/>
+                            <!-- 浅灰悬浮 -->
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 分隔条样式 -->
+    <Style x:Key="Win11MenuSeparatorStyle" TargetType="Separator">
+        <Setter Property="Height" Value="1"/>
+        <Setter Property="Margin" Value="4,4,4,4"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Separator">
+                    <Border Background="#E5E5E5"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Win11 强调色 -->
+    <SolidColorBrush x:Key="Win11AccentBrush" Color="#0067C0"/>
+    <SolidColorBrush x:Key="Win11TrackBackground" Color="#20000000"/>
+
+    <!-- 1. 滑块 (Thumb) 的样式 -->
+    <Style x:Key="Win11SliderThumbStyle" TargetType="Thumb">
+        <Setter Property="SnapsToDevicePixels" Value="true"/>
+        <Setter Property="OverridesDefaultStyle" Value="true"/>
+        <Setter Property="Height" Value="18"/>
+        <Setter Property="Width" Value="18"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Grid>
+                        <!-- 滑块外圈 -->
+                        <Ellipse x:Name="OuterRing" 
+                             Fill="White" 
+                             Stroke="#BBB" 
+                             StrokeThickness="1"/>
+                        <!-- 滑块内圆 (Win11 特色) -->
+                        <Ellipse x:Name="InnerDot" 
+                             Fill="{StaticResource Win11AccentBrush}" 
+                             Width="6" Height="6" 
+                             VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <Ellipse.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1" CenterX="3" CenterY="3"/>
+                            </Ellipse.RenderTransform>
+                        </Ellipse>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="OuterRing" Property="Stroke" Value="#888"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="InnerDot" 
+                                                     Storyboard.TargetProperty="(RenderTransform).ScaleX" 
+                                                     To="1.5" Duration="0:0:0.1"/>
+                                        <DoubleAnimation Storyboard.TargetName="InnerDot" 
+                                                     Storyboard.TargetProperty="(RenderTransform).ScaleY" 
+                                                     To="1.5" Duration="0:0:0.1"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="InnerDot" 
+                                                     Storyboard.TargetProperty="(RenderTransform).ScaleX" 
+                                                     To="1" Duration="0:0:0.1"/>
+                                        <DoubleAnimation Storyboard.TargetName="InnerDot" 
+                                                     Storyboard.TargetProperty="(RenderTransform).ScaleY" 
+                                                     To="1" Duration="0:0:0.1"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 2. Slider 整体模板 (修正了 RepeatButton 问题) -->
+    <Style x:Key="Win11VerticalSliderStyle" TargetType="Slider">
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Slider">
+                    <Grid Margin="0,10">
+                        <!-- 轨道背景 -->
+                        <Border x:Name="TrackBackground" 
+                            Width="4" 
+                            Background="{StaticResource Win11TrackBackground}" 
+                            CornerRadius="2" 
+                            HorizontalAlignment="Center"/>
+
+                        <!-- 轨道控制 -->
+                        <Track x:Name="PART_Track">
+                            <!-- 这里的按钮必须是 RepeatButton -->
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Command="{x:Static Slider.DecreaseLarge}" Background="Transparent" BorderBrush="Transparent">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate TargetType="RepeatButton">
+                                            <Border Background="Transparent"/>
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
+                            </Track.DecreaseRepeatButton>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Command="{x:Static Slider.IncreaseLarge}" Background="Transparent" BorderBrush="Transparent">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate TargetType="RepeatButton">
+                                            <Border Background="Transparent"/>
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
+                            </Track.IncreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Style="{StaticResource Win11SliderThumbStyle}"/>
+                            </Track.Thumb>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    <Style TargetType="ToolBar">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToolBar">
+                    <StackPanel Orientation="Horizontal" IsItemsHost="True"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <!-- 通用标题栏按钮样式 -->
+    <Style x:Key="TitleTextStyle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="Black"/>
+        <Style.Triggers>
+            <!-- 当所在窗口失去焦点时变灰 -->
+            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=IsActive}" Value="False">
+                <Setter Property="Foreground" Value="Gray"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="TitleBarButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Foreground" Value="Black"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="0"
+                            >
+                        <ContentPresenter VerticalAlignment="Center"
+                                          HorizontalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Border" Property="Background" Value="#EEE"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Border" Property="Background" Value="#DDD"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="MenuSeparator" TargetType="Separator">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Separator">
+                    <Grid Margin="0,4,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="32"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Rectangle Grid.Column="0" Grid.ColumnSpan="3"
+                             Height="1"
+                            Stroke="#DDD"
+                             VerticalAlignment="Center"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <!-- 专门用于“关闭”按钮的样式 -->
+    <Style x:Key="CloseButtonStyle" BasedOn="{StaticResource TitleBarButtonStyle}" TargetType="Button">
+        <Setter Property="FontSize" Value="18"/>
+        <!-- 字体更大 -->
+        <Setter Property="Foreground" Value="Black"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Border"
+                            Background="{TemplateBinding Background}"
+                            >
+                        <ContentPresenter VerticalAlignment="Center"
+                                          HorizontalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <!-- 悬浮红色 -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Border" Property="Background" Value="#FF5555"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Trigger>
+                        <!-- 点击深红色 -->
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Border" Property="Background" Value="#CC3333"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="ColorCircleButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Width" Value="34"/>
+        <!-- 稍微加宽一点，给外圈留空间 -->
+        <Setter Property="Height" Value="34"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <!-- Grid 用于叠加内外两个圆 -->
+                    <Grid>
+                        <!-- 1. 外层：高亮边框圆 (默认透明) -->
+                        <Ellipse x:Name="OuterRing" 
+                             Stroke="Transparent" 
+                             StrokeThickness="1" 
+                             HorizontalAlignment="Stretch" 
+                             VerticalAlignment="Stretch"/>
+
+                        <!-- 2. 内层：实际的颜色圆 -->
+                        <!-- Margin="4" 就是你想要的间距 -->
+                        <Ellipse x:Name="InnerCircle" 
+                             Fill="{TemplateBinding Background}"
+                             Stroke="#CCCCCC" 
+                             StrokeThickness="1"
+                             Margin="4" 
+                             SnapsToDevicePixels="True"/>
+                    </Grid>
+
+                    <ControlTemplate.Triggers>
+                        <!-- 当 Tag 为 True (选中) 时 -->
+                        <Trigger Property="Tag" Value="True">
+                            <!-- 显示外层紫色边框 -->
+                            <Setter TargetName="OuterRing" Property="Stroke" Value="#D6BFFE"/>
+                        </Trigger>
+
+                        <!-- 鼠标悬停时，内圈边框加深 -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="InnerCircle" Property="Stroke" Value="#888888"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+
+    <Style x:Key="SubMenuItemStyle" TargetType="MenuItem">
+        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Border x:Name="BgBorder" 
+            CornerRadius="4" 
+            Background="Transparent" 
+            Padding="{TemplateBinding Padding}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32"/>
+                                <!-- 图标区 -->
+                                <ColumnDefinition Width="*"/>
+                                <!-- 文字 -->
+                                <ColumnDefinition Width="Auto"/>
+                                <!-- 快捷键 -->
+                            </Grid.ColumnDefinitions>
+
+                            <!-- 图标 -->
+                            <ContentPresenter Grid.Column="0"
+                              ContentSource="Icon"
+                              VerticalAlignment="Center"
+                              HorizontalAlignment="Center"
+                              Width="16" Height="16"/>
+
+                            <!-- 菜单文字 -->
+                            <ContentPresenter Grid.Column="1"
+                              ContentSource="Header"
+                              VerticalAlignment="Center"/>
+
+                            <!-- 快捷键 -->
+                            <TextBlock Grid.Column="2"
+                       Text="{TemplateBinding InputGestureText}"
+                       Foreground="#888"
+                       Margin="16,0,8,0"
+                       VerticalAlignment="Center"
+                                           HorizontalAlignment="Right"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- 高亮 -->
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="BgBorder" Property="Background" Value="#E7F3FF"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    <Style x:Key="ModernMenuItemStyle" TargetType="{x:Type MenuItem}">
+        <!-- 设置内边距，让背景比文字大一些 -->
+        <Setter Property="Padding" Value="10,5"/>
+        <!-- 设置外边距，让菜单项之间有间距 -->
+        <Setter Property="Margin" Value="2,0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type MenuItem}">
+                    <!-- 使用 Grid 布局，方便放置 Header 和 Popup -->
+                    <Grid Background="Transparent">
+                        <!-- 视觉元素：圆角边框，用于悬浮效果 -->
+                        <Border x:Name="BgBorder" 
+                                Background="Transparent" 
+                                BorderBrush="Transparent" 
+                                BorderThickness="1"
+                                CornerRadius="2">
+                            <!-- 内容显示：绑定 Header 和 Padding -->
+                            <ContentPresenter ContentSource="Header" 
+                                              RecognizesAccessKey="True"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"/>
+                        </Border>
+
+                        <!-- 功能核心：Popup 用于显示子菜单 -->
+                        <!-- IsOpen 属性与 MenuItem 的 IsSubmenuOpen 状态绑定 -->
+                        <Popup x:Name="SubMenuPopup"
+                               IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                               Placement="Bottom"
+                               Focusable="false"
+                               AllowsTransparency="True"
+                               PopupAnimation="None">
+                            <!-- 子菜单的容器和外观 -->
+                            <Border Name="SubmenuBorder"
+                                    Background="White"
+                                    BorderBrush="#E0E0E0"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    Margin="5,0"
+                                    Padding="2">
+                                <!-- ItemsPresenter 用于显示所有子 MenuItem -->
+                                <ItemsPresenter x:Name="ItemsPresenter"
+                                                KeyboardNavigation.DirectionalNavigation="Cycle"
+                                                Grid.IsSharedSizeScope="true"
+                                                SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
+                                                KeyboardNavigation.TabNavigation="Cycle"/>
+                            </Border>
+                        </Popup>
+                    </Grid>
+
+                    <!-- 触发器：定义不同状态下的样式 -->
+                    <ControlTemplate.Triggers>
+                        <!-- 1. 鼠标悬浮时的样式 -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="BgBorder" Property="Background" Value="#77E0E0E0"/>
+                        </Trigger>
+
+                        <!-- 2. 当子菜单打开时，保持高亮状态 -->
+                        <Trigger Property="IsSubmenuOpen" Value="True">
+                            <Setter TargetName="BgBorder" Property="Background" Value="#77EAEAEA"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="RoundedMenuButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="8"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <!-- 命名 Border 为 mainBorder 方便 Trigger 指定目标 -->
+                    <Border x:Name="mainBorder" 
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="3"  
+                        Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+
+                    <ControlTemplate.Triggers>
+                        <!-- 1. 基础悬停效果 -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="mainBorder" Property="Background" Value="#159333EA"/>
+                            <Setter TargetName="mainBorder" Property="BorderBrush" Value="#C084FC"/>
+                        </Trigger>
+
+                        <!-- 2. 基础按下效果 -->
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="mainBorder" Property="Background" Value="#309333EA"/>
+                            <Setter TargetName="mainBorder" Property="BorderBrush" Value="#A366F2"/>
+                        </Trigger>
+
+                        <!-- 3. 选中状态效果 (通过 Tag 判断) -->
+                        <!-- 当 Tag 为 True 时，即使鼠标移出，颜色也会保持 -->
+                        <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True">
+                            <Setter TargetName="mainBorder" Property="BorderBrush" Value="#9333EA"/>
+                            <Setter TargetName="mainBorder" Property="Background" Value="#28886CE4"/>
+                        </DataTrigger>
+
+
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+
+    <Style x:Key="SliderRepeatButtonStyle" TargetType="RepeatButton">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="IsTabStop" Value="False"/>
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RepeatButton">
+                    <!-- 使用一个简单的矩形作为模板，确保它不会干扰其他元素 -->
+                    <Rectangle Fill="{TemplateBinding Background}" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="ToolbarButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Padding" Value="4"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="0" CornerRadius="4">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#333"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="#555"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="DropDownButtonStyle" TargetType="{x:Type ToggleButton}">
+        <Setter Property="Padding" Value="7,7"/>
+        <Setter Property="Margin" Value="2,0"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                    <!-- 使用 Border 来实现悬浮和点击时的背景效果 -->
+                    <Border x:Name="BgBorder" 
+                        Background="{TemplateBinding Background}" 
+                        BorderBrush="{TemplateBinding BorderBrush}" 
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="2">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- 左侧：显示文字内容，如 "效果" -->
+                            <ContentPresenter Grid.Column="0"
+                                          ContentSource="Content" 
+                                          RecognizesAccessKey="True"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Margin="{TemplateBinding Padding}"/>
+
+                            <!-- 右侧：显示下拉箭头图标，作为实际的点击区域 -->
+                            <Path x:Name="Arrow"
+                                      Grid.Column="1"
+                                      Data="M 0 0 L 4 4 L 8 0 "
+                                      Stroke="#333"
+                                      StrokeThickness="1"
+                                      VerticalAlignment="Center"
+                                      Margin="0,0,8,0">
+
+                            </Path>
+
+                        </Grid>
+                    </Border>
+
+                    <!-- 触发器：定义不同状态下的样式 -->
+                    <ControlTemplate.Triggers>
+                        <!-- 1. 鼠标悬浮时的样式 -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="BgBorder" Property="Background" Value="#77E0E0E0"/>
+                        </Trigger>
+
+                        <!-- 2. 当按钮被按下（子菜单打开）时，保持高亮状态 -->
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="BgBorder" Property="Background" Value="#77EAEAEA"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <!-- 扁平菜单样式 -->
+
+    <Style TargetType="Button" x:Key="ToolButton">
+        <Setter Property="Background" Value="#ccc"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}"
+                        CornerRadius="6"
+                        Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#333"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 菜单弹出窗口的圆角与阴影效果 -->
+    <Style TargetType="ContextMenu">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border Background="#222"
+                        BorderBrush="#444"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="2">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="10"
+                                          ShadowDepth="3"
+                                          Color="#66000000"/>
+                        </Border.Effect>
+                        <StackPanel>
+                            <ItemsPresenter/>
+                        </StackPanel>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+	
+
+	<!-- 如果有引用的颜色，也可以放在这里或引用 Brushes.xaml -->
+</ResourceDictionary>

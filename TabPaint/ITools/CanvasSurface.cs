@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Interop;
@@ -23,6 +24,8 @@ using System.Windows.Threading;
 
 namespace TabPaint
 {
+
+
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
         public class CanvasSurface
@@ -255,3 +258,5 @@ namespace TabPaint
 
     }
 }
+
+
