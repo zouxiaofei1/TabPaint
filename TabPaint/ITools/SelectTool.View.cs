@@ -177,16 +177,10 @@ namespace TabPaint
                     Math.Round(localX, 0),
                     Math.Round(localY, 0)
                 );
-
-                // 5. 补充：如果你的 SelectionPreview 还在 Canvas 中，
-                // 请确保它的 Canvas.Left 和 Top 都设为 0，避免重复偏移
-                // Canvas.SetLeft(ctx.SelectionPreview, 0);
-                // Canvas.SetTop(ctx.SelectionPreview, 0);
             }
 
             private void StartDragDropOperation(ToolContext ctx)
             {
-
                 if (_selectionData == null) return;
 
                 int width = _originalRect.Width > 0 ? _originalRect.Width : _selectionRect.Width;

@@ -237,28 +237,10 @@ namespace TabPaint
                 if (_selectionData != null)
                 {
                     CopyToSystemClipboard(ctx);
-                    if (_originalRect.Width == 0 || _originalRect.Height == 0)
-                    {
-                        _clipboardWidth = _selectionRect.Width;
-                        _clipboardHeight = _selectionRect.Height;
-                    }
-                    else
-                    {
-                        _clipboardWidth = _originalRect.Width;
-                        _clipboardHeight = _originalRect.Height;
-                    }
-
+                    _clipboardWidth = _originalRect.Width > 0 ? _originalRect.Width : _selectionRect.Width;
+                    _clipboardHeight = _originalRect.Height > 0 ? _originalRect.Height : _selectionRect.Height;
                     _clipboardData = new byte[_selectionData.Length];
                     Array.Copy(_selectionData, _clipboardData, _selectionData.Length);
-
-                    // 直接原位粘贴
-                    //   PasteSelection(ctx, true);
-                    HidePreview(ctx);
-                    ctx.SelectionOverlay.Children.Clear();
-                    ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
-
-                    // 清空状态
-                    _selectionData = null;
                 }
             }
 
@@ -431,7 +413,7 @@ namespace TabPaint
                         _draggingSelection = true;
                         _clickOffset = new Point(px.X - _selectionRect.X, px.Y - _selectionRect.Y);
                         //s(_clickOffset);
-                        //ctx.ViewElement.CaptureMouse();
+                        ctx.ViewElement.CaptureMouse();
                         return;
                     }
                 }
@@ -447,7 +429,7 @@ namespace TabPaint
                 ((MainWindow)System.Windows.Application.Current.MainWindow).SetCropButtonState();
             }
 
-
+            private bool _hasLifted = false;
             public override void OnPointerMove(ToolContext ctx, Point viewPos)
             {
                 //s(_selectionData.Length);
@@ -566,27 +548,41 @@ namespace TabPaint
 
                 if (_selecting)// 框选逻辑
                 {
+                    _hasLifted = false;
                     _selectionRect = MakeRect(_startPixel, px);
                     DrawOverlay(ctx, _selectionRect);
                 }
 
                 else if (_draggingSelection) // 拖动逻辑
                 {
+                    if (!_hasLifted)
+                    {
+                        ClearRect(ctx, _originalRect, ctx.EraserColor);
+                        _hasLifted = true;
+                    }
                     var mainWindow = System.Windows.Application.Current.MainWindow;
                     if (mainWindow != null)
                     {
-                        // 将鼠标位置从视图元素坐标系转换到屏幕坐标系
-                        Point mouseOnScreen = ctx.ViewElement.PointToScreen(viewPos);
-                        var windowBoundsInPixels = GetWindowBoundsInPhysicalPixels(mainWindow);
+                        // 1. 将当前的鼠标位置转换为相对于【整个窗口】的逻辑坐标
+                        Point posInWindow = ctx.ViewElement.TranslatePoint(viewPos, mainWindow);
 
-                        // 检查鼠标是否在窗口边界之外
-                        if (!windowBoundsInPixels.Contains(mouseOnScreen))
+                        // 2. 判定逻辑坐标是否超出了窗口的实际宽高 (ActualWidth/Height)
+                        // 我们给 5 像素的缓冲区，防止边缘判定太死板
+                        double margin = -5;
+                        bool isOutside = posInWindow.X < margin ||
+                                         posInWindow.Y < margin ||
+                                         posInWindow.X > mainWindow.ActualWidth - margin ||
+                                         posInWindow.Y > mainWindow.ActualHeight - margin;
+                        if (isOutside)
                         {
+                            // 释放捕获，否则系统拖放引擎无法接管鼠标
+                            ctx.ViewElement.ReleaseMouseCapture();
 
-                            // 用户正在向外拖动，启动文件拖放操作
+                            // 启动拖放
                             StartDragDropOperation(ctx);
-                            _draggingSelection = false; // 停止内部拖动
-                            return; // 退出事件处理器
+
+                            _draggingSelection = false;
+                            return;
                         }
                     }
                     int newX = (int)(px.X - _clickOffset.X);
@@ -706,12 +702,12 @@ namespace TabPaint
                         _originalRect = _selectionRect;
                         // ---------------------------
 
-                        ctx.Undo.BeginStroke();
-                        ctx.Undo.AddDirtyRect(_selectionRect);
-                        ctx.Undo.CommitStroke();
+                        //ctx.Undo.BeginStroke();
+                        //ctx.Undo.AddDirtyRect(_selectionRect);
+                        //ctx.Undo.CommitStroke();
 
                         // 2. 擦除原画布内容
-                        ClearRect(ctx, _selectionRect, ctx.EraserColor);
+                      //  ClearRect(ctx, _selectionRect, ctx.EraserColor);
 
                         // 3. 创建预览
                         var previewBmp = new WriteableBitmap(_selectionRect.Width, _selectionRect.Height,

@@ -174,81 +174,106 @@ namespace TabPaint
             {
                 var px = ctx.ToPixel(viewPos);
 
-                // 💡 一段独立：根据鼠标所在的句柄更新光标形状
-                if (_textBox != null)
+                // 1️⃣ 光标状态更新逻辑 (增加移动光标检测)
+                if (_textBox != null && !_resizing && !_dragging) // 如果没有在操作中，才检测光标
                 {
-                    var anchor = HitTestTextboxHandle(px); // 只检测，不缩放
-                    switch (anchor)
+                    var anchor = HitTestTextboxHandle(px);
+                    if (anchor != ResizeAnchor.None)
                     {
-                        case ResizeAnchor.TopLeft:
-                        case ResizeAnchor.BottomRight:
-                            Mouse.OverrideCursor = System.Windows.Input.Cursors.SizeNWSE;
-                            break;
-                        case ResizeAnchor.TopRight:
-                        case ResizeAnchor.BottomLeft:
-                            Mouse.OverrideCursor = System.Windows.Input.Cursors.SizeNESW;
-                            break;
-                        case ResizeAnchor.LeftMiddle:
-                        case ResizeAnchor.RightMiddle:
-                            Mouse.OverrideCursor = System.Windows.Input.Cursors.SizeWE;
-                            break;
-                        case ResizeAnchor.TopMiddle:
-                        case ResizeAnchor.BottomMiddle:
-                            Mouse.OverrideCursor = System.Windows.Input.Cursors.SizeNS;
-                            break;
-                        default:
-                            // 非句柄位置 → 普通箭头
-                            Mouse.OverrideCursor = null;
-                            break;
+                        // 命中句柄 -> 显示调整大小光标
+                        switch (anchor)
+                        {
+                            case ResizeAnchor.TopLeft:
+                            case ResizeAnchor.BottomRight:
+                                Mouse.OverrideCursor = System.Windows.Input.Cursors.SizeNWSE;
+                                break;
+                            case ResizeAnchor.TopRight:
+                            case ResizeAnchor.BottomLeft:
+                                Mouse.OverrideCursor = System.Windows.Input.Cursors.SizeNESW;
+                                break;
+                            case ResizeAnchor.LeftMiddle:
+                            case ResizeAnchor.RightMiddle:
+                                Mouse.OverrideCursor = System.Windows.Input.Cursors.SizeWE;
+                                break;
+                            case ResizeAnchor.TopMiddle:
+                            case ResizeAnchor.BottomMiddle:
+                                Mouse.OverrideCursor = System.Windows.Input.Cursors.SizeNS;
+                                break;
+                        }
+                    }
+                    else if (IsInsideBorder(px))
+                    {
+                        // 命中虚线边框 -> 显示移动光标 (十字箭头) ✨✨✨
+                        Mouse.OverrideCursor = System.Windows.Input.Cursors.SizeAll;
+                    }
+                    else
+                    {
+                        // 既没中句柄也没中边框 -> 恢复默认
+                        Mouse.OverrideCursor = null;
                     }
                 }
 
-                // 🧩 真正的缩放逻辑，只有在 _resizing == true 时执行
-                if (_resizing && _textBox != null)
+                // 2️⃣ 具体的交互逻辑
+                if (_textBox != null)
                 {
                     double dx = px.X - _startMouse.X;
                     double dy = px.Y - _startMouse.Y;
 
-                    switch (_currentAnchor)
+                    // A. 处理调整大小 (Resizing)
+                    if (_resizing)
                     {
-                        case ResizeAnchor.TopLeft:
-                            Canvas.SetLeft(_textBox, _startX + dx);
-                            Canvas.SetTop(_textBox, _startY + dy);
-                            _textBox.Width = Math.Max(1, _startW - dx);
-                            _textBox.Height = Math.Max(1, _startH - dy);
-                            break;
-                        case ResizeAnchor.TopMiddle:
-                            Canvas.SetTop(_textBox, _startY + dy);
-                            _textBox.Height = Math.Max(1, _startH - dy);
-                            break;
-                        case ResizeAnchor.TopRight:
-                            _textBox.Width = Math.Max(1, _startW + dx);
-                            Canvas.SetTop(_textBox, _startY + dy);
-                            _textBox.Height = Math.Max(1, _startH - dy);
-                            break;
-                        case ResizeAnchor.LeftMiddle:
-                            Canvas.SetLeft(_textBox, _startX + dx);
-                            _textBox.Width = Math.Max(1, _startW - dx);
-                            break;
-                        case ResizeAnchor.RightMiddle:
-                            _textBox.Width = Math.Max(1, _startW + dx);
-                            break;
-                        case ResizeAnchor.BottomLeft:
-                            Canvas.SetLeft(_textBox, _startX + dx);
-                            _textBox.Width = Math.Max(1, _startW - dx);
-                            _textBox.Height = Math.Max(1, _startH + dy);
-                            break;
-                        case ResizeAnchor.BottomMiddle:
-                            _textBox.Height = Math.Max(1, _startH + dy);
-                            break;
-                        case ResizeAnchor.BottomRight:
-                            _textBox.Width = Math.Max(1, _startW + dx);
-                            _textBox.Height = Math.Max(1, _startH + dy);
-                            break;
+                        switch (_currentAnchor)
+                        {
+                            case ResizeAnchor.TopLeft:
+                                Canvas.SetLeft(_textBox, _startX + dx);
+                                Canvas.SetTop(_textBox, _startY + dy);
+                                _textBox.Width = Math.Max(1, _startW - dx);
+                                _textBox.Height = Math.Max(1, _startH - dy);
+                                break;
+                            case ResizeAnchor.TopMiddle:
+                                Canvas.SetTop(_textBox, _startY + dy);
+                                _textBox.Height = Math.Max(1, _startH - dy);
+                                break;
+                            case ResizeAnchor.TopRight:
+                                _textBox.Width = Math.Max(1, _startW + dx);
+                                Canvas.SetTop(_textBox, _startY + dy);
+                                _textBox.Height = Math.Max(1, _startH - dy);
+                                break;
+                            case ResizeAnchor.LeftMiddle:
+                                Canvas.SetLeft(_textBox, _startX + dx);
+                                _textBox.Width = Math.Max(1, _startW - dx);
+                                break;
+                            case ResizeAnchor.RightMiddle:
+                                _textBox.Width = Math.Max(1, _startW + dx);
+                                break;
+                            case ResizeAnchor.BottomLeft:
+                                Canvas.SetLeft(_textBox, _startX + dx);
+                                _textBox.Width = Math.Max(1, _startW - dx);
+                                _textBox.Height = Math.Max(1, _startH + dy);
+                                break;
+                            case ResizeAnchor.BottomMiddle:
+                                _textBox.Height = Math.Max(1, _startH + dy);
+                                break;
+                            case ResizeAnchor.BottomRight:
+                                _textBox.Width = Math.Max(1, _startW + dx);
+                                _textBox.Height = Math.Max(1, _startH + dy);
+                                break;
+                        }
+                        DrawTextboxOverlay(ctx); // 实时重绘边框
                     }
-                    DrawTextboxOverlay(ctx);
+                    // B. 处理拖拽移动 (Dragging) ✨✨✨ 这里是你缺失的部分
+                    else if (_dragging)
+                    {
+                        // 移动 TextBox
+                        Canvas.SetLeft(_textBox, _startX + dx);
+                        Canvas.SetTop(_textBox, _startY + dy);
+
+                        // 实时重绘边框跟随移动
+                        DrawTextboxOverlay(ctx);
+                    }
                 }
             }
+
 
 
             public override void OnPointerDown(ToolContext ctx, Point viewPos)

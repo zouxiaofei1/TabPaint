@@ -407,6 +407,16 @@
                                             <Image Source="{StaticResource Watercolor_Image}" Width="16" Height="16"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
+                                    <MenuItem Header="荧光笔"  Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Highlighter">
+                                        <MenuItem.Icon>
+                                            <Image Source="{StaticResource Highlighter_Image}" Width="16" Height="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="马赛克"  Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Mosaic">
+                                        <MenuItem.Icon>
+                                            <Image Source="{StaticResource Mosaic_Image}" Width="16" Height="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
                                 </StackPanel>
                             </Border>
                         </Popup>
@@ -741,7 +751,14 @@
            VerticalAlignment="Top"
            SnapsToDevicePixels="True"
            RenderOptions.BitmapScalingMode="NearestNeighbor" />
-
+                    
+                    
+                    <Canvas Name="CanvasResizeOverlay" 
+            Visibility="Visible" 
+            IsHitTestVisible="True" 
+            Background="Transparent">
+                        <!-- 这里的内容将由代码动态生成 -->
+                    </Canvas>
                     <!-- 选区预览层 -->
                     <Image Name="SelectionPreview"
        Stretch="Fill" 
@@ -771,42 +788,7 @@
             IsHitTestVisible="False"
             Visibility="Visible"/>
 
-                    <!-- 3. 画布调整手柄层 (位于最上层) -->
-                    <!-- 我们让这个 Canvas 绑定 BackgroundImage 的宽高 -->
-                    <Canvas Name="ResizeHandleCanvas" 
-            Width="{Binding ElementName=BackgroundImage, Path=ActualWidth}"
-            Height="{Binding ElementName=BackgroundImage, Path=ActualHeight}"
-            HorizontalAlignment="Left" VerticalAlignment="Top">
-
-                        <!-- 左上 -->
-                        <Thumb Style="{StaticResource ResizeHandleStyle}" Cursor="SizeNWSE" 
-               Canvas.Left="-4" Canvas.Top="-4" Tag="TopLeft" DragDelta="OnResizeDragDelta"/>
-                        <!-- 上中 -->
-                        <Thumb Style="{StaticResource ResizeHandleStyle}" Cursor="SizeNS" 
-               Canvas.Left="{Binding ElementName=ResizeHandleCanvas, Path=Width, Converter={StaticResource HalfValueConverter}}" 
-               Canvas.Top="-4" Margin="-4,0,0,0" Tag="Top" DragDelta="OnResizeDragDelta"/>
-                        <!-- 右上 -->
-                        <Thumb Style="{StaticResource ResizeHandleStyle}" Cursor="SizeNESW" 
-               Canvas.Left="{Binding ElementName=ResizeHandleCanvas, Path=Width}" Canvas.Top="-4" Margin="-4,0,0,0" Tag="TopRight" DragDelta="OnResizeDragDelta"/>
-                        <!-- 右中 -->
-                        <Thumb Style="{StaticResource ResizeHandleStyle}" Cursor="SizeWE" 
-               Canvas.Left="{Binding ElementName=ResizeHandleCanvas, Path=Width}" 
-               Canvas.Top="{Binding ElementName=ResizeHandleCanvas, Path=Height, Converter={StaticResource HalfValueConverter}}" Margin="-4,-4,0,0" Tag="Right" DragDelta="OnResizeDragDelta"/>
-                        <!-- 右下 -->
-                        <Thumb Style="{StaticResource ResizeHandleStyle}" Cursor="SizeNWSE" 
-               Canvas.Left="{Binding ElementName=ResizeHandleCanvas, Path=Width}" Canvas.Top="{Binding ElementName=ResizeHandleCanvas, Path=Height}" Margin="-4,-4,0,0" Tag="BottomRight" DragDelta="OnResizeDragDelta"/>
-                        <!-- 下中 -->
-                        <Thumb Style="{StaticResource ResizeHandleStyle}" Cursor="SizeNS" 
-               Canvas.Left="{Binding ElementName=ResizeHandleCanvas, Path=Width, Converter={StaticResource HalfValueConverter}}" 
-               Canvas.Top="{Binding ElementName=ResizeHandleCanvas, Path=Height}" Margin="-4,-4,0,0" Tag="Bottom" DragDelta="OnResizeDragDelta"/>
-                        <!-- 左下 -->
-                        <Thumb Style="{StaticResource ResizeHandleStyle}" Cursor="SizeNESW" 
-               Canvas.Left="-4" Canvas.Top="{Binding ElementName=ResizeHandleCanvas, Path=Height}" Margin="0,-4,0,0" Tag="BottomLeft" DragDelta="OnResizeDragDelta"/>
-                        <!-- 左中 -->
-                        <Thumb Style="{StaticResource ResizeHandleStyle}" Cursor="SizeWE" 
-               Canvas.Left="-4" 
-               Canvas.Top="{Binding ElementName=ResizeHandleCanvas, Path=Height, Converter={StaticResource HalfValueConverter}}" Margin="0,-4,0,0" Tag="Left" DragDelta="OnResizeDragDelta"/>
-                    </Canvas>
+           
                 </Grid>
 
 

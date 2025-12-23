@@ -205,7 +205,7 @@ namespace TabPaint
                 return region;
             }
 
-            private byte[] SafeExtractRegion(Int32Rect rect)
+            public byte[] SafeExtractRegion(Int32Rect rect)
             {
                 // 检查合法范围，防止尺寸变化导致越界
                 if (rect.X < 0 || rect.Y < 0 ||

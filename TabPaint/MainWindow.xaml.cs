@@ -30,11 +30,11 @@ namespace TabPaint
 
 
         private CanvasSurface _surface;
-        private UndoRedoManager _undo;
+        public UndoRedoManager _undo;
         public ToolContext _ctx;
         private InputRouter _router;
         private ToolRegistry _tools;
-        private double zoomscale = 1;
+        public double zoomscale = 1;
         private byte[]? _preDrawSnapshot = null;
 
         private WriteableBitmap _bitmap;
@@ -87,7 +87,7 @@ namespace TabPaint
                 }
             }
         }
-        public enum BrushStyle { Round, Square, Brush, Spray, Pencil, Eraser, Watercolor, Crayon }
+        public enum BrushStyle { Round, Square, Brush, Spray, Pencil, Eraser, Watercolor, Crayon,Highlighter,Mosaic }
         public enum UndoActionType
         {
             Draw,         // 普通绘图
@@ -364,7 +364,7 @@ namespace TabPaint
 
 
 
-
+        public CanvasResizeManager _canvasResizer;
 
         public MainWindow(string startFilePath)///////////////////////////////////////////////////主窗口初始化
         {
@@ -372,7 +372,7 @@ namespace TabPaint
             _currentFilePath = startFilePath;
             InitializeComponent();
 
-
+ 
             Loaded += (s, e) =>
             {
                 MicaAcrylicManager.ApplyEffect(this);
@@ -427,6 +427,9 @@ namespace TabPaint
             SetCropButtonState();
             this.PreviewKeyDown += MainWindow_PreviewKeyDown;
 
+
+            _canvasResizer = new CanvasResizeManager(this);
+          
             this.Focusable = true;
         }
 
@@ -483,87 +486,9 @@ namespace TabPaint
             }
         }
 
-        private void OnResizeDragDelta(object sender, DragDeltaEventArgs e)
-        {
-            var thumb = sender as Thumb;
-            var tag = thumb.Tag.ToString();
 
-            // 获取当前的缩放倍数
-            double zoom = ZoomTransform.ScaleX;
 
-            // 获取当前 UI 尺寸
-            double oldWidth = double.IsNaN(BackgroundImage.Width) ? BackgroundImage.ActualWidth : BackgroundImage.Width;
-            double oldHeight = double.IsNaN(BackgroundImage.Height) ? BackgroundImage.ActualHeight : BackgroundImage.Height;
-
-            double newWidth = oldWidth;
-            double newHeight = oldHeight;
-
-            // --- 水平方向处理 ---
-            if (tag.Contains("Left"))
-            {
-                // 拉左边：宽度增加，且滚动条向右偏移以抵消视觉位移
-                double deltaX = e.HorizontalChange;
-                double widthChange = -deltaX;
-
-                if (oldWidth + widthChange > 10) // 最小宽度限制
-                {
-                    newWidth = oldWidth + widthChange;
-                    // 补偿位移：由于 Grid 居中，增加宽度会向两边扩张，我们需要补偿滚动位置
-                    // 公式：新的偏移 = 当前偏移 + (变化量 * 缩放 / 2) 
-                    // 注意：如果是 Left，deltaX 是负数，这里逻辑需要根据你的具体布局微调
-                    ScrollContainer.ScrollToHorizontalOffset(ScrollContainer.HorizontalOffset + (deltaX * zoom));
-                }
-            }
-            else if (tag.Contains("Right"))
-            {
-                // 拉右边：简单增加宽度
-                newWidth = Math.Max(10, oldWidth + e.HorizontalChange);
-            }
-
-            // --- 垂直方向处理 ---
-            if (tag.Contains("Top"))
-            {
-                double deltaY = e.VerticalChange;
-                double heightChange = -deltaY;
-
-                if (oldHeight + heightChange > 10)
-                {
-                    newHeight = oldHeight + heightChange;
-                    ScrollContainer.ScrollToVerticalOffset(ScrollContainer.VerticalOffset + (deltaY * zoom));
-                }
-            }
-            else if (tag.Contains("Bottom"))
-            {
-                newHeight = Math.Max(10, oldHeight + e.VerticalChange);
-            }
-
-            // 更新 UI 尺寸
-            BackgroundImage.Width = newWidth;
-            BackgroundImage.Height = newHeight;
-
-            // 手动强制同步手柄层 Canvas 的尺寸，如果没用绑定的话
-            ResizeHandleCanvas.Width = newWidth;
-            ResizeHandleCanvas.Height = newHeight;
-        }
-        private void OnResizeDragCompleted(object sender, DragCompletedEventArgs e)
-        {
-            // 1. 获取 UI 最终拉伸后的尺寸
-            int finalWidth = (int)BackgroundImage.Width;
-            int finalHeight = (int)BackgroundImage.Height;
-
-            // 2. 创建一个新的 WriteableBitmap
-            // WriteableBitmap newBmp = new WriteableBitmap(finalWidth, finalHeight, 96, 96, ...);
-
-            // 3. 将旧位图绘制到新位图上
-            // 如果是拉右/下：旧图画在 (0,0)
-            // 如果是拉左/上：旧图画在 (offset, offset)
-
-            // 4. 更新核心数据源，重置 Image 控件的拉伸
-            // BackgroundImage.Source = newBmp;
-            // BackgroundImage.Width = double.NaN; // 恢复自动宽度
-            // BackgroundImage.Height = double.NaN;
-        }
-
+       
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             this.Focus();
@@ -721,11 +646,14 @@ namespace TabPaint
 
             _undo.Undo(); _ctx.IsDirty = true;
             SetUndoRedoButtonState();
+            _canvasResizer.UpdateUI();
+
         }
         private void Redo()
         {
             _undo.Redo(); _ctx.IsDirty = true;
             SetUndoRedoButtonState();
+            _canvasResizer.UpdateUI();
         }
 
         private byte[] ExtractRegionFromBitmap(WriteableBitmap bmp, Int32Rect rect)
@@ -896,6 +824,7 @@ namespace TabPaint
                 // 或者你把 ctx 传给这个方法
                 st.RefreshOverlay(_ctx);
             }
+            _canvasResizer.UpdateUI();
         }
 
 

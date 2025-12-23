@@ -32,9 +32,13 @@ namespace TabPaint
 
             private bool _drawing = false;
             private Point _lastPixel;
+            private bool[] _currentStrokeMask;
+            private int _maskWidth;
+            private int _maskHeight;
             private static Random _rnd = new Random();
             public override void Cleanup(ToolContext ctx)
             {
+                base.Cleanup(ctx);
                 _drawing = false;
                 StopDrawing(ctx);
 
@@ -42,6 +46,22 @@ namespace TabPaint
             public override void OnPointerDown(ToolContext ctx, Point viewPos)
             {
                 if (((MainWindow)System.Windows.Application.Current.MainWindow)._router.CurrentTool != ((MainWindow)System.Windows.Application.Current.MainWindow)._tools.Pen) return;
+
+                int totalPixels = ctx.Surface.Width * ctx.Surface.Height;
+
+                // 只有当尺寸变了或者为空时才重新分配内存，否则直接清除，减少GC压力
+                if (_currentStrokeMask == null || _currentStrokeMask.Length != totalPixels || _maskWidth != ctx.Surface.Width)
+                {
+                    _currentStrokeMask = new bool[totalPixels];
+                    _maskWidth = ctx.Surface.Width;
+                    _maskHeight = ctx.Surface.Height;
+                }
+                else
+                {
+                    // 快速清空数组 (全部设为 false)
+                    Array.Clear(_currentStrokeMask, 0, _currentStrokeMask.Length);
+                }
+
                 // CAPTURE THE POINTER!
                 ctx.CapturePointer();
 
@@ -51,6 +71,7 @@ namespace TabPaint
                 _lastPixel = px;
                 if (ctx.PenStyle != BrushStyle.Eraser)
 
+                    if(ctx.PenStyle != BrushStyle.Highlighter)
                     ctx.Surface.SetPixel((int)px.X, (int)px.Y, ctx.PenColor);
                 else
                     ctx.Surface.SetPixel((int)px.X, (int)px.Y, ctx.EraserColor);
@@ -61,6 +82,7 @@ namespace TabPaint
 
             private void DrawContinuousStroke(ToolContext ctx, Point from, Point to)
             {
+                a.s(from, to);
                 // 线段长度
                 double dx = to.X - from.X;
                 double dy = to.Y - from.Y;
@@ -98,6 +120,12 @@ namespace TabPaint
                     case BrushStyle.Crayon: // 油画笔可以稍微稀疏一些
                         steps = (int)(length / (ctx.PenThickness / 2));
                         break;
+                    case BrushStyle.Highlighter:
+                        DrawHighlighterLine(ctx, from, to);
+                        ctx.Undo.AddDirtyRect(LineBounds(from, to, (int)ctx.PenThickness));
+                        break;
+
+
                 }
                 double xStep = dx / steps;
                 double yStep = dy / steps;
@@ -117,7 +145,8 @@ namespace TabPaint
                 switch (ctx.PenStyle)
                 {
                     case BrushStyle.Round:
-                        DrawRoundStroke(ctx, _lastPixel, px); ctx.Undo.AddDirtyRect(LineBounds(_lastPixel, px));
+
+                        DrawRoundStroke(ctx, _lastPixel, px); ctx.Undo.AddDirtyRect(LineBounds(_lastPixel, px, (int)ctx.PenThickness));
                         break;
                     case BrushStyle.Square:
                         DrawSquareStroke(ctx, _lastPixel, px); ctx.Undo.AddDirtyRect(LineBounds(_lastPixel, px, (int)ctx.PenThickness));
@@ -144,8 +173,19 @@ namespace TabPaint
                         break;
                     case BrushStyle.Crayon:
                         DrawOilPaintStroke(ctx, px);
-                        ctx.Undo.AddDirtyRect(LineBounds(_lastPixel, px, (int)ctx.PenThickness));
+                        ctx.Undo.AddDirtyRect(LineBounds(_lastPixel, px, (int)ctx.PenThickness + 5));
                         break;
+                    //case BrushStyle.Highlighter:
+                    //    DrawHighlighterStroke(ctx, px);
+                    //    // 水彩笔的扩散效果可能更大
+                    // ctx.Undo.AddDirtyRect(LineBounds(_lastPixel, px, (int)ctx.PenThickness + 5));
+                    //  break;
+                    case BrushStyle.Mosaic:
+                        DrawMosaicStroke(ctx, px);
+                        ctx.Undo.AddDirtyRect(LineBounds(_lastPixel, px, (int)ctx.PenThickness + 5));
+                        break;
+
+
                 }
                 _lastPixel = px;
 
@@ -316,20 +356,39 @@ namespace TabPaint
                 ctx.IsDirty = true;
                 ctx.ReleasePointerCapture();
             }
+            //private static Int32Rect ClampRect(Int32Rect rect, int maxWidth, int maxHeight)
+            //{
+            //    int newX = (rect.X > maxWidth) ? maxWidth : rect.X;
+            //    int newY = (rect.Y > maxHeight) ? maxHeight : rect.Y;
+            //    int x = Math.Max(0, newX);
+            //    int y = Math.Max(0, newY);
+            //    int w = Math.Min(rect.Width, maxWidth - newX);
+            //    int h = Math.Min(rect.Height, maxHeight - newY);
+            //    return new Int32Rect(x, y, w, h);
+            //}
+
             private static Int32Rect ClampRect(Int32Rect rect, int maxWidth, int maxHeight)
             {
-                int newX = (rect.X > maxWidth) ? maxWidth : rect.X;
-                int newY = (rect.Y > maxHeight) ? maxHeight : rect.Y;
-                int x = Math.Max(0, newX);
-                int y = Math.Max(0, newY);
-                int w = Math.Min(rect.Width, maxWidth - newX);
-                int h = Math.Min(rect.Height, maxHeight - newY);
-                return new Int32Rect(x, y, w, h);
+                // 1. 计算左上角和右下角的边界坐标
+                int left = Math.Max(0, rect.X);
+                int top = Math.Max(0, rect.Y);
+
+                // 2. 计算右边界和下边界（不能超过最大宽高）
+                int right = Math.Min(maxWidth, rect.X + rect.Width);
+                int bottom = Math.Min(maxHeight, rect.Y + rect.Height);
+
+                // 3. 计算新的宽高。确保结果不为负数
+                int width = Math.Max(0, right - left);
+                int height = Math.Max(0, bottom - top);
+
+                return new Int32Rect(left, top, width, height);
             }
+
 
             private static Int32Rect LineBounds(Point p1, Point p2, int penRadius)
             {
                 int expand = penRadius + 2; // 在笔粗半径基础上多扩2像素留余量
+
                 int x = (int)Math.Min(p1.X, p2.X) - expand;
                 int y = (int)Math.Min(p1.Y, p2.Y) - expand;
                 int w = (int)Math.Abs(p1.X - p2.X) + expand * 2;
@@ -498,6 +557,159 @@ namespace TabPaint
                     ctx.Surface.SetPixel(x, y, ctx.PenColor);
                 }
             }
+
+            private void DrawMosaicStroke(ToolContext ctx, Point p)
+            {
+                int radius = (int)ctx.PenThickness;
+                int blockSize = 12; // 马赛克方块的大小，可以根据 PenThickness 动态调整
+
+                int x_start = (int)Math.Max(0, p.X - radius);
+                int x_end = (int)Math.Min(ctx.Surface.Width, p.X + radius);
+                int y_start = (int)Math.Max(0, p.Y - radius);
+                int y_end = (int)Math.Min(ctx.Surface.Height, p.Y + radius);
+
+                ctx.Surface.Bitmap.Lock();
+                unsafe
+                {
+                    byte* basePtr = (byte*)ctx.Surface.Bitmap.BackBuffer;
+                    int stride = ctx.Surface.Bitmap.BackBufferStride;
+
+                    for (int y = y_start; y < y_end; y++)
+                    {
+                        for (int x = x_start; x < x_end; x++)
+                        {
+                            // 圆形笔触判定
+                            double dist = Math.Sqrt((x - p.X) * (x - p.X) + (y - p.Y) * (y - p.Y));
+                            if (dist < radius)
+                            {
+                                // 计算当前点所属的马赛克块左上角坐标
+                                int blockX = (x / blockSize) * blockSize;
+                                int blockY = (y / blockSize) * blockSize;
+
+                                // 确保块基准点不越界
+                                blockX = Math.Clamp(blockX, 0, ctx.Surface.Width - 1);
+                                blockY = Math.Clamp(blockY, 0, ctx.Surface.Height - 1);
+
+                                byte* sourcePixel = basePtr + blockY * stride + blockX * 4;
+                                byte* targetPixel = basePtr + y * stride + x * 4;
+
+                                // 将块基准点的颜色赋给当前像素
+                                targetPixel[0] = sourcePixel[0]; // B
+                                targetPixel[1] = sourcePixel[1]; // G
+                                targetPixel[2] = sourcePixel[2]; // R
+                                targetPixel[3] = 255;
+                            }
+                        }
+                    }
+                }
+                ctx.Surface.Bitmap.AddDirtyRect(
+                    ClampRect(new Int32Rect(x_start, y_start, x_end - x_start, y_end - y_start),
+                    ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelWidth, ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelHeight)
+                    );
+                ctx.Surface.Bitmap.Unlock();
+            }
+            private void DrawHighlighterLine(ToolContext ctx, Point p1, Point p2)
+            {
+                int r = (int)ctx.PenThickness;
+                // 荧光黄，Alpha设为 30-50 比较合适，因为现在是单层覆盖，不会瞬间变黑
+                // 如果觉得太浅，可以调高 Alpha；如果觉得叠加太黑，调低 Alpha
+                Color c = Color.FromArgb(30, 255, 255, 0);
+
+                // 计算包围盒，减少循环次数
+                int xmin = (int)Math.Min(p1.X, p2.X) - r;
+                int ymin = (int)Math.Min(p1.Y, p2.Y) - r;
+                int xmax = (int)Math.Max(p1.X, p2.X) + r;
+                int ymax = (int)Math.Max(p1.Y, p2.Y) + r;
+
+                // 边界安全检查
+                xmin = Math.Max(0, xmin);
+                ymin = Math.Max(0, ymin);
+                xmax = Math.Min(ctx.Surface.Width - 1, xmax);
+                ymax = Math.Min(ctx.Surface.Height - 1, ymax);
+                int width = ctx.Surface.Width;
+                ctx.Surface.Bitmap.Lock();
+                unsafe
+                {
+                    byte* basePtr = (byte*)ctx.Surface.Bitmap.BackBuffer;
+                    int stride = ctx.Surface.Bitmap.BackBufferStride;
+
+                    // 预计算向量 P1 -> P2
+                    double dx = p2.X - p1.X;
+                    double dy = p2.Y - p1.Y;
+                    double lenSq = dx * dx + dy * dy; // 长度平方
+
+                    for (int y = ymin; y <= ymax; y++)
+                    {
+                        int rowStartIndex = y * width;
+                        for (int x = xmin; x <= xmax; x++)
+                        {
+                            int pixelIndex = rowStartIndex + x;
+                            if (_currentStrokeMask[pixelIndex])
+                            {
+                                // 如果这个像素在这一笔中已经画过了，跳过！
+                                // 这完美解决了连接处重叠和反复涂抹变黑的问题
+                                continue;
+                            }
+                            // --- 距离计算核心逻辑 (SDF) ---
+                            double t = 0;
+                            if (lenSq > 0)
+                            {
+                                double dot = (x - p1.X) * dx + (y - p1.Y) * dy;
+                                t = Math.Max(0, Math.Min(1, dot / lenSq));
+                            }
+                            double closeX = p1.X + t * dx;
+                            double closeY = p1.Y + t * dy;
+                            double distSq = (x - closeX) * (x - closeX) + (y - closeY) * (y - closeY);
+
+                            // ... 省略外层循环代码 ...
+
+                            if (distSq <= r * r)
+                            {
+                                // 标记该像素已处理
+                                _currentStrokeMask[pixelIndex] = true;
+
+                                byte* p = basePtr + y * stride + x * 4;
+
+                                // 读取旧的背景数据
+                                byte oldB = p[0];
+                                byte oldG = p[1];
+                                byte oldR = p[2];
+                                byte oldA = p[3]; // 获取背景透明度
+
+                                // 预计算反向 Alpha (0..255)
+                                int invSA = 255 - c.A;
+
+                                // --- 颜色混合公式 (标准 Premultiplied Alpha 混合) ---
+                                // 即使背景是透明的 (old=0)，这里也会算出预乘后的颜色值 (如 50, 50, 0)
+                                // 这本身是对的，只要配套正确的 Alpha 就行。
+                                p[0] = (byte)((c.B * c.A + oldB * invSA) / 255); // Blue
+                                p[1] = (byte)((c.G * c.A + oldG * invSA) / 255); // Green
+                                p[2] = (byte)((c.R * c.A + oldR * invSA) / 255); // Red
+
+                                // --- 【核心修复】 Alpha 通道计算 ---
+                                // 以前是 p[3] = 255; 导致透明区域变黑
+                                // 现在使用公式：ResultAlpha = SrcAlpha + DstAlpha * (1 - SrcAlpha)
+                                p[3] = (byte)(c.A + (oldA * invSA) / 255);
+                            }
+
+                        }
+                    }
+                }
+                int dirtyW = xmax - xmin + 1;
+                int dirtyH = ymax - ymin + 1;
+
+                // 确保矩形合法（在图片范围内）
+                if (dirtyW > 0 && dirtyH > 0)
+                {
+                    ctx.Surface.Bitmap.AddDirtyRect(new Int32Rect(xmin, ymin, dirtyW, dirtyH));
+                }
+
+                ctx.Surface.Bitmap.Unlock();
+            }
+
+
+
+
         }
 
     }

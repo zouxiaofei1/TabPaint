@@ -157,95 +157,7 @@ namespace TabPaint
             _currentImageIndex = _imageFiles.IndexOf(filePath);
         }
 
-        //private async Task LoadImage(string filePath)
-        //{//不推荐直接使用
-        //    if (!File.Exists(filePath)) { s($"找不到图片文件: {filePath}"); return; }
 
-        //    try
-        //    {
-        //        // 🧩 后台线程进行解码和位图创建
-        //        var wb = await Task.Run(() =>
-        //        {
-        //            using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-
-        //            // 先用解码器获取原始尺寸
-        //            var decoder = BitmapDecoder.Create(
-        //                fs,
-        //                BitmapCreateOptions.IgnoreColorProfile,
-        //                BitmapCacheOption.None
-        //            );
-        //            int originalWidth = decoder.Frames[0].PixelWidth;
-        //            int originalHeight = decoder.Frames[0].PixelHeight;
-
-        //            fs.Position = 0; // 重置流位置以重新读取
-
-        //            var img = new BitmapImage();
-        //            img.BeginInit();
-        //            img.CacheOption = BitmapCacheOption.OnLoad;
-        //            img.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
-        //            img.StreamSource = fs;
-
-        //            // 如果超过 16384，就等比例缩放
-        //            const int maxSize = 16384;
-        //            if (originalWidth > maxSize || originalHeight > maxSize)
-        //            {
-        //                if (originalWidth >= originalHeight)
-        //                {
-        //                    img.DecodePixelWidth = maxSize;
-        //                }
-        //                else
-        //                {
-        //                    img.DecodePixelHeight = maxSize;
-        //                }
-        //            }
-
-        //            img.EndInit();
-        //            img.Freeze();
-
-        //            return img;
-        //        });
-
-        //        // ✅ 回到 UI 线程更新
-        //        await Dispatcher.InvokeAsync(() =>
-        //        {
-        //            _bitmap = new WriteableBitmap(wb);
-
-        //            _currentFileName = System.IO.Path.GetFileName(filePath);
-        //            BackgroundImage.Source = _bitmap;
-
-        //            if (_surface == null)
-        //                _surface = new CanvasSurface(_bitmap);
-        //            else
-        //                _surface.Attach(_bitmap);
-
-        //            _undo?.ClearUndo();
-        //            _undo?.ClearRedo();
-
-        //            _currentFilePath = filePath;
-        //            _isEdited = false;
-
-        //            SetPreviewSlider();
-
-        //            // 窗口调整逻辑
-        //            double imgWidth = _bitmap.Width;
-        //            double imgHeight = _bitmap.Height;
-
-        //            BackgroundImage.Width = imgWidth;
-        //            BackgroundImage.Height = imgHeight;
-
-        //            _imageSize = $"{_surface.Width}×{_surface.Height}";
-        //            OnPropertyChanged(nameof(ImageSize));
-        //            UpdateWindowTitle();
-
-        //            FitToWindow();
-
-        //        }, System.Windows.Threading.DispatcherPriority.Background);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        s($"加载图片失败: {ex.Message}");
-        //    }
-        //}
 
         // 新增的辅助方法 1: 专门用于解码低分辨率预览图
         private BitmapImage DecodePreviewBitmap(byte[] imageBytes, CancellationToken token)
@@ -359,6 +271,7 @@ namespace TabPaint
                         BackgroundImage.InvalidateVisual();
                         Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
                         isInitialLayoutSet = true; // 标记初始布局已完成
+                        _canvasResizer.UpdateUI();
 
                     });
                 }
@@ -385,6 +298,7 @@ namespace TabPaint
                         CenterImage();
                         BackgroundImage.InvalidateVisual();
                         Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
+                        _canvasResizer.UpdateUI();
                     }
 
                     // 用质量更好的 480p 预览图替换掉之前的图像
@@ -422,6 +336,7 @@ namespace TabPaint
                     // 因为尺寸可能因解码有微小差异，最后再校准一次布局是好习惯
                     FitToWindow();
                     CenterImage();
+                    _canvasResizer.UpdateUI();
                 });
             }
             catch (OperationCanceledException)
