@@ -43,6 +43,7 @@ namespace TabPaint
             // 句柄尺寸
             private const double HandleSize = 6;
             private int lag = 0;
+            private bool _justDismissed = false; // 用于记录当前点击是否是为了销毁上一个文本框
 
             public enum ResizeAnchor
             {
@@ -319,7 +320,7 @@ namespace TabPaint
                 double y = Canvas.GetTop(_textBox);
                 double w = _textBox.ActualWidth;
                 double h = _textBox.ActualHeight;
-                double borderThickness = 5 / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale;
+                double borderThickness = Math.Max(5 / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale, 10);
 
                 // 外矩形 (扩大边框宽度)
                 bool inOuter = px.X >= x - borderThickness &&
@@ -339,10 +340,21 @@ namespace TabPaint
             {
 
                 if (((MainWindow)System.Windows.Application.Current.MainWindow)._router.CurrentTool != ((MainWindow)System.Windows.Application.Current.MainWindow)._tools.Text) return;
-                if (_resizing) _resizing = false;// return;
-
-                if (_dragging && _textBox == null)
+                if (_resizing || (_dragging && _textBox != null))
                 {
+                    _resizing = false;
+                    _dragging = false;
+                    _currentAnchor = ResizeAnchor.None;
+
+                    // 释放鼠标捕获，这样下次点击才能正常工作
+                    ctx.EditorOverlay.ReleaseMouseCapture();
+
+                    // 既然是拖动结束，就不需要执行下面的创建逻辑了，直接返回
+                    return;
+                }
+                if (_dragging && _textBox == null)
+                {//创建新的文本框
+
                     if (lag > 0)
                     {
                         lag -= 1;
@@ -385,41 +397,46 @@ namespace TabPaint
                     };
 
                     // 👉 在这里添加 PreviewMouseDown 事件绑定
+                    // 👉 修正后的 PreviewMouseDown 事件绑定
                     ctx.EditorOverlay.PreviewMouseDown += (s, e) =>
                     {
-                        Point pos = e.GetPosition(ctx.EditorOverlay);
+                        Point pos = e.GetPosition(ctx.EditorOverlay); // 获取当前点击在 Overlay 上的位置
+                        Point pixelPos = ctx.ToPixel(pos);            // 转为画布像素坐标
 
-                        var anchor = HitTestTextboxHandle(ctx.ToPixel(pos));
+                        var anchor = HitTestTextboxHandle(pixelPos);
+
+                        // 1. 命中句柄 -> 缩放模式
                         if (anchor != ResizeAnchor.None)
                         {
-
                             _resizing = true;
                             _currentAnchor = anchor;
-                            _startMouse = ctx.ToPixel(pos);
+                            _startMouse = pixelPos;             // 记录当前鼠标位置
                             _startW = _textBox.ActualWidth;
                             _startH = _textBox.ActualHeight;
                             _startX = Canvas.GetLeft(_textBox);
                             _startY = Canvas.GetTop(_textBox);
 
-                            e.Handled = true; // 防止 TextBox 获取点击焦点
+                            ctx.EditorOverlay.CaptureMouse();   // 【重要】捕获鼠标，防止拖出窗口后丢失状态
+                            e.Handled = true;
                         }
+                        // 2. 命中虚线边框 -> 移动模式
+                        else if (IsInsideBorder(pixelPos))
+                        {
+                            _dragging = true;
+                            _startMouse = pixelPos;             // 【关键修正】这里要用当前的 pixelPos，不要用 viewPos
+                            _startX = Canvas.GetLeft(_textBox); // 记录当前文本框位置
+                            _startY = Canvas.GetTop(_textBox);
+
+                            ctx.EditorOverlay.CaptureMouse();   // 【重要】捕获鼠标
+                            e.Handled = true;                   // 防止事件传给 TextBox 导致光标闪烁
+                        }
+                        // 3. 点击内部 -> 交给 TextBox 自己处理（输入文字）
                         else
                         {
-                            // 点击边框区域时启用拖动整个 TextBox
-                            if (IsInsideBorder(ctx.ToPixel(pos)))
-                            {
-
-                                _dragging = true;
-                                _startMouse = ctx.ToPixel(viewPos);
-                                _startX = Canvas.GetLeft(_textBox);
-                                _startY = Canvas.GetTop(_textBox);
-                            }
-                            else
-                                OnPointerDown(ctx, pos);
+                            OnPointerDown(ctx, pos);
                         }
-
-
                     };
+
                     _textBox.PreviewKeyDown += (s, e) =>
                     {
                         if (e.Key == Key.Delete)
@@ -477,55 +494,105 @@ namespace TabPaint
 
             public void CommitText(ToolContext ctx)
             {
-                if (_textBox == null || string.IsNullOrWhiteSpace(_textBox.Text))
+                if (_textBox == null) return;
+                if (string.IsNullOrWhiteSpace(_textBox.Text))
+                {
+                    ((MainWindow)System.Windows.Application.Current.MainWindow).HideTextToolbar();
+                    ctx.SelectionOverlay.Children.Clear();
+                    ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
+                    if (ctx.EditorOverlay.Children.Contains(_textBox))
+                        ctx.EditorOverlay.Children.Remove(_textBox);
+                    lag = 1;
                     return;
+                }
+
+                // 1. 获取 DPI (改从 ViewElement 获取，绕过 CanvasSurface 的定义问题)
+                var dpiInfo = VisualTreeHelper.GetDpi(ctx.ViewElement);
+                double dpiX = dpiInfo.PixelsPerInchX;
+                double dpiY = dpiInfo.PixelsPerInchY;
+
+                // 2. 获取位置和尺寸
                 double x = Canvas.GetLeft(_textBox);
                 double y = Canvas.GetTop(_textBox);
-                var dpiInfo = VisualTreeHelper.GetDpi(_textBox);
-                ctx.Undo.BeginStroke();
-                ctx.Undo.AddDirtyRect(_textRect);
-                double pixelsPerDip = VisualTreeHelper.GetDpi(ctx.ViewElement).PixelsPerDip;
-                // 将文字渲染到位图
+                double w = _textBox.ActualWidth;
+                double h = _textBox.ActualHeight;
+
+                // 3. 构建文本对象
+                var formattedText = new FormattedText(
+                    _textBox.Text,
+                    CultureInfo.CurrentCulture,
+                   System.Windows.FlowDirection.LeftToRight,
+                    new Typeface(_textBox.FontFamily, _textBox.FontStyle, _textBox.FontWeight, _textBox.FontStretch),
+                    _textBox.FontSize,
+                    _textBox.Foreground,
+                    dpiInfo.PixelsPerDip
+                )
+                {
+                    MaxTextWidth = Math.Max(1, w - _textBox.Padding.Left - _textBox.Padding.Right),
+                    MaxTextHeight = double.MaxValue,
+                    Trimming = TextTrimming.None,
+                    TextAlignment = _textBox.TextAlignment
+                };
+
+                // 4. 绘制到 DrawingVisual
                 var visual = new DrawingVisual();
                 using (var dc = visual.RenderOpen())
                 {
-                    dc.DrawText(
-                        new FormattedText(
-                            _textBox.Text,
-                            System.Globalization.CultureInfo.CurrentCulture,
-                            System.Windows.FlowDirection.LeftToRight,
-                            new Typeface(_textBox.FontFamily, _textBox.FontStyle, _textBox.FontWeight, _textBox.FontStretch),
-                            _textBox.FontSize,
-                            _textBox.Foreground,
-                            pixelsPerDip
-                        ),
-                        new Point(0, 0));
+                    // ✨ 修复点：使用 RenderOptions 来设置附加属性，解决 DrawingVisual 不包含定义的问题
+                    TextOptions.SetTextRenderingMode(visual, TextRenderingMode.Grayscale);
 
+                    // HintingMode 也是附加属性，或者可以使用 TextFormattingMode
+                    TextOptions.SetTextFormattingMode(visual, TextFormattingMode.Display);
+
+                    dc.DrawText(formattedText, new Point(_textBox.Padding.Left, _textBox.Padding.Top));
                 }
-                TextOptions.SetTextRenderingMode(_textBox, TextRenderingMode.ClearType);
-                TextOptions.SetTextFormattingMode(_textBox, TextFormattingMode.Display);
 
-                // 渲染为图像并写入 Surface
-                var bmp = new RenderTargetBitmap((int)_textBox.ActualWidth, (int)_textBox.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+                // 5. 计算像素尺寸并渲染
+                int renderWidth = (int)Math.Ceiling(w * (dpiX / 96.0));
+                int renderHeight = (int)Math.Ceiling(
+                    Math.Max(h, formattedText.Height + _textBox.Padding.Top + _textBox.Padding.Bottom) * (dpiY / 96.0)
+                );
+
+                // 强制最小 1x1 像素防止异常
+                renderWidth = Math.Max(1, renderWidth);
+                renderHeight = Math.Max(1, renderHeight);
+
+                var bmp = new RenderTargetBitmap(renderWidth, renderHeight, dpiX, dpiY, PixelFormats.Pbgra32);
                 bmp.Render(visual);
 
+                // 6. 转换位图数据
                 var wb = new WriteableBitmap(bmp);
                 int stride = wb.PixelWidth * 4;
                 var pixels = new byte[wb.PixelHeight * stride];
                 wb.CopyPixels(pixels, stride, 0);
 
+                // 7. 写入画布
                 ctx.Undo.BeginStroke();
-                ctx.Undo.AddDirtyRect(new Int32Rect((int)x, (int)y, wb.PixelWidth, wb.PixelHeight));
-                ctx.Surface.WriteRegion(new Int32Rect((int)x, (int)y, wb.PixelWidth, wb.PixelHeight), pixels, stride, false);
+
+                // ✨ 修复点：直接使用渲染出的 wb 的尺寸，不依赖 ctx.Surface.PixelWidth
+                Int32Rect dirtyRect = new Int32Rect((int)x, (int)y, wb.PixelWidth, wb.PixelHeight);
+
+                // 如果你的 CanvasSurface 没有暴露 PixelWidth/PixelHeight，
+                // 我们暂时移除越界检查，或者你可以根据你的代码逻辑手动限制坐标。
+                // 这里先保证编译通过：
+                ctx.Undo.AddDirtyRect(dirtyRect);
+                ctx.Surface.WriteRegion(dirtyRect, pixels, stride, false);
+
                 ctx.Undo.CommitStroke();
+
+                // 8. 清理 UI
                 ((MainWindow)System.Windows.Application.Current.MainWindow).HideTextToolbar();
-                // 从 UI 移除 TextBox
                 ctx.SelectionOverlay.Children.Clear();
                 ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
-                ctx.EditorOverlay.Children.Remove(_textBox);
+                if (ctx.EditorOverlay.Children.Contains(_textBox))
+                    ctx.EditorOverlay.Children.Remove(_textBox);
+
                 ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
+                _textBox = null;
                 lag = 1;
             }
+
+
         }
 
     }

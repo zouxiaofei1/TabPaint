@@ -3,6 +3,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:TabPaint" 
+        xmlns:System="clr-namespace:System;assembly=mscorlib"
         Title="TabPaint"
         Height="900" Width="1250"
         Top=" 100" Left="100"
@@ -46,6 +47,54 @@
                     </Setter.Value>
                 </Setter>
             </Style>
+
+            <!-- 1. 修正后的 ComboBox 样式 (删除了会导致解析错误的 Resources Setter) -->
+            <Style x:Key="FluentComboBoxStyle" TargetType="ComboBox">
+                <Setter Property="Height" Value="32"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="Padding" Value="8,0,0,0"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="#DCDCDC"/>
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="Margin" Value="0,0,8,0"/>
+                <Setter Property="IsEditable" Value="True"/>
+                <!-- 移除之前引起报错的 <Setter Property="Resources"> 部分 -->
+            </Style>
+
+            <!-- 2. 修正后的 ToggleButton 样式 -->
+            <Style x:Key="FluentToggleButtonStyle" TargetType="ToggleButton">
+                <Setter Property="Width" Value="32"/>
+                <Setter Property="Height" Value="32"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
+                <Setter Property="Margin" Value="2,0"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <!-- 这里必须明确指定 Border 的背景和边框，否则会有点击穿透 -->
+                            <Border x:Name="border" 
+                        Background="{TemplateBinding Background}" 
+                        BorderBrush="{TemplateBinding BorderBrush}" 
+                        BorderThickness="{TemplateBinding BorderThickness}" 
+                        CornerRadius="4">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="#EAEAEA"/>
+                                </Trigger>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="#E2E2E2"/>
+                                    <Setter TargetName="border" Property="BorderBrush" Value="#CCCCCC"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+
         </ResourceDictionary>
        
     </Window.Resources>
@@ -230,17 +279,17 @@
                     <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
 
                         <!-- 保存按钮 -->
-                        <Button Margin="6,0"  Click="OnSaveClick" Style="{StaticResource RoundedMenuButtonStyle}">
+                        <Button Margin="6,0"  ToolTip="保存" Click="OnSaveClick" Style="{StaticResource RoundedMenuButtonStyle}">
                             <Image Source="{StaticResource Save_Normal_Image}" Width="16" Height="16"/>
                         </Button>
                         <!-- 中间分隔线 -->
                         <Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="2,4"/>
                         <!-- 撤销按钮 -->
-                        <Button Margin="6,0"  Name="UndoButton" Click="OnUndoClick" IsEnabled="False" Style="{StaticResource RoundedMenuButtonStyle}" >
+                        <Button Margin="6,0"  ToolTip="撤销" Name="UndoButton" Click="OnUndoClick" IsEnabled="False" Style="{StaticResource RoundedMenuButtonStyle}" >
                             <Image x:Name="UndoIcon"      Source="{StaticResource Undo_Image}" Width="16" Height="16"/>
                         </Button>
                         <!-- 重做按钮 -->
-                        <Button  Name="RedoButton" Click="OnRedoClick" IsEnabled="False" Style="{StaticResource RoundedMenuButtonStyle}">
+                        <Button   ToolTip="重做" Name="RedoButton" Click="OnRedoClick" IsEnabled="False" Style="{StaticResource RoundedMenuButtonStyle}">
                             <Image x:Name="RedoIcon" Source="{StaticResource Redo_Image}" Width="16"  Height="16"/>
                         </Button>
                     </StackPanel>
@@ -311,7 +360,7 @@
                                 BorderBrush="#E0E0E0"
                                 BorderThickness="1"
                                 CornerRadius="4"
-                                Margin="5,0"
+                                Margin="5,0"  ToolTip="旋转/翻转"
                                 Padding="2">
                                 <StackPanel KeyboardNavigation.DirectionalNavigation="Cycle">
                                     <MenuItem Header="向右旋转90°"  Style="{StaticResource SubMenuItemStyle}" Click="OnRotateRightClick">
@@ -363,7 +412,7 @@
                             StaysOpen="{Binding IsMouseOver, ElementName=BrushToggle}">
 
                                         <!-- 子菜单的容器和外观 -->
-                            <Border Name="SubmenuBorderBrush"
+                            <Border Name="SubmenuBorderBrush"  ToolTip="画刷"
                           Background="White"
                           BorderBrush="#E0E0E0"
                           BorderThickness="1"
@@ -509,133 +558,203 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- 左侧 ScrollViewer + ItemsControl -->
-                    <ScrollViewer x:Name="FileTabsScroller"
-              Grid.Column="0"
-              HorizontalScrollBarVisibility="Hidden"
+                    <ScrollViewer x:Name="FileTabsScroller" Grid.Column="0"
+                                   HorizontalScrollBarVisibility="Hidden"
               VerticalScrollBarVisibility="Disabled"
               PanningMode="HorizontalOnly"
-              Stylus.IsPressAndHoldEnabled="False"
-              Stylus.IsFlicksEnabled="False"
+              
+              PreviewMouseWheel="OnFileTabsWheelScroll" 
+              
               ScrollChanged="OnFileTabsScrollChanged"
-              PreviewMouseWheel="OnFileTabsWheelScroll"
               ManipulationBoundaryFeedback="ScrollViewer_ManipulationBoundaryFeedback">
+                        <!-- 修改点 1: 用 StackPanel 包裹 ItemsControl 和 新增按钮 -->
+                        <StackPanel Orientation="Horizontal">
 
-                        <ItemsControl x:Name="FileTabList" ItemsSource="{Binding FileTabs}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <VirtualizingStackPanel Orientation="Horizontal"
-                                                VirtualizationMode="Recycling"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
+                            <ItemsControl x:Name="FileTabList" ItemsSource="{Binding FileTabs}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <VirtualizingStackPanel Orientation="Horizontal" VirtualizationMode="Recycling"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
 
-                            <!-- 缩略图 Button 模板 -->
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Button Width="120" Height="80" Margin="2" Padding="4"
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <!-- 修改点 2: 增加 Grid 作为容器以支持叠加层 -->
+                                        <Grid>
+                                            <Button Width="120" Height="80" Margin="2" Padding="4"
                                 ToolTip="{Binding FileName}"
                                 Click="OnFileTabClick">
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Background="{TemplateBinding Background}"
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
                                             BorderBrush="{TemplateBinding BorderBrush}"
                                             BorderThickness="{TemplateBinding BorderThickness}"
                                             CornerRadius="4">
-                                                    <ContentPresenter HorizontalAlignment="Center"
-                                                          VerticalAlignment="Center"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Button.Template>
+                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Button.Template>
 
-                                        <StackPanel Orientation="Vertical">
-                                            <Image Source="{Binding Thumbnail}"
-                                       Width="100" Height="60"
-                                        HorizontalAlignment="Center" Stretch="Uniform"
-       VerticalAlignment="Center"/>
-                                            <TextBlock Text="{Binding DisplayName}"
-                                           FontSize="12"
-                                           TextAlignment="Center"/>
-                                        </StackPanel>
+                                                <StackPanel Orientation="Vertical">
+                                                    <!-- 缩略图：如果是新建文件且没有缩略图，显示一个默认图标 -->
+                                                    <Image Source="{Binding Thumbnail}" Width="100" Height="60" Stretch="Uniform" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding DisplayName}" FontSize="12" TextAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
 
-                                        <!-- 🔹 按钮样式 -->
-                                        <Button.Style>
-                                            <Style TargetType="Button">
-                                                <Setter Property="Background" Value="Transparent"/>
-                                                <Setter Property="BorderBrush" Value="#DDD"/>
-                                                <Setter Property="BorderThickness" Value="1"/>
-                                                <Setter Property="Foreground" Value="Black"/>
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Background" Value="Transparent"/>
+                                                        <Setter Property="BorderBrush" Value="#DDD"/>
+                                                        <Setter Property="BorderThickness" Value="1"/>
 
-                                                <Style.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Background" Value="AliceBlue"/>
-                                                    </Trigger>
-                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                        <Setter Property="Background" Value="#CCFFFFFF"/>
-                                                        <Setter Property="Foreground" Value="Black"/>
-                                                        <Setter Property="BorderBrush" Value="#FF2266FF"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Button.Style>
-                                    </Button>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter Property="Background" Value="#11000000"/>
+                                                                <!-- 淡灰色悬浮 -->
+                                                            </Trigger>
+                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                <Setter Property="Background" Value="#CCE6F0FF"/>
+                                                                <!-- 选中淡蓝 -->
+                                                                <Setter Property="BorderBrush" Value="#FF0078D7"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+
+                                            <!-- 🔥 UI升级核心：悬浮层状态指示器 🔥 -->
+
+                                            <!-- 1. 左上角状态点 (红/蓝) -->
+                                            <Ellipse Width="8" Height="8" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="6,6,0,0" IsHitTestVisible="False">
+                                                <Ellipse.Style>
+                                                    <Style TargetType="Ellipse">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <!-- 脏数据：红色 -->
+                                                            <DataTrigger Binding="{Binding IsDirty}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                                <Setter Property="Fill" Value="#FF5555"/>
+                                                            </DataTrigger>
+                                                            <!-- 新建数据：蓝色 (且未Dirty时) -->
+                                                            <MultiDataTrigger>
+                                                                <MultiDataTrigger.Conditions>
+                                                                    <Condition Binding="{Binding IsNew}" Value="True"/>
+                                                                    <Condition Binding="{Binding IsDirty}" Value="False"/>
+                                                                </MultiDataTrigger.Conditions>
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                                <Setter Property="Fill" Value="#0078D7"/>
+                                                            </MultiDataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Ellipse.Style>
+                                            </Ellipse>
+
+                                            <!-- 2. 右上角关闭按钮 (悬浮显示) -->
+                                            <Button x:Name="CloseBtn" Width="18" Height="18" 
+                                HorizontalAlignment="Right" VerticalAlignment="Top" 
+                                Margin="0,4,4,0"
+                                Background="#CCFFFFFF" BorderThickness="0"
+                                Click="OnFileTabCloseClick" 
+                                Tag="{Binding}"
+                                Visibility="Hidden">
+                                                <!-- 默认隐藏 -->
+                                                <Button.Resources>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="CornerRadius" Value="9"/>
+                                                    </Style>
+                                                </Button.Resources>
+                                                <Path Data="M0,0 L8,8 M8,0 L0,8" Stroke="#666" StrokeThickness="1.5" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                            </Button>
+
+                                        </Grid>
+
+                                        <!-- 触发器：鼠标悬浮在整个Item上时，显示关闭按钮 -->
+                                        <DataTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="CloseBtn" Property="Visibility" Value="Visible"/>
+                                            </Trigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- 修改点 3: 列表末尾的新建按钮 -->
+                            <Button x:Name="NewTabBtn" Width="40" Height="80" Margin="2" Click="OnNewTabClick" 
+                Background="Transparent" BorderBrush="Transparent">
+                                <Path Data="M0,5 L10,5 M5,0 L5,10" Stroke="#999" StrokeThickness="2"/>
+                            </Button>
+
+                        </StackPanel>
                     </ScrollViewer>
+
+
+
+
                     <Slider Grid.Column="1"
         x:Name="PreviewSlider"
         Orientation="Vertical"
         Minimum="0"
         Maximum="100"
-        
-        Width="20"
-        VerticalAlignment="Stretch"
-        Margin="2"
-        PreviewMouseLeftButtonDown="Slider_PreviewMouseLeftButtonDown"
-    PreviewMouseMove="Slider_PreviewMouseMove"
-    PreviewMouseLeftButtonUp="Slider_PreviewMouseLeftButtonUp"
-    PreviewMouseWheel="Slider_PreviewMouseWheel">
-                        <!-- ⬅️ 添加这个事件处理器 -->
+        Width="24" 
+        Margin="0,4,4,4"
+        IsDirectionReversed="True" 
+        IsMoveToPointEnabled="True"
+        ValueChanged="PreviewSlider_ValueChanged">
+                        <!-- IsDirectionReversed="True": 让顶部对应Index 0 -->
+                        <!-- IsMoveToPointEnabled="True": 点击轨道任意位置直接跳转，无需手写代码 -->
+
                         <Slider.Template>
                             <ControlTemplate TargetType="Slider">
-                                <Grid Margin="4" Background="Transparent">
-                                    <!-- 背景 -->
-                                    <Border CornerRadius="4" Background="#333" Opacity="0.3"/>
+                                <Grid Background="Transparent">
+                                    <!-- 增加背景以确保点击命中率 -->
+                                    <!-- 背景轨道 -->
+                                    <Border Width="4" CornerRadius="2" Background="#333" Opacity="0.1" HorizontalAlignment="Center"/>
 
-                                    <!-- 核心轨道 -->
-                                    <Track x:Name="PART_Track" Orientation="Vertical" VerticalAlignment="Stretch">
-
-                                        <!-- 上半轨道按钮 -->
+                                    <!-- 核心组件 -->
+                                    <Track x:Name="PART_Track" Orientation="Vertical">
                                         <Track.DecreaseRepeatButton>
-                                            <!-- IsMoveToPointEnabled="True" 已经处理了点击移动，通常不需要额外事件 -->
                                             <RepeatButton Command="Slider.DecreaseLarge" Style="{StaticResource SliderRepeatButtonStyle}"/>
                                         </Track.DecreaseRepeatButton>
 
-                                        <!-- Thumb（可拖动手柄）- 关键修正区域 -->
                                         <Track.Thumb>
-
-                                            <Thumb x:Name="PART_Thumb" Width="12" Height="12" Background="Purple">
+                                            <Thumb x:Name="PART_Thumb" Height="16" Width="16" VerticalAlignment="Center">
                                                 <Thumb.Template>
                                                     <ControlTemplate TargetType="Thumb">
-
-                                                        <Ellipse Fill="{TemplateBinding Background}" 
-                                             Stroke="White" 
-                                             StrokeThickness="1" />
+                                                        <Grid>
+                                                            <!-- 阴影增加立体感 -->
+                                                            <Ellipse Fill="#33000000" Margin="0,2,-1,-2"/>
+                                                            <!-- 你的紫色球 -->
+                                                            <Ellipse Fill="Purple" Stroke="White" StrokeThickness="2"/>
+                                                        </Grid>
                                                     </ControlTemplate>
                                                 </Thumb.Template>
                                             </Thumb>
                                         </Track.Thumb>
 
-                                        <!-- 下半轨道按钮 -->
                                         <Track.IncreaseRepeatButton>
                                             <RepeatButton Command="Slider.IncreaseLarge" Style="{StaticResource SliderRepeatButtonStyle}"/>
                                         </Track.IncreaseRepeatButton>
-
                                     </Track>
                                 </Grid>
                             </ControlTemplate>
                         </Slider.Template>
-                        <!-- 为了让 RepeatButton 的模板更简洁，可以定义一个共享样式 -->
 
+                        <!-- 这是一个隐藏的 Style，用于让轨道上下部分的点击区域透明 -->
+                        <Slider.Resources>
+                            <Style x:Key="SliderRepeatButtonStyle" TargetType="RepeatButton">
+                                <Setter Property="OverridesDefaultStyle" Value="true"/>
+                                <Setter Property="IsTabStop" Value="false"/>
+                                <Setter Property="Focusable" Value="false"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="RepeatButton">
+                                            <Border Background="Transparent"/>
+                                            <!-- 关键：透明背景接收点击 -->
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Slider.Resources>
                     </Slider>
 
 
@@ -798,45 +917,89 @@
         </DockPanel>
 
         <Border x:Name="TextEditBar"
-            Background="#F5F5F5"
-            CornerRadius="6"
-            Padding="8"
-            Opacity="0.95"
-                
-            Visibility="Collapsed"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Top"
-            Margin="0,80,0,0"
-            >
-            <StackPanel Orientation="Horizontal" >
-                <!-- 字体选择 -->
+        Visibility="Collapsed"
+                 MouseDown="TextEditBar_MouseDown" 
+        HorizontalAlignment="Center" 
+        VerticalAlignment="Top"
+        Margin="0,80,0,0"
+        Background="#FAFAFA"
+        BorderBrush="#E5E5E5"
+        BorderThickness="1"
+        CornerRadius="8"
+        Padding="6">
+
+            <!-- 添加阴影效果 -->
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="12" ShadowDepth="4" Direction="270" Color="#20000000" Opacity="0.4"/>
+            </Border.Effect>
+
+            <StackPanel Orientation="Horizontal">
+
+                <!-- 1. 字体选择 -->
+                <!-- IsEditable: 允许输入搜索 | StaysOpenOnEdit: 输入时不关闭下拉 -->
                 <ComboBox x:Name="FontFamilyBox"
-                      Width="140"
-                      ItemsSource="{x:Static Fonts.SystemFontFamilies}"
-                      DisplayMemberPath="Source"
-                      SelectedItem="Segoe UI"/>
-                <!-- 字号 -->
-                <ComboBox x:Name="FontSizeBox"
-                      Width="60"
-                      SelectedIndex="6">
-                    <ComboBoxItem>8</ComboBoxItem>
-                    <ComboBoxItem>10</ComboBoxItem>
-                    <ComboBoxItem>12</ComboBoxItem>
-                    <ComboBoxItem>14</ComboBoxItem>
-                    <ComboBoxItem>18</ComboBoxItem>
-                    <ComboBoxItem>24</ComboBoxItem>
-                    <ComboBoxItem>36</ComboBoxItem>
-                    <ComboBoxItem>48</ComboBoxItem>
-                    <ComboBoxItem>72</ComboBoxItem>
+                  Style="{StaticResource FluentComboBoxStyle}"
+                  Width="180"
+                  ItemsSource="{x:Static Fonts.SystemFontFamilies}"
+                  DisplayMemberPath="Source"
+                  SelectedValuePath="Source"
+                          KeyDown="Control_KeyDown"
+                  IsEditable="True"
+                  StaysOpenOnEdit="True"
+                  TextSearch.TextPath="Source"
+                          SelectionChanged="FontSettingChanged"
+          TextBoxBase.TextChanged="FontSettingChanged"
+                  SelectedIndex="0">
+                    <!-- 虚拟化，防止字体太多卡顿 -->
+                    <ComboBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <VirtualizingStackPanel />
+                        </ItemsPanelTemplate>
+                    </ComboBox.ItemsPanel>
                 </ComboBox>
 
-                <!-- 样式按钮 -->
-                <ToggleButton x:Name="BoldBtn" FontWeight="Bold" Width="30" Content="B"/>
-                <ToggleButton x:Name="ItalicBtn" FontStyle="Italic" Width="30" Content="I"/>
-                <ToggleButton x:Name="UnderlineBtn" Width="30" Content="U"
-                        />
-                <!-- 留空 -->
-                <Separator Width="20"/>
+                <!-- 2. 字号选择 -->
+                <ComboBox x:Name="FontSizeBox"
+                  Style="{StaticResource FluentComboBoxStyle}"
+                  Width="80"
+                          SelectionChanged="FontSettingChanged"
+          TextBoxBase.TextChanged="FontSettingChanged"
+                          KeyDown="Control_KeyDown"
+                  IsEditable="True"
+                  Text="12">
+                    <System:Double>8</System:Double>
+                    <System:Double>9</System:Double>
+                    <System:Double>10</System:Double>
+                    <System:Double>11</System:Double>
+                    <System:Double>12</System:Double>
+                    <System:Double>14</System:Double>
+                    <System:Double>16</System:Double>
+                    <System:Double>18</System:Double>
+                    <System:Double>24</System:Double>
+                    <System:Double>36</System:Double>
+                    <System:Double>48</System:Double>
+                    <System:Double>72</System:Double>
+                </ComboBox>
+
+                <!-- 分割线 -->
+                <Rectangle Width="1" Height="20" Fill="#E0E0E0" Margin="4,0,8,0"/>
+
+                <!-- 3. 样式按钮组 -->
+                <!-- 粗体 -->
+                <ToggleButton x:Name="BoldBtn" Style="{StaticResource FluentToggleButtonStyle}" ToolTip="加粗">
+                    <TextBlock Text="B" FontWeight="Bold" FontFamily="Segoe UI" FontSize="16"/>
+                </ToggleButton>
+
+                <!-- 斜体 -->
+                <ToggleButton x:Name="ItalicBtn" Style="{StaticResource FluentToggleButtonStyle}" ToolTip="斜体">
+                    <TextBlock Text="I" FontStyle="Italic" FontFamily="Times New Roman" FontSize="16"/>
+                </ToggleButton>
+
+                <!-- 下划线 -->
+                <ToggleButton x:Name="UnderlineBtn" Style="{StaticResource FluentToggleButtonStyle}" ToolTip="下划线">
+                    <TextBlock Text="U" TextDecorations="Underline" FontFamily="Segoe UI" FontSize="16"/>
+                </ToggleButton>
+
             </StackPanel>
         </Border>
 

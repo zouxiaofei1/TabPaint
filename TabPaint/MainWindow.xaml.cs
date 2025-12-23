@@ -17,6 +17,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using static TabPaint.MainWindow;
 //
 //TabPaint主程序
 //
@@ -45,7 +46,7 @@ namespace TabPaint
         private int _currentImageIndex = -1;
         private bool _isEdited = false; // 标记当前画布是否被修改
         private string _currentFileName = "未命名";
-        private string _programVersion = "v0.6.1 alpha"; // 可以从 Assembly 读取
+        private string _programVersion = "v0.6.2 alpha"; // 可以从 Assembly 读取
         private bool _isFileSaved = true; // 是否有未保存修改
 
         private string _mousePosition = "X:0, Y:0";
@@ -190,13 +191,19 @@ namespace TabPaint
                 }
             }
         }
+        private void SetPenResizeBarVisibility(bool vis)
+        {
+            ((MainWindow)System.Windows.Application.Current.MainWindow).ThicknessPanel.Visibility = vis ? Visibility.Visible : Visibility.Collapsed;
 
+        }
 
         private void SetBrushStyle(BrushStyle style)
         {//设置画笔样式，所有画笔都是pen工具
             _router.SetTool(_tools.Pen);
             _ctx.PenStyle = style;
             UpdateToolSelectionHighlight();
+            
+            SetPenResizeBarVisibility( _ctx.PenStyle != BrushStyle.Pencil);
         }
 
 
@@ -351,6 +358,44 @@ namespace TabPaint
             ColorBtn1.Tag = !useSecondColor ? "True" : "False"; // 如果不是色2，那就是色1选中
             ColorBtn2.Tag = useSecondColor ? "True" : "False";
         }
+        private void FontSizeBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (!double.TryParse(FontSizeBox.Text, out _))
+            {
+                FontSizeBox.Text = _activeTextBox.FontSize.ToString(); // 还原为当前有效字号
+            }
+        }
+        private void Control_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                // 1. 强制让当前的 ComboBox 失去焦点并应用更改
+                DependencyObject focusScope = FocusManager.GetFocusScope((System.Windows.Controls.Control)sender);
+                FocusManager.SetFocusedElement(focusScope, _activeTextBox);
+
+                // 2. 将焦点还给画布上的文本框，让用户可以继续打字
+                if (_activeTextBox != null)
+                {
+                    _activeTextBox.Focus();
+                    // 将光标移到文字末尾
+                    _activeTextBox.SelectionStart = _activeTextBox.Text.Length;
+                }
+
+                e.Handled = true; // 阻止回车产生额外的换行或响铃
+            }
+        }
+        private void TextEditBar_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            // 如果点击的是工具栏背景本身，而不是子控件
+            if (e.OriginalSource is Border || e.OriginalSource is StackPanel)
+            {
+                if (_activeTextBox != null)
+                {
+                    _activeTextBox.Focus();
+                }
+                e.Handled = true;
+            }
+        }
 
         private void OnSourceInitialized(object? sender, EventArgs e)
         {
@@ -488,7 +533,39 @@ namespace TabPaint
 
 
 
-       
+        private bool _isSyncingSlider = false; // 防止死循环
+
+        // 当滑块拖动时触发
+        private async void PreviewSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_isSyncingSlider) return;
+            if (_imageFiles == null || _imageFiles.Count == 0) return;
+
+            // 只有当变化量足够大（或者是拖动结束）时才加载图片，防止滑动太快卡顿
+            // 这里做一个简单的去抖动处理，或者直接加载
+            int index = (int)e.NewValue;
+
+            // 边界检查
+            if (index < 0) index = 0;
+            if (index >= _imageFiles.Count) index = _imageFiles.Count - 1;
+
+            // 调用你的加载逻辑，并不触发滚动条反向更新 Slider
+            _isSyncingSlider = true;
+            await OpenImageAndTabs(_imageFiles[index],true);
+            _isSyncingSlider = false;
+        }
+
+        // 同时，当你通过点击列表切换图片时，也要更新 Slider 的位置
+        // 在 OpenImageAndTabs 方法内部：
+        /*
+            if (!fromSlider) 
+            {
+                _isSyncingSlider = true;
+                PreviewSlider.Value = _currentImageIndex;
+                _isSyncingSlider = false;
+            }
+        */
+
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             this.Focus();
@@ -824,9 +901,89 @@ namespace TabPaint
                 // 或者你把 ctx 传给这个方法
                 st.RefreshOverlay(_ctx);
             }
-            _canvasResizer.UpdateUI();
+            if (_tools.Text is TextTool tx)
+            {
+                tx.DrawTextboxOverlay(_ctx);
+            }
+                _canvasResizer.UpdateUI();
         }
 
+        // 1. 实现 Ctrl+N 或点击 (+) 按钮
+        private void OnNewTabClick(object sender, RoutedEventArgs e)
+        {
+            CreateNewTab();
+        }
+
+        private void CreateNewTab()
+        {
+            // 创建一个新的 ViewModel
+            var newTab = new FileTabItem(null)
+            {
+                IsNew = true,
+                IsSelected = true
+                // 可以在这里设置一个默认的白板缩略图
+            };
+
+            // 取消其他选中
+            foreach (var tab in FileTabs) tab.IsSelected = false;
+
+            // 添加到列表末尾
+            FileTabs.Add(newTab);
+
+            // 滚动到最后
+            FileTabsScroller.ScrollToRightEnd();
+
+            // TODO: 这里需要调用你加载 Canvas 空白画布的逻辑
+            // OpenCanvas(null); 
+        }
+
+        // 2. 实现关闭逻辑
+        private void OnFileTabCloseClick(object sender, RoutedEventArgs e)
+        {
+            // 阻止事件冒泡到 Item 的点击事件
+            e.Handled = true;
+
+            if (sender is System.Windows.Controls.Button btn && btn.Tag is FileTabItem item)
+            {
+                CloseTab(item);
+            }
+        }
+
+        private void CloseTab(FileTabItem item)
+        {
+            if (item.IsDirty)
+            {
+                var result = System.Windows.MessageBox.Show($"图片 {item.FileName} 尚未保存，是否保存？", "保存提示", MessageBoxButton.YesNoCancel);
+                if (result == MessageBoxResult.Cancel) return;
+                if (result == MessageBoxResult.Yes)
+                {
+                    // TODO: 调用保存逻辑
+                    // SaveFile(item);
+                }
+            }
+
+            // 从 UI 集合移除
+            FileTabs.Remove(item);
+
+            // 如果移除的是当前选中的，需要选中另一个
+            if (item.IsSelected && FileTabs.Count > 0)
+            {
+                // 简单策略：选中最后一个，或者选中相邻的
+                var last = FileTabs.Last();
+                last.IsSelected = true;
+                // OpenImageAndTabs(last.FilePath);
+            }
+        }
+
+        // 3. 键盘快捷键监听 (建议放在 Window_PreviewKeyDown)
+        private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.N && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                CreateNewTab();
+                e.Handled = true;
+            }
+        }
 
         private void ShowToast(string message)
         {

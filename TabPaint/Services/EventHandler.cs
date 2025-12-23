@@ -228,25 +228,50 @@ namespace TabPaint
         {
             if (_activeTextBox == null) return;
 
+            // --- 1. 处理字体 (兼容手动输入和选择) ---
             if (FontFamilyBox.SelectedItem is FontFamily family)
+            {
                 _activeTextBox.FontFamily = family;
-            if (double.TryParse((FontSizeBox.SelectedItem as ComboBoxItem)?.Content?.ToString(), out double size))
-                _activeTextBox.FontSize = size;
+            }
+            else if (!string.IsNullOrWhiteSpace(FontFamilyBox.Text))
+            {
+                try
+                {
+                    // 尝试根据输入的字符串创建字体
+                    _activeTextBox.FontFamily = new FontFamily(FontFamilyBox.Text);
+                }
+                catch { /* 输入了非法字体名则忽略 */ }
+            }
 
+            // --- 2. 处理字号 (兼容手动输入) ---
+            // 注意：ComboBox 可编辑时，FontSizeBox.Text 是获取输入值的最直接方式
+            if (double.TryParse(FontSizeBox.Text, out double size))
+            {
+                if (size > 0 && size < 1000) // 限制一个合理的范围
+                {
+                    _activeTextBox.FontSize = size;
+                }
+            }
+
+            // --- 3. 处理样式按钮 ---
             _activeTextBox.FontWeight = BoldBtn.IsChecked == true ? FontWeights.Bold : FontWeights.Normal;
             _activeTextBox.FontStyle = ItalicBtn.IsChecked == true ? FontStyles.Italic : FontStyles.Normal;
             _activeTextBox.TextDecorations = UnderlineBtn.IsChecked == true ? TextDecorations.Underline : null;
 
-
-
-            if (_tools.Text is TextTool st) // 强转成 SelectTool
+            // --- 4. 强制布局更新并重绘虚线框 ---
+            if (_tools.Text is TextTool st)
             {
+                // 关键：先让 TextBox 根据新属性重新计算自己的实际宽高
+                _activeTextBox.UpdateLayout();
+
+                // 使用 Render 优先级确保在界面渲染时更新虚线框位置
                 _activeTextBox.Dispatcher.BeginInvoke(new Action(() =>
                 {
                     st.DrawTextboxOverlay(_ctx);
-                }), DispatcherPriority.Background);
+                }), System.Windows.Threading.DispatcherPriority.Render);
             }
         }
+
 
         private void OnExitClick(object sender, RoutedEventArgs e)
         {
@@ -449,6 +474,7 @@ namespace TabPaint
                 _ctx.PenStyle = style; // 你的画笔样式枚举
             }
             UpdateToolSelectionHighlight();
+            SetPenResizeBarVisibility(_ctx.PenStyle != BrushStyle.Pencil);
             // 点击后关闭下拉按钮
             BrushToggle.IsChecked = false;
         }
@@ -499,32 +525,47 @@ namespace TabPaint
         {
             if (_router.CurrentTool is SelectTool selTool && selTool._selectionData != null)
             {
-                // 获取点击位置（相对于 CanvasWrapper，即考虑了缩放和偏移的逻辑坐标）
+                // 1. 检查点击的是否是左键（通常右键用于弹出菜单，不应触发提交）
+                if (e.ChangedButton != MouseButton.Left) return;
+
+                // 2. 深度判定：点击来源是否属于滚动条的任何组成部分
+                if (IsVisualAncestorOf<System.Windows.Controls.Primitives.ScrollBar>(e.OriginalSource as DependencyObject))
+                {
+                    return; // 点击在滚动条上（轨道、滑块、箭头等），不执行提交
+                }
+
+                // 获取逻辑坐标
                 Point pt = e.GetPosition(CanvasWrapper);
 
-                // 判定：点击是否不在选区内，且不在缩放句柄上
+                // 3. 判定：点击是否不在选区内，且不在缩放句柄上
                 bool hitHandle = selTool.HitTestHandle(pt, selTool._selectionRect) != SelectTool.ResizeAnchor.None;
                 bool hitInside = selTool.IsPointInSelection(pt);
 
                 if (!hitHandle && !hitInside)
                 {
-                    // 检查点击的来源
-                    // 如果点击的是滚动条本身，则不提交（防止想滚动时误提交）
-                    if (e.OriginalSource is System.Windows.Controls.Primitives.ScrollBar ||
-                        e.OriginalSource is System.Windows.Controls.Primitives.Thumb)
-                    {
-                        return;
-                    }
-
                     // 执行提交
                     selTool.CommitSelection(this._ctx);
                     selTool.CleanUp(this._ctx);
 
-                    // 此时可以手动标志事件已处理，防止 CanvasWrapper 再次触发 Down 事件
+                    // 如果不希望 Canvas 接收这次点击（例如防止开始一次新的拖拽），可以拦截
                     // e.Handled = true; 
                 }
             }
         }
+
+        /// <summary>
+        /// 辅助方法：向上查找视觉树，判断是否包含指定类型的祖先
+        /// </summary>
+        private bool IsVisualAncestorOf<T>(DependencyObject node) where T : DependencyObject
+        {
+            while (node != null)
+            {
+                if (node is T) return true;
+                node = VisualTreeHelper.GetParent(node); // 关键：获取视觉树父级
+            }
+            return false;
+        }
+
 
         private void OnTextClick(object sender, RoutedEventArgs e)
         {

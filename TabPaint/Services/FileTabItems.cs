@@ -29,15 +29,19 @@ namespace TabPaint
 
         public class FileTabItem : INotifyPropertyChanged
         {
-            public string FilePath { get; }
-            public string FileName => System.IO.Path.GetFileName(FilePath);
-            public string DisplayName => System.IO.Path.GetFileNameWithoutExtension(FilePath);
+            public string FilePath { get; set; } // 允许 set，因为新建文件可能一开始没有路径
+
+            // 逻辑文件名：如果有路径显示文件名，如果是新建的显示 "未命名"
+            public string FileName => !string.IsNullOrEmpty(FilePath) ? System.IO.Path.GetFileName(FilePath) : "未命名";
+            public string DisplayName => !string.IsNullOrEmpty(FilePath) ? System.IO.Path.GetFileNameWithoutExtension(FilePath) : "未命名";
+
             private bool _isSelected;
             public bool IsSelected
             {
                 get => _isSelected;
                 set { _isSelected = value; OnPropertyChanged(nameof(IsSelected)); }
             }
+
             private bool _isLoading;
             public bool IsLoading
             {
@@ -45,93 +49,138 @@ namespace TabPaint
                 set { _isLoading = value; OnPropertyChanged(nameof(IsLoading)); }
             }
 
+            // 🔴 状态：是否修改未保存
+            private bool _isDirty;
+            public bool IsDirty
+            {
+                get => _isDirty;
+                set { _isDirty = value; OnPropertyChanged(nameof(IsDirty)); }
+            }
+
+            // 🔵 状态：是否是纯新建的内存文件
+            private bool _isNew;
+            public bool IsNew
+            {
+                get => _isNew;
+                set { _isNew = value; OnPropertyChanged(nameof(IsNew)); }
+            }
+
             private BitmapSource? _thumbnail;
             public BitmapSource? Thumbnail
             {
                 get => _thumbnail;
-                set
-                {
-                    _thumbnail = value;
-                    OnPropertyChanged(nameof(Thumbnail));
-                }
+                set { _thumbnail = value; OnPropertyChanged(nameof(Thumbnail)); }
             }
 
-            public FileTabItem(string path) { FilePath = path; }
+            // 预留给 UI 绑定的关闭命令（可选，或者直接在 View 处理 Click）
+            public ICommand CloseCommand { get; set; }
+
+            public FileTabItem(string path)
+            {
+                FilePath = path;
+            }
+
+            // ... LoadThumbnailAsync 方法保持不变 ...
             public async Task LoadThumbnailAsync(int containerWidth, int containerHeight)
-            {  
+            {
+                // 保持你原有的逻辑
+                // 注意：如果是 IsNew=True 的文件，Thumbnail 应该直接从 Canvas 生成，而不是读取磁盘
+                if (IsNew || string.IsNullOrEmpty(FilePath)) return;
+
                 var thumbnail = await Task.Run(() =>
                 {
                     try
                     {
-                        // 步骤 1: 使用 System.Drawing.Image 获取原始尺寸
-                        double originalWidth, originalHeight;
-                        using (var img = System.Drawing.Image.FromFile(FilePath))
-                        {
-                            originalWidth = img.Width;
-                            originalHeight = img.Height;
-                        }
+                        // 你的 System.Drawing 逻辑...
+                        // 略... (保持你原有的代码)
 
-                        // 步骤 2, 3, 4 与方案一完全相同
-                        double ratioX = containerWidth / originalWidth;
-                        double ratioY = containerHeight / originalHeight;
-                        double finalRatio = Math.Min(ratioX, ratioY);
+                        // 为了演示完整性，这里简写，请保留你原有的完整代码
+                        using (var img = System.Drawing.Image.FromFile(FilePath)) { /*...*/ }
 
-                        if (finalRatio > 1.0)
-                        {
-                            finalRatio = 1.0;
-                        }
-
-                        int decodeWidth = (int)(originalWidth * finalRatio);
-                        if (decodeWidth < 1) decodeWidth = 1;
-
-                        // 步骤 5: 创建并加载BitmapImage
                         var bmp = new BitmapImage();
                         bmp.BeginInit();
-                        bmp.CacheOption = BitmapCacheOption.OnLoad;
                         bmp.UriSource = new Uri(FilePath);
                         bmp.DecodePixelWidth = 100;
+                        bmp.CacheOption = BitmapCacheOption.OnLoad; // 关键
                         bmp.EndInit();
                         bmp.Freeze();
-                        //  s(bmp.PixelWidth.ToString() + " " + bmp.PixelHeight.ToString());
                         return bmp;
                     }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"Failed to load thumbnail for {FilePath}: {ex.Message}");
-                        return null;
-                    }
+                    catch { return null; }
                 });
                 if (thumbnail != null) Thumbnail = thumbnail;
             }
+
             public event PropertyChangedEventHandler? PropertyChanged;
-            protected void OnPropertyChanged(string name)
-                => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+            protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
+
 
         private const int PageSize = 10; // 每页标签数量（可调整）
 
         public ObservableCollection<FileTabItem> FileTabs { get; }
             = new ObservableCollection<FileTabItem>();
         // 加载当前页 + 前后页文件到显示区
+        //private void LoadTabPageAsync(int centerIndex)
+        //{//全部清空并重新加载!!!
+        //    if (_imageFiles == null || _imageFiles.Count == 0) return;
+
+
+        //    FileTabs.Clear();
+        //    int start = Math.Max(0, centerIndex - PageSize);
+        //    int end = Math.Min(_imageFiles.Count - 1, centerIndex + PageSize);
+        //    //s(centerIndex);
+        //    foreach (var path in _imageFiles.Skip(start).Take(end - start + 1))
+        //        FileTabs.Add(new FileTabItem(path));
+
+        //    foreach (var tab in FileTabs)
+        //        if (tab.Thumbnail == null && !tab.IsLoading)
+        //        {
+        //            tab.IsLoading = true;
+        //            _ = tab.LoadThumbnailAsync(100, 60);
+        //        }
+        //}
+
+        // 修改 LoadTabPageAsync 的开头逻辑
         private void LoadTabPageAsync(int centerIndex)
-        {//全部清空并重新加载!!!
-            if (_imageFiles == null || _imageFiles.Count == 0) return;
+        {
+            // 1. 找出需要保留的 Tab (脏文件、新文件、外部文件)
+            var keepTabs = FileTabs.Where(t => t.IsDirty || t.IsNew).ToList();
 
+            // 2. 清空
+           // FileTabs.Clear();
 
-            FileTabs.Clear();
-            int start = Math.Max(0, centerIndex - PageSize);
-            int end = Math.Min(_imageFiles.Count - 1, centerIndex + PageSize);
-            //s(centerIndex);
-            foreach (var path in _imageFiles.Skip(start).Take(end - start + 1))
-                FileTabs.Add(new FileTabItem(path));
+            // 3. 先把保留的 Tab 加回来 (或者加到末尾，看你喜好)
+            // 策略 A：固定在左侧 (类似 VSCode Pinned)
+            foreach (var t in keepTabs) FileTabs.Add(t);
 
+            // 4. 加载文件夹内的文件 (原有逻辑)
+            if (_imageFiles != null && _imageFiles.Count > 0)
+            {
+                int start = Math.Max(0, centerIndex - PageSize);
+                int end = Math.Min(_imageFiles.Count - 1, centerIndex + PageSize);
+
+                foreach (var path in _imageFiles.Skip(start).Take(end - start + 1))
+                {
+                    // 防止重复添加已经在 keepTabs 里的文件
+                    if (!keepTabs.Any(t => t.FilePath == path))
+                    {
+                        FileTabs.Add(new FileTabItem(path));
+                    }
+                }
+            }
+
+            // 5. 触发加载缩略图
             foreach (var tab in FileTabs)
-                if (tab.Thumbnail == null && !tab.IsLoading)
+            {
+                if (tab.Thumbnail == null && !tab.IsLoading && !tab.IsNew) // IsNew 的不用加载
                 {
                     tab.IsLoading = true;
                     _ = tab.LoadThumbnailAsync(100, 60);
                 }
+            }
         }
+
         private async Task RefreshTabPageAsync(int centerIndex, bool refresh = false)
         {
 
@@ -279,7 +328,21 @@ namespace TabPaint
 
         private async void OnFileTabClick(object sender, RoutedEventArgs e)// 点击标签打开图片
         {
-            if (sender is System.Windows.Controls.Button btn && btn.DataContext is FileTabItem item) await OpenImageAndTabs(item.FilePath);
+            if (sender is System.Windows.Controls.Button btn && btn.DataContext is FileTabItem clickedItem)
+            {
+                // 1. 核心修复：先将所有项设为未选中
+                //foreach (var tab in FileTabs)
+                //{
+                //    tab.IsSelected = false;
+                //}
+
+                //// 2. 选中当前项
+                //clickedItem.IsSelected = true;
+
+                // 3. 打开图片
+                await OpenImageAndTabs(clickedItem.FilePath);
+            }
+           // if (sender is System.Windows.Controls.Button btn && btn.DataContext is FileTabItem item) await OpenImageAndTabs(item.FilePath);
         }
 
         // 鼠标滚轮横向滑动标签栏

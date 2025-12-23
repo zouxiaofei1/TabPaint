@@ -349,7 +349,7 @@ namespace TabPaint
                         }
                     }
                 }
-                ctx.Surface.Bitmap.AddDirtyRect(rect);
+                ctx.Surface.Bitmap.AddDirtyRect(ClampRect(rect, ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelWidth, ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelHeight));
                 ctx.Surface.Bitmap.Unlock();
             }
         }

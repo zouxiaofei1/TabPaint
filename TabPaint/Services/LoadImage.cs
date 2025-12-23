@@ -35,6 +35,8 @@ namespace TabPaint
         private CancellationTokenSource _loadImageCts;
         public async Task OpenImageAndTabs(string filePath, bool refresh = false)
         {
+            if (_currentImageIndex == -1) ScanFolderImages(filePath);
+
             foreach (var tab in FileTabs)
                 tab.IsSelected = false;
 
@@ -43,22 +45,23 @@ namespace TabPaint
             if (current != null)
                 current.IsSelected = true;
 
-            if (_currentImageIndex == -1) ScanFolderImages(filePath);
             // 加载对应图片
             int newIndex = _imageFiles.IndexOf(filePath);
             _currentImageIndex = newIndex;
 
             RefreshTabPageAsync(_currentImageIndex, refresh);
             await LoadImage(filePath);
+            foreach (var tab in FileTabs)
+                tab.IsSelected = false;
 
-      
+            // 找到当前点击的标签并选中
+            current = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
+            if (current != null)
+                current.IsSelected = true;
 
-            // 标签栏刷新后，重新选中对应项
-            var reopened = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
-            if (reopened != null)
-                reopened.IsSelected = true;
+
         }
-    
+
         public void RequestImageLoad(string filePath)
         {
             lock (_queueLock)
@@ -114,9 +117,9 @@ namespace TabPaint
                     tab.IsSelected = false;
 
                 // 2. 找到并选中新标签（如果它已在可视区域）
-                var currentTab = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
-                if (currentTab != null)
-                    currentTab.IsSelected = true;
+                //var currentTab = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
+                //if (currentTab != null)
+                //    currentTab.IsSelected = true;
 
                 // 3. 加载主图片
                 await LoadImage(filePath); // 假设这是您加载大图的方法
@@ -125,9 +128,9 @@ namespace TabPaint
                 await RefreshTabPageAsync(_currentImageIndex);
 
                 // 5. 再次确保标签被选中（因为RefreshTabPageAsync可能重建了列表）
-                var reopenedTab = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
-                if (reopenedTab != null)
-                    reopenedTab.IsSelected = true;
+                //var reopenedTab = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
+                //if (reopenedTab != null)
+                //    reopenedTab.IsSelected = true;
 
                 // 6. 更新Slider
                 SetPreviewSlider();
@@ -302,7 +305,7 @@ namespace TabPaint
                     }
 
                     // 用质量更好的 480p 预览图替换掉之前的图像
-                   
+
                 });
 
                 // --- 阶段 2: 等待完整图并最终更新 ---

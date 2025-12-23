@@ -5,6 +5,7 @@
 
     <!-- Win11 风格 ContextMenu 样式 -->
     <Style x:Key="Win11ContextMenuStyle" TargetType="ContextMenu">
+
         <Setter Property="Background" Value="#F9F9F9"/>
         <Setter Property="BorderBrush" Value="#E5E5E5"/>
         <Setter Property="BorderThickness" Value="1"/>
@@ -14,26 +15,34 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ContextMenu">
-                    <Border CornerRadius="8" 
+                    <Popup x:Name="PART_Popup"
+                       AllowsTransparency="True"
+                       Placement="MousePoint"
+                       IsOpen="{TemplateBinding IsOpen}"
+                       PopupAnimation="None" 
+                       Focusable="False">
+                        <Border CornerRadius="8" 
                         Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
                         Padding="{TemplateBinding Padding}">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="15" Opacity="0.2" ShadowDepth="2" Color="Black"/>
-                        </Border.Effect>
-                        <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle"/>
-                    </Border>
+                            <!--<Border.Effect>
+                                <DropShadowEffect BlurRadius="15" Opacity="0.2" ShadowDepth="2" Color="Black"/>
+                            </Border.Effect>-->
+                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                        </Border>
+                    </Popup>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
 
+
     <!-- Win11 风格 MenuItem 样式 -->
     <Style x:Key="Win11MenuItemStyle" TargetType="MenuItem">
-        <Setter Property="Height" Value="32"/>
+        <Setter Property="Height" Value="28"/>
         <Setter Property="Foreground" Value="#1A1A1A"/>
-        <Setter Property="Padding" Value="10,0,10,0"/>
+        <Setter Property="Padding" Value="6,0,6,0"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="MenuItem">
@@ -159,6 +168,7 @@
 
     <!-- 2. Slider 整体模板 (修正了 RepeatButton 问题) -->
     <Style x:Key="Win11VerticalSliderStyle" TargetType="Slider">
+        
         <Setter Property="OverridesDefaultStyle" Value="True"/>
         <Setter Property="Template">
             <Setter.Value>
@@ -661,7 +671,7 @@
             </Setter.Value>
         </Setter>
     </Style>
-	
+   
 
-	<!-- 如果有引用的颜色，也可以放在这里或引用 Brushes.xaml -->
+    <!-- 如果有引用的颜色，也可以放在这里或引用 Brushes.xaml -->
 </ResourceDictionary>

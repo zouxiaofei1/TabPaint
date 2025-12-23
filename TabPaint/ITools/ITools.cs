@@ -16,6 +16,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using static TabPaint.MainWindow;
 
 //
 //TabPaint主程序
@@ -178,7 +179,7 @@ namespace TabPaint
             private readonly Brush PurpleBackgroundBrush = new SolidColorBrush(Color.FromArgb(40, 136, 108, 228)); // 15% 透明度的紫色背景
 
 
-
+   
 
             public void SetTool(ITool tool)
             {
@@ -192,14 +193,8 @@ namespace TabPaint
                 _ctx.ViewElement.Cursor = tool.Cursor;
                 a.s(_ctx.ViewElement.Cursor);
                 //var mainWindow = (MainWindow)Application.Current.MainWindow;
-                if (tool is PenTool)
-                {
-                    ((MainWindow)System.Windows.Application.Current.MainWindow).ThicknessPanel.Visibility = Visibility.Visible;
-                }
-                else
-                {
-                    ((MainWindow)System.Windows.Application.Current.MainWindow).ThicknessPanel.Visibility = Visibility.Collapsed;
-                }
+
+                ((MainWindow)System.Windows.Application.Current.MainWindow).SetPenResizeBarVisibility((tool is PenTool && _ctx.PenStyle != BrushStyle.Pencil));
                 ((MainWindow)System.Windows.Application.Current.MainWindow).UpdateToolSelectionHighlight();
             }
             public void ViewElement_MouseDown(object sender, MouseButtonEventArgs e)
