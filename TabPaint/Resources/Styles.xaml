@@ -1,8 +1,90 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-	
+    <Style x:Key="Win11ToolIconBtn" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Margin" Value="0,1"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="4">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#15000000"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#25000000"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
     <!-- 把原本在 Window.Resources 里的 Style、ControlTemplate 剪切到这里 -->
+    <Style x:Key="Win11AddButtonStyle" TargetType="Button">
+        <Setter Property="Width" Value="36"/>
+        <!-- 稍微窄一点，显精致 -->
+        <Setter Property="Height" Value="80"/>
+        <!-- 与你的 Tab 高度保持一致 -->
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Margin" Value="2,0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <!-- 容器：背景色和圆角 -->
+                    <Border x:Name="Bd" 
+                            Background="{TemplateBinding Background}" 
+                            CornerRadius="6"
+                            SnapsToDevicePixels="True">
+                        <!-- 动画过渡 -->
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal"/>
+                                <VisualState x:Name="MouseOver">
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="Bd" 
+                                                        Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" 
+                                                        To="#15000000" Duration="0:0:0.1"/>
+                                        <!-- 👆 悬浮时显示淡淡的黑色 -->
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="Bd" 
+                                                        Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" 
+                                                        To="#0D000000" Duration="0:0:0.05"/>
+                                        <!-- 👇 点击时图标稍微缩小，增加按压感 -->
+                                        <DoubleAnimation Storyboard.TargetName="IconScale"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         To="0.9" Duration="0:0:0.05"/>
+                                        <DoubleAnimation Storyboard.TargetName="IconScale"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         To="0.9" Duration="0:0:0.05"/>
+                                    </Storyboard>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
 
+                        <!-- 图标：细线条十字 -->
+                        <Path x:Name="Icon" 
+                              Data="M0,6 L12,6 M6,0 L6,12" 
+                              Stroke="#555" 
+                              StrokeThickness="1.2" 
+                              VerticalAlignment="Center" 
+                              HorizontalAlignment="Center"
+                              RenderTransformOrigin="0.5,0.5">
+                            <Path.RenderTransform>
+                                <ScaleTransform x:Name="IconScale" ScaleX="1" ScaleY="1"/>
+                            </Path.RenderTransform>
+                        </Path>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
     <!-- Win11 风格 ContextMenu 样式 -->
     <Style x:Key="Win11ContextMenuStyle" TargetType="ContextMenu">
 

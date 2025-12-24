@@ -918,6 +918,25 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
+    <DrawingImage x:Key="Reset_Image">
+        <DrawingImage.Drawing>
+            <DrawingGroup Transform="1,0,0,1,1,1">
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="#FFDD6666">
+                        <GeometryDrawing.Geometry>
+                            <StreamGeometry>M8.549,0.046C4.69,0.046,1.73,3.238,1.383,7.031L0.059,7.031 1.951,8.983 4.016,7.031 2.677,7.031C3.008,3.802 5.424,1.073 8.614,1.073 12.026,1.073 14.803,3.961 14.803,7.51 14.803,11.059 12.026,13.948 8.614,13.948 6.919,13.948 5.382,13.235 4.264,12.083L3.443,12.909C4.776,14.185 6.572,14.974 8.549,14.974 12.641,14.974 15.968,11.625 15.968,7.51 15.968,3.395 12.641,0.046 8.549,0.046L8.549,0.046z</StreamGeometry>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="#FFDD6666">
+                        <GeometryDrawing.Geometry>
+                            <StreamGeometry>M8,2.98962402L8,8 11.9597167,8 11.9597167,7 8.971,7 8.97100003,2.98962402C8.97200003,2.98962402,8,2.98962402,8,2.98962402z</StreamGeometry>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup.Children>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
 
 
 

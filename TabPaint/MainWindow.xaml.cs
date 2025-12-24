@@ -406,6 +406,75 @@ namespace TabPaint
             src.CompositionTarget.BackgroundColor = Colors.Transparent;
         }
 
+        // Session 数据结构
+        public class PaintSession
+        {
+            public string LastViewedFile { get; set; } // 上次正在看的文件
+            public List<string> DirtyFilePaths { get; set; } = new List<string>(); // 还没保存的已存在文件
+            public List<string> NewFileBackups { get; set; } = new List<string>(); // 新建未命名文件的临时缓存路径
+        }
+
+        // 在 MainWindow 类中添加：
+        private string _sessionPath = System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "TabPaint", "session.json");
+
+        private void SaveSession()
+        {
+            var session = new PaintSession
+            {
+                // 记录当前视野中心的文件
+                LastViewedFile = _imageFiles != null && _imageFiles.Count > _currentImageIndex
+                    ? _imageFiles[_currentImageIndex] : null,
+
+                // 记录所有“脏”文件
+                DirtyFilePaths = FileTabs.Where(t => t.IsDirty && !t.IsNew).Select(t => t.FilePath).ToList(),
+
+                // 对于新建的文件(IsNew)，我们需要先保存成临时文件才能恢复
+                // 这里仅做演示逻辑，实际需要你实现 SaveToTemp(bitmap)
+                NewFileBackups = new List<string>()
+            };
+
+            // 确保目录存在
+            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(_sessionPath));
+            File.WriteAllText(_sessionPath, System.Text.Json.JsonSerializer.Serialize(session));
+        }
+
+        private void LoadSession()
+        {
+            if (!File.Exists(_sessionPath)) return;
+            try
+            {
+                var json = File.ReadAllText(_sessionPath);
+                var session = System.Text.Json.JsonSerializer.Deserialize<PaintSession>(json);
+
+                // 1. 恢复脏文件标签 (加到列表末尾或合并)
+                if (session.DirtyFilePaths != null)
+                {
+                    foreach (var path in session.DirtyFilePaths)
+                    {
+                        if (File.Exists(path))
+                        {
+                            var tab = new FileTabItem(path) { IsDirty = true }; // 标记为脏，强制保留
+                                                                                // 触发加载缩略图
+                            tab.IsLoading = true;
+                            _ = tab.LoadThumbnailAsync(100, 60);
+                            FileTabs.Add(tab);
+                        }
+                    }
+                }
+
+                // 2. 恢复上次浏览的位置
+                if (!string.IsNullOrEmpty(session.LastViewedFile) && _imageFiles.Contains(session.LastViewedFile))
+                {
+                    int index = _imageFiles.IndexOf(session.LastViewedFile);
+                    // 调用你的滑块更新逻辑
+                    PreviewSlider.Value = index;
+                }
+            }
+            catch { /* 忽略损坏的 Session */ }
+        }
+
 
 
 
@@ -420,6 +489,7 @@ namespace TabPaint
  
             Loaded += (s, e) =>
             {
+                LoadSession();
                 MicaAcrylicManager.ApplyEffect(this);
             };
             Loaded += MainWindow_Loaded;
@@ -472,7 +542,7 @@ namespace TabPaint
             SetCropButtonState();
             this.PreviewKeyDown += MainWindow_PreviewKeyDown;
 
-
+            
             _canvasResizer = new CanvasResizeManager(this);
           
             this.Focusable = true;
@@ -534,10 +604,13 @@ namespace TabPaint
 
 
         private bool _isSyncingSlider = false; // 防止死循环
+        private bool _isUpdatingUiFromScroll = false;
 
         // 当滑块拖动时触发
         private async void PreviewSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
+            if (_isUpdatingUiFromScroll) return;
+
             if (_isSyncingSlider) return;
             if (_imageFiles == null || _imageFiles.Count == 0) return;
 
@@ -570,13 +643,15 @@ namespace TabPaint
         {
             this.Focus();
 
-
+            InitializeScrollPosition();
 
             Task.Run(async () => // 在后台线程运行，不阻塞UI线程
             {
+               // await 
                 await OpenImageAndTabs(_currentFilePath, true);
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>// 如果你需要在完成后通知UI，要切回UI线程
                 {
+                    InitializeScrollPosition();
                     _isInitialLayoutComplete = true;
                 });
             });
@@ -911,8 +986,34 @@ namespace TabPaint
         // 1. 实现 Ctrl+N 或点击 (+) 按钮
         private void OnNewTabClick(object sender, RoutedEventArgs e)
         {
-            CreateNewTab();
+            // 创建一个纯内存的 Tab
+            var newTab = new FileTabItem(null)
+            {
+                IsNew = true,
+                IsDirty = false // 新建初始状态可以是 False，画了一笔后变 True
+            };
+
+            // 生成一个白色背景的缩略图 (这里简单演示)
+            // 实际项目中，你应该把当前的 Canvas 清空并让新 Tab 处于激活状态
+            var bmp = new RenderTargetBitmap(100, 60, 96, 96, PixelFormats.Pbgra32);
+            var drawingVisual = new DrawingVisual();
+            using (var context = drawingVisual.RenderOpen())
+            {
+                context.DrawRectangle(Brushes.White, null, new Rect(0, 0, 100, 60));
+            }
+            bmp.Render(drawingVisual);
+            bmp.Freeze();
+            newTab.Thumbnail = bmp;
+
+            FileTabs.Add(newTab);
+
+            // 滚动到最后
+            if (VisualTreeHelper.GetChildrenCount(FileTabList) > 0)
+            {
+                FileTabsScroller.ScrollToRightEnd();
+            }
         }
+
 
         private void CreateNewTab()
         {
@@ -980,6 +1081,7 @@ namespace TabPaint
         {
             if (e.Key == Key.N && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
             {
+                
                 CreateNewTab();
                 e.Handled = true;
             }
@@ -1130,10 +1232,126 @@ namespace TabPaint
             _ctx.Undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);   // --- 5. 将完整的变换信息压入 Undo 栈 ---
             SetUndoRedoButtonState();
         }
+        private void InitializeScrollPosition()
+        {
+            // 强制刷新一次布局，确保 LeftAddBtn.ActualWidth 能取到值
+            FileTabsScroller.UpdateLayout();
+
+            // 计算要隐藏的宽度 = 按钮宽度 + Margin
+            double hiddenWidth = LeftAddBtn.ActualWidth + LeftAddBtn.Margin.Left + LeftAddBtn.Margin.Right;
+
+            // 如果没有打开特定的图片（比如 session 也没恢复，只是纯启动），就隐藏左侧按钮
+            // 如果有打开图片，OpenImageAndTabs 里的 ScrollTo 会自动覆盖这个，不用担心冲突
+            if (FileTabsScroller.HorizontalOffset == 0)
+            {
+                FileTabsScroller.ScrollToHorizontalOffset(hiddenWidth);
+            }
+        }
 
         private void OnPenClick(object sender, RoutedEventArgs e)
         {
             SetBrushStyle(BrushStyle.Pencil);
+        }
+        // 1. 保存所有 (Save All)
+        private void OnSaveAllClick(object sender, RoutedEventArgs e)
+        {
+            // 筛选出所有脏文件
+            var dirtyTabs = FileTabs.Where(t => t.IsDirty).ToList();
+
+            if (dirtyTabs.Count == 0) return;
+
+            foreach (var tab in dirtyTabs)
+            {
+                // TODO: 调用你封装好的保存逻辑，例如 SaveTabToFile(tab);
+                // SaveTabToFile(tab);
+
+                // 模拟保存成功：
+                tab.IsDirty = false;
+            }
+            s($"已保存 {dirtyTabs.Count} 张图片。");
+        }
+
+        // 2. 清空未编辑 (Clear Unedited)
+        private void OnClearUneditedClick(object sender, RoutedEventArgs e)
+        {
+            // 倒序遍历删除，防止索引错乱
+            for (int i = FileTabs.Count - 1; i >= 0; i--)
+            {
+                var tab = FileTabs[i];
+
+                // 如果没有修改(IsDirty=false) 且 不是新建的空白页(IsNew=false)
+                // 或者是新建的但也没画过东西
+                if (!tab.IsDirty)
+                {
+                    FileTabs.RemoveAt(i);
+                }
+            }
+
+            // 如果全删光了，可能需要保留一个空白页或回到初始状态
+            if (FileTabs.Count == 0)
+            {
+                // 可选：OnNewTabClick(null, null);
+            }
+        }
+
+        // 3. 放弃所有编辑 (Discard All)
+        private void OnDiscardAllClick(object sender, RoutedEventArgs e)
+        {
+            var dirtyTabs = FileTabs.Where(t => t.IsDirty).ToList();
+            if (dirtyTabs.Count == 0) return;
+
+            var result = System.Windows.MessageBox.Show(
+                $"确定要放弃所有 {dirtyTabs.Count} 张图片的修改吗？\n这将还原到上次保存的状态，新建的未保存图片将丢失。",
+                "警告",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                for (int i = FileTabs.Count - 1; i >= 0; i--)
+                {
+                    var tab = FileTabs[i];
+                    if (tab.IsDirty)
+                    {
+                        if (tab.IsNew)
+                        {
+                            // 如果是新建的还没存过盘，直接移除
+                            FileTabs.RemoveAt(i);
+                        }
+                        else
+                        {
+                            // 如果是已存在文件，还原状态 (重新加载缩略图 = 视觉上的还原)
+                            tab.IsDirty = false;
+                            tab.IsLoading = true;
+                            _ = tab.LoadThumbnailAsync(100, 60); // 重新从磁盘读取
+                        }
+                    }
+                }
+            }
+        }
+
+        private void OnPrependTabClick(object sender, RoutedEventArgs e)
+        {
+            var newTab = new FileTabItem(null)
+            {
+                IsNew = true,
+                IsDirty = false
+                // 记得生成一个默认的白色 Thumbnail 赋值进去，否则 UI 上是空的
+            };
+
+            var bmp = new RenderTargetBitmap(100, 60, 96, 96, PixelFormats.Pbgra32);
+            var drawingVisual = new DrawingVisual();
+            using (var context = drawingVisual.RenderOpen())
+            {
+                context.DrawRectangle(Brushes.White, null, new Rect(0, 0, 100, 60));
+            }
+            bmp.Render(drawingVisual);
+            bmp.Freeze();
+            newTab.Thumbnail = bmp;
+            FileTabs.Insert(0, newTab); // 👈 关键：插入到 0
+
+            // 滚回去看它
+            FileTabsScroller.ScrollToHorizontalOffset(0);
         }
 
         private void Clean_bitmap(int _bmpWidth, int _bmpHeight)

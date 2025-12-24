@@ -144,42 +144,83 @@ namespace TabPaint
         // 修改 LoadTabPageAsync 的开头逻辑
         private void LoadTabPageAsync(int centerIndex)
         {
-            // 1. 找出需要保留的 Tab (脏文件、新文件、外部文件)
-            var keepTabs = FileTabs.Where(t => t.IsDirty || t.IsNew).ToList();
+            if (_imageFiles == null || _imageFiles.Count == 0) return;
 
-            // 2. 清空
-           // FileTabs.Clear();
+            // 1. 确定当前“文件夹视图”的范围
+            int start = Math.Max(0, centerIndex - PageSize);
+            int end = Math.Min(_imageFiles.Count - 1, centerIndex + PageSize);
+            var viewportPaths = new HashSet<string>();
+            for (int i = start; i <= end; i++) viewportPaths.Add(_imageFiles[i]);
 
-            // 3. 先把保留的 Tab 加回来 (或者加到末尾，看你喜好)
-            // 策略 A：固定在左侧 (类似 VSCode Pinned)
-            foreach (var t in keepTabs) FileTabs.Add(t);
-
-            // 4. 加载文件夹内的文件 (原有逻辑)
-            if (_imageFiles != null && _imageFiles.Count > 0)
+            // 2. 清理阶段：只移除那些 "既不在视野内，又不是脏数据，也不是新文件" 的项
+            for (int i = FileTabs.Count - 1; i >= 0; i--)
             {
-                int start = Math.Max(0, centerIndex - PageSize);
-                int end = Math.Min(_imageFiles.Count - 1, centerIndex + PageSize);
+                var tab = FileTabs[i];
+                bool isViewport = viewportPaths.Contains(tab.FilePath);
+                bool isKeepAlive = tab.IsDirty || tab.IsNew; // 🔥 关键：只要脏了或者新了，就永远不删
 
-                foreach (var path in _imageFiles.Skip(start).Take(end - start + 1))
+                if (!isViewport && !isKeepAlive)
                 {
-                    // 防止重复添加已经在 keepTabs 里的文件
-                    if (!keepTabs.Any(t => t.FilePath == path))
+                    FileTabs.RemoveAt(i);
+                }
+            }
+
+            // 3. 填充与排序阶段
+            // 我们需要维护一个显示列表，策略如下：
+            // [当前视野内的图片 (按Index排序)] + [视野外的脏图片] + [新建图片]
+
+            // A. 插入当前视野的图片
+            for (int i = start; i <= end; i++)
+            {
+                string path = _imageFiles[i];
+                var existingTab = FileTabs.FirstOrDefault(t => t.FilePath == path);
+
+                if (existingTab == null)
+                {
+                    // 创建新 Tab
+                    var newTab = new FileTabItem(path);
+                    newTab.IsLoading = true;
+                    _ = newTab.LoadThumbnailAsync(100, 60);
+
+                    // 插入逻辑：找到合适的位置
+                    // 我们希望 viewport 内的图片保持有序，且在列表的最左侧
+                    int insertIndex = 0;
+                    bool inserted = false;
+
+                    for (int j = 0; j < FileTabs.Count; j++)
                     {
-                        FileTabs.Add(new FileTabItem(path));
+                        var t = FileTabs[j];
+
+                        // 如果遇到新建文件(IsNew)或视野外的脏文件(不在viewportPaths里)，说明如果不插在这里，后面就都是特殊文件了
+                        bool isSpecial = t.IsNew || (!string.IsNullOrEmpty(t.FilePath) && !viewportPaths.Contains(t.FilePath));
+
+                        if (isSpecial)
+                        {
+                            FileTabs.Insert(j, newTab);
+                            inserted = true;
+                            break;
+                        }
+
+                        // 如果是普通视野文件，按索引比较
+                        int tIndex = _imageFiles.IndexOf(t.FilePath);
+                        if (tIndex > i)
+                        {
+                            FileTabs.Insert(j, newTab);
+                            inserted = true;
+                            break;
+                        }
                     }
+
+                    if (!inserted) FileTabs.Add(newTab);
+                }
+                else
+                {
                 }
             }
 
-            // 5. 触发加载缩略图
-            foreach (var tab in FileTabs)
-            {
-                if (tab.Thumbnail == null && !tab.IsLoading && !tab.IsNew) // IsNew 的不用加载
-                {
-                    tab.IsLoading = true;
-                    _ = tab.LoadThumbnailAsync(100, 60);
-                }
-            }
         }
+
+
 
         private async Task RefreshTabPageAsync(int centerIndex, bool refresh = false)
         {
@@ -210,47 +251,91 @@ namespace TabPaint
         // 文件总数绑定属性
         public int ImageFilesCount;
         private bool _isInitialLayoutComplete = false;
+
         private void OnFileTabsScrollChanged(object sender, ScrollChangedEventArgs e)
         {
-            if (!_isInitialLayoutComplete) return;
+            if (!_isInitialLayoutComplete || _isUpdatingUiFromScroll) return;
 
             double itemWidth = 124;
             int firstIndex = (int)(FileTabsScroller.HorizontalOffset / itemWidth);
             int visibleCount = (int)(FileTabsScroller.ViewportWidth / itemWidth) + 2;
             int lastIndex = firstIndex + visibleCount;
-            PreviewSlider.Value = firstIndex;
+
+            if (PreviewSlider.Value != firstIndex)
+            {
+                _isUpdatingUiFromScroll = true;  // 🔒 上锁：告诉 Slider "别激动，这只是同步显示，不是用户在拖你"
+                PreviewSlider.Value = firstIndex;
+                _isUpdatingUiFromScroll = false; // 🔓 解锁
+            }
+
+           // PreviewSlider.Value = firstIndex;
+
+
             bool needload = false;
 
             // 尾部加载
-            if (lastIndex >= FileTabs.Count - 10 && FileTabs.Count < _imageFiles.Count)
+            // 尾部加载 (修复版)
+            if (lastIndex >= FileTabs.Count - 2 && FileTabs.Count < _imageFiles.Count) // 阈值调小一点，体验更丝滑
             {
-                int currentFirstIndex = _imageFiles.IndexOf(FileTabs[FileTabs.Count - 1].FilePath);
-                if (currentFirstIndex > 0)
+                // 获取当前列表最后一个文件的真实索引
+                var lastTab = FileTabs[FileTabs.Count - 1];
+                int lastFileIndex = _imageFiles.IndexOf(lastTab.FilePath);
+
+                // 只有当它在文件列表中存在，且不是最后一张时才加载
+                if (lastFileIndex >= 0 && lastFileIndex < _imageFiles.Count - 1)
                 {
-                    int start = Math.Min(_imageFiles.Count - 1, currentFirstIndex);
-                    foreach (var path in _imageFiles.Skip(start).Take(PageSize))
-                        FileTabs.Add(new FileTabItem(path));
+                    // 关键修复：从 lastFileIndex + 1 开始取，防止重复！
+                    var nextItems = _imageFiles.Skip(lastFileIndex + 1).Take(PageSize);
+
+                    foreach (var path in nextItems)
+                    {
+                        // 双重保险：防止异步滚动时的并发重复
+                        if (!FileTabs.Any(t => t.FilePath == path))
+                        {
+                            FileTabs.Add(new FileTabItem(path));
+                        }
+                    }
                     needload = true;
                 }
             }
 
-            // 前端加载
-            if (FileTabs.Count > 0 && firstIndex < 10 && FileTabs[0].FilePath != _imageFiles[0])
+
+            // 前端加载 (修复版)
+            if (firstIndex < 2 && FileTabs.Count > 0)
             {
-                int currentFirstIndex = _imageFiles.IndexOf(FileTabs[0].FilePath);
-                if (currentFirstIndex > 0)
+                // 获取当前列表第一个文件的真实索引
+                var firstTab = FileTabs[0];
+                int firstFileIndex = _imageFiles.IndexOf(firstTab.FilePath);
+
+                if (firstFileIndex > 0) // 如果前面还有图
                 {
-                    int start = Math.Min(0, currentFirstIndex - PageSize);
-                    double offsetBefore = FileTabsScroller.HorizontalOffset;
+                    // 计算需要拿多少张
+                    int takeCount = PageSize;
+                    // 如果前面不够 PageSize 张了，就只拿剩下的
+                    if (firstFileIndex < PageSize) takeCount = firstFileIndex;
 
-                    var prevPaths = _imageFiles.Skip(start).Take(currentFirstIndex - start);
+                    // 关键修复：从 firstFileIndex - takeCount 开始拿
+                    int start = firstFileIndex - takeCount;
 
-                    foreach (var path in prevPaths.Reverse())
-                        FileTabs.Insert(0, new FileTabItem(path));
-                    FileTabsScroller.ScrollToHorizontalOffset(offsetBefore + prevPaths.Count() * itemWidth);
+                    var prevPaths = _imageFiles.Skip(start).Take(takeCount);
+
+                    // 使用 Insert(0, ...) 会导致大量 UI 重绘，建议反转顺序逐个插入
+                    int insertPos = 0;
+                    foreach (var path in prevPaths)
+                    {
+                        if (!FileTabs.Any(t => t.FilePath == path))
+                        {
+                            FileTabs.Insert(insertPos, new FileTabItem(path));
+                            insertPos++; // 保持插入顺序
+                        }
+                    }
+
+                    // 修正滚动条位置，防止因为插入元素导致视图跳动
+                    FileTabsScroller.ScrollToHorizontalOffset(FileTabsScroller.HorizontalOffset + insertPos * itemWidth);
                     needload = true;
                 }
             }
+
             if (needload || e.HorizontalChange != 0 || e.ExtentWidthChange != 0)  // 懒加载缩略图，仅当有新增或明显滚动时触发
             {
                 int end = Math.Min(lastIndex, FileTabs.Count);
@@ -265,21 +350,7 @@ namespace TabPaint
                 }
             }
         }
-        private void FileTabsScroller_ManipulationDelta(object sender, ManipulationDeltaEventArgs e)
-        {
-            if (sender is ScrollViewer scroller)
-            {
-                // ManipulationDelta.Translation 包含了手指在 X 和 Y 方向上的移动距离
-                // 我们只关心 X 方向的移动 (水平)
-                var offset = scroller.HorizontalOffset - e.DeltaManipulation.Translation.X;
 
-                // 滚动到新的位置
-                scroller.ScrollToHorizontalOffset(offset);
-
-                // 标记事件已处理，防止其他控件响应
-                e.Handled = true;
-            }
-        }
         // 鼠标滚轮横向滚动
         private void OnFileTabsWheelScroll(object sender, MouseWheelEventArgs e)
         {
@@ -326,33 +397,38 @@ namespace TabPaint
             FileTabsScroller.ReleaseMouseCapture();
         }
 
-        private async void OnFileTabClick(object sender, RoutedEventArgs e)// 点击标签打开图片
+        private async void OnFileTabClick(object sender, RoutedEventArgs e)
         {
             if (sender is System.Windows.Controls.Button btn && btn.DataContext is FileTabItem clickedItem)
             {
-                // 1. 核心修复：先将所有项设为未选中
-                //foreach (var tab in FileTabs)
-                //{
-                //    tab.IsSelected = false;
-                //}
+                // 1. 更新选中视觉状态 (可选，如果你用了RadioButton风格可省略)
+                foreach (var tab in FileTabs) tab.IsSelected = false;
+                clickedItem.IsSelected = true;
 
-                //// 2. 选中当前项
-                //clickedItem.IsSelected = true;
+                // 2. 核心修复：分支判断
+                if (clickedItem.IsNew)
+                {
+                    if (_currentTabItem != clickedItem)
+                    {
+                        Clean_bitmap(1200, 900); // 调用你旧有的初始化白板方法
+                        _currentFilePath = string.Empty;
+                        _currentFileName = "未命名";
+                        UpdateWindowTitle();
+                    }
+                }
+                else
+                {
+                    // B. 普通文件，走原有逻辑
+                    await OpenImageAndTabs(clickedItem.FilePath);
+                }
 
-                // 3. 打开图片
-                await OpenImageAndTabs(clickedItem.FilePath);
+                // 记录当前正在激活的 Tab，方便后续插入位置计算
+                _currentTabItem = clickedItem;
             }
-           // if (sender is System.Windows.Controls.Button btn && btn.DataContext is FileTabItem item) await OpenImageAndTabs(item.FilePath);
         }
 
-        // 鼠标滚轮横向滑动标签栏
-        //private void OnFileTabsWheelScroll(object sender, MouseWheelEventArgs e)
-        //{
-        //    //s(1);
-        //    double offset = FileTabsScroller.HorizontalOffset - e.Delta / 2;
-        //    FileTabsScroller.ScrollToHorizontalOffset(offset);
-        //    e.Handled = true;
-        //}
+        // 补充定义：在类成员里加一个引用，记录当前是谁
+        private FileTabItem _currentTabItem;
 
         private bool _isDragging = false;
         private void Slider_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -463,12 +539,6 @@ namespace TabPaint
             PreviewSlider.Minimum = 0;
             PreviewSlider.Maximum = _imageFiles.Count - 1;
             PreviewSlider.Value = _currentImageIndex;
-            //if(_imageFiles.Count < 30)
-            //    PreviewSlider.Visibility= Visibility.Collapsed;
-            //else
-            //    PreviewSlider.Visibility = Visibility.Visible;
         }
-
-
     }
 }

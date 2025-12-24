@@ -179,6 +179,7 @@ namespace TabPaint
 
         private void Close_Click(object sender, RoutedEventArgs e)
         {
+            SaveSession();
             Close();
         }
         private void CropMenuItem_Click(object sender, RoutedEventArgs e)
@@ -643,13 +644,87 @@ namespace TabPaint
 
         private void OnNewClick(object sender, RoutedEventArgs e)
         {
-            _bmpWidth = 1200; // 可以弹出对话框让用户输入宽高，也可以用默认尺寸
-            _bmpHeight = 900;
-            _currentFilePath = string.Empty; // 新建后没有路径
-            _currentFileName = "未命名";
-            Clean_bitmap(_bmpWidth, _bmpHeight);
+            // 1. 尝试确定插入锚点
+            int insertIndex = -1;
 
+            // 优先使用明确点击过的 Tab
+            if (_currentTabItem != null && FileTabs.Contains(_currentTabItem))
+            {
+                insertIndex = FileTabs.IndexOf(_currentTabItem) + 1;
+            }
+            // 如果没有明确点击过，尝试查找 UI 上被选中的 Tab
+            else
+            {
+                var selectedTab = FileTabs.FirstOrDefault(t => t.IsSelected);
+                if (selectedTab != null)
+                {
+                    insertIndex = FileTabs.IndexOf(selectedTab) + 1;
+                    _currentTabItem = selectedTab; // 顺便修正引用
+                }
+                // 如果 UI 也没选中，尝试通过当前文件路径查找
+                else if (!string.IsNullOrEmpty(_currentFilePath))
+                {
+                    var pathTab = FileTabs.FirstOrDefault(t => t.FilePath == _currentFilePath);
+                    if (pathTab != null)
+                    {
+                        insertIndex = FileTabs.IndexOf(pathTab) + 1;
+                        _currentTabItem = pathTab; // 顺便修正引用
+                    }
+                }
+            }
+
+            // 保底逻辑：如果还是算不出来（比如列表为空），就插在最后
+            if (insertIndex < 0 || insertIndex > FileTabs.Count)
+            {
+                insertIndex = FileTabs.Count;
+            }
+
+            // 2. 创建新 Tab
+            var newTab = new FileTabItem(null)
+            {
+                IsNew = true,
+                IsDirty = false,
+                IsSelected = true, // 新建的自然是被选中的
+                Thumbnail = CreateWhiteThumbnail() // 调用之前写的生成白图方法
+            };
+
+            // 3. 插入集合
+            FileTabs.Insert(insertIndex, newTab);
+
+            // 4. 立即激活新 Tab
+            // 更新选中状态
+            foreach (var tab in FileTabs)
+                if (tab != newTab) tab.IsSelected = false;
+
+            // 更新引用
+            _currentTabItem = newTab;
+
+            // 执行清空画布操作
+            Clean_bitmap(1200, 900);
+            _currentFilePath = string.Empty;
+            _currentFileName = "未命名";
             UpdateWindowTitle();
+
+            // 5. 滚动到可见位置 (简单处理，往后滚一点)
+            if (insertIndex > FileTabs.Count - 2)
+                FileTabsScroller.ScrollToRightEnd();
         }
+
+        // 辅助方法：生成纯白缩略图
+        private BitmapSource CreateWhiteThumbnail()
+        {
+            int w = 100; int h = 60;
+            var bmp = new RenderTargetBitmap(w, h, 96, 96, PixelFormats.Pbgra32);
+            var visual = new DrawingVisual();
+            using (var ctx = visual.RenderOpen())
+            {
+                ctx.DrawRectangle(Brushes.White, null, new Rect(0, 0, w, h));
+                // 可以在中间画个加号或者 "New" 字样
+            }
+            bmp.Render(visual);
+            bmp.Freeze();
+            return bmp;
+        }
+
     }
 }

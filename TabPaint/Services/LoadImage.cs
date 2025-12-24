@@ -43,8 +43,10 @@ namespace TabPaint
             // 找到当前点击的标签并选中
             var current = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
             if (current != null)
+            {
                 current.IsSelected = true;
-
+                _currentTabItem = current;
+            }
             // 加载对应图片
             int newIndex = _imageFiles.IndexOf(filePath);
             _currentImageIndex = newIndex;

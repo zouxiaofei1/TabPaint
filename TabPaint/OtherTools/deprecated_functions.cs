@@ -540,3 +540,19 @@ using System.Windows;
 //        s($"加载图片失败: {ex.Message}");
 //    }
 //}
+
+//private void FileTabsScroller_ManipulationDelta(object sender, ManipulationDeltaEventArgs e)
+//{
+//    if (sender is ScrollViewer scroller)
+//    {
+//        // ManipulationDelta.Translation 包含了手指在 X 和 Y 方向上的移动距离
+//        // 我们只关心 X 方向的移动 (水平)
+//        var offset = scroller.HorizontalOffset - e.DeltaManipulation.Translation.X;
+
+//        // 滚动到新的位置
+//        scroller.ScrollToHorizontalOffset(offset);
+
+//        // 标记事件已处理，防止其他控件响应
+//        e.Handled = true;
+//    }
+//}
