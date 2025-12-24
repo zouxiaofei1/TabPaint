@@ -179,8 +179,8 @@ namespace TabPaint
 
         private void Close_Click(object sender, RoutedEventArgs e)
         {
-            SaveSession();
-            Close();
+            OnClosing();
+            //Close();
         }
         private void CropMenuItem_Click(object sender, RoutedEventArgs e)
         {

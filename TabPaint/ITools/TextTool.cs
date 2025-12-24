@@ -279,7 +279,6 @@ namespace TabPaint
 
             public override void OnPointerDown(ToolContext ctx, Point viewPos)
             {
-                a.s("texttool");
                 if (_textBox != null)
                 {
                     Point p = viewPos;

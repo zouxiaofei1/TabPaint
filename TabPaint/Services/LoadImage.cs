@@ -35,34 +35,63 @@ namespace TabPaint
         private CancellationTokenSource _loadImageCts;
         public async Task OpenImageAndTabs(string filePath, bool refresh = false)
         {
+          
+            // 1. 如果是第一次加载，初始化文件列表
             if (_currentImageIndex == -1) ScanFolderImages(filePath);
 
-            foreach (var tab in FileTabs)
-                tab.IsSelected = false;
+            // 2. 切图前保存上一个 Tab 的缓存 (如果有的话)
+            await SaveCurrentToCacheAsync();
 
-            // 找到当前点击的标签并选中
-            var current = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
-            if (current != null)
-            {
-                current.IsSelected = true;
-                _currentTabItem = current;
-            }
-            // 加载对应图片
+            // 3. 计算新图片的索引
             int newIndex = _imageFiles.IndexOf(filePath);
             _currentImageIndex = newIndex;
 
+            // 4. 🔥 关键修复：先刷新 UI 列表！
+            // 这步操作会将目标图片附近的 Tab 添加到 FileTabs 集合中
+            // 务必加上 await，确保列表生成完毕后再往下执行
             RefreshTabPageAsync(_currentImageIndex, refresh);
-            await LoadImage(filePath);
-            foreach (var tab in FileTabs)
-                tab.IsSelected = false;
 
-            // 找到当前点击的标签并选中
-            current = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
+            // 5. 现在再去查找，这时候 FileTabs 里肯定有这个对象了
+            var current = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
+
+            // 6. 更新选中状态
             if (current != null)
+            {
+                foreach (var tab in FileTabs) tab.IsSelected = false;
                 current.IsSelected = true;
+                _currentTabItem = current; // 更新当前引用
+            }
+            else
+            {
+                // 极端情况：如果在 RefreshTabPageAsync 后还找不到，说明该文件不在当前 Viewport 策略内
+                // 你可能需要手动 new 一个 FileTabItem 并 Add 进去，或者检查 Viewport 逻辑
+            }
 
+            // 7. 决定加载哪个文件（缓存 vs 原图）
+            string fileToLoad = filePath;
+            var isFileLoadedFromCache = false;
 
+            if (current != null && current.IsDirty && !string.IsNullOrEmpty(current.BackupPath) && File.Exists(current.BackupPath))
+            {
+                fileToLoad = current.BackupPath;
+                isFileLoadedFromCache = true;
+            }
+
+            // 8. 加载图片到画布
+            //s(fileToLoad);
+            await LoadImage(fileToLoad);
+
+            // 9. 重置脏状态追踪器
+            ResetDirtyTracker();
+
+            // 10. 如果加载的是缓存，强制标记为脏
+            if (isFileLoadedFromCache)
+            {
+                _savedUndoPoint = -1; // 设为 -1，使得 0 != -1，触发脏状态
+                CheckDirtyState();    // 立即刷新红点
+            }
         }
+
 
         public void RequestImageLoad(string filePath)
         {

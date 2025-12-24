@@ -31,7 +31,6 @@ namespace TabPaint
             public override System.Windows.Input.Cursor Cursor => System.Windows.Input.Cursors.Hand;
             public override void OnPointerDown(ToolContext ctx, Point viewPos)
             {
-                a.s("FillTool");
                 var start = ctx.ToPixel(viewPos);
                 // 记录绘制前
                 ctx.Undo.BeginStroke();

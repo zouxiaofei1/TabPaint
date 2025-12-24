@@ -1,21 +1,13 @@
-﻿using Microsoft.Win32;
-using System;
+﻿
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
-using System.Globalization;
-using System.IO;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Forms;
 using System.Windows.Input;
-using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using System.Windows.Threading;
 
 //
 //TabPaint主程序
@@ -74,7 +66,12 @@ namespace TabPaint
 
             // 预留给 UI 绑定的关闭命令（可选，或者直接在 View 处理 Click）
             public ICommand CloseCommand { get; set; }
-
+            // 🔥 新增：唯一ID，用于生成缓存文件名
+            public string Id { get; set; } = Guid.NewGuid().ToString();
+            // 🔥 新增：缓存文件的路径
+            public string BackupPath { get; set; }
+            // 🔥 新增：最后一次备份的时间 (可选，用于调试)
+            public DateTime LastBackupTime { get; set; }
             public FileTabItem(string path)
             {
                 FilePath = path;
@@ -120,28 +117,7 @@ namespace TabPaint
 
         public ObservableCollection<FileTabItem> FileTabs { get; }
             = new ObservableCollection<FileTabItem>();
-        // 加载当前页 + 前后页文件到显示区
-        //private void LoadTabPageAsync(int centerIndex)
-        //{//全部清空并重新加载!!!
-        //    if (_imageFiles == null || _imageFiles.Count == 0) return;
 
-
-        //    FileTabs.Clear();
-        //    int start = Math.Max(0, centerIndex - PageSize);
-        //    int end = Math.Min(_imageFiles.Count - 1, centerIndex + PageSize);
-        //    //s(centerIndex);
-        //    foreach (var path in _imageFiles.Skip(start).Take(end - start + 1))
-        //        FileTabs.Add(new FileTabItem(path));
-
-        //    foreach (var tab in FileTabs)
-        //        if (tab.Thumbnail == null && !tab.IsLoading)
-        //        {
-        //            tab.IsLoading = true;
-        //            _ = tab.LoadThumbnailAsync(100, 60);
-        //        }
-        //}
-
-        // 修改 LoadTabPageAsync 的开头逻辑
         private void LoadTabPageAsync(int centerIndex)
         {
             if (_imageFiles == null || _imageFiles.Count == 0) return;
@@ -165,11 +141,6 @@ namespace TabPaint
                 }
             }
 
-            // 3. 填充与排序阶段
-            // 我们需要维护一个显示列表，策略如下：
-            // [当前视野内的图片 (按Index排序)] + [视野外的脏图片] + [新建图片]
-
-            // A. 插入当前视野的图片
             for (int i = start; i <= end; i++)
             {
                 string path = _imageFiles[i];
@@ -222,13 +193,20 @@ namespace TabPaint
 
 
 
+        // 在 MainWindow 类成员变量里加一个锁标记
+        private bool _isProgrammaticScroll = false;
+
         private async Task RefreshTabPageAsync(int centerIndex, bool refresh = false)
         {
-
             if (_imageFiles == null || _imageFiles.Count == 0) return;
 
             if (refresh)
+            {
                 LoadTabPageAsync(centerIndex);
+                // 强制给 UI 一点时间去生成那些 Tab 的控件
+                // 使用 DispatcherPriority.ContextIdle 等待布局渲染完成
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.ContextIdle);
+            }
 
             // 计算当前选中图片在 FileTabs 中的索引
             var currentTab = FileTabs.FirstOrDefault(t => t.FilePath == _imageFiles[centerIndex]);
@@ -237,16 +215,34 @@ namespace TabPaint
             int selectedIndex = FileTabs.IndexOf(currentTab);
             if (selectedIndex < 0) return;
 
-            double itemWidth = 124;                   // 与 Button 实际宽度一致
+            double itemWidth = 124;
             double viewportWidth = FileTabsScroller.ViewportWidth;
+
+            // 如果窗口还没加载完，ViewportWidth 可能是 0，这时候滚动没意义且可能报错
+            if (viewportWidth <= 0) return;
+
             double targetOffset = selectedIndex * itemWidth - viewportWidth / 2 + itemWidth / 2;
 
-            targetOffset = Math.Max(0, targetOffset); // 防止负数偏移
+            targetOffset = Math.Max(0, targetOffset);
             double maxOffset = Math.Max(0, FileTabs.Count * itemWidth - viewportWidth);
-            targetOffset = Math.Min(targetOffset, maxOffset); // 防止超出范围
+            targetOffset = Math.Min(targetOffset, maxOffset);
 
-            FileTabsScroller.ScrollToHorizontalOffset(targetOffset);
+            // 🔥 关键修复：使用 Dispatcher 并在滚动期间上锁
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    _isProgrammaticScroll = true; // 🔒 上锁：告诉 ScrollChanged 别乱动
+                    FileTabsScroller.ScrollToHorizontalOffset(targetOffset);
+                    FileTabsScroller.UpdateLayout(); // 强制刷新一下确保位置正确
+                }
+                finally
+                {
+                    _isProgrammaticScroll = false; // 🔓 解锁
+                }
+            });
         }
+
 
         // 文件总数绑定属性
         public int ImageFilesCount;
@@ -254,6 +250,7 @@ namespace TabPaint
 
         private void OnFileTabsScrollChanged(object sender, ScrollChangedEventArgs e)
         {
+            if (_isProgrammaticScroll) return;
             if (!_isInitialLayoutComplete || _isUpdatingUiFromScroll) return;
 
             double itemWidth = 124;
@@ -267,15 +264,11 @@ namespace TabPaint
                 PreviewSlider.Value = firstIndex;
                 _isUpdatingUiFromScroll = false; // 🔓 解锁
             }
-
-           // PreviewSlider.Value = firstIndex;
-
-
             bool needload = false;
 
             // 尾部加载
             // 尾部加载 (修复版)
-            if (lastIndex >= FileTabs.Count - 2 && FileTabs.Count < _imageFiles.Count) // 阈值调小一点，体验更丝滑
+            if (FileTabs.Count > 0&&lastIndex >= FileTabs.Count - 2 && FileTabs.Count < _imageFiles.Count) // 阈值调小一点，体验更丝滑
             {
                 // 获取当前列表最后一个文件的真实索引
                 var lastTab = FileTabs[FileTabs.Count - 1];

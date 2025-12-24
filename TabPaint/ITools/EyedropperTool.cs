@@ -35,7 +35,6 @@ namespace TabPaint
 
             public override void OnPointerDown(ToolContext ctx, Point viewPos)
             {
-                a.s("EyedropperTool");
                 var px = ctx.ToPixel(viewPos);
                 ctx.PenColor = ctx.Surface.GetPixel((int)px.X, (int)px.Y);
                 ((MainWindow)System.Windows.Application.Current.MainWindow).UpdateCurrentColor(ctx.PenColor, ((MainWindow)System.Windows.Application.Current.MainWindow).useSecondColor);

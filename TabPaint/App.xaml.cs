@@ -24,7 +24,6 @@ namespace TabPaint
             // 判断是否通过命令行传入文件路径
             if (e.Args is { Length: > 0 } && File.Exists(e.Args[0]))
             {
-               // s(1);
                 filePath = e.Args[0];
             }
             else

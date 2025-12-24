@@ -368,7 +368,6 @@ namespace TabPaint
 
             public override void OnPointerDown(ToolContext ctx, Point viewPos)
             {
-                a.s("Selecttool");
                 if (ctx.Surface.Bitmap == null) return;
                 var px = ctx.ToPixel(viewPos);
 
@@ -412,7 +411,6 @@ namespace TabPaint
                         _transformStep++;
                         _draggingSelection = true;
                         _clickOffset = new Point(px.X - _selectionRect.X, px.Y - _selectionRect.Y);
-                        //s(_clickOffset);
                         ctx.ViewElement.CaptureMouse();
                         return;
                     }

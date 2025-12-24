@@ -56,6 +56,13 @@ namespace TabPaint
             private readonly Stack<UndoAction> _redo = new();
             private byte[]? _preStrokeSnapshot;
             private readonly List<Int32Rect> _strokeRects = new();
+            public int UndoCount => _undo.Count;
+            private void UpdateUI()
+            {
+                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                mw.SetUndoRedoButtonState(); // 更新按钮可用性
+                mw.CheckDirtyState();        // 更新红点状态
+            }
             public UndoRedoManager(CanvasSurface surface) { _surface = surface; }
 
             public bool CanUndo => _undo.Count > 0;
@@ -64,7 +71,7 @@ namespace TabPaint
             {//自动SetUndoRedoButtonState和_redo.Clear()
                 _undo.Push(new UndoAction(undoRect, undoPixels, redoRect, redoPixels));
                 _redo.Clear(); // 新操作截断重做链
-                ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
+                UpdateUI();
             }
             // ---------- 绘制操作 ----------
             public void BeginStroke()
@@ -94,8 +101,9 @@ namespace TabPaint
 
                 byte[] region = ExtractRegionFromSnapshot(_preStrokeSnapshot, combined, _surface.Bitmap.BackBufferStride);
                 _undo.Push(new UndoAction(combined, region));
-                ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
+                UpdateUI();
                 _preStrokeSnapshot = null;
+                ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasChanged();
             }
 
             // ---------- 撤销 / 重做 ----------
@@ -133,9 +141,9 @@ namespace TabPaint
                     // 执行 Undo
                     _surface.WriteRegion(action.Rect, action.Pixels);
                 }
-     ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
-                // 触发UI更新，如居中等
-               // ((MainWindow)System.Windows.Application.Current.MainWindow).CenterImage();
+                UpdateUI();
+                            // 触发UI更新，如居中等
+                            ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasChanged();
             }
 
             public void Redo()
@@ -170,8 +178,8 @@ namespace TabPaint
                     _surface.WriteRegion(action.Rect, action.Pixels);
                 }
 
-                ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
-                //((MainWindow)System.Windows.Application.Current.MainWindow).CenterImage();
+                UpdateUI();
+                ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasChanged();
             }
             public void PushFullImageUndo()
             { // ---------- 供整图操作调用 ----------

@@ -191,7 +191,6 @@ namespace TabPaint
                 a.s("Set to:" + CurrentTool.ToString());
 
                 _ctx.ViewElement.Cursor = tool.Cursor;
-                a.s(_ctx.ViewElement.Cursor);
                 //var mainWindow = (MainWindow)Application.Current.MainWindow;
 
                 ((MainWindow)System.Windows.Application.Current.MainWindow).SetPenResizeBarVisibility((tool is PenTool && _ctx.PenStyle != BrushStyle.Pencil));

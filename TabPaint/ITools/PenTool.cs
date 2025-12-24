@@ -82,7 +82,6 @@ namespace TabPaint
 
             private void DrawContinuousStroke(ToolContext ctx, Point from, Point to)
             {
-                a.s(from, to);
                 // 线段长度
                 double dx = to.X - from.X;
                 double dy = to.Y - from.Y;
