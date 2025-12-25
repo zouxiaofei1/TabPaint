@@ -1,181 +1,63 @@
-﻿<!-- 定义部分 -->
-<Window x:Class="TabPaint.MainWindow"
+﻿<Window x:Class="TabPaint.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:TabPaint" 
         xmlns:System="clr-namespace:System;assembly=mscorlib"
         Title="TabPaint"
         Height="900" Width="1250"
-        Top=" 100" Left="100"
+        Top="100" Left="100"
         SizeToContent="Manual"
-         AllowsTransparency="True"
+        AllowsTransparency="True"
         WindowStyle="None"
-        Background="#01000000" 
-
- >
+        Background="#01000000">
 
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <!-- 引入全局样式 -->
                 <ResourceDictionary Source="pack://application:,,,/Resources/Styles.xaml"/>
+                <!-- 引入刚刚抽离的局部样式 -->
             </ResourceDictionary.MergedDictionaries>
-
-            <!-- 你依然可以在这里保留少量只属于 MainWindow 的私有资源 -->
-
-          
-            <Style x:Key="ResizeHandleStyle" TargetType="Thumb">
-                <Setter Property="Width" Value="8"/>
-                <Setter Property="Height" Value="8"/>
-                <Setter Property="Background" Value="White"/>
-                <Setter Property="BorderBrush" Value="#888888"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Thumb">
-                            <Grid>
-                                <!-- 增加一个透明的大的感应区，方便鼠标点击 -->
-                                <Rectangle Fill="Transparent" Margin="-4"/>
-                                <Rectangle Fill="{TemplateBinding Background}"
-						   Stroke="{TemplateBinding BorderBrush}"
-						   StrokeThickness="{TemplateBinding BorderThickness}"/>
-                            </Grid>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-
-            <!-- 1. 修正后的 ComboBox 样式 (删除了会导致解析错误的 Resources Setter) -->
-            <Style x:Key="FluentComboBoxStyle" TargetType="ComboBox">
-                <Setter Property="Height" Value="32"/>
-                <Setter Property="VerticalContentAlignment" Value="Center"/>
-                <Setter Property="Padding" Value="8,0,0,0"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="BorderBrush" Value="#DCDCDC"/>
-                <Setter Property="Background" Value="White"/>
-                <Setter Property="Margin" Value="0,0,8,0"/>
-                <Setter Property="IsEditable" Value="True"/>
-                <!-- 移除之前引起报错的 <Setter Property="Resources"> 部分 -->
-            </Style>
-
-            <!-- 2. 修正后的 ToggleButton 样式 -->
-            <Style x:Key="FluentToggleButtonStyle" TargetType="ToggleButton">
-                <Setter Property="Width" Value="32"/>
-                <Setter Property="Height" Value="32"/>
-                <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="BorderBrush" Value="Transparent"/>
-                <Setter Property="Margin" Value="2,0"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="ToggleButton">
-                            <!-- 这里必须明确指定 Border 的背景和边框，否则会有点击穿透 -->
-                            <Border x:Name="border" 
-                        Background="{TemplateBinding Background}" 
-                        BorderBrush="{TemplateBinding BorderBrush}" 
-                        BorderThickness="{TemplateBinding BorderThickness}" 
-                        CornerRadius="4">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="border" Property="Background" Value="#EAEAEA"/>
-                                </Trigger>
-                                <Trigger Property="IsChecked" Value="True">
-                                    <Setter TargetName="border" Property="Background" Value="#E2E2E2"/>
-                                    <Setter TargetName="border" Property="BorderBrush" Value="#CCCCCC"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-
-
         </ResourceDictionary>
-       
     </Window.Resources>
 
     <Grid Background="Transparent">
         <DockPanel LastChildFill="True">
 
-            <!--最上面的header-->
-            <Border DockPanel.Dock="Top"
-        Height="28"
-        Background="#50FFFFFF"
-        VerticalAlignment="Top"
-                   
-      HorizontalAlignment="Stretch"   
-                MouseLeftButtonDown="Border_MouseLeftButtonDown">
-
+            <!-- #region 1. 自定义标题栏 (TitleBar) -->
+            <Border DockPanel.Dock="Top" Height="28" Background="#50FFFFFF" VerticalAlignment="Top" HorizontalAlignment="Stretch" MouseLeftButtonDown="Border_MouseLeftButtonDown">
                 <DockPanel LastChildFill="True">
-                    <!-- 允许右边自动靠边 -->
-                    <!-- 左边标题 -->
-                    <Image x:Name="AppIcon"
-               Source="pack://application:,,,/Resources/TabPaint.ico"
-               Width="20" Height="20"
-               Margin="8,0,8,0"/>
-
-                    <!-- 标题文字 -->
-                    <TextBlock x:Name="TitleTextBlock"
-                   Text="TabPaint"
-                   VerticalAlignment="Center"
-                   FontSize="12"
-                    Style="{StaticResource TitleTextStyle}"
-                   />
-                    <!-- 右边控制按钮 -->
-                    <StackPanel DockPanel.Dock="Right"
-                    Orientation="Horizontal"
-                    VerticalAlignment="Center"
-                    HorizontalAlignment="Right"   
-                        Margin="0,0,0,0">
-                        <!-- 加一点右边距 -->
-                        <Button Width="40" Height="30" Foreground="Black"
-                    ToolTip="最小化" Click="Minimize_Click" Style="{StaticResource TitleBarButtonStyle}">
+                    <!-- Icon -->
+                    <Image x:Name="AppIcon" Source="pack://application:,,,/Resources/TabPaint.ico" Width="20" Height="20" Margin="8,0,8,0"/>
+                    <!-- Title -->
+                    <TextBlock x:Name="TitleTextBlock" Text="TabPaint" VerticalAlignment="Center" FontSize="12" Style="{StaticResource TitleTextStyle}"/>
+                    <!-- Window Buttons -->
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+                        <Button Width="40" Height="30" ToolTip="最小化" Click="Minimize_Click" Style="{StaticResource TitleBarButtonStyle}">
                             <Viewbox Width="10" Height="10">
                                 <Path Stroke="Black" StrokeThickness="1" Data="M0,2 L12,2"/>
                             </Viewbox>
                         </Button>
-
-                        <Button Width="40" Height="30" Name="MaxRestoreButton" Foreground="Black"
-                    ToolTip="最大化" Click="MaximizeRestore_Click" Style="{StaticResource TitleBarButtonStyle}">
+                        <Button Width="40" Height="30" Name="MaxRestoreButton" ToolTip="最大化" Click="MaximizeRestore_Click" Style="{StaticResource TitleBarButtonStyle}">
                             <Viewbox Width="10" Height="10">
                                 <Rectangle Stroke="Black" StrokeThickness="1" Width="12" Height="12"/>
-
                             </Viewbox>
-
                         </Button>
-
-                        <Button Width="48" Height="30"  Foreground="Black"
-                    ToolTip="退出" Click="Close_Click" Style="{StaticResource CloseButtonStyle}">
+                        <Button Width="48" Height="30" ToolTip="退出" Click="Close_Click" Style="{StaticResource CloseButtonStyle}">
                             <Viewbox Width="10" Height="10">
                                 <Path Stroke="Black" StrokeThickness="1" Data="M0,0 L12,12 M12,0 L0,12"/>
                             </Viewbox>
-
                         </Button>
-
-
                     </StackPanel>
                 </DockPanel>
             </Border>
+            <!-- #endregion -->
 
-
-
-
-            <!-- 顶部菜单栏 -->
-
-            <Border DockPanel.Dock="Top" Height="36" Background="Transparent" >
+            <!-- #region 2. 菜单栏 (MenuBar) -->
+            <Border DockPanel.Dock="Top" Height="36" Background="Transparent">
                 <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,0">
-                    <Menu DockPanel.Dock="Left"
-              Background="Transparent"
-              Foreground="Black"
-              VerticalAlignment="Center"
-              BorderThickness="0"
-              FontSize="14"
-              Padding="0"
-              Margin="0">
-
-                        <!-- 左边菜单 -->
-                        <!--文件-->
+                    <Menu DockPanel.Dock="Left" Background="Transparent" BorderThickness="0" FontSize="14" Padding="0" Margin="0">
+                        <!-- 文件菜单 -->
                         <MenuItem Header="文件" Style="{StaticResource ModernMenuItemStyle}">
                             <MenuItem Header="新建" Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+N" Click="OnNewClick">
                                 <MenuItem.Icon>
@@ -188,208 +70,157 @@
                                 </MenuItem.Icon>
                             </MenuItem>
                             <Separator Style="{StaticResource MenuSeparator}"/>
-                            <MenuItem Header="保存"  Style="{StaticResource SubMenuItemStyle}"  InputGestureText="Ctrl+S" Click="OnSaveClick">
+                            <MenuItem Header="保存" Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+S" Click="OnSaveClick">
                                 <MenuItem.Icon>
                                     <Image Source="{StaticResource Save_Normal_Image}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-
-							<MenuItem Header="另存为"  Style="{StaticResource SubMenuItemStyle}"   Click="OnSaveAsClick">
-								<MenuItem.Icon>
-									<Image Source="{StaticResource Save_Button_Image}" Width="16" Height="16"/>
-								</MenuItem.Icon>
-							</MenuItem>
-                            <MenuItem Header="退出"  Style="{StaticResource SubMenuItemStyle}" Click="OnExitClick">
+                            <MenuItem Header="另存为" Style="{StaticResource SubMenuItemStyle}" Click="OnSaveAsClick">
+                                <MenuItem.Icon>
+                                    <Image Source="{StaticResource Save_Button_Image}" Width="16" Height="16"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="退出" Style="{StaticResource SubMenuItemStyle}" Click="OnExitClick">
                                 <MenuItem.Icon>
                                     <Image Source="{StaticResource Exit_Image}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                         </MenuItem>
 
-
-
                         <!-- 编辑菜单 -->
                         <MenuItem Header="编辑" Style="{StaticResource ModernMenuItemStyle}">
-
-                            <MenuItem Header="复制    "  Style="{StaticResource SubMenuItemStyle}"  InputGestureText="Ctrl+C" Click="OnCopyClick">
+                            <MenuItem Header="复制" Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+C" Click="OnCopyClick">
                                 <MenuItem.Icon>
                                     <Image Source="{StaticResource Copy_Image}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="剪切    "  Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+X" Click="OnCutClick">
+                            <MenuItem Header="剪切" Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+X" Click="OnCutClick">
                                 <MenuItem.Icon>
                                     <Image Source="{StaticResource Cut_Image}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="粘贴    "  Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+V" Click="OnPasteClick">
+                            <MenuItem Header="粘贴" Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+V" Click="OnPasteClick">
                                 <MenuItem.Icon>
                                     <Image Source="{StaticResource Paste_Image}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                             <Separator Style="{StaticResource MenuSeparator}"/>
-                            <MenuItem Header="调整大小"  Style="{StaticResource SubMenuItemStyle}"  Click="OnResizeCanvasClick">
+                            <MenuItem Header="调整大小" Style="{StaticResource SubMenuItemStyle}" Click="OnResizeCanvasClick">
                                 <MenuItem.Icon>
                                     <Image Source="{StaticResource Resize_Image}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                         </MenuItem>
 
-
-                        <!-- 查看菜单 -->
+                        <!-- 效果菜单 -->
                         <MenuItem Header="效果" Style="{StaticResource ModernMenuItemStyle}">
                             <MenuItem Header="亮度/对比度/曝光" Style="{StaticResource SubMenuItemStyle}" Click="OnBrightnessContrastExposureClick">
                                 <MenuItem.Icon>
                                     <Image Source="{StaticResource Brightness_Image}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="色温/色调/饱和度"  Style="{StaticResource SubMenuItemStyle}" Click="OnColorTempTintSaturationClick">
+                            <MenuItem Header="色温/色调/饱和度" Style="{StaticResource SubMenuItemStyle}" Click="OnColorTempTintSaturationClick">
                                 <MenuItem.Icon>
                                     <Image Source="{StaticResource Color_Temperature_Image}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-
-                            <MenuItem Header="黑白"  Style="{StaticResource SubMenuItemStyle}" Click="OnConvertToBlackAndWhiteClick">
+                            <MenuItem Header="黑白" Style="{StaticResource SubMenuItemStyle}" Click="OnConvertToBlackAndWhiteClick">
                                 <MenuItem.Icon>
                                     <Image Source="{StaticResource Black_And_White_Image}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <Separator Style="{StaticResource MenuSeparator}"/>
-                            <MenuItem Header="暂无"  Style="{StaticResource SubMenuItemStyle}" Click="EmptyClick">
-                                <MenuItem.Icon>
-                                    <Image Source="{StaticResource Color_Temperature_Image}" Width="16" Height="16"/>
-                                </MenuItem.Icon>
-                            </MenuItem>
-                            <MenuItem Header="暂无"  Style="{StaticResource SubMenuItemStyle}" Click="EmptyClick">
-                                <MenuItem.Icon>
-                                    <Image Source="{StaticResource Color_Temperature_Image}" Width="16" Height="16"/>
-                                </MenuItem.Icon>
-                            </MenuItem>
                         </MenuItem>
-
                     </Menu>
 
-                    <!-- 中间分隔线 -->
+                    <!-- 快捷操作按钮 -->
                     <Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="2,4"/>
-
-                    <!-- 图片按钮栏 -->
                     <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-
-                        <!-- 保存按钮 -->
-                        <Button Margin="6,0"  ToolTip="保存" Click="OnSaveClick" Style="{StaticResource RoundedMenuButtonStyle}">
+                        <Button Margin="6,0" ToolTip="保存" Click="OnSaveClick" Style="{StaticResource RoundedMenuButtonStyle}">
                             <Image Source="{StaticResource Save_Normal_Image}" Width="16" Height="16"/>
                         </Button>
-                        <!-- 中间分隔线 -->
                         <Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="2,4"/>
-                        <!-- 撤销按钮 -->
-                        <Button Margin="6,0"  ToolTip="撤销" Name="UndoButton" Click="OnUndoClick" IsEnabled="False" Style="{StaticResource RoundedMenuButtonStyle}" >
-                            <Image x:Name="UndoIcon"      Source="{StaticResource Undo_Image}" Width="16" Height="16"/>
+                        <Button Margin="6,0" ToolTip="撤销" Name="UndoButton" Click="OnUndoClick" IsEnabled="False" Style="{StaticResource RoundedMenuButtonStyle}">
+                            <Image x:Name="UndoIcon" Source="{StaticResource Undo_Image}" Width="16" Height="16"/>
                         </Button>
-                        <!-- 重做按钮 -->
-                        <Button   ToolTip="重做" Name="RedoButton" Click="OnRedoClick" IsEnabled="False" Style="{StaticResource RoundedMenuButtonStyle}">
-                            <Image x:Name="RedoIcon" Source="{StaticResource Redo_Image}" Width="16"  Height="16"/>
+                        <Button ToolTip="重做" Name="RedoButton" Click="OnRedoClick" IsEnabled="False" Style="{StaticResource RoundedMenuButtonStyle}">
+                            <Image x:Name="RedoIcon" Source="{StaticResource Redo_Image}" Width="16" Height="16"/>
                         </Button>
                     </StackPanel>
-
                 </DockPanel>
             </Border>
+            <!-- #endregion -->
 
-
-
-
-
-            <!-- 工具栏 -->
-            <Border DockPanel.Dock="Top" Height="36" Background="Transparent" >
+            <!-- #region 3. 工具栏 (ToolBar) -->
+            <Border DockPanel.Dock="Top" Height="36" Background="Transparent">
                 <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,0">
-                             
+                    <!-- 基础工具 -->
+                    <Button Margin="6,0,2,0" Name="PenButton" Click="OnPenClick" Style="{StaticResource RoundedMenuButtonStyle}">
+                        <Image x:Name="PenIcon" Source="{StaticResource Pencil_Image}" Width="16" Height="16"/>
+                    </Button>
+                    <Button Margin="2,0" Name="PickColorButton" ToolTip="取颜色" Click="OnPickColorClick" Style="{StaticResource RoundedMenuButtonStyle}">
+                        <Image x:Name="PickColorIcon" Source="{StaticResource Pick_Colour_Image}" Width="16" Height="16"/>
+                    </Button>
+                    <Button Margin="2,0" Name="EraserButton" ToolTip="橡皮擦" Click="OnEraserClick" Style="{StaticResource RoundedMenuButtonStyle}">
+                        <Image x:Name="EraserIcon" Source="{StaticResource Eraser_Image}" Width="16" Height="16"/>
+                    </Button>
+                    <Button Margin="2,0" Name="SelectButton" ToolTip="选择区域" Click="OnSelectClick" Style="{StaticResource RoundedMenuButtonStyle}">
+                        <Image x:Name="SelectIcon" Source="{StaticResource Select_Image}" Width="16" Height="16"/>
+                    </Button>
+                    <Button Margin="2,0" Name="FillButton" ToolTip="填充" Click="OnFillClick" Style="{StaticResource RoundedMenuButtonStyle}">
+                        <Image x:Name="FillIcon" Source="{StaticResource Fill_Bucket_Image}" Width="16" Height="16"/>
+                    </Button>
+                    <Button Margin="2,0" Name="TextButton" ToolTip="文字" Click="OnTextClick" Style="{StaticResource RoundedMenuButtonStyle}">
+                        <Image x:Name="TextIcon" Source="{StaticResource Text_Image}" Width="16" Height="16"/>
+                    </Button>
 
-                    <!--铅笔-->
-                    <Button Margin="6,0,2,0"  Name="PenButton" Click="OnPenClick" Style="{StaticResource RoundedMenuButtonStyle}" >
-                        <Image x:Name="PenIcon"      Source="{StaticResource Pencil_Image}" Width="16" Height="16"/>
-                    </Button>
-                    <!--取颜色-->
-                    <Button Margin="2,0"  Name="PickColorButton" ToolTip="取颜色" Click="OnPickColorClick" Style="{StaticResource RoundedMenuButtonStyle}" >
-                        <Image x:Name="PickColorIcon"      Source="{StaticResource Pick_Colour_Image}" Width="16" Height="16"/>
-                    </Button>
-                    <!--橡皮擦-->
-                    <Button Margin="2,0"  Name="EraserButton" ToolTip="橡皮擦" Click="OnEraserClick"  Style="{StaticResource RoundedMenuButtonStyle}" >
-                        <Image x:Name="EraserIcon"      Source="{StaticResource Eraser_Image}" Width="16" Height="16"/>
-                    </Button>
-                    <!--选择-->
-                    <Button Margin="2,0"  Name="SelectButton"  ToolTip="选择区域" Click="OnSelectClick"  Style="{StaticResource RoundedMenuButtonStyle}" >
-                        <Image x:Name="SelectIcon"      Source="{StaticResource Select_Image}" Width="16" Height="16"/>
-                    </Button>
-                    <!--填充-->
-                    <Button Margin="2,0"  Name="FillButton"  ToolTip="填充" Click="OnFillClick" Style="{StaticResource RoundedMenuButtonStyle}" >
-                        <Image x:Name="FillIcon"      Source="{StaticResource Fill_Bucket_Image}" Width="16" Height="16"/>
-                    </Button>
-                    <!--文字-->
-                    <Button Margin="2,0"  Name="TextButton"  ToolTip="文字" Click="OnTextClick" Style="{StaticResource RoundedMenuButtonStyle}" >
-                        <Image x:Name="TextIcon"      Source="{StaticResource Text_Image}" Width="16" Height="16"/>
-                    </Button>
                     <Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="2,4"/>
+
+                    <!-- 画刷菜单 -->
                     <Grid>
-                        <ToggleButton x:Name="BrushToggle" 
-               
-              Style="{StaticResource DropDownButtonStyle}">
-                            <Image      Source="{StaticResource Brush_Image}" Width="16" Height="16"/>
+                        <ToggleButton x:Name="BrushToggle" Style="{StaticResource DropDownButtonStyle}">
+                            <Image Source="{StaticResource Brush_Image}" Width="16" Height="16"/>
                         </ToggleButton>
-
-                        <Popup x:Name="SubMenuPopupBrush"
-                   IsOpen="{Binding IsChecked, ElementName=BrushToggle, Mode=TwoWay}"
-                   PlacementTarget="{Binding ElementName=BrushToggle}"
-                           Placement="Bottom"
-         
-                       AllowsTransparency="True"
-                       PopupAnimation="None"
-                          StaysOpen="{Binding IsMouseOver, ElementName=BrushToggle}">
-
-                            <!-- 子菜单的容器和外观 -->
-                            <Border Name="SubmenuBorderBrush"  ToolTip="画刷"
-                        Background="White"
-                        BorderBrush="#E0E0E0"
-                        BorderThickness="1"
-                        CornerRadius="4"
-                        Margin="5,0"
-                             Padding="2">
-                                <StackPanel KeyboardNavigation.DirectionalNavigation="Cycle">
-
-                                    <MenuItem Header="圆形笔"  Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Round">
+                        <Popup x:Name="SubMenuPopupBrush" IsOpen="{Binding IsChecked, ElementName=BrushToggle, Mode=TwoWay}"
+                               PlacementTarget="{Binding ElementName=BrushToggle}" Placement="Bottom" AllowsTransparency="True" PopupAnimation="None" StaysOpen="{Binding IsMouseOver, ElementName=BrushToggle}">
+                            <Border Name="SubmenuBorderBrush" ToolTip="画刷" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Margin="5,0" Padding="2">
+                                <StackPanel>
+                                    <MenuItem Header="圆形笔" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Round">
                                         <MenuItem.Icon>
                                             <Image Source="{StaticResource Brush_Normal_Image}" Width="16" Height="16"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
-                                    <MenuItem Header="方形笔"  Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Square">
+                                    <MenuItem Header="方形笔" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Square">
                                         <MenuItem.Icon>
                                             <Image Source="{StaticResource Brush_Rect_Image}" Width="16" Height="16"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
-                                    <MenuItem Header="毛刷"  Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Brush">
+                                    <MenuItem Header="毛刷" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Brush">
                                         <MenuItem.Icon>
                                             <Image Source="{StaticResource Brush_Normal_Image}" Width="16" Height="16"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
-                                    <MenuItem Header="喷枪"  Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Spray">
+                                    <MenuItem Header="喷枪" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Spray">
                                         <MenuItem.Icon>
                                             <Image Source="{StaticResource Paint_Spray_Image}" Width="16" Height="16"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
                                     <Separator Style="{StaticResource MenuSeparator}"/>
-                                    <MenuItem Header="蜡笔"  Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Crayon">
+                                    <MenuItem Header="蜡笔" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Crayon">
                                         <MenuItem.Icon>
                                             <Image Source="{StaticResource Crayon_Image}" Width="16" Height="16"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
-                                    <MenuItem Header="水彩画笔"  Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Watercolor">
+                                    <MenuItem Header="水彩画笔" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Watercolor">
                                         <MenuItem.Icon>
                                             <Image Source="{StaticResource Watercolor_Image}" Width="16" Height="16"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
-                                    <MenuItem Header="荧光笔"  Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Highlighter">
+                                    <MenuItem Header="荧光笔" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Highlighter">
                                         <MenuItem.Icon>
                                             <Image Source="{StaticResource Highlighter_Image}" Width="16" Height="16"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
-                                    <MenuItem Header="马赛克"  Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Mosaic">
+                                    <MenuItem Header="马赛克" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Mosaic">
                                         <MenuItem.Icon>
                                             <Image Source="{StaticResource Mosaic_Image}" Width="16" Height="16"/>
                                         </MenuItem.Icon>
@@ -398,61 +229,40 @@
                             </Border>
                         </Popup>
                     </Grid>
+
                     <Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="2,4"/>
 
-
-                    <!--裁剪选区-->
-                    <Button Margin="2,0"  Name="CutImage"  ToolTip="裁剪选区" Click="CropMenuItem_Click"  Style="{StaticResource RoundedMenuButtonStyle}" >
-                        <Image x:Name="CutImageIcon"      Source="{StaticResource Cut_Selection_Image}" Width="16" Height="16"/>
+                    <!-- 图像操作 -->
+                    <Button Margin="2,0" Name="CutImage" ToolTip="裁剪选区" Click="CropMenuItem_Click" Style="{StaticResource RoundedMenuButtonStyle}">
+                        <Image x:Name="CutImageIcon" Source="{StaticResource Cut_Selection_Image}" Width="16" Height="16"/>
                     </Button>
-                    <!--左转-->
-                    <Button Margin="2,0"  Name="RotateLeft"  ToolTip="向左旋转90°" Click="OnRotateLeftClick"  Style="{StaticResource RoundedMenuButtonStyle}" >
+                    <Button Margin="2,0" Name="RotateLeft" ToolTip="向左旋转90°" Click="OnRotateLeftClick" Style="{StaticResource RoundedMenuButtonStyle}">
                         <Image Source="{StaticResource Rotate_Left_Image}" Width="16" Height="16"/>
                     </Button>
-                    <!--右转-->
-                    <Button Margin="2,0"  Name="RotateRight"  ToolTip="向右旋转90°" Click="OnRotateRightClick"  Style="{StaticResource RoundedMenuButtonStyle}" >
+                    <Button Margin="2,0" Name="RotateRight" ToolTip="向右旋转90°" Click="OnRotateRightClick" Style="{StaticResource RoundedMenuButtonStyle}">
                         <Image Source="{StaticResource Rotate_Right_Image}" Width="16" Height="16"/>
                     </Button>
 
                     <Grid>
-                     
-                     
-                        <ToggleButton x:Name="RotateFlipMenuToggle" 
-                 
-                  Style="{StaticResource DropDownButtonStyle}">
-                            <Image      Source="{StaticResource Spin180_Image}" Width="16" Height="16"/>
+                        <ToggleButton x:Name="RotateFlipMenuToggle" Style="{StaticResource DropDownButtonStyle}">
+                            <Image Source="{StaticResource Spin180_Image}" Width="16" Height="16"/>
                         </ToggleButton>
-
-                        <Popup x:Name="SubMenuPopup"
-                       IsOpen="{Binding IsChecked, ElementName=RotateFlipMenuToggle, Mode=TwoWay}"
-                       PlacementTarget="{Binding ElementName=RotateFlipMenuToggle}"
-                               Placement="Bottom"
-                             
-                               AllowsTransparency="True"
-                               PopupAnimation="None"
-                                  StaysOpen="{Binding IsMouseOver, ElementName=RotateFlipMenuToggle}">
-
-                            <!-- 子菜单的容器和外观 -->
-                            <Border Name="SubmenuBorder"
-                                Background="White"
-                                BorderBrush="#E0E0E0"
-                                BorderThickness="1"
-                                CornerRadius="4"
-                                Margin="5,0"  ToolTip="旋转/翻转"
-                                Padding="2">
-                                <StackPanel KeyboardNavigation.DirectionalNavigation="Cycle">
-                                    <MenuItem Header="旋转180°"  Style="{StaticResource SubMenuItemStyle}" Click="OnRotate180Click">
+                        <Popup x:Name="SubMenuPopup" IsOpen="{Binding IsChecked, ElementName=RotateFlipMenuToggle, Mode=TwoWay}"
+                               PlacementTarget="{Binding ElementName=RotateFlipMenuToggle}" Placement="Bottom" AllowsTransparency="True" PopupAnimation="None" StaysOpen="{Binding IsMouseOver, ElementName=RotateFlipMenuToggle}">
+                            <Border Name="SubmenuBorder" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Margin="5,0" ToolTip="旋转/翻转" Padding="2">
+                                <StackPanel>
+                                    <MenuItem Header="旋转180°" Style="{StaticResource SubMenuItemStyle}" Click="OnRotate180Click">
                                         <MenuItem.Icon>
                                             <Image Source="{StaticResource Spin180_Image}" Width="16" Height="16"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
                                     <Separator Style="{StaticResource MenuSeparator}"/>
-                                    <MenuItem Header="垂直翻转"  Style="{StaticResource SubMenuItemStyle}" Click="OnFlipVerticalClick">
+                                    <MenuItem Header="垂直翻转" Style="{StaticResource SubMenuItemStyle}" Click="OnFlipVerticalClick">
                                         <MenuItem.Icon>
                                             <Image Source="{StaticResource Flip_Vertical_Image}" Width="16" Height="16"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
-                                    <MenuItem Header="水平翻转"  Style="{StaticResource SubMenuItemStyle}" Click="OnFlipHorizontalClick">
+                                    <MenuItem Header="水平翻转" Style="{StaticResource SubMenuItemStyle}" Click="OnFlipHorizontalClick">
                                         <MenuItem.Icon>
                                             <Image Source="{StaticResource Flip_Horizontal_Image}" Width="16" Height="16"/>
                                         </MenuItem.Icon>
@@ -463,61 +273,31 @@
                     </Grid>
 
                     <Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="2,4"/>
-  
 
-                    <Button    ToolTip="自定义颜色" Click="OnCustomColorClick" Margin="10,0" Padding="0" Style="{StaticResource RoundedMenuButtonStyle}" HorizontalAlignment="Left" VerticalAlignment="Top" HorizontalContentAlignment="Left">
-                        <Image Source="pack://application:,,,/Resources/colorwheel_64x64.png"  Width="32"  Height="32"/>
+                    <!-- 颜色区域 -->
+                    <Button ToolTip="自定义颜色" Click="OnCustomColorClick" Margin="10,0" Padding="0" Style="{StaticResource RoundedMenuButtonStyle}" HorizontalAlignment="Left" VerticalAlignment="Top" HorizontalContentAlignment="Left">
+                        <Image Source="pack://application:,,,/Resources/colorwheel_64x64.png" Width="32" Height="32"/>
                     </Button>
 
+                    <Button x:Name="ColorBtn1" Width="30" Height="30" Margin="2" ToolTip="颜色1" Click="OnColorOneClick" Tag="True" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding ForegroundBrush, Mode=TwoWay}"/>
+                    <Button x:Name="ColorBtn2" Width="30" Height="30" Margin="2,0,10,0" ToolTip="颜色2" Click="OnColorTwoClick" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding BackgroundBrush, Mode=TwoWay}"/>
 
-                    <!-- 两个颜色按钮，优先级差不多 -->
-                    <Button x:Name="ColorBtn1" 
-        Width="30" Height="30" Margin="2"
-        ToolTip="颜色1"
-        Click="OnColorOneClick"
-        Tag="True"
-        Style="{StaticResource ColorCircleButtonStyle}"
-        Background="{Binding ForegroundBrush, Mode=TwoWay}"/>
-
-                    <Button x:Name="ColorBtn2" 
-        Width="30" Height="30" Margin="2,0,10,0"
-        ToolTip="颜色2"
-        Click="OnColorTwoClick"
-        Style="{StaticResource ColorCircleButtonStyle}"
-        Background="{Binding BackgroundBrush, Mode=TwoWay}"/>
-
-
-                    <!-- 颜色按钮列表 -->
                     <ItemsControl ItemsSource="{Binding ColorItems}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel Orientation="Horizontal"/>
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
-
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-
-
-                                <Button Width="20" Height="20"
-        Margin="1"
-                                
-                            Click="OnColorButtonClick"
-        Background="{Binding}">
+                                <Button Width="20" Height="20" Margin="1" Click="OnColorButtonClick" Background="{Binding}">
                                     <Button.Template>
                                         <ControlTemplate TargetType="Button">
-                                            <Ellipse x:Name="circle"
-                     Fill="{TemplateBinding Background}"
-                     Stroke="Transparent"
-                     StrokeThickness="1"/>
-
+                                            <Ellipse x:Name="circle" Fill="{TemplateBinding Background}" Stroke="Transparent" StrokeThickness="1"/>
                                             <ControlTemplate.Triggers>
-                                                <!-- 鼠标悬浮时 -->
                                                 <Trigger Property="IsMouseOver" Value="True">
                                                     <Setter TargetName="circle" Property="Stroke" Value="Gray"/>
                                                 </Trigger>
-
-                                                <!-- 按下去时（可选） -->
                                                 <Trigger Property="IsPressed" Value="True">
                                                     <Setter TargetName="circle" Property="Stroke" Value="DarkGray"/>
                                                 </Trigger>
@@ -525,133 +305,85 @@
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
-
-
-
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-
                 </DockPanel>
             </Border>
+            <!-- #endregion -->
 
-
-
-            <!-- 文件标签栏 -->
+            <!-- #region 4. 图片列表栏 (ImageBar) -->
             <Border DockPanel.Dock="Top" Height="100" Background="Transparent">
-                <Grid Background="Transparent" AllowDrop="True"
-      DragOver="OnImageBarDragOver"
-      Drop="OnImageBarDrop">
-                    <!-- 两列：左侧缩略图列表 + 右侧垂直滚动条 -->
+                <Grid Background="Transparent" AllowDrop="True" DragOver="OnImageBarDragOver" Drop="OnImageBarDrop">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
-                        <!-- 缩略图区域，占剩余空间 -->
                         <ColumnDefinition Width="24" />
-                        <!-- 滚动条固定宽度 -->
                     </Grid.ColumnDefinitions>
-                    <Border Grid.Column="0" Margin="4,0,4,0" VerticalAlignment="Center" 
-        BorderBrush="#33999999" BorderThickness="0,0,1,0" Padding="0,0,4,0">
+
+                    <!-- 左侧控制按钮 -->
+                    <Border Grid.Column="0" Margin="4,0,4,0" VerticalAlignment="Center" BorderBrush="#33999999" BorderThickness="0,0,1,0" Padding="0,0,4,0">
                         <UniformGrid Columns="1" Rows="3" Height="80" Width="28">
-
-                            <!-- 1. 保存所有 (Save All) -->
                             <Button ToolTip="保存所有已编辑图片" Click="OnSaveAllClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
-                              
-                                    <Path Data="M2,0 L12,0 L14,2 L14,14 L0,14 L0,0 L2,0 M3,12 L11,12 L11,9 L3,9 L3,12 M3,0 L3,5 L9,5 L9,0" 
-Fill="#555" Stretch="Uniform" Width="14" Height="14"/>
-
-                                </Button>
-
-                            <!-- 2. 清空未编辑 (Clear Unedited) -->
+                                <Path Data="M2,0 L12,0 L14,2 L14,14 L0,14 L0,0 L2,0 M3,12 L11,12 L11,9 L3,9 L3,12 M3,0 L3,5 L9,5 L9,0" Fill="#555" Stretch="Uniform" Width="14" Height="14"/>
+                            </Button>
                             <Button ToolTip="关闭所有未编辑的图片" Click="OnClearUneditedClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
                                 <Grid Width="16" Height="16">
-                                    <!-- 后面的卡片 (淡色或虚线暗示) -->
                                     <Path Data="M5,2 L13,2 L13,10" Stroke="#777" StrokeThickness="1.5" StrokeEndLineCap="Round"/>
-                                    <!-- 前面的卡片 -->
                                     <Path Data="M2,5 L10,5 L10,13 L2,13 Z" Stroke="#444" StrokeThickness="1.5"/>
-                                    <!-- 叉号 (表示移除/关闭) -->
                                     <Path Data="M4.5,7.5 L7.5,10.5 M4.5,10.5 L7.5,7.5" Stroke="#444" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                                 </Grid>
                             </Button>
-
-                            <!-- 3. 放弃所有编辑 (Discard All) -->
                             <Button ToolTip="放弃所有更改" Click="OnDiscardAllClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
-                                <Image x:Name="ResetIcon"      Source="{StaticResource Reset_Image}" Width="16" Height="16"/>
+                                <Image x:Name="ResetIcon" Source="{StaticResource Reset_Image}" Width="16" Height="16"/>
                             </Button>
-
                         </UniformGrid>
                     </Border>
-                    <!-- 左侧 ScrollViewer + ItemsControl -->
-                    <ScrollViewer x:Name="FileTabsScroller" Grid.Column="1"
-                                   HorizontalScrollBarVisibility="Hidden"
-              VerticalScrollBarVisibility="Disabled"
-              PanningMode="HorizontalOnly"
-              
-              PreviewMouseWheel="OnFileTabsWheelScroll" 
-              
-              ScrollChanged="OnFileTabsScrollChanged"
-              ManipulationBoundaryFeedback="ScrollViewer_ManipulationBoundaryFeedback">
-                        <!-- 修改点 1: 用 StackPanel 包裹 ItemsControl 和 新增按钮 -->
+
+                    <!-- 图片标签列表 -->
+                    <ScrollViewer x:Name="FileTabsScroller" Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" PanningMode="HorizontalOnly" PreviewMouseWheel="OnFileTabsWheelScroll" ScrollChanged="OnFileTabsScrollChanged" ManipulationBoundaryFeedback="ScrollViewer_ManipulationBoundaryFeedback">
                         <StackPanel Orientation="Horizontal">
-                            <Button Name="LeftAddBtn" Style="{StaticResource Win11AddButtonStyle}" 
-                Click="OnPrependTabClick" 
-                ToolTip="在左侧新建"/>
+                            <Button Name="LeftAddBtn" Style="{StaticResource Win11AddButtonStyle}" Click="OnPrependTabClick" ToolTip="在左侧新建"/>
+
                             <ItemsControl x:Name="FileTabList" ItemsSource="{Binding FileTabs}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <VirtualizingStackPanel Orientation="Horizontal" VirtualizationMode="Recycling"/>
                                     </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
-
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <!-- 修改点 2: 增加 Grid 作为容器以支持叠加层 -->
                                         <Grid>
-                                            <Button Width="120" Height="80" Margin="2" Padding="4"
-                                                        Click="OnFileTabClick"
-                                              PreviewMouseLeftButtonDown="OnFileTabPreviewMouseDown"
-PreviewMouseMove="OnFileTabPreviewMouseMove" ToolTip="{Binding FileName}">
+                                            <Button Width="120" Height="80" Margin="2" Padding="4" Click="OnFileTabClick" PreviewMouseLeftButtonDown="OnFileTabPreviewMouseDown" PreviewMouseMove="OnFileTabPreviewMouseMove" ToolTip="{Binding FileName}">
                                                 <Button.Template>
                                                     <ControlTemplate TargetType="Button">
-                                                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                            BorderThickness="{TemplateBinding BorderThickness}"
-                                            CornerRadius="4">
+                                                        <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
                                                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                         </Border>
                                                     </ControlTemplate>
                                                 </Button.Template>
-
                                                 <StackPanel Orientation="Vertical">
-                                                    <!-- 缩略图：如果是新建文件且没有缩略图，显示一个默认图标 -->
                                                     <Image Source="{Binding Thumbnail}" Width="100" Height="60" Stretch="Uniform" VerticalAlignment="Center"/>
                                                     <TextBlock Text="{Binding DisplayName}" FontSize="12" TextAlignment="Center" TextTrimming="CharacterEllipsis"/>
                                                 </StackPanel>
-
                                                 <Button.Style>
                                                     <Style TargetType="Button">
                                                         <Setter Property="Background" Value="Transparent"/>
                                                         <Setter Property="BorderBrush" Value="#DDD"/>
                                                         <Setter Property="BorderThickness" Value="1"/>
-
                                                         <Style.Triggers>
                                                             <Trigger Property="IsMouseOver" Value="True">
                                                                 <Setter Property="Background" Value="#11000000"/>
-                                                                <!-- 淡灰色悬浮 -->
                                                             </Trigger>
                                                             <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                                                 <Setter Property="Background" Value="#CCE6F0FF"/>
-                                                                <!-- 选中淡蓝 -->
                                                                 <Setter Property="BorderBrush" Value="#FF0078D7"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
                                                 </Button.Style>
                                             </Button>
-
-                                            <!-- 🔥 UI升级核心：悬浮层状态指示器 🔥 -->
-
-                                            <!-- 1. 左上角状态点 (红) -->
+                                            <!-- 状态指示器 -->
                                             <Ellipse Width="8" Height="8" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="6,6,0,0" IsHitTestVisible="False">
                                                 <Ellipse.Style>
                                                     <Style TargetType="Ellipse">
@@ -665,15 +397,8 @@ PreviewMouseMove="OnFileTabPreviewMouseMove" ToolTip="{Binding FileName}">
                                                     </Style>
                                                 </Ellipse.Style>
                                             </Ellipse>
-                                            <!-- 2. 右上角关闭按钮 (悬浮显示) -->
-                                            <Button x:Name="CloseBtn" Width="18" Height="18" 
-                                HorizontalAlignment="Right" VerticalAlignment="Top" 
-                                Margin="0,4,4,0"
-                                Background="#CCFFFFFF" BorderThickness="0"
-                                Click="OnFileTabCloseClick" 
-                                Tag="{Binding}"
-                                Visibility="Hidden">
-                                                <!-- 默认隐藏 -->
+                                            <!-- 悬浮关闭按钮 -->
+                                            <Button x:Name="CloseBtn" Width="18" Height="18" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,4,0" Background="#CCFFFFFF" BorderThickness="0" Click="OnFileTabCloseClick" Tag="{Binding}" Visibility="Hidden">
                                                 <Button.Resources>
                                                     <Style TargetType="Border">
                                                         <Setter Property="CornerRadius" Value="9"/>
@@ -681,10 +406,7 @@ PreviewMouseMove="OnFileTabPreviewMouseMove" ToolTip="{Binding FileName}">
                                                 </Button.Resources>
                                                 <Path Data="M0,0 L8,8 M8,0 L0,8" Stroke="#666" StrokeThickness="1.5" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                                             </Button>
-
                                         </Grid>
-
-                                        <!-- 触发器：鼠标悬浮在整个Item上时，显示关闭按钮 -->
                                         <DataTemplate.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
                                                 <Setter TargetName="CloseBtn" Property="Visibility" Value="Visible"/>
@@ -694,59 +416,32 @@ PreviewMouseMove="OnFileTabPreviewMouseMove" ToolTip="{Binding FileName}">
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <!-- 修改点 3: 列表末尾的新建按钮 -->
-                            <Button x:Name="NewTabBtn" 
-                Style="{StaticResource Win11AddButtonStyle}" 
-                Click="OnNewTabClick"
-                ToolTip="新建画布 (Ctrl+N)"/>
-
+                            <Button x:Name="NewTabBtn" Style="{StaticResource Win11AddButtonStyle}" Click="OnNewTabClick" ToolTip="新建画布 (Ctrl+N)"/>
                         </StackPanel>
                     </ScrollViewer>
 
-
-
-
-                    <Slider Grid.Column="2"
-        x:Name="PreviewSlider"
-        Orientation="Vertical"
-        Minimum="0"
-        Maximum="100"
-        Width="24" 
-        Margin="0,4,4,4"
-        IsDirectionReversed="True" 
-        IsMoveToPointEnabled="True"
-        ValueChanged="PreviewSlider_ValueChanged">
-                        <!-- IsDirectionReversed="True": 让顶部对应Index 0 -->
-                        <!-- IsMoveToPointEnabled="True": 点击轨道任意位置直接跳转，无需手写代码 -->
-
+                    <!-- 预览滑块 -->
+                    <Slider Grid.Column="2" x:Name="PreviewSlider" Orientation="Vertical" Minimum="0" Maximum="100" Width="24" Margin="0,4,4,4" IsDirectionReversed="True" IsMoveToPointEnabled="True" ValueChanged="PreviewSlider_ValueChanged">
                         <Slider.Template>
                             <ControlTemplate TargetType="Slider">
                                 <Grid Background="Transparent">
-                                    <!-- 增加背景以确保点击命中率 -->
-                                    <!-- 背景轨道 -->
                                     <Border Width="4" CornerRadius="2" Background="#333" Opacity="0.1" HorizontalAlignment="Center"/>
-
-                                    <!-- 核心组件 -->
                                     <Track x:Name="PART_Track" Orientation="Vertical">
                                         <Track.DecreaseRepeatButton>
                                             <RepeatButton Command="Slider.DecreaseLarge" Style="{StaticResource SliderRepeatButtonStyle}"/>
                                         </Track.DecreaseRepeatButton>
-
                                         <Track.Thumb>
                                             <Thumb x:Name="PART_Thumb" Height="16" Width="16" VerticalAlignment="Center">
                                                 <Thumb.Template>
                                                     <ControlTemplate TargetType="Thumb">
                                                         <Grid>
-                                                            <!-- 阴影增加立体感 -->
                                                             <Ellipse Fill="#33000000" Margin="0,2,-1,-2"/>
-                                                            <!-- 你的紫色球 -->
                                                             <Ellipse Fill="Purple" Stroke="White" StrokeThickness="2"/>
                                                         </Grid>
                                                     </ControlTemplate>
                                                 </Thumb.Template>
                                             </Thumb>
                                         </Track.Thumb>
-
                                         <Track.IncreaseRepeatButton>
                                             <RepeatButton Command="Slider.IncreaseLarge" Style="{StaticResource SliderRepeatButtonStyle}"/>
                                         </Track.IncreaseRepeatButton>
@@ -754,8 +449,6 @@ PreviewMouseMove="OnFileTabPreviewMouseMove" ToolTip="{Binding FileName}">
                                 </Grid>
                             </ControlTemplate>
                         </Slider.Template>
-
-                        <!-- 这是一个隐藏的 Style，用于让轨道上下部分的点击区域透明 -->
                         <Slider.Resources>
                             <Style x:Key="SliderRepeatButtonStyle" TargetType="RepeatButton">
                                 <Setter Property="OverridesDefaultStyle" Value="true"/>
@@ -765,29 +458,21 @@ PreviewMouseMove="OnFileTabPreviewMouseMove" ToolTip="{Binding FileName}">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="RepeatButton">
                                             <Border Background="Transparent"/>
-                                            <!-- 关键：透明背景接收点击 -->
                                         </ControlTemplate>
                                     </Setter.Value>
                                 </Setter>
                             </Style>
                         </Slider.Resources>
                     </Slider>
-
-
-                    <!-- 右侧垂直 Slider -->
-
                 </Grid>
             </Border>
+            <!-- #endregion -->
 
-            <!-- 绑定文件总数 -->
-
-            <!-- 底部状态栏 -->
+            <!-- #region 5. 底部状态栏 (StatusBar) -->
             <StatusBar DockPanel.Dock="Bottom" Background="#44FFFFFF">
                 <StatusBarItem Content="{Binding MousePosition}" Width="150"/>
                 <StatusBarItem Content="{Binding ImageSize}" Width="100"/>
                 <StatusBarItem Content="{Binding SelectionSize}" Width="120"/>
-
-                <!-- 这个弹性控件会把后面的元素推到右侧 -->
                 <StatusBarItem>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -796,15 +481,11 @@ PreviewMouseMove="OnFileTabPreviewMouseMove" ToolTip="{Binding FileName}">
                     </Grid>
                 </StatusBarItem>
 
-                <!-- 右边的部分 -->
                 <StatusBarItem HorizontalAlignment="Right">
                     <StackPanel Orientation="Horizontal">
-                        <Button Width="24" Height="24" ToolTip="适应窗口大小" Padding="2,0"
-                    Style="{StaticResource RoundedMenuButtonStyle}"
-                    Click="FitToWindow_Click">
+                        <Button Width="24" Height="24" ToolTip="适应窗口大小" Padding="2,0" Style="{StaticResource RoundedMenuButtonStyle}" Click="FitToWindow_Click">
                             <Image Source="{StaticResource FitToWindow_Image}" Width="16" Height="16"/>
                         </Button>
-
                         <ComboBox x:Name="ZoomMenu" Width="80" SelectionChanged="ZoomMenu_SelectionChanged" IsEditable="True">
                             <ComboBoxItem Content="25%" Tag="0.25"/>
                             <ComboBoxItem Content="50%" Tag="0.5"/>
@@ -817,172 +498,65 @@ PreviewMouseMove="OnFileTabPreviewMouseMove" ToolTip="{Binding FileName}">
                             <ComboBoxItem Content="600%" Tag="6.0"/>
                             <ComboBoxItem Content="800%" Tag="8.0"/>
                         </ComboBox>
-
-                        <Button Width="24" Height="24" ToolTip="缩小"
-                    Style="{StaticResource RoundedMenuButtonStyle}"
-                    Click="ZoomOut_Click" Padding="2,0">
+                        <Button Width="24" Height="24" ToolTip="缩小" Style="{StaticResource RoundedMenuButtonStyle}" Click="ZoomOut_Click" Padding="2,0">
                             <Image Source="{StaticResource Zoom_Out_Image}" Width="16" Height="16"/>
                         </Button>
-
-                        <Slider Name="ZoomSlider" Minimum="0.1" Maximum="8.0"
-                    Value="{Binding ZoomScale, Mode=TwoWay}"
-                    Width="120" TickFrequency="0.1" SmallChange="0.1"
-                    IsSnapToTickEnabled="True"/>
-
-                        <Button Width="24" Height="24" ToolTip="放大"
-                    Style="{StaticResource RoundedMenuButtonStyle}"
-                    Click="ZoomIn_Click" Padding="2,0">
+                        <Slider Name="ZoomSlider" Minimum="0.1" Maximum="8.0" Value="{Binding ZoomScale, Mode=TwoWay}" Width="120" TickFrequency="0.1" SmallChange="0.1" IsSnapToTickEnabled="True"/>
+                        <Button Width="24" Height="24" ToolTip="放大" Style="{StaticResource RoundedMenuButtonStyle}" Click="ZoomIn_Click" Padding="2,0">
                             <Image Source="{StaticResource Zoom_In_Image}" Width="16" Height="16"/>
                         </Button>
                     </StackPanel>
                 </StatusBarItem>
             </StatusBar>
+            <!-- #endregion -->
 
-
-
-
-            <!-- 可缩放滚动区域 -->
-            <ScrollViewer Name="ScrollContainer"
-              HorizontalScrollBarVisibility="Auto"
-              VerticalScrollBarVisibility="Auto"
-              PreviewMouseWheel="OnMouseWheelZoom"
-                      Background="Transparent" 
-                          PreviewMouseDown="OnScrollContainerMouseDown" AllowDrop="True" 
-                          PreviewDragOver="OnCanvasDragOver" 
-              PreviewDrop="OnCanvasDrop">
-
-
+            <!-- #region 6. 主画布区域 (Canvas) -->
+            <ScrollViewer Name="ScrollContainer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" PreviewMouseWheel="OnMouseWheelZoom" Background="Transparent" PreviewMouseDown="OnScrollContainerMouseDown" AllowDrop="True" PreviewDragOver="OnCanvasDragOver" PreviewDrop="OnCanvasDrop">
                 <ScrollViewer.ContextMenu>
                     <ContextMenu Style="{StaticResource Win11ContextMenuStyle}">
-                        <!-- 剪切、复制、粘贴 -->
-
                         <MenuItem Header="复制" InputGestureText="Ctrl+C" Style="{StaticResource Win11MenuItemStyle}" Click="OnCopyClick"/>
-                        
-
                         <Separator Style="{StaticResource Win11MenuSeparatorStyle}"/>
                         <MenuItem Header="粘贴" InputGestureText="Ctrl+V" Style="{StaticResource Win11MenuItemStyle}" Click="OnPasteClick"/>
-                        <!-- 选区操作 (Roadmap 0.6.22) -->
-
-                     
                     </ContextMenu>
                 </ScrollViewer.ContextMenu>
 
-
-                <Grid Name="CanvasWrapper"
-      HorizontalAlignment="Center"
-      VerticalAlignment="Center"
-      SnapsToDevicePixels="True"
-      UseLayoutRounding="True"
-    >
-
+                <Grid Name="CanvasWrapper" HorizontalAlignment="Center" VerticalAlignment="Center" SnapsToDevicePixels="True" UseLayoutRounding="True">
                     <Grid.LayoutTransform>
                         <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1" />
                     </Grid.LayoutTransform>
 
-                    <!-- 背景图片 -->
-                    <Image Name="BackgroundImage"
-           Stretch="None"
-           HorizontalAlignment="Left"
-           VerticalAlignment="Top"
-           SnapsToDevicePixels="True"
-           RenderOptions.BitmapScalingMode="NearestNeighbor" />
-                    
-                    
-                    <Canvas Name="CanvasResizeOverlay" 
-            Visibility="Visible" 
-            IsHitTestVisible="True" 
-            Background="Transparent">
-                        <!-- 这里的内容将由代码动态生成 -->
-                    </Canvas>
-                    <!-- 选区预览层 -->
-                    <Image Name="SelectionPreview"
-       Stretch="Fill" 
-       HorizontalAlignment="Left"
-       VerticalAlignment="Top"
-       IsHitTestVisible="False"
-       RenderOptions.BitmapScalingMode="NearestNeighbor"
-       UseLayoutRounding="True"
-                            RenderOptions.EdgeMode="Aliased"
-                           Margin="0" 
-       SnapsToDevicePixels="True"
-       Visibility="Collapsed"/>
-
-                    <!-- 选区边框 & 句柄层 -->
-                    <Canvas Name="SelectionOverlayCanvas"
-            Visibility="Collapsed"
-            IsHitTestVisible="False"
-            Background="Transparent"
-                            UseLayoutRounding="False"
-                            SnapsToDevicePixels="False"
-                            >
-                        
-                    </Canvas>
-
-                    <Canvas Name="EditorOverlayCanvas"
-            Background="Transparent"
-            IsHitTestVisible="False"
-            Visibility="Visible"/>
-
-           
+                    <!-- 1. 基础图片 -->
+                    <Image Name="BackgroundImage" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                    <!-- 2. 调整大小层 -->
+                    <Canvas Name="CanvasResizeOverlay" Visibility="Visible" IsHitTestVisible="True" Background="Transparent"/>
+                    <!-- 3. 选区预览层 -->
+                    <Image Name="SelectionPreview" Stretch="Fill" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False" RenderOptions.BitmapScalingMode="NearestNeighbor" UseLayoutRounding="True" RenderOptions.EdgeMode="Aliased" Margin="0" SnapsToDevicePixels="True" Visibility="Collapsed"/>
+                    <!-- 4. 选区UI层 -->
+                    <Canvas Name="SelectionOverlayCanvas" Visibility="Collapsed" IsHitTestVisible="False" Background="Transparent" UseLayoutRounding="False" SnapsToDevicePixels="False"/>
+                    <!-- 5. 编辑器层 -->
+                    <Canvas Name="EditorOverlayCanvas" Background="Transparent" IsHitTestVisible="False" Visibility="Visible"/>
                 </Grid>
-
-
-
             </ScrollViewer>
+            <!-- #endregion -->
 
         </DockPanel>
 
-        <Border x:Name="TextEditBar"
-        Visibility="Collapsed"
-                 MouseDown="TextEditBar_MouseDown" 
-        HorizontalAlignment="Center" 
-        VerticalAlignment="Top"
-        Margin="0,80,0,0"
-        Background="#FAFAFA"
-        BorderBrush="#E5E5E5"
-        BorderThickness="1"
-        CornerRadius="8"
-        Padding="6">
+        <!-- #region 7. 悬浮面板 (Floating UI) -->
 
-            <!-- 添加阴影效果 -->
+        <!-- 文本编辑条 -->
+        <Border x:Name="TextEditBar" Visibility="Collapsed" MouseDown="TextEditBar_MouseDown" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,80,0,0" Background="#FAFAFA" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="6">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="12" ShadowDepth="4" Direction="270" Color="#20000000" Opacity="0.4"/>
             </Border.Effect>
-
             <StackPanel Orientation="Horizontal">
-
-                <!-- 1. 字体选择 -->
-                <!-- IsEditable: 允许输入搜索 | StaysOpenOnEdit: 输入时不关闭下拉 -->
-                <ComboBox x:Name="FontFamilyBox"
-                  Style="{StaticResource FluentComboBoxStyle}"
-                  Width="180"
-                  ItemsSource="{x:Static Fonts.SystemFontFamilies}"
-                  DisplayMemberPath="Source"
-                  SelectedValuePath="Source"
-                          KeyDown="Control_KeyDown"
-                  IsEditable="True"
-                  StaysOpenOnEdit="True"
-                  TextSearch.TextPath="Source"
-                          SelectionChanged="FontSettingChanged"
-          TextBoxBase.TextChanged="FontSettingChanged"
-                  SelectedIndex="0">
-                    <!-- 虚拟化，防止字体太多卡顿 -->
+                <ComboBox x:Name="FontFamilyBox" Style="{StaticResource FluentComboBoxStyle}" Width="180" ItemsSource="{x:Static Fonts.SystemFontFamilies}" DisplayMemberPath="Source" SelectedValuePath="Source" KeyDown="Control_KeyDown" IsEditable="True" StaysOpenOnEdit="True" TextSearch.TextPath="Source" SelectionChanged="FontSettingChanged" TextBoxBase.TextChanged="FontSettingChanged" SelectedIndex="0">
                     <ComboBox.ItemsPanel>
                         <ItemsPanelTemplate>
                             <VirtualizingStackPanel />
                         </ItemsPanelTemplate>
                     </ComboBox.ItemsPanel>
                 </ComboBox>
-
-                <!-- 2. 字号选择 -->
-                <ComboBox x:Name="FontSizeBox"
-                  Style="{StaticResource FluentComboBoxStyle}"
-                  Width="80"
-                          SelectionChanged="FontSettingChanged"
-          TextBoxBase.TextChanged="FontSettingChanged"
-                          KeyDown="Control_KeyDown"
-                  IsEditable="True"
-                  Text="12">
+                <ComboBox x:Name="FontSizeBox" Style="{StaticResource FluentComboBoxStyle}" Width="80" SelectionChanged="FontSettingChanged" TextBoxBase.TextChanged="FontSettingChanged" KeyDown="Control_KeyDown" IsEditable="True" Text="12">
                     <System:Double>8</System:Double>
                     <System:Double>9</System:Double>
                     <System:Double>10</System:Double>
@@ -996,53 +570,26 @@ PreviewMouseMove="OnFileTabPreviewMouseMove" ToolTip="{Binding FileName}">
                     <System:Double>48</System:Double>
                     <System:Double>72</System:Double>
                 </ComboBox>
-
-                <!-- 分割线 -->
                 <Rectangle Width="1" Height="20" Fill="#E0E0E0" Margin="4,0,8,0"/>
-
-                <!-- 3. 样式按钮组 -->
-                <!-- 粗体 -->
                 <ToggleButton x:Name="BoldBtn" Style="{StaticResource FluentToggleButtonStyle}" ToolTip="加粗">
                     <TextBlock Text="B" FontWeight="Bold" FontFamily="Segoe UI" FontSize="16"/>
                 </ToggleButton>
-
-                <!-- 斜体 -->
                 <ToggleButton x:Name="ItalicBtn" Style="{StaticResource FluentToggleButtonStyle}" ToolTip="斜体">
                     <TextBlock Text="I" FontStyle="Italic" FontFamily="Times New Roman" FontSize="16"/>
                 </ToggleButton>
-
-                <!-- 下划线 -->
                 <ToggleButton x:Name="UnderlineBtn" Style="{StaticResource FluentToggleButtonStyle}" ToolTip="下划线">
                     <TextBlock Text="U" TextDecorations="Underline" FontFamily="Segoe UI" FontSize="16"/>
                 </ToggleButton>
-
             </StackPanel>
         </Border>
 
-
-        <Border x:Name="ThicknessPanel"
-        Width="42" Height="240"
-        CornerRadius="12"
-        Background="#F3F3F3" 
-        BorderBrush="#D0D0D0"
-        BorderThickness="1"
-        VerticalAlignment="Center"
-        HorizontalAlignment="Left"
-        Margin="15">
+        <!-- 粗细调节条 -->
+        <Border x:Name="ThicknessPanel" Width="42" Height="240" CornerRadius="12" Background="#F3F3F3" BorderBrush="#D0D0D0" BorderThickness="1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="15">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="15" Opacity="0.15" ShadowDepth="2"/>
             </Border.Effect>
-
             <Grid x:Name="SliderContainer">
-                <Slider x:Name="ThicknessSlider"
-                Style="{StaticResource Win11VerticalSliderStyle}"
-                Orientation="Vertical"
-                Minimum="1" Maximum="250"
-                Value="{Binding PenThickness, Mode=TwoWay}"
-                IsSnapToTickEnabled="True"
-                TickFrequency="1" Thumb.DragStarted="ThicknessSlider_DragStarted"
-         Thumb.DragCompleted="ThicknessSlider_DragCompleted"
-         ValueChanged="ThicknessSlider_ValueChanged">
+                <Slider x:Name="ThicknessSlider" Style="{StaticResource Win11VerticalSliderStyle}" Orientation="Vertical" Minimum="1" Maximum="250" Value="{Binding PenThickness, Mode=TwoWay}" IsSnapToTickEnabled="True" TickFrequency="1" Thumb.DragStarted="ThicknessSlider_DragStarted" Thumb.DragCompleted="ThicknessSlider_DragCompleted" ValueChanged="ThicknessSlider_ValueChanged">
                     <Slider.ToolTip>
                         <ToolTip Background="Black" Foreground="White" BorderThickness="0" Padding="8,4">
                             <StackPanel Orientation="Horizontal">
@@ -1055,54 +602,24 @@ PreviewMouseMove="OnFileTabPreviewMouseMove" ToolTip="{Binding FileName}">
             </Grid>
         </Border>
 
-
-        <Border x:Name="ThicknessTip"
-        Background="#333"
-        CornerRadius="4"
-        Padding="6,2" 
-        HorizontalAlignment="Left"
-        VerticalAlignment="Top"
-        Margin="30,0,0,0"
-                    Visibility="Collapsed">
-            <TextBlock x:Name="ThicknessTipText"
-               Foreground="White"
-               FontSize="12"
-               TextWrapping="NoWrap" 
-               TextAlignment="Center"/>
+        <!-- 粗细提示 -->
+        <Border x:Name="ThicknessTip" Background="#333" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="30,0,0,0" Visibility="Collapsed">
+            <TextBlock x:Name="ThicknessTipText" Foreground="White" FontSize="12" TextWrapping="NoWrap" TextAlignment="Center"/>
         </Border>
 
-        <!-- 预览圆形（显示当前粗细） -->
-        <Ellipse x:Name="ThicknessPreview"
-         Fill="Transparent"
-         Stroke="MediumPurple"
-         StrokeThickness="2"
-         Width="40"
-         Height="40"
-         Visibility="Collapsed"
-         Opacity="0.6"
-         StrokeDashArray="3 2"
-         HorizontalAlignment="Center"
-         VerticalAlignment="Center"/>
+        <!-- 粗细预览圆 -->
+        <Ellipse x:Name="ThicknessPreview" Fill="Transparent" Stroke="MediumPurple" StrokeThickness="2" Width="40" Height="40" Visibility="Collapsed" Opacity="0.6" StrokeDashArray="3 2" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
-        <!-- 全局通知提示层 -->
-
+        <!-- 通知层 -->
         <Grid x:Name="NotificationLayer" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,120" IsHitTestVisible="False">
-            <Border x:Name="InfoToast" 
-            Background="#A0444444" 
-            CornerRadius="20" 
-            Padding="20,8" 
-            Opacity="0">
+            <Border x:Name="InfoToast" Background="#A0444444" CornerRadius="20" Padding="20,8" Opacity="0">
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.3"/>
                 </Border.Effect>
-                <TextBlock x:Name="InfoToastText" 
-                   Text="提示信息" 
-                   Foreground="White" 
-                   FontSize="14" 
-                   VerticalAlignment="Center"/>
+                <TextBlock x:Name="InfoToastText" Text="提示信息" Foreground="White" FontSize="14" VerticalAlignment="Center"/>
             </Border>
         </Grid>
+        <!-- #endregion -->
 
-        
     </Grid>
 </Window>

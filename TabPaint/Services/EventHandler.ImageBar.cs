@@ -21,27 +21,27 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
-        private void OnPrependTabClick(object sender, RoutedEventArgs e)
+        // 这里的 1 表示下一个新建文件的编号
+        private int _nextUntitledIndex = 1;
+
+        private FileTabItem CreateNewUntitledTab()
         {
+            a.s(1);
             var newTab = new FileTabItem(null)
             {
                 IsNew = true,
-                IsDirty = false
-                // 记得生成一个默认的白色 Thumbnail 赋值进去，否则 UI 上是空的
+                IsDirty = false,
+                // 🔥 核心修复：赋值并递增全局计数器
+                UntitledNumber = _nextUntitledIndex++,
+                Thumbnail = GenerateBlankThumbnail()
             };
+            return newTab;
+        }
 
-            var bmp = new RenderTargetBitmap(100, 60, 96, 96, PixelFormats.Pbgra32);
-            var drawingVisual = new DrawingVisual();
-            using (var context = drawingVisual.RenderOpen())
-            {
-                context.DrawRectangle(Brushes.White, null, new Rect(0, 0, 100, 60));
-            }
-            bmp.Render(drawingVisual);
-            bmp.Freeze();
-            newTab.Thumbnail = bmp;
-            FileTabs.Insert(0, newTab); // 👈 关键：插入到 0
-
-            // 滚回去看它
+        private void OnPrependTabClick(object sender, RoutedEventArgs e)
+        {
+            var newTab = CreateNewUntitledTab();
+            FileTabs.Insert(0, newTab);
             FileTabsScroller.ScrollToHorizontalOffset(0);
         }
         private void OnImageBarDragOver(object sender, System.Windows.DragEventArgs e)
@@ -150,15 +150,7 @@ namespace TabPaint
                 }
             }
         }
-        private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
-        {
-            if (e.Key == Key.N && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
-            {
 
-                CreateNewTab();
-                e.Handled = true;
-            }
-        }
         private void OnSaveAllClick(object sender, RoutedEventArgs e)
         {
             // 筛选出所有脏文件
@@ -184,139 +176,154 @@ namespace TabPaint
         }
 
         // 2. 清空未编辑 (Clear Unedited)
+        // 2. 清空未编辑 (Clear Unedited)
         private void OnClearUneditedClick(object sender, RoutedEventArgs e)
         {
-            // 记录一下操作前当前选中的是谁，防止删掉后界面错乱
             var originalCurrent = _currentTabItem;
             bool currentRemoved = false;
 
-            // 倒序遍历删除
             for (int i = FileTabs.Count - 1; i >= 0; i--)
             {
                 var tab = FileTabs[i];
                 if (!tab.IsDirty)
                 {
-                    // 如果删掉的是当前正在看的，做个标记
                     if (tab == originalCurrent) currentRemoved = true;
-
                     FileTabs.RemoveAt(i);
                 }
             }
-            if (currentRemoved)
+
+            // 如果列表空了，或者剩下的全是新建未保存的（一般逻辑上不太可能，除非全是脏的新建页）
+            if (FileTabs.Count == 0)
             {
-                if (FileTabs.Count > 0)
+                ResetToNewCanvas();
+            }
+            else if (currentRemoved)
+            {
+                // 之前选中的被删了，切换到最后一个
+                var newTab = FileTabs.Last();
+                foreach (var t in FileTabs) t.IsSelected = false;
+                newTab.IsSelected = true;
+                _currentTabItem = newTab;
+
+                if (newTab.IsNew)
                 {
-                    // 选中最后一个或第一个
-                    var newTab = FileTabs.Last();
-                    // 模拟点击逻辑切换过去
-                    OnFileTabClick(null, null); // 需要调整你的 OnFileTabClick 支持 null sender 或重构切换逻辑
-                                                // 或者直接:
-                    _ = OpenImageAndTabs(newTab.FilePath);
+                    // 如果切到了一个新建页，清理画布（或者恢复该新建页的内容，如果有缓存的话）
+                    // 这里简化处理：如果是新建页，且没有BackupPath，视为空白
+                    if (string.IsNullOrEmpty(newTab.BackupPath))
+                        Clean_bitmap(1200, 900);
+                    else
+                        _ = OpenImageAndTabs(newTab.BackupPath); // 尝试加载缓存
                 }
                 else
                 {
-                    // 全删光了，新建一个白板
-                    // Clean_bitmap(...)
+                    _ = OpenImageAndTabs(newTab.FilePath);
                 }
             }
         }
+
         private void OnNewTabClick(object sender, RoutedEventArgs e)
         {
-            // 创建一个纯内存的 Tab
-            var newTab = new FileTabItem(null)
-            {
-                IsNew = true,
-                IsDirty = false // 新建初始状态可以是 False，画了一笔后变 True
-            };
-
-            var bmp = new RenderTargetBitmap(100, 60, 96, 96, PixelFormats.Pbgra32);
-            var drawingVisual = new DrawingVisual();
-            using (var context = drawingVisual.RenderOpen())
-            {
-                context.DrawRectangle(Brushes.White, null, new Rect(0, 0, 100, 60));
-            }
-            bmp.Render(drawingVisual);
-            bmp.Freeze();
-            newTab.Thumbnail = bmp;
-
+            var newTab = CreateNewUntitledTab();
             FileTabs.Add(newTab);
-
-            // 滚动到最后
             if (VisualTreeHelper.GetChildrenCount(FileTabList) > 0)
             {
                 FileTabsScroller.ScrollToRightEnd();
             }
         }
-        // 3. 放弃所有编辑 (Discard All)
+
+        // 3. 放弃所有编辑 (Discard All) - 终极清理版
         private async void OnDiscardAllClick(object sender, RoutedEventArgs e)
         {
-            var dirtyTabs = FileTabs.Where(t => t.IsDirty).ToList();
-            if (dirtyTabs.Count == 0) return;
+            // [修改点1]：现在的目标不仅是脏文件，还包括所有新建的未命名文件
+            // 只要有任何改动，或者有任何新建的临时页，都允许执行重置
+            bool hasTargets = FileTabs.Any(t => t.IsDirty || t.IsNew);
+            if (!hasTargets) return;
 
             var result = System.Windows.MessageBox.Show(
-                $"确定要放弃所有 {dirtyTabs.Count} 张图片的修改吗？\n这将还原到上次保存的状态，新建的未保存图片将丢失。",
-                "警告",
+                "确定要重置当前工作区吗？\n" +
+                "· 所有“未命名”的新建画布将被删除\n" +
+                "· 所有打开的图片将还原至磁盘文件状态\n" +
+                "· 撤销记录将被清空",
+                "放弃更改",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
 
-            if (result == MessageBoxResult.Yes)
+            if (result != MessageBoxResult.Yes) return;
+
+            _autoSaveTimer.Stop();
+
+            var originalCurrentTab = _currentTabItem;
+            bool currentTabAffected = false;
+
+            // 倒序遍历
+            for (int i = FileTabs.Count - 1; i >= 0; i--)
             {
-                bool currentTabReverted = false;
+                var tab = FileTabs[i];
 
-                for (int i = FileTabs.Count - 1; i >= 0; i--)
+                // 1. 先清理缓存文件 (如果有)
+                if (tab.IsDirty && !string.IsNullOrEmpty(tab.BackupPath))
                 {
-                    var tab = FileTabs[i];
-                    if (tab.IsDirty)
+                    try { if (File.Exists(tab.BackupPath)) File.Delete(tab.BackupPath); } catch { }
+                    tab.BackupPath = null;
+                }
+
+                // [修改点2]：分类处理
+                if (tab.IsNew)
+                {
+                    // A. 对于新建的文件 (无论是否修改过)：直接移除！
+                    // 因为我们要"放弃所有更改"，新建的文件本身就是一种"更改"，所以要删掉
+                    if (tab == originalCurrentTab) currentTabAffected = true;
+                    FileTabs.RemoveAt(i);
+                }
+                else if (tab.IsDirty)
+                {
+                    // B. 对于磁盘上已有的文件 (且被修改过)：还原状态
+                    tab.IsDirty = false;
+
+                    // 标记受影响
+                    if (tab == originalCurrentTab) currentTabAffected = true;
+
+                    // 还原缩略图
+                    tab.IsLoading = true;
+                    await tab.LoadThumbnailAsync(100, 60);
+                    tab.IsLoading = false;
+                }
+                // C. 对于磁盘上已有且未修改的文件：保持原样，不动它
+            }
+
+            // 3. 后续处理 (同前)
+            if (FileTabs.Count == 0)
+            {
+                // 如果全删光了（比如全是新建的），重置为一张白纸
+                ResetToNewCanvas();
+            }
+            else if (currentTabAffected)
+            {
+                // 如果当前页没了，或者当前页被重置了
+                if (!FileTabs.Contains(originalCurrentTab))
+                {
+                    // 找个新的选中
+                    var firstTab = FileTabs.FirstOrDefault();
+                    if (firstTab != null)
                     {
-                        // 清理缓存文件
-                        if (File.Exists(tab.BackupPath))
-                        {
-                            File.Delete(tab.BackupPath);
-                            tab.BackupPath = null;
-                        }
-
-                        if (tab.IsNew)
-                        {
-                            // A. 如果是新建的还没存过盘，直接移除
-                            if (tab == _currentTabItem) currentTabReverted = true; // 标记当前页面被删了
-                            FileTabs.RemoveAt(i);
-                        }
-                        else
-                        {
-                            // B. 如果是已存在文件，还原状态
-                            tab.IsDirty = false;
-
-                            // 重新加载缩略图 (视觉还原)
-                            tab.IsLoading = true;
-                            await tab.LoadThumbnailAsync(100, 60);
-
-                            // 如果这个 Tab 恰好是当前正在看的，必须强制重载画布！
-                            if (tab == _currentTabItem)
-                            {
-                                // 重新打开原文件
-                                await OpenImageAndTabs(tab.FilePath);
-                            }
-                        }
+                        foreach (var t in FileTabs) t.IsSelected = false;
+                        firstTab.IsSelected = true;
+                        _currentTabItem = firstTab;
                     }
                 }
 
-                // 如果当前的新建页面被删了，且列表还有其他图，切换到第一张
-                if (currentTabReverted && !_currentTabItem.IsDirty && FileTabs.Count > 0)
+                // 刷新画布并清空 Undo
+                if (_currentTabItem != null)
                 {
-                    // 切换到剩下的某张图
-                    var nextTab = FileTabs.FirstOrDefault();
-                    if (nextTab != null) await OpenImageAndTabs(nextTab.FilePath);
+                    await OpenImageAndTabs(_currentTabItem.FilePath);
+                    ResetDirtyTracker(); // 必须清空撤销栈！
                 }
-                else if (FileTabs.Count == 0)
-                {
-                    // 全空了
-                    // Clean_bitmap(...)
-                }
-
-                // 更新 Session
-                SaveSession();
             }
+
+            SaveSession();
+            GC.Collect();
         }
+
 
     }
 }

@@ -105,30 +105,58 @@ namespace TabPaint
                 FilePath = path;
             }
 
-            // ... LoadThumbnailAsync 方法保持不变 ...
+            // 在 MainWindow.cs -> FileTabItem 类内部
+
             public async Task LoadThumbnailAsync(int containerWidth, int containerHeight)
             {
-                if (IsNew || string.IsNullOrEmpty(FilePath)) return;
+                // 1. 确定要加载的路径：优先由 BackupPath (缓存)，其次是 FilePath (原图)
+                string targetPath = null;
+
+                if (!string.IsNullOrEmpty(BackupPath) && File.Exists(BackupPath))
+                {
+                    targetPath = BackupPath;
+                }
+                else if (!string.IsNullOrEmpty(FilePath) && File.Exists(FilePath))
+                {
+                    targetPath = FilePath;
+                }
+
+                if (targetPath == null) return;
 
                 var thumbnail = await Task.Run(() =>
                 {
                     try
                     {
-                        using (var img = System.Drawing.Image.FromFile(FilePath)) { /*...*/ }
-
                         var bmp = new BitmapImage();
                         bmp.BeginInit();
-                        bmp.UriSource = new Uri(FilePath);
-                        bmp.DecodePixelWidth = 100;
-                        bmp.CacheOption = BitmapCacheOption.OnLoad; // 关键
+                        bmp.UriSource = new Uri(targetPath);
+
+                        if (targetPath == FilePath)
+                        {
+                            bmp.DecodePixelWidth = 100;
+                        }
+
+                        bmp.CacheOption = BitmapCacheOption.OnLoad; // 关键：加载完立即释放文件锁
                         bmp.EndInit();
                         bmp.Freeze();
                         return bmp;
                     }
-                    catch { return null; }
+                    catch
+                    {
+                        return null;
+                    }
                 });
-                if (thumbnail != null) Thumbnail = thumbnail;
+
+                if (thumbnail != null)
+                {
+                    // 回到 UI 线程设置属性
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        Thumbnail = thumbnail;
+                    });
+                }
             }
+
 
             public event PropertyChangedEventHandler? PropertyChanged;
             protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
@@ -252,8 +280,8 @@ namespace TabPaint
                 try
                 {
                     _isProgrammaticScroll = true; 
-                    FileTabsScroller.ScrollToHorizontalOffset(targetOffset);
-                    FileTabsScroller.UpdateLayout(); 
+                    //FileTabsScroller.ScrollToHorizontalOffset(targetOffset);
+                    //FileTabsScroller.UpdateLayout(); 
                 }
                 finally
                 {
@@ -269,46 +297,37 @@ namespace TabPaint
             e.Handled = true;
         }
 
-        // 修改方法名为 TriggerBackgroundBackup，因为它不再是“同步等待保存完成”
-        private void TriggerBackgroundBackup()
+        // 修改方法签名，允许传入已生成的截图
+        private void TriggerBackgroundBackup(BitmapSource? existingSnapshot = null)
         {
-            
             if (_currentTabItem == null) return;
-            if (_currentTabItem.IsDirty == false) return; // 仅当有修改时才备份
-            // 1. 【UI线程】 瞬间完成：获取截图并冻结
-            // GetCurrentCanvasSnapshot 应该是使用 RenderTargetBitmap，这是毫秒级的
-            BitmapSource bitmap = GetCurrentCanvasSnapshot();
+            if (_currentTabItem.IsDirty == false && !_currentTabItem.IsNew) return;
+
+            // 1. 如果外部传了截图就用外部的，否则自己截
+            BitmapSource bitmap = existingSnapshot ?? GetCurrentCanvasSnapshot();
+
             if (bitmap == null) return;
+            if (bitmap.IsFrozen == false) bitmap.Freeze();
 
-            if (bitmap.IsFrozen == false) bitmap.Freeze(); // 必须冻结才能跨线程传递
-
-            // 2. 【UI线程】 捕获当前 Tab 的引用，防止后续 _currentTabItem 变化
             var tabToSave = _currentTabItem;
 
-            // 3. 【后台线程】 启动保存任务，且不等待它完成 (_ = Task.Run)
             _ = Task.Run(() =>
             {
                 try
                 {
-                    string fileName = $"{tabToSave.Id}.cache.png"; // 建议加后缀区分
+                    // ... 原有的保存逻辑 ...
+                    string fileName = $"{tabToSave.Id}.cache.png";
                     string fullPath = System.IO.Path.Combine(_cacheDir, fileName);
 
                     using (var fileStream = new FileStream(fullPath, FileMode.Create))
                     {
-                        // 优化建议：如果是缓存，追求速度，可以用 BmpBitmapEncoder (体积大但极快)
-                        // 这里暂时保持 PngBitmapEncoder，但它是在后台跑，不会卡顿 UI
                         BitmapEncoder encoder = new PngBitmapEncoder();
                         encoder.Frames.Add(BitmapFrame.Create(bitmap));
                         encoder.Save(fileStream);
                     }
 
-                    // 更新数据模型（注意：如果是绑定属性，且在非UI线程更新，需确保 ViewModel 处理了跨线程问题
-                    // 或者使用 Dispatcher 更新 UI 相关属性）
                     tabToSave.BackupPath = fullPath;
                     tabToSave.LastBackupTime = DateTime.Now;
-
-                    // 调试日志
-                    System.Diagnostics.Debug.WriteLine($"[后台] 自动保存完成: {tabToSave.FileName}");
                 }
                 catch (Exception ex)
                 {
@@ -318,50 +337,69 @@ namespace TabPaint
         }
 
 
+
         private async void OnFileTabClick(object sender, RoutedEventArgs e)
         {
-            a.s(1);
+            // a.s(1); // 调试代码可保留或删除
             if (sender is System.Windows.Controls.Button btn && btn.DataContext is FileTabItem clickedItem)
             {
-                if (_currentTabItem != null && _currentTabItem == clickedItem)
+                // 1. 拦截：如果点击的是当前正在激活的 Tab，不做任何操作
+                if (_currentTabItem == clickedItem) return;
+
+                // 2. 拦截：如果点击的是同一个文件路径（非新建页），也不做操作
+                if (!clickedItem.IsNew &&
+                    !string.IsNullOrEmpty(_currentFilePath) &&
+                    clickedItem.FilePath == _currentFilePath)
                 {
                     return;
                 }
 
-                if (!string.IsNullOrEmpty(_currentFilePath) &&
-                    clickedItem.FilePath == _currentFilePath &&
-                    !clickedItem.IsNew)
+                // ==========================================================
+                // 3. 【核心同步逻辑】：在离开当前页面前，保存并同步缩略图
+                // ==========================================================
+                if (_currentTabItem != null)
                 {
-                    return;
+                    // 停止正在倒计时的自动保存（因为我们要马上手动存了）
+                    _autoSaveTimer.Stop();
+
+                    // 只有当页面是脏的（有修改）或者是新建页时，才需要同步
+                    if (_currentTabItem.IsDirty || _currentTabItem.IsNew)
+                    {
+                        // A. 立即更新 UI 缩略图 (让用户觉得“已经存好了”)
+                        UpdateTabThumbnail(_currentTabItem);
+
+                        // B. 后台保存文件 (不卡顿界面)
+                        TriggerBackgroundBackup();
+                    }
                 }
+
+                // ==========================================================
+                // 4. 切换 UI 选中状态
+                // ==========================================================
                 foreach (var tab in FileTabs) tab.IsSelected = false;
                 clickedItem.IsSelected = true;
 
-                // 2. 核心逻辑：分支判断
+                // ==========================================================
+                // 5. 加载新页面内容
+                // ==========================================================
                 if (clickedItem.IsNew)
                 {
-                    // 如果是从普通文件切换到“新建未命名”
-                    if (_currentTabItem != clickedItem)
-                    {
-                        // 保存上一个文件的缓存（如果需要）
-                        if (_currentTabItem != null)
-                        {
-                            TriggerBackgroundBackup();
-                        }
+                    // 情况 A：切换到“未命名”新建页
+                    // 既然前面已经保存了旧图，这里直接清空画布即可
+                    Clean_bitmap(1200, 900); // 这里可以使用默认尺寸或上次记忆的尺寸
 
-                        Clean_bitmap(1200, 900); // 初始化白板
-                        _currentFilePath = string.Empty;
-                        _currentFileName = "未命名";
-                        UpdateWindowTitle();
-                    }
+                    _currentFilePath = string.Empty;
+                    _currentFileName = "未命名";
+                    UpdateWindowTitle();
                 }
                 else
                 {
-                    a.s(2);
+                    // 情况 B：切换到已存在的图片文件
+                    // a.s(2); 
                     await OpenImageAndTabs(clickedItem.FilePath);
                 }
 
-                // 3. 记录当前正在激活的 Tab
+                // 6. 更新当前引用，完成切换
                 _currentTabItem = clickedItem;
             }
         }
@@ -535,26 +573,158 @@ namespace TabPaint
             _autoSaveTimer.Tick += AutoSaveTimer_Tick;
         }
 
-        // 3. 外部调用接口：当用户绘画结束（MouseUp）或修改内容时调用此方法
-        // 例如：在 InkCanvas_MouseUp 或 StrokeCollected 事件中调用
-        public void NotifyCanvasChanged(int timeleft = 3)
-        {
+        // 在 MainWindow 类中修改 NotifyCanvasChanged 方法
 
+        public void NotifyCanvasChanged()
+        {
             _autoSaveTimer.Stop();
+
+            // --- 动态调整时间逻辑 ---
+            double delayMs = 2000; // 基础延迟 2秒
+
+            if (BackgroundImage.Source is BitmapSource source)
+            {
+                double pixels = source.PixelWidth * source.PixelHeight;
+
+                // 阈值根据实际性能调整
+                if (pixels > 3840 * 2160) // 4K以上
+                {
+                    delayMs = 5000; // 大图给 5秒
+                }
+                else if (pixels > 1920 * 1080) // 1080P以上
+                {
+                    delayMs = 3000; // 中图给 3秒
+                }
+                else
+                {
+                    delayMs = 1500; // 小图 1.5秒，响应更快
+                }
+            }
+
+            _autoSaveTimer.Interval = TimeSpan.FromMilliseconds(delayMs);
             _autoSaveTimer.Start();
+
+            // 标记状态
+            CheckDirtyState();
+        }
+
+        private BitmapSource GenerateBlankThumbnail()
+        {
+            int width = 100;
+            int height = 60;
+            var bmp = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+            var drawingVisual = new DrawingVisual();
+            using (var context = drawingVisual.RenderOpen())
+            {
+                // 绘制白色背景
+                context.DrawRectangle(Brushes.White, null, new Rect(0, 0, width, height));
+                // 可选：画一个浅灰色边框让它看得清楚
+                context.DrawRectangle(null, new Pen(new SolidColorBrush(Color.FromRgb(220, 220, 220)), 1), new Rect(0.5, 0.5, width - 1, height - 1));
+            }
+            bmp.Render(drawingVisual);
+            bmp.Freeze();
+            return bmp;
+        }
+
+        /// <summary>
+        /// 当列表被清空时，强制重置为一个新建的未命名画板
+        /// </summary>
+        private void ResetToNewCanvas()
+        {
+            // 1. 清理底层画布 (假设 Clean_bitmap 已定义，使用默认尺寸或上次记忆尺寸)
+            Clean_bitmap(1200, 900);
+
+            // 2. 重置窗口标题和状态变量
+            _currentFilePath = string.Empty;
+            _currentFileName = "未命名";
+            UpdateWindowTitle();
+
+            // 3. 创建一个新的 Tab 对象
+            var newTab = new FileTabItem(null)
+            {
+                IsNew = true,
+                IsDirty = false,
+                IsSelected = true, // 默认选中
+                Thumbnail = GenerateBlankThumbnail() // 核心：立即同步缩略图
+            };
+
+            // 4. 加入列表并更新引用
+            FileTabs.Add(newTab);
+            _currentTabItem = newTab;
+
+            // 5. 重置撤销栈和脏状态追踪
+            ResetDirtyTracker();
+
+            // 6. 滚动视图归位
+            FileTabsScroller.ScrollToHorizontalOffset(0);
+        }
+
+        private void UpdateTabThumbnail(string path)
+        {
+            // 在 ObservableCollection 中找到对应的 Tab
+            var tab = FileTabs.FirstOrDefault(t => t.FilePath == path);
+            if (tab == null) return;
+
+            double targetWidth = 100;
+            double scale = targetWidth / _bitmap.PixelWidth;
+
+            var transformedBitmap = new TransformedBitmap(_bitmap, new ScaleTransform(scale, scale));
+
+            var newThumb = new WriteableBitmap(transformedBitmap);
+            newThumb.Freeze();
+
+            // 触发 UI 更新
+            tab.Thumbnail = newThumb;
+        }
+
+        private void UpdateTabThumbnail(FileTabItem tabItem)
+        {
+            if (tabItem == null || BackgroundImage.ActualWidth <= 0) return;
+
+            try
+            {
+                // 1. 获取当前画布的全尺寸截图
+                // 注意：RenderTargetBitmap 比较消耗资源，但为了准确性必须渲染
+                RenderTargetBitmap rtb = new RenderTargetBitmap(
+                    (int)BackgroundImage.ActualWidth,
+                    (int)BackgroundImage.ActualHeight,
+                    96d, 96d, PixelFormats.Pbgra32);
+
+                rtb.Render(BackgroundImage);
+                rtb.Freeze(); // 冻结以便跨线程使用（如果需要）
+
+                // 2. 生成高性能缩略图 (缩放到高度 60px 左右，匹配 ImageBar)
+                // 这一步至关重要，防止 ImageBar 持有几十个 4K 截图导致内存爆炸
+                double scale = 60.0 / rtb.PixelHeight;
+                if (scale > 1) scale = 1; // 不放大
+
+                var scaleTransform = new ScaleTransform(scale, scale);
+                var transformedBitmap = new TransformedBitmap(rtb, scaleTransform);
+                transformedBitmap.Freeze();
+
+                // 3. 立即更新 UI (ViewModel)
+                tabItem.Thumbnail = transformedBitmap;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Thumbnail update failed: {ex.Message}");
+            }
         }
 
         // 4. 计时器触发：后台静默保存
         private async void AutoSaveTimer_Tick(object sender, EventArgs e)
         {
             _autoSaveTimer.Stop(); // 停止计时，直到下次改动
-            TriggerBackgroundBackup();
+            if (_currentTabItem != null)
+            {
+                // 1. 先更新 UI 缩略图 (用户立刻看到变化)
+                UpdateTabThumbnail(_currentTabItem);
+
+                // 2. 再触发后台文件备份 (不卡顿 UI)
+                TriggerBackgroundBackup();
+            }
         }
 
-        // 5. 核心保存逻辑
-
-
-        // 辅助：获取当前画布截图 (请根据你的实际 Canvas 控件名称修改)
         private BitmapSource GetCurrentCanvasSnapshot()
         {
             if (BackgroundImage == null || BackgroundImage.ActualWidth <= 0) return null;
@@ -617,8 +787,11 @@ namespace TabPaint
             File.WriteAllText(_sessionPath, json);
         }
 
+        // 在 MainWindow.cs 中
+
         private void LoadSession()
         {
+            // 如果没有会话文件，直接返回
             if (!File.Exists(_sessionPath)) return;
 
             try
@@ -630,55 +803,102 @@ namespace TabPaint
                 {
                     foreach (var info in session.Tabs)
                     {
+                        // 只有当缓存文件真实存在时才恢复，防止死链
                         if (!string.IsNullOrEmpty(info.BackupPath) && File.Exists(info.BackupPath))
                         {
+                            // 恢复 Tab 对象
                             var tab = new FileTabItem(info.OriginalPath)
                             {
                                 Id = info.Id,
                                 IsNew = info.IsNew,
-                                IsDirty = info.IsDirty, // 恢复脏状态
-                                BackupPath = info.BackupPath
+                                IsDirty = info.IsDirty,
+                                BackupPath = info.BackupPath,
+                                IsLoading = true
                             };
-                            tab.IsLoading = true;
+
+                            // 加入列表
                             FileTabs.Add(tab);
+
+                            // 🔥 核心修复：显式触发缩略图加载
+                            // 因为是在启动时，为了不阻塞 UI，扔给线程池去跑
+                            _ = tab.LoadThumbnailAsync(100, 60).ContinueWith(t =>
+                            {
+                                // 加载完后取消 Loading 状态
+                                tab.IsLoading = false;
+                            }, TaskScheduler.FromCurrentSynchronizationContext());
                         }
                     }
                 }
+
+                // 恢复上次查看的文件（可选优化：如果上次看的是 dirty 的，需要特殊处理，这里暂且保持原逻辑）
+                if (!string.IsNullOrEmpty(session.LastViewedFile))
+                {
+                    // 可以在这里写逻辑自动选中上次的文件
+                }
             }
-            catch { /* Handle Json Error */ }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Session Load Error: {ex.Message}");
+            }
         }
+
 
         private void ResetDirtyTracker()
         {
+            // 1. 清空撤销栈
             if (_undo != null)
             {
                 _undo.ClearUndo();
                 _undo.ClearRedo();
             }
-            _savedUndoPoint = 0; // 归零
-                                 // 注意：如果是 session 恢复的“脏”文件，这里处理会比较特殊(见下文补充)，
-                                 // 但对于普通打开图片，它是干净的。
-            if (_currentTabItem != null) _currentTabItem.IsDirty = false;
+
+            // 2. 智能重置保存点
+            if (_currentTabItem != null && _currentTabItem.IsDirty)
+            {
+                // 🔥 核心修复：
+                // 如果 Tab 已经是 Dirty 的（说明是从 Session 恢复的未保存图片），
+                // 且此时 Undo 栈是空的（Count=0），我们不能把 _savedUndoPoint 设为 0，
+                // 否则 CheckDirtyState 会认为 0==0 (已保存)。
+                // 我们将其设为 -1，这样 CheckDirtyState 比较时：UndoCount(0) != SavedPoint(-1) => True (保持 Dirty)
+                _savedUndoPoint = -1;
+            }
+            else
+            {
+                // 正常情况：打开一个新文件，认为是干净的
+                _savedUndoPoint = 0;
+                if (_currentTabItem != null) _currentTabItem.IsDirty = false;
+            }
+
             SetUndoRedoButtonState();
         }
-        private void CreateNewTab()
-        {
-            // 创建一个新的 ViewModel
-            var newTab = new FileTabItem(null)
-            {
-                IsNew = true,
-                IsSelected = true
-            };
 
-            foreach (var tab in FileTabs) tab.IsSelected = false;
+        private void CreateNewTab(bool switchto = false)
+        {
+            var newTab = CreateNewUntitledTab();
+
             FileTabs.Add(newTab);
-            FileTabsScroller.ScrollToRightEnd();
+            if (VisualTreeHelper.GetChildrenCount(FileTabList) > 0)
+            {
+                FileTabsScroller.ScrollToRightEnd();
+            }
+            if(switchto)
+            {
+                foreach (var tab in FileTabs) tab.IsSelected = false;
+                newTab.IsSelected = true;
+                // 切换到新建画布
+                Clean_bitmap(1200, 900); // 使用默认尺寸或上次记忆的尺寸
+                _currentFilePath = string.Empty;
+                _currentFileName = "未命名";
+                UpdateWindowTitle();
+                _currentTabItem = newTab;
+                // 重置撤销栈和脏状态追踪
+                ResetDirtyTracker();
+            }
         }
 
         // 2. 实现关闭逻辑
         private void OnFileTabCloseClick(object sender, RoutedEventArgs e)
         {
-            // 阻止事件冒泡到 Item 的点击事件
             e.Handled = true;
 
             if (sender is System.Windows.Controls.Button btn && btn.Tag is FileTabItem item)
@@ -699,14 +919,11 @@ namespace TabPaint
                     // SaveFile(item);
                 }
             }
-
-            // 从 UI 集合移除
             FileTabs.Remove(item);
 
             // 如果移除的是当前选中的，需要选中另一个
             if (item.IsSelected && FileTabs.Count > 0)
             {
-                // 简单策略：选中最后一个，或者选中相邻的
                 var last = FileTabs.Last();
                 last.IsSelected = true;
             }
@@ -715,8 +932,6 @@ namespace TabPaint
         {
             // 强制刷新一次布局，确保 LeftAddBtn.ActualWidth 能取到值
             FileTabsScroller.UpdateLayout();
-
-            // 计算要隐藏的宽度 = 按钮宽度 + Margin
             double hiddenWidth = LeftAddBtn.ActualWidth + LeftAddBtn.Margin.Left + LeftAddBtn.Margin.Right;
             if (FileTabsScroller.HorizontalOffset == 0)
             {
@@ -727,13 +942,11 @@ namespace TabPaint
         {
             try
             {
-                // 情况 A: 这是一个新建的未命名文件，还没路径
                 if (tab.IsNew && string.IsNullOrEmpty(tab.FilePath)) return;
 
                 // 情况 B: 这是当前正在编辑的 Tab -> 从画布保存
                 if (tab == _currentTabItem)
                 {
-                    // 获取当前画布截图 (复用上一轮的截图方法)
                     var bmp = GetCurrentCanvasSnapshot();
                     if (bmp != null)
                     {
@@ -745,13 +958,11 @@ namespace TabPaint
                         }
                     }
                 }
-                // 情况 C: 这是后台 Tab -> 从缓存文件恢复
                 else if (File.Exists(tab.BackupPath))
                 {
                     // 直接将缓存文件覆盖到原文件，这是最快的
                     File.Copy(tab.BackupPath, tab.FilePath, true);
                 }
-                // 保存成功后的清理工作
                 tab.IsDirty = false;
                 tab.IsNew = false; // 保存后就不算新文件了
 
@@ -763,17 +974,12 @@ namespace TabPaint
             {
             }
         }
-        // 🔥 新增：专门用于检查是否应该显示红点
         public void CheckDirtyState()
         {
             if (_currentTabItem == null || _undo == null) return;
 
             int currentCount = _undo.UndoCount;
-
-            // 核心逻辑：如果当前步数 不等于 上次保存时的步数，就是脏的
             bool isDirty = currentCount != _savedUndoPoint;
-
-            // 只有状态真正改变时才更新 UI，避免死循环或闪烁
             if (_currentTabItem.IsDirty != isDirty)
             {
                 _currentTabItem.IsDirty = isDirty;
@@ -782,8 +988,6 @@ namespace TabPaint
         private void MarkAsSaved()
         {
             if (_currentTabItem == null) return;
-
-            // 🔥 关键：将当前的撤销步数记为“干净点”
             _savedUndoPoint = _undo.UndoCount;
 
             _currentTabItem.IsDirty = false;

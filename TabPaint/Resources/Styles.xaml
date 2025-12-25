@@ -753,7 +753,71 @@
             </Setter.Value>
         </Setter>
     </Style>
-   
 
+    <!-- 1. 调整大小的手柄样式 -->
+    <Style x:Key="ResizeHandleStyle" TargetType="Thumb">
+        <Setter Property="Width" Value="8"/>
+        <Setter Property="Height" Value="8"/>
+        <Setter Property="Background" Value="White"/>
+        <Setter Property="BorderBrush" Value="#888888"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Grid>
+                        <!-- 透明大感应区 -->
+                        <Rectangle Fill="Transparent" Margin="-4"/>
+                        <Rectangle Fill="{TemplateBinding Background}"
+                                   Stroke="{TemplateBinding BorderBrush}"
+                                   StrokeThickness="{TemplateBinding BorderThickness}"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 2. Fluent 风格 ComboBox -->
+    <Style x:Key="FluentComboBoxStyle" TargetType="ComboBox">
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Padding" Value="8,0,0,0"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#DCDCDC"/>
+        <Setter Property="Background" Value="White"/>
+        <Setter Property="Margin" Value="0,0,8,0"/>
+        <Setter Property="IsEditable" Value="True"/>
+    </Style>
+
+    <!-- 3. Fluent 风格 ToggleButton -->
+    <Style x:Key="FluentToggleButtonStyle" TargetType="ToggleButton">
+        <Setter Property="Width" Value="32"/>
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Margin" Value="2,0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="border" 
+                            Background="{TemplateBinding Background}" 
+                            BorderBrush="{TemplateBinding BorderBrush}" 
+                            BorderThickness="{TemplateBinding BorderThickness}" 
+                            CornerRadius="4">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#EAEAEA"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#E2E2E2"/>
+                            <Setter TargetName="border" Property="BorderBrush" Value="#CCCCCC"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
     <!-- 如果有引用的颜色，也可以放在这里或引用 Brushes.xaml -->
 </ResourceDictionary>

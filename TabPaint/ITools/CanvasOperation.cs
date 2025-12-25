@@ -89,16 +89,21 @@ namespace TabPaint
         }
         private static Int32Rect ClampRect(Int32Rect rect, int maxWidth, int maxHeight)
         {
-            // Clamp 左上角坐标到合法范围
-            int x = Math.Max(0, Math.Min(rect.X, maxWidth));
-            int y = Math.Max(0, Math.Min(rect.Y, maxHeight));
+            // 1. 计算左上角和右下角的边界坐标
+            int left = Math.Max(0, rect.X);
+            int top = Math.Max(0, rect.Y);
 
-            // 计算允许的最大宽高
-            int w = Math.Max(0, Math.Min(rect.Width, maxWidth - x));
-            int h = Math.Max(0, Math.Min(rect.Height, maxHeight - y));
+            // 2. 计算右边界和下边界（不能超过最大宽高）
+            int right = Math.Min(maxWidth, rect.X + rect.Width);
+            int bottom = Math.Min(maxHeight, rect.Y + rect.Height);
 
-            return new Int32Rect(x, y, w, h);
+            // 3. 计算新的宽高。确保结果不为负数
+            int width = Math.Max(0, right - left);
+            int height = Math.Max(0, bottom - top);
+
+            return new Int32Rect(left, top, width, height);
         }
+
         private void ClearRect(ToolContext ctx, Int32Rect rect, Color color)
         {
             ctx.Surface.Bitmap.Lock();

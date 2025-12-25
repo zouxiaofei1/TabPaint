@@ -310,74 +310,7 @@ namespace TabPaint
 
         private void OnNewClick(object sender, RoutedEventArgs e)
         {
-            int insertIndex = -1;
-            if (_currentTabItem != null && FileTabs.Contains(_currentTabItem))
-            {
-                insertIndex = FileTabs.IndexOf(_currentTabItem) + 1;
-            }
-            else
-            {
-                var selectedTab = FileTabs.FirstOrDefault(t => t.IsSelected);
-                if (selectedTab != null)
-                {
-                    insertIndex = FileTabs.IndexOf(selectedTab) + 1;
-                    _currentTabItem = selectedTab;
-                }
-                else if (!string.IsNullOrEmpty(_currentFilePath))
-                {
-                    var pathTab = FileTabs.FirstOrDefault(t => t.FilePath == _currentFilePath);
-                    if (pathTab != null)
-                    {
-                        insertIndex = FileTabs.IndexOf(pathTab) + 1;
-                        _currentTabItem = pathTab;
-                    }
-                }
-            }
-
-            if (insertIndex < 0 || insertIndex > FileTabs.Count) insertIndex = FileTabs.Count;
-
-            var usedNumbers = new HashSet<int>();
-            foreach (var tab in FileTabs)
-            {
-                if (tab.IsNew)
-                {
-                    usedNumbers.Add(tab.UntitledNumber);
-                }
-            }
-
-            // 从 1 开始向上找，找到第一个不在集合里的数字
-            int newNumber = 1;
-            while (usedNumbers.Contains(newNumber)) newNumber++;
-
-            var newTab = new FileTabItem(null)
-            {
-                IsNew = true,
-                UntitledNumber = newNumber, // 👈 赋值编号
-                IsDirty = false,
-                IsSelected = true,
-                Thumbnail = CreateWhiteThumbnail()
-            };
-
-            // 4. 插入集合
-            FileTabs.Insert(insertIndex, newTab);
-
-            // 5. 立即激活新 Tab
-            foreach (var tab in FileTabs)
-                if (tab != newTab) tab.IsSelected = false;
-
-            _currentTabItem = newTab;
-
-            // 6. 执行清空画布操作
-            Clean_bitmap(1200, 900);
-            _currentFilePath = string.Empty;
-
-            // 🔥 这里也要更新一下，让标题栏显示 "TabPaint - 未命名 X"
-            _currentFileName = newTab.FileName;
-            UpdateWindowTitle();
-
-            // 7. 滚动到可见位置
-            if (insertIndex > FileTabs.Count - 2)
-                FileTabsScroller.ScrollToRightEnd();
+            CreateNewTab(true);
         }
     }
 }
