@@ -539,7 +539,9 @@
 
             <!-- 文件标签栏 -->
             <Border DockPanel.Dock="Top" Height="100" Background="Transparent">
-                <Grid Background="Transparent">
+                <Grid Background="Transparent" AllowDrop="True"
+      DragOver="OnImageBarDragOver"
+      Drop="OnImageBarDrop">
                     <!-- 两列：左侧缩略图列表 + 右侧垂直滚动条 -->
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -606,8 +608,9 @@ Fill="#555" Stretch="Uniform" Width="14" Height="14"/>
                                         <!-- 修改点 2: 增加 Grid 作为容器以支持叠加层 -->
                                         <Grid>
                                             <Button Width="120" Height="80" Margin="2" Padding="4"
-                                ToolTip="{Binding FileName}"
-                                Click="OnFileTabClick">
+                                                        Click="OnFileTabClick"
+                                              PreviewMouseLeftButtonDown="OnFileTabPreviewMouseDown"
+PreviewMouseMove="OnFileTabPreviewMouseMove" ToolTip="{Binding FileName}">
                                                 <Button.Template>
                                                     <ControlTemplate TargetType="Button">
                                                         <Border x:Name="Bd" Background="{TemplateBinding Background}"
@@ -648,31 +651,20 @@ Fill="#555" Stretch="Uniform" Width="14" Height="14"/>
 
                                             <!-- 🔥 UI升级核心：悬浮层状态指示器 🔥 -->
 
-                                            <!-- 1. 左上角状态点 (红/蓝) -->
+                                            <!-- 1. 左上角状态点 (红) -->
                                             <Ellipse Width="8" Height="8" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="6,6,0,0" IsHitTestVisible="False">
                                                 <Ellipse.Style>
                                                     <Style TargetType="Ellipse">
                                                         <Setter Property="Visibility" Value="Collapsed"/>
                                                         <Style.Triggers>
-                                                            <!-- 脏数据：红色 -->
                                                             <DataTrigger Binding="{Binding IsDirty}" Value="True">
                                                                 <Setter Property="Visibility" Value="Visible"/>
                                                                 <Setter Property="Fill" Value="#FF5555"/>
                                                             </DataTrigger>
-                                                            <!-- 新建数据：蓝色 (且未Dirty时) -->
-                                                            <MultiDataTrigger>
-                                                                <MultiDataTrigger.Conditions>
-                                                                    <Condition Binding="{Binding IsNew}" Value="True"/>
-                                                                    <Condition Binding="{Binding IsDirty}" Value="False"/>
-                                                                </MultiDataTrigger.Conditions>
-                                                                <Setter Property="Visibility" Value="Visible"/>
-                                                                <Setter Property="Fill" Value="#0078D7"/>
-                                                            </MultiDataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
                                                 </Ellipse.Style>
                                             </Ellipse>
-
                                             <!-- 2. 右上角关闭按钮 (悬浮显示) -->
                                             <Button x:Name="CloseBtn" Width="18" Height="18" 
                                 HorizontalAlignment="Right" VerticalAlignment="Top" 

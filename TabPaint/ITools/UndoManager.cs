@@ -25,6 +25,21 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private void Undo()
+        {
+
+            _undo.Undo(); _ctx.IsDirty = true;
+            SetUndoRedoButtonState();
+            _canvasResizer.UpdateUI();
+
+        }
+        private void Redo()
+        {
+            _undo.Redo(); _ctx.IsDirty = true;
+            SetUndoRedoButtonState();
+            _canvasResizer.UpdateUI();
+        }
+
         public class UndoAction
         {
             public Int32Rect Rect { get; }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -613,4 +614,22 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 //{
 //    _scrollMousePoint = null;
 //    FileTabsScroller.ReleaseMouseCapture();
+//}
+
+//protected override void OnSourceInitialized(EventArgs e)
+//{
+//    base.OnSourceInitialized(e);
+//    var hwndSource = (HwndSource)PresentationSource.FromVisual(this);
+//    hwndSource.AddHook(WndProc);
+//}
+
+
+
+//public void LogCallerInfo([CallerMemberName] string callerName = "",
+//                   [CallerFilePath] string filePath = "",
+//                   [CallerLineNumber] int lineNumber = 0)
+//{
+//    Console.WriteLine($"调用者方法名: {callerName}");
+//    Console.WriteLine($"调用者文件路径: {filePath}");
+//    Console.WriteLine($"调用者行号: {lineNumber}");
 //}
