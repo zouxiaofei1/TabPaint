@@ -29,7 +29,8 @@ namespace TabPaint
             else
             {
                 // Visual Studio 调试默认打开
-                filePath = @"E:\dev\1.png";
+                //filePath = @"E:\dev\1.png";//默认
+                filePath = @"E:\dev\res\102339946_p0.png";//150+图片
             }
 
             var window = new MainWindow(filePath);

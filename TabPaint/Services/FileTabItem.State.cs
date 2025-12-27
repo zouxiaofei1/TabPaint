@@ -192,6 +192,9 @@ namespace TabPaint
         private int _nextUntitledIndex = 1;
         // 存储当前会话中被用户手动关闭的图片路径，防止自动滚动时诈尸
         private HashSet<string> _explicitlyClosedFiles = new HashSet<string>();
+        private long _currentCanvasVersion = 0;
 
+        // 上次成功备份时的版本号
+        private long _lastBackedUpVersion = -1;
     }
 }

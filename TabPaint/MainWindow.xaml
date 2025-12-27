@@ -354,7 +354,17 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Grid>
-                                            <Button Width="120" Height="80" Margin="2" Padding="4" Click="OnFileTabClick" PreviewMouseDown="OnFileTabPreviewMouseDown" PreviewMouseMove="OnFileTabPreviewMouseMove" ToolTip="{Binding FileName}">
+                                            <Button Width="120" Height="80" Margin="2" Padding="4" Click="OnFileTabClick" PreviewMouseDown="OnFileTabPreviewMouseDown" PreviewMouseMove="OnFileTabPreviewMouseMove" ToolTip="{Binding FileName}"  Tag="{Binding}"  AllowDrop="True" Drop="OnFileTabDrop"   DragOver="OnFileTabReorderDragOver">
+                                                <Button.ContextMenu>
+                                                    <ContextMenu Style="{StaticResource Win11ContextMenuStyle}">
+                                                        <MenuItem Header="复制 (Copy)" Click="OnTabCopyClick" Tag="{Binding}"/>
+                                                        <MenuItem Header="剪切 (Cut)" Click="OnTabCutClick" Tag="{Binding}"/>
+                                                        <MenuItem Header="在此处粘贴 (Paste)" Click="OnTabPasteClick" Tag="{Binding}"/>
+                                                        <Separator/>
+                                                        <MenuItem Header="关闭 (Close)" Click="OnTabDeleteClick" Tag="{Binding}"/>
+                                                        <MenuItem Header="删除文件 (Delete)" Click="OnTabFileDeleteClick" Foreground="Red" Tag="{Binding}"/>
+                                                    </ContextMenu>
+                                                </Button.ContextMenu>
                                                 <Button.Template>
                                                     <ControlTemplate TargetType="Button">
                                                         <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">

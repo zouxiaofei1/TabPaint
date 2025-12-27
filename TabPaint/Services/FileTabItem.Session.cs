@@ -18,43 +18,78 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private System.Collections.Concurrent.ConcurrentDictionary<string, Task> _activeSaveTasks
+    = new System.Collections.Concurrent.ConcurrentDictionary<string, Task>();
         private void TriggerBackgroundBackup(BitmapSource? existingSnapshot = null)
         {
             if (_currentTabItem == null) return;
+            // 如果没有修改且不是新文件，不需要备份
             if (_currentTabItem.IsDirty == false && !_currentTabItem.IsNew) return;
-
-            // 1. 如果外部传了截图就用外部的，否则自己截
-            BitmapSource bitmap = existingSnapshot ?? GetCurrentCanvasSnapshot();
+            if (_currentCanvasVersion == _lastBackedUpVersion &&
+        !string.IsNullOrEmpty(_currentTabItem.BackupPath) &&
+        File.Exists(_currentTabItem.BackupPath))
+            {
+                return;
+            }
+            long versionToRecord = _currentCanvasVersion;
+            _lastBackedUpVersion = versionToRecord;
+            // 1. 获取快照 (必须在 UI 线程完成)
+            // 修复点：这里获取到的必须是纯净的、与渲染线程解绑的 Bitmap
+            BitmapSource bitmap = existingSnapshot ?? GetCurrentCanvasSnapshotSafe();
 
             if (bitmap == null) return;
+
+            // 再次确保冻结
             if (bitmap.IsFrozen == false) bitmap.Freeze();
 
             var tabToSave = _currentTabItem;
+            string fileId = tabToSave.Id; // 保存 ID，防止闭包变量在线程中变化
 
-            _ = Task.Run(() =>
+            // 2. 启动后台保存任务
+            var saveTask = Task.Run(() =>
             {
                 try
                 {
-                    // ... 原有的保存逻辑 ...
-                    string fileName = $"{tabToSave.Id}.cache.png";
+                    string fileName = $"{fileId}.cache.png";
                     string fullPath = System.IO.Path.Combine(_cacheDir, fileName);
+
+                    // 确保目录存在
+                    if (!Directory.Exists(_cacheDir)) Directory.CreateDirectory(_cacheDir);
 
                     using (var fileStream = new FileStream(fullPath, FileMode.Create))
                     {
                         BitmapEncoder encoder = new PngBitmapEncoder();
+                        // 此时 bitmap 是 WriteableBitmap，后台线程可以安全访问
                         encoder.Frames.Add(BitmapFrame.Create(bitmap));
                         encoder.Save(fileStream);
                     }
 
-                    tabToSave.BackupPath = fullPath;
-                    tabToSave.LastBackupTime = DateTime.Now;
+                    // 更新 Tab 信息 (注意线程安全，虽然属性设置通常会自动 Marshaling，但最好 Invoke)
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        var targetTab = FileTabs.FirstOrDefault(t => t.Id == fileId);
+                        if (targetTab != null)
+                        {
+                            targetTab.BackupPath = fullPath;
+                            targetTab.LastBackupTime = DateTime.Now;
+                        }
+                    });
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"AutoBackup Failed: {ex.Message}");
                 }
+                finally
+                {
+                    // 任务完成后，从字典中移除
+                    _activeSaveTasks.TryRemove(fileId, out _);
+                }
             });
+
+            // 3. 将任务加入字典，防止还没存完就去读
+            _activeSaveTasks.TryAdd(fileId, saveTask);
         }
+
         private BitmapSource RenderCurrentCanvasToBitmap()
         {
             double width = BackgroundImage.ActualWidth;
@@ -125,6 +160,8 @@ namespace TabPaint
 
         public void NotifyCanvasChanged()
         {
+            _currentCanvasVersion++;
+            //a.s("NotifyCanvasChanged");
             _autoSaveTimer.Stop();
             double delayMs = 2000; // 基础延迟 2秒
             if (BackgroundImage.Source is BitmapSource source)
@@ -236,18 +273,36 @@ namespace TabPaint
                 TriggerBackgroundBackup();
             }
         }
-
-        private BitmapSource GetCurrentCanvasSnapshot()
+        private BitmapSource GetCurrentCanvasSnapshotSafe()
         {
             if (BackgroundImage == null || BackgroundImage.ActualWidth <= 0) return null;
 
-            RenderTargetBitmap rtb = new RenderTargetBitmap(
-                (int)BackgroundImage.ActualWidth,
-                (int)BackgroundImage.ActualHeight,
-                96d, 96d, PixelFormats.Default);
+            try
+            {
+                // 1. 渲染
+                RenderTargetBitmap rtb = new RenderTargetBitmap(
+                    (int)BackgroundImage.ActualWidth,
+                    (int)BackgroundImage.ActualHeight,
+                    96d, 96d, PixelFormats.Pbgra32);
 
-            rtb.Render(BackgroundImage);
-            return rtb;
+                rtb.Render(BackgroundImage);
+
+                // 2. 关键修复：深拷贝为 WriteableBitmap
+                // 这会将显存/MIL资源中的数据拷贝到系统内存，彻底切断线程关联
+                var safeBitmap = new WriteableBitmap(rtb);
+                safeBitmap.Freeze(); // 冻结以供跨线程使用
+
+                return safeBitmap;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private BitmapSource GetCurrentCanvasSnapshot()
+        {
+            return GetCurrentCanvasSnapshotSafe();
         }
         protected async void OnClosing()
         {

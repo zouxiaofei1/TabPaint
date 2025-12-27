@@ -87,35 +87,39 @@ namespace TabPaint
             }
 
             string dirtyMark = _currentTabItem.IsDirty ? "*" : "";
+
+            // 如果是新建的未保存文件(IsNew)，通常显示 "未命名-0" 之类，这里取 FileName
             string displayFileName = _currentTabItem.FileName;
-            
+
             string countInfo = "";
-            if (_currentTabItem.IsNew)
-            {
-                countInfo = ""; // 新建文件不显示进度
-            }
-            else
+
+            // 逻辑修正：只要不是新建的纯内存图片(IsNew)，都去文件列表里找位置
+            if (!_currentTabItem.IsNew)
             {
                 int total = _imageFiles.Count;
-                int currentIndex = FileTabs.IndexOf(_currentTabItem);
-                if (currentIndex == -1 && !string.IsNullOrEmpty(_currentTabItem.FilePath))
+                int currentIndex = -1;
+
+                // 核心修复：直接在总文件列表(_imageFiles)中查找路径，而不是在标签列表(FileTabs)中查对象
+                if (!string.IsNullOrEmpty(_currentTabItem.FilePath))
                 {
                     currentIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
                 }
 
+                // 只有找到了有效的索引且总数大于0才显示
                 if (currentIndex >= 0 && total > 0)
                 {
-                    countInfo = $"({currentIndex + 1}/{total})";
+                    countInfo = $" ({currentIndex + 1}/{total})";
                 }
             }
 
             // 4. 拼接标题
-            string newTitle = $"{dirtyMark}{displayFileName} {countInfo} - TabPaint {_programVersion}";
+            string newTitle = $"{dirtyMark}{displayFileName}{countInfo} - TabPaint {_programVersion}";
 
             // 5. 更新 UI
             this.Title = newTitle;
             if (TitleTextBlock != null) TitleTextBlock.Text = newTitle;
         }
+
 
 
         public void ShowTextToolbarFor(System.Windows.Controls.TextBox tb)

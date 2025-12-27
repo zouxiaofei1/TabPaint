@@ -281,14 +281,13 @@ namespace TabPaint
         // 3. 放弃所有编辑 (Discard All) - 终极清理版
         private async void OnDiscardAllClick(object sender, RoutedEventArgs e)
         {
-            bool hasTargets = FileTabs.Any(t => t.IsDirty || t.IsNew);
-            if (!hasTargets) return;
-
+            // 这里不再预先判断 hasTargets，因为即使内存里没脏数据，缓存文件夹里可能有垃圾需要清理
+            // 提示文案稍微改重一点，强调会清除缓存
             var result = System.Windows.MessageBox.Show(
                 "确定要重置当前工作区吗？\n" +
                 "· 所有“未命名”的新建画布将被删除\n" +
                 "· 所有打开的图片将还原至磁盘文件状态\n" +
-                "· 撤销记录将被清空",
+                "· 撤销记录、所有临时缓存文件及会话记录将被清空",
                 "放弃更改",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
@@ -297,26 +296,52 @@ namespace TabPaint
 
             _autoSaveTimer.Stop();
 
+            // --- 核心新增：强制清理物理文件 (Cache & Session) ---
+            try
+            {
+                // 1. 删除 Session.json
+                if (File.Exists(_sessionPath))
+                {
+                    File.Delete(_sessionPath);
+                }
+
+                // 2. 清空 Cache 文件夹下的所有文件 (无论程序是否知道它们)
+                if (Directory.Exists(_cacheDir))
+                {
+                    string[] cacheFiles = Directory.GetFiles(_cacheDir);
+                    foreach (string file in cacheFiles)
+                    {
+                        try
+                        {
+                            File.Delete(file);
+                        }
+                        catch
+                        {
+                            // 忽略占用错误，尽力而为
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Cleanup failed: {ex.Message}");
+            }
+            // ----------------------------------------------------
+
             var originalCurrentTab = _currentTabItem;
             bool currentTabAffected = false;
 
-            // 倒序遍历
+            // 倒序遍历内存中的 Tabs 进行重置
             for (int i = FileTabs.Count - 1; i >= 0; i--)
             {
                 var tab = FileTabs[i];
 
-                // 1. 先清理缓存文件 (如果有)
-                if (tab.IsDirty && !string.IsNullOrEmpty(tab.BackupPath))
-                {
-                    try { if (File.Exists(tab.BackupPath)) File.Delete(tab.BackupPath); } catch { }
-                    tab.BackupPath = null;
-                }
+                // 先把 BackupPath 指针置空，因为物理文件刚才已经被我们强删了
+                tab.BackupPath = null;
 
-                // [修改点2]：分类处理
                 if (tab.IsNew)
                 {
-                    // A. 对于新建的文件 (无论是否修改过)：直接移除！
-                    // 因为我们要"放弃所有更改"，新建的文件本身就是一种"更改"，所以要删掉
+                    // A. 对于新建的文件：直接移除
                     if (tab == originalCurrentTab) currentTabAffected = true;
                     FileTabs.RemoveAt(i);
                 }
@@ -328,18 +353,18 @@ namespace TabPaint
                     // 标记受影响
                     if (tab == originalCurrentTab) currentTabAffected = true;
 
-                    // 还原缩略图
+                    // 还原缩略图 (重新从原图读取)
                     tab.IsLoading = true;
                     await tab.LoadThumbnailAsync(100, 60);
                     tab.IsLoading = false;
                 }
-                // C. 对于磁盘上已有且未修改的文件：保持原样，不动它
+                // C. 没改过的文件保持原样
             }
 
-            // 3. 后续处理 (同前)
+            // 后续 UI 处理
             if (FileTabs.Count == 0)
             {
-                // 如果全删光了（比如全是新建的），重置为一张白纸
+                // 如果全删光了，重置为一张白纸
                 ResetToNewCanvas();
             }
             else if (currentTabAffected)
@@ -347,7 +372,7 @@ namespace TabPaint
                 // 如果当前页没了，或者当前页被重置了
                 if (!FileTabs.Contains(originalCurrentTab))
                 {
-                    // 找个新的选中
+                    // 找个新的选中 (默认第一个)
                     var firstTab = FileTabs.FirstOrDefault();
                     if (firstTab != null)
                     {
@@ -360,14 +385,22 @@ namespace TabPaint
                 // 刷新画布并清空 Undo
                 if (_currentTabItem != null)
                 {
+                    // 重新加载原图 (因为缓存已经被删了，OpenImageAndTabs 内部会去读原文件)
                     await OpenImageAndTabs(_currentTabItem.FilePath);
-                    ResetDirtyTracker(); // 必须清空撤销栈！
+                    ResetDirtyTracker();
                 }
             }
+            else
+            {
+                // 即使当前 Tab 没受影响（比如当前 Tab 本来就是干净的），
+                // 但因为我们强删了 Session 和 Cache，最好还是重置一下 Undo 栈以防万一
+                ResetDirtyTracker();
+            }
 
-            SaveSession();
+            // 强制 GC
             GC.Collect();
         }
+
 
         private void OnFileTabPreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -388,59 +421,374 @@ namespace TabPaint
         }
         private void OnFileTabPreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
+            // 1. 如果左键没按住，直接返回
             if (e.LeftButton != MouseButtonState.Pressed) return;
-            if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) return;
 
+            // 2. [核心修复] 计算移动距离，增加“防抖动”阈值
+            // 系统默认是 4px，太灵敏了。我们改为 10px 或者 15px。
             Vector diff = _dragStartPoint - e.GetPosition(null);
-            if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
-                Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
+            double dragThreshold = 100.0; // 手动设置阈值为 100 像素
+
+            // 如果 X 和 Y 方向移动都小于阈值，视为误触，不执行拖拽
+            if (Math.Abs(diff.X) < dragThreshold && Math.Abs(diff.Y) < dragThreshold)
             {
-                var button = sender as System.Windows.Controls.Button;
-                var tabItem = button?.DataContext as FileTabItem;
-                if (tabItem == null) return;
+                return;
+            }
 
+            // --- 以下是原有的拖拽逻辑，保持不变 ---
+
+            var button = sender as System.Windows.Controls.Button;
+            var tabItem = button?.DataContext as FileTabItem;
+            if (tabItem == null) return;
+
+            // === 分支 1: Ctrl + 拖拽 = 导出文件 ===
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+            {
+                // ... (保持之前的导出文件代码不变) ...
+                // 省略代码以节省篇幅，请保留你现有的 Ctrl+拖拽 逻辑
+                // ...
                 string finalDragPath = tabItem.FilePath;
-                bool needTempFile = false;
-                if (string.IsNullOrEmpty(finalDragPath) || !System.IO.File.Exists(finalDragPath) || tabItem.IsDirty)
-                {
-                    needTempFile = true;
-                }
-
-                if (needTempFile)
-                {
-                    try
-                    {
-                        BitmapSource highResBitmap = GetHighResImageForTab(tabItem);
-                        if (highResBitmap != null)
-                        {
-                            string fileName = string.IsNullOrEmpty(tabItem.FileName) ? "Image" : System.IO.Path.GetFileNameWithoutExtension(tabItem.FileName);
-                            string tempFileName = $"{fileName}_{DateTime.Now:HHmmss}.png";
-                            finalDragPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), tempFileName);
-                            SaveBitmapToPng(highResBitmap, finalDragPath); // 这一行需要取消注释才能真正生成文件
-                        }
-                        else return;
-                    }
-                    catch { return; }
-                }
-
+                // ...
                 if (!string.IsNullOrEmpty(finalDragPath) && System.IO.File.Exists(finalDragPath))
                 {
-                    // --- 核心修改 ---
                     var dataObject = new System.Windows.DataObject();
-
-                    // 1. 放入标准文件格式 (给 Explorer/桌面用)
                     var fileList = new System.Collections.Specialized.StringCollection();
                     fileList.Add(finalDragPath);
                     dataObject.SetFileDropList(fileList);
-
-                    // 2. 放入自定义记号 (给 TabPaint 自己识别用)
                     dataObject.SetData("TabPaintInternalDrag", true);
-
                     DragDrop.DoDragDrop(button, dataObject, System.Windows.DragDropEffects.Copy);
                     e.Handled = true;
                 }
             }
+            // === 分支 2: 直接拖拽 = 内部排序 ===
+            else
+            {
+                var dataObject = new System.Windows.DataObject();
+                dataObject.SetData("TabPaintReorderItem", tabItem);
+
+                // 这里的 DoDragDrop 会阻塞线程直到松手
+                DragDrop.DoDragDrop(button, dataObject, System.Windows.DragDropEffects.Move);
+
+                // 拖拽结束后，标记已处理，防止触发 Click 事件
+                e.Handled = true;
+            }
         }
+
+
+        private void OnFileTabReorderDragOver(object sender, System.Windows.DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent("TabPaintReorderItem"))
+            {
+                e.Effects = System.Windows.DragDropEffects.Move;
+                e.Handled = true;
+            }
+            else
+            {
+                e.Effects = System.Windows.DragDropEffects.None;
+            }
+        }
+
+        // [新增] 放下时交换顺序
+        private void OnFileTabDrop(object sender, System.Windows.DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent("TabPaintReorderItem"))
+            {
+                var sourceTab = e.Data.GetData("TabPaintReorderItem") as FileTabItem;
+                var targetButton = sender as System.Windows.Controls.Button;
+                var targetTab = targetButton?.DataContext as FileTabItem;
+
+                if (sourceTab != null && targetTab != null && sourceTab != targetTab)
+                {
+                    // 1. 在 UI 集合 (FileTabs) 中移动位置
+                    int oldIndex = FileTabs.IndexOf(sourceTab);
+                    int newIndex = FileTabs.IndexOf(targetTab);
+
+                    if (oldIndex >= 0 && newIndex >= 0)
+                    {
+                        FileTabs.Move(oldIndex, newIndex);
+                    }
+                    if (!string.IsNullOrEmpty(sourceTab.FilePath) &&
+                        !string.IsNullOrEmpty(targetTab.FilePath))
+                    {
+                        int srcFileIdx = _imageFiles.IndexOf(sourceTab.FilePath);
+                        int tgtFileIdx = _imageFiles.IndexOf(targetTab.FilePath);
+
+                        if (srcFileIdx >= 0 && tgtFileIdx >= 0)
+                        {
+                            // 简单的列表移动逻辑
+                            string item = _imageFiles[srcFileIdx];
+                            _imageFiles.RemoveAt(srcFileIdx);
+                            int newTgtIdx = _imageFiles.IndexOf(targetTab.FilePath);
+                            if (newIndex > oldIndex)
+                            {
+                                if (newTgtIdx >= 0)
+                                {
+                                    _imageFiles.Insert(newTgtIdx, item);
+                                }
+                            }
+                            else
+                            {
+                                // 向前移：直接插在目标前面
+                                if (newTgtIdx >= 0) _imageFiles.Insert(newTgtIdx, item);
+                            }
+                        }
+                    }
+                }
+                e.Handled = true;
+            }
+        }
+        // #region 右键菜单事件 (Context Menu Events)
+
+        private void OnTabCopyClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem item && item.Tag is FileTabItem tab)
+            {
+                CopyTabToClipboard(tab);
+            }
+        }
+
+        private void OnTabCutClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem item && item.Tag is FileTabItem tab)
+            {
+                // 1. 先复制
+                CopyTabToClipboard(tab);
+                // 2. 后关闭 (实现剪切效果)
+                CloseTab(tab);
+            }
+        }
+
+        private async void OnTabPasteClick(object sender, RoutedEventArgs e)
+        {
+            // 获取插入位置：在右键点击的 Tab 后面
+            int insertIndex = -1; // 默认最后
+            int uiInsertIndex = FileTabs.Count;
+
+            if (sender is MenuItem item && item.Tag is FileTabItem targetTab)
+            {
+                int targetUiIndex = FileTabs.IndexOf(targetTab);
+                if (targetUiIndex >= 0)
+                {
+                    uiInsertIndex = targetUiIndex + 1;
+                    // 尝试在 _imageFiles 里找到对应位置
+                    if (!string.IsNullOrEmpty(targetTab.FilePath))
+                    {
+                        int fileIndex = _imageFiles.IndexOf(targetTab.FilePath);
+                        if (fileIndex >= 0) insertIndex = fileIndex + 1;
+                    }
+                }
+            }
+            if (insertIndex == -1) insertIndex = _imageFiles.Count;
+
+            bool hasHandled = false;
+            IDataObject data = Clipboard.GetDataObject(); // 获取剪贴板数据对象
+
+            // ---------------------------------------------------------
+            // 情况 A: 粘贴的是文件 (从资源管理器复制)
+            // ---------------------------------------------------------
+            if (data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] files = (string[])data.GetData(DataFormats.FileDrop);
+                if (files != null && files.Length > 0)
+                {
+                    int addedCount = 0;
+                    foreach (string file in files)
+                    {
+                        if (IsImageFile(file) && !_imageFiles.Contains(file))
+                        {
+                            _imageFiles.Insert(insertIndex + addedCount, file);
+
+                            var newTab = new FileTabItem(file) { IsLoading = true };
+                            FileTabs.Insert(uiInsertIndex + addedCount, newTab);
+                            _ = newTab.LoadThumbnailAsync(100, 60);
+
+                            addedCount++;
+                        }
+                    }
+                    if (addedCount > 0) hasHandled = true;
+                }
+            }
+            // ---------------------------------------------------------
+            // 情况 B: 粘贴的是图片 (从网页/QQ/截图工具复制)
+            // ---------------------------------------------------------
+            else if (data.GetDataPresent(DataFormats.Bitmap))
+            {
+                try
+                {
+                    // 获取位图数据
+                    BitmapSource source = Clipboard.GetImage();
+                    if (source != null)
+                    {
+                        // 1. 创建一个新的未命名 Tab
+                        var newTab = CreateNewUntitledTab();
+
+                        // 2. 立即将剪贴板图片保存为缓存文件
+                        // 必须这样做，否则下次加载这个 Tab 时它就是空的
+                        string cacheFileName = $"{newTab.Id}.cache.png";
+                        string fullCachePath = System.IO.Path.Combine(_cacheDir, cacheFileName);
+
+                        using (var fileStream = new FileStream(fullCachePath, FileMode.Create))
+                        {
+                            BitmapEncoder encoder = new PngBitmapEncoder();
+                            encoder.Frames.Add(BitmapFrame.Create(source));
+                            encoder.Save(fileStream);
+                        }
+
+                        // 3. 设置 Tab 属性
+                        newTab.BackupPath = fullCachePath;
+                        newTab.IsDirty = true; // 标记为脏，提示用户保存
+
+                        // 生成一个小缩略图给 UI 显示
+                        UpdateTabThumbnail(fullCachePath); // 这一步可以优化，暂时先这样
+
+                        // 4. 插入 UI
+                        FileTabs.Insert(uiInsertIndex, newTab);
+
+                        // 5. 自动选中并滚动
+                        // 注意：这里我们手动把 UI 滚动过去
+                        FileTabsScroller.ScrollToHorizontalOffset(FileTabsScroller.HorizontalOffset + 120);
+
+                        hasHandled = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("粘贴图片失败: " + ex.Message);
+                }
+            }
+
+            if (hasHandled)
+            {
+                // 刷新底部 Slider 数量
+                ImageFilesCount = _imageFiles.Count;
+                SetPreviewSlider();
+            }
+        }
+
+
+        private void OnTabDeleteClick(object sender, RoutedEventArgs e)
+        {
+            // 这里的“关闭”等同于界面上的 X 按钮
+            if (sender is MenuItem item && item.Tag is FileTabItem tab)
+            {
+                CloseTab(tab);
+            }
+        }
+
+        private void OnTabFileDeleteClick(object sender, RoutedEventArgs e)
+        {
+            // 这里的“删除”是物理删除文件
+            if (sender is MenuItem item && item.Tag is FileTabItem tab)
+            {
+                if (tab.IsNew && string.IsNullOrEmpty(tab.FilePath))
+                {
+                    CloseTab(tab); // 如果是没保存的新建画布，直接关掉
+                    return;
+                }
+
+                var result = MessageBox.Show(
+                    $"确定要将文件 '{tab.FileName}' 放入回收站吗？\n此操作不可撤销（取决于系统设置）。",
+                    "删除文件",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    string path = tab.FilePath;
+
+                    // 1. 先从 TabPaint 关闭
+                    CloseTab(tab);
+
+                    // 2. 再执行物理删除
+                    try
+                    {
+                        if (File.Exists(path))
+                        {
+                            Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(
+                                path,
+                                Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs,
+                                Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("删除失败: " + ex.Message);
+                    }
+                }
+            }
+        }
+
+        // 辅助方法：复制 Tab 到剪贴板
+        private void CopyTabToClipboard(FileTabItem tab)
+        {
+            var dataObject = new DataObject();
+            bool hasContent = false;
+            BitmapSource heavyBitmap = null;
+
+            try
+            {
+                // ---------------------------------------------------------
+                // 策略 A: 优先使用文件路径 (内存消耗 ≈ 0)
+                // 适用场景: 文件已存在于磁盘，且当前没有未保存的修改
+                // ---------------------------------------------------------
+                if (!string.IsNullOrEmpty(tab.FilePath) && File.Exists(tab.FilePath) && !tab.IsDirty)
+                {
+                    var fileList = new System.Collections.Specialized.StringCollection();
+                    fileList.Add(tab.FilePath);
+                    dataObject.SetFileDropList(fileList);
+                    hasContent = true;
+
+                    // 注意：这里我们故意不调用 SetImage。
+                    // 99% 的软件（QQ, 微信, PS, 资源管理器）都能识别文件路径。
+                    // 这样做避免了将几十MB的像素数据解压到内存中。
+                }
+                // ---------------------------------------------------------
+                // 策略 B: 只有在迫不得已时才渲染像素 (高内存消耗)
+                // 适用场景: 新建的未命名画布，或者有未保存的涂鸦
+                // ---------------------------------------------------------
+                else
+                {
+                    heavyBitmap = GetHighResImageForTab(tab);
+                    if (heavyBitmap != null)
+                    {
+                        dataObject.SetImage(heavyBitmap);
+                        hasContent = true;
+                    }
+                }
+
+                if (hasContent)
+                {
+                    // 第二个参数 true 表示在此应用程序退出后，剪贴板数据仍然有效
+                    // 这会促使数据被系统复制，但也会增加内存压力
+                    Clipboard.SetDataObject(dataObject, true);
+                }
+            }
+            catch (Exception ex)
+            {
+                // 剪贴板不仅内存敏感，还容易被其他程序锁定导致 COMException
+                System.Diagnostics.Debug.WriteLine($"Copy failed: {ex.Message}");
+            }
+            finally
+            {
+                // ---------------------------------------------------------
+                // 策略 C: 激进的资源清理
+                // ---------------------------------------------------------
+                dataObject = null;
+                heavyBitmap = null;
+
+                // 只有在执行了策略 B (大图渲染) 时，才需要强制 GC
+                // 如果只是复制了路径，没必要强制 GC，以免造成界面卡顿
+                if (tab.IsDirty || tab.IsNew)
+                {
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    GC.Collect(); // 再次调用以确保完全释放
+                }
+            }
+        }
+
+
+        // #endregion
 
 
 

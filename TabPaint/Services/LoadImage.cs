@@ -35,49 +35,64 @@ namespace TabPaint
         private CancellationTokenSource _loadImageCts;
         public async Task OpenImageAndTabs(string filePath, bool refresh = false)
         {
-            // 1. 如果是第一次加载，初始化文件列表
+            // ... [之前的代码: 扫描文件夹，备份当前图] ...
             if (_currentImageIndex == -1) ScanFolderImages(filePath);
 
+            // 触发当前图的备份 (这是异步的)
             TriggerBackgroundBackup();
+
+            // ... [中间的代码: 计算索引，刷新列表] ...
             // 3. 计算新图片的索引
             int newIndex = _imageFiles.IndexOf(filePath);
             _currentImageIndex = newIndex;
-
             RefreshTabPageAsync(_currentImageIndex, refresh);
 
             var current = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
 
-            // 6. 更新选中状态
+            // ... [更新选中状态的代码] ...
             if (current != null)
             {
                 foreach (var tab in FileTabs) tab.IsSelected = false;
                 current.IsSelected = true;
-                _currentTabItem = current; // 更新当前引用
-            }
-            else
-            {
+                _currentTabItem = current;
             }
 
+            // --- 修复开始 ---
             string fileToLoad = filePath;
-            var isFileLoadedFromCache = false;
+            bool isFileLoadedFromCache = false;
 
-            if (current != null && current.IsDirty && !string.IsNullOrEmpty(current.BackupPath) && File.Exists(current.BackupPath))
+            // 检查是否有缓存
+            if (current != null && current.IsDirty && !string.IsNullOrEmpty(current.BackupPath))
             {
-                fileToLoad = current.BackupPath;
-                isFileLoadedFromCache = true;
-            }
+                // 修复点：检查这个 Tab 是否正在进行后台保存
+                if (_activeSaveTasks.TryGetValue(current.Id, out Task? pendingSave))
+                {
+                    // 如果正在保存，等待它完成！
+                    // 这样既避免了文件占用冲突，也避免了读取到写了一半的坏图
+                    await pendingSave;
+                }
 
+                if (File.Exists(current.BackupPath))
+                {
+                    fileToLoad = current.BackupPath;
+                    isFileLoadedFromCache = true;
+                }
+            }
+            // --- 修复结束 ---
+
+            // 继续加载
             await LoadImage(fileToLoad);
 
-            // 9. 重置脏状态追踪器
+            // ... [之后的代码: 重置 dirty 状态] ...
             ResetDirtyTracker();
 
             if (isFileLoadedFromCache)
             {
-                _savedUndoPoint = -1; // 设为 -1，使得 0 != -1，触发脏状态
-                CheckDirtyState();    // 立即刷新红点
+                _savedUndoPoint = -1;
+                CheckDirtyState();
             }
         }
+
 
 
         public void RequestImageLoad(string filePath)
