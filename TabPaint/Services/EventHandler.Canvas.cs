@@ -106,6 +106,17 @@ namespace TabPaint
 
         private void OnScrollContainerMouseDown(object sender, MouseButtonEventArgs e)
         {
+            if (Keyboard.IsKeyDown(Key.Space) && e.ChangedButton == MouseButton.Left)
+            {
+                _isPanning = true;
+                _lastMousePosition = e.GetPosition(ScrollContainer);
+                ScrollContainer.CaptureMouse(); // 捕获鼠标，防止拖出控件范围失效
+
+                // 改变光标样式为抓手
+                Mouse.OverrideCursor = System.Windows.Input.Cursors.ScrollAll;
+                e.Handled = true; // 阻止后续工具逻辑（如开始画画或选区）
+                return;
+            }
             if (_router.CurrentTool is SelectTool selTool && selTool._selectionData != null)
             {
                 // 1. 检查点击的是否是左键（通常右键用于弹出菜单，不应触发提交）

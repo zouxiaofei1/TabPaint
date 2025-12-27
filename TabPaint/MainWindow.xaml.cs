@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -190,7 +191,12 @@ namespace TabPaint
                 _canvasResizer.UpdateUI();
             }
         }
-     
+       
+        private string GetPixelFormatString(System.Windows.Media.PixelFormat format)
+        {
+            // 简单映射常见格式名
+            return format.ToString().Replace("Rgb", "RGB").Replace("Bgr", "BGR");
+        }
         private void CenterImage()
         {
             if (_bitmap == null || BackgroundImage == null)
@@ -290,6 +296,32 @@ namespace TabPaint
             }
             return null;
         }
+
+        private void OnScrollContainerMouseMove(object sender, MouseEventArgs e)
+        {
+            if (_isPanning)
+            {
+                Point currentPos = e.GetPosition(ScrollContainer);
+
+                // 计算偏移量：鼠标向左移，视口应该向右移，所以是 上次位置 - 当前位置
+                double deltaX = _lastMousePosition.X - currentPos.X;
+                double deltaY = _lastMousePosition.Y - currentPos.Y;
+
+                ScrollContainer.ScrollToHorizontalOffset(ScrollContainer.HorizontalOffset + deltaX);
+                ScrollContainer.ScrollToVerticalOffset(ScrollContainer.VerticalOffset + deltaY);
+                _lastMousePosition = currentPos;
+            }
+        }
+        private void OnScrollContainerMouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (_isPanning)
+            {
+                _isPanning = false;
+                ScrollContainer.ReleaseMouseCapture();
+                Mouse.OverrideCursor = null; // 恢复光标
+            }
+        }
+
     }
 
 }

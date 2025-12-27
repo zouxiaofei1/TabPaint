@@ -1,25 +1,14 @@
-﻿using Microsoft.Win32;
-using System;
-using System.Collections.ObjectModel;
+﻿
 using System.ComponentModel;
-using System.Diagnostics;
-using System.Globalization;
-using System.IO;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
-using System.Windows.Forms;
 using System.Windows.Input;
-using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using System.Windows.Threading;
 using static TabPaint.MainWindow;
 
 //
-//TabPaint主程序
+//工具管理器
 //
 
 namespace TabPaint
@@ -32,7 +21,7 @@ namespace TabPaint
 
         private void UpdateToolSelectionHighlight()
         {
-            var toolControls = new System.Windows.Controls.Control[] { PickColorButton, EraserButton, SelectButton, FillButton, TextButton, BrushToggle, PenButton };
+            var toolControls = new System.Windows.Controls.Control[] { PickColorButton, EraserButton, SelectButton, FillButton, TextButton, BrushToggle, PenButton, ShapeToggle };
 
             System.Windows.Controls.Control target = _router.CurrentTool switch
             {
@@ -43,10 +32,11 @@ namespace TabPaint
                 PenTool when _ctx.PenStyle == BrushStyle.Eraser => EraserButton,
                 PenTool when _ctx.PenStyle == BrushStyle.Pencil => PenButton,
                 PenTool => BrushToggle,
+                ShapeTool => ShapeToggle,
                 _ => null
             };
 
-
+           
             foreach (var ctrl in toolControls)
             {
                 
@@ -58,11 +48,16 @@ namespace TabPaint
                     BrushToggle.BorderBrush= PurpleHighlightBrush;
                     BrushToggle.Background= PurpleBackgroundBrush;
                 }
+
                 // 2. 关键：清除之前可能存在的本地颜色赋值，让 Style 重新接管控制权
                 ctrl.ClearValue(System.Windows.Controls.Control.BorderBrushProperty);
                 ctrl.ClearValue(System.Windows.Controls.Control.BackgroundProperty);
             }
-
+                if (_router.CurrentTool == _tools.Shape)
+                {
+                    ShapeToggle.BorderBrush = PurpleHighlightBrush;
+                    ShapeToggle.Background = PurpleBackgroundBrush;
+                }
         }
         
 
@@ -145,6 +140,7 @@ namespace TabPaint
             public ITool Fill { get; } = new FillTool();
             public ITool Select { get; } = new SelectTool();//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             public ITool Text { get; } = new TextTool();
+            public ITool Shape { get; } = new ShapeTool();
         }
 
         public class InputRouter /// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -171,7 +167,7 @@ namespace TabPaint
                 {
 
                     Point px = _ctx.ToPixel(position);
-                    ((MainWindow)System.Windows.Application.Current.MainWindow).MousePosition = $"X:{(int)px.X} Y:{(int)px.Y}";
+                    ((MainWindow)System.Windows.Application.Current.MainWindow).MousePosition = $"{(int)px.X}, {(int)px.Y}像素";
                 }
                 CurrentTool.OnPointerMove(_ctx, position);
             }// 定义高亮颜色

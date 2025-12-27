@@ -171,7 +171,7 @@ namespace TabPaint
             BackgroundImage.Width = imgWidth;
             BackgroundImage.Height = imgHeight;
 
-            _imageSize = $"{_surface.Width}×{_surface.Height}";
+            _imageSize = $"{_surface.Width}×{_surface.Height}像素";
             OnPropertyChanged(nameof(ImageSize));
             UpdateWindowTitle();
 

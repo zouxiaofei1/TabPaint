@@ -25,7 +25,7 @@ namespace TabPaint
             private Point _startPixel;
             private Point _clickOffset;
             public Int32Rect _selectionRect;
-            private Int32Rect _originalRect;
+            public Int32Rect _originalRect;
             public byte[]? _selectionData;
             private int _transformStep = 0; // 0 = 未操作，>0 = 已操作
             private byte[]? _clipboardData;

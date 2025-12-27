@@ -173,7 +173,7 @@
                         <Image x:Name="TextIcon" Source="{StaticResource Text_Image}" Width="16" Height="16"/>
                     </Button>
 
-                    <Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="2,4"/>
+                    <!--<Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="2,4"/>-->
 
                     <!-- 画刷菜单 -->
                     <Grid>
@@ -230,8 +230,58 @@
                         </Popup>
                     </Grid>
 
-                    <Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="2,4"/>
+                    
+                    <!-- 在 BrushToggle 的 Grid 后面添加这个 Grid -->
+                    <Grid Margin="0,0,0,0">
+                        <!-- 图形工具主按钮 -->
+                        <ToggleButton x:Name="ShapeToggle" Style="{StaticResource DropDownButtonStyle}">
+                            <!-- 默认显示矩形图标，后续会根据选择变动 -->
+                            <Image x:Name="CurrentShapeIcon" Source="{StaticResource Shapes_Image}" Width="16" Height="16"/>
+                        </ToggleButton>
+                        <!-- 下拉菜单 -->
+                        <Popup x:Name="SubMenuPopupShape" IsOpen="{Binding IsChecked, ElementName=ShapeToggle, Mode=TwoWay}"
+           PlacementTarget="{Binding ElementName=ShapeToggle}" Placement="Bottom" AllowsTransparency="True" PopupAnimation="None" 
+           StaysOpen="{Binding IsMouseOver, ElementName=ShapeToggle}">
+                            <Border Name="SubmenuBorderShape" ToolTip="形状" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Margin="5,0" Padding="2">
+                                <StackPanel>
+                                    <MenuItem Header="矩形" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick" Tag="Rectangle">
+                                        <MenuItem.Icon>
+                                            <Image Source="{StaticResource Icon_Shape_Rectangle}" Width="16" Height="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
 
+                                    <!-- 圆角矩形 -->
+                                    <MenuItem Header="圆角矩形" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick" Tag="RoundedRectangle">
+                                        <MenuItem.Icon>
+                                            <Image Source="{StaticResource Icon_Shape_RoundedRect}" Width="16" Height="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+
+                                    <!-- 圆形 -->
+                                    <MenuItem Header="圆形" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick" Tag="Ellipse">
+                                        <MenuItem.Icon>
+                                            <Image Source="{StaticResource Icon_Shape_Ellipse}" Width="16" Height="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+
+                                    <!-- 直线 -->
+                                    <MenuItem Header="直线" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick" Tag="Line">
+                                        <MenuItem.Icon>
+                                            <Image Source="{StaticResource Icon_Shape_Line}" Width="16" Height="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+
+                                    <!-- 箭头 -->
+                                    <MenuItem Header="箭头" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick" Tag="Arrow">
+                                        <MenuItem.Icon>
+                                            <Image Source="{StaticResource Icon_Shape_Arrow}" Width="16" Height="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                </StackPanel>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="2,4"/>
                     <!-- 图像操作 -->
                     <Button Margin="2,0" Name="CutImage" ToolTip="裁剪选区" Click="CropMenuItem_Click" Style="{StaticResource RoundedMenuButtonStyle}">
                         <Image x:Name="CutImageIcon" Source="{StaticResource Cut_Selection_Image}" Width="16" Height="16"/>
@@ -480,9 +530,29 @@
 
             <!-- #region 5. 底部状态栏 (StatusBar) -->
             <StatusBar DockPanel.Dock="Bottom" Background="#44FFFFFF">
-                <StatusBarItem Content="{Binding MousePosition}" Width="150"/>
-                <StatusBarItem Content="{Binding ImageSize}" Width="100"/>
-                <StatusBarItem Content="{Binding SelectionSize}" Width="120"/>
+                <StatusBarItem Width="130" Margin="8,0">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="{StaticResource Cursor_Image}" Style="{StaticResource StatusIconStyle}"/>
+                        <TextBlock Text="{Binding MousePosition}" VerticalAlignment="Center" FontSize="11"/>
+                    </StackPanel>
+                </StatusBarItem>
+                <Separator Width="1" Height="14" Margin="2,0" Background="#20000000" VerticalAlignment="Center"/>
+
+                <StatusBarItem Width="130" Margin="8,0">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="{StaticResource Picture_Image}" Style="{StaticResource StatusIconStyle}"/>
+                        <TextBlock Text="{Binding ImageSize}" VerticalAlignment="Center" FontSize="11"/>
+                    </StackPanel>
+                </StatusBarItem>
+                <Separator Width="1" Height="14" Margin="2,0" Background="#20000000" VerticalAlignment="Center"/>
+
+                <StatusBarItem Width="130" Margin="8,0">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="{StaticResource Select_Image}" Style="{StaticResource StatusIconStyle}"/>
+                        <TextBlock Text="{Binding SelectionSize}" VerticalAlignment="Center" FontSize="11"/>
+                    </StackPanel>
+                </StatusBarItem>
+                <Separator Width="1" Height="14" Margin="2,0" Background="#20000000" VerticalAlignment="Center"/>
                 <StatusBarItem>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -493,10 +563,25 @@
 
                 <StatusBarItem HorizontalAlignment="Right">
                     <StackPanel Orientation="Horizontal">
-                        <Button Width="24" Height="24" ToolTip="适应窗口大小" Padding="2,0" Style="{StaticResource RoundedMenuButtonStyle}" Click="FitToWindow_Click">
+                        <Button Width="24" Height="24" 
+                    Style="{StaticResource RoundedMenuButtonStyle}" 
+                    Padding="2,0" 
+                    Cursor="Help">
+                            <Button.ToolTip>
+                                <ToolTip Background="#F3F3F3" BorderBrush="#CCCCCC" HasDropShadow="True">
+                                    <StackPanel Margin="5">
+                                        <TextBlock Text="图片详细信息" FontWeight="Bold" Margin="0,0,0,5"/>
+                                        <Separator Background="#DDD"/>
+                                        <TextBlock Text="{Binding CurrentImageFullInfo}" FontFamily="Consolas" FontSize="11"/>
+                                    </StackPanel>
+                                </ToolTip>
+                            </Button.ToolTip>
+                            <Image Source="{StaticResource Info_Image}" Width="16" Height="16" Opacity="0.8"/>
+                        </Button>
+                        <Button Width="24" Height="24" ToolTip="适应窗口大小" Margin="6,0" Padding="2,0" Style="{StaticResource RoundedMenuButtonStyle}" Click="FitToWindow_Click">
                             <Image Source="{StaticResource FitToWindow_Image}" Width="16" Height="16"/>
                         </Button>
-                        <ComboBox x:Name="ZoomMenu" Width="80" SelectionChanged="ZoomMenu_SelectionChanged" IsEditable="True">
+                        <ComboBox x:Name="ZoomMenu" Margin="0,0,6,0" Width="80" SelectionChanged="ZoomMenu_SelectionChanged" IsEditable="True">
                             <ComboBoxItem Content="25%" Tag="0.25"/>
                             <ComboBoxItem Content="50%" Tag="0.5"/>
                             <ComboBoxItem Content="75%" Tag="0.75"/>
@@ -521,7 +606,7 @@
             <!-- #endregion -->
 
             <!-- #region 6. 主画布区域 (Canvas) -->
-            <ScrollViewer Name="ScrollContainer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" PreviewMouseWheel="OnMouseWheelZoom" Background="Transparent" PreviewMouseDown="OnScrollContainerMouseDown" AllowDrop="True" PreviewDragOver="OnCanvasDragOver" PreviewDrop="OnCanvasDrop">
+            <ScrollViewer Name="ScrollContainer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" PreviewMouseWheel="OnMouseWheelZoom" Background="Transparent" PreviewMouseDown="OnScrollContainerMouseDown" PreviewMouseMove="OnScrollContainerMouseMove"  PreviewMouseUp="OnScrollContainerMouseUp" AllowDrop="True" PreviewDragOver="OnCanvasDragOver" PreviewDrop="OnCanvasDrop">
                 <ScrollViewer.ContextMenu>
                     <ContextMenu Style="{StaticResource Win11ContextMenuStyle}">
                         <MenuItem Header="复制" InputGestureText="Ctrl+C" Style="{StaticResource Win11MenuItemStyle}" Click="OnCopyClick"/>

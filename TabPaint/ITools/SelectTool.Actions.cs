@@ -618,7 +618,7 @@ namespace TabPaint
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {// 状态栏更新
                     ((MainWindow)System.Windows.Application.Current.MainWindow).SelectionSize =
-                        $"{_selectionRect.Width}×{_selectionRect.Height}";
+                        $"{_selectionRect.Width}×{_selectionRect.Height}像素";
                 });
             }
 

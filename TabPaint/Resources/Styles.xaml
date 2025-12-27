@@ -48,6 +48,14 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <!-- 统一图标样式 -->
+    <Style TargetType="Image" x:Key="StatusIconStyle">
+        <Setter Property="Width" Value="14"/>
+        <Setter Property="Height" Value="14"/>
+        <Setter Property="Margin" Value="0,0,6,0"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Opacity" Value="0.8"/>
+    </Style>
     <!-- 把原本在 Window.Resources 里的 Style、ControlTemplate 剪切到这里 -->
     <Style x:Key="Win11AddButtonStyle" TargetType="Button">
         <Setter Property="Width" Value="36"/>
@@ -276,7 +284,7 @@
 
     <!-- 2. Slider 整体模板 (修正了 RepeatButton 问题) -->
     <Style x:Key="Win11VerticalSliderStyle" TargetType="Slider">
-        
+
         <Setter Property="OverridesDefaultStyle" Value="True"/>
         <Setter Property="Template">
             <Setter.Value>

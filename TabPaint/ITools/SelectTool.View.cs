@@ -240,16 +240,28 @@ namespace TabPaint
             public void CommitSelection(ToolContext ctx)
             {
                 if (_selectionData == null) return;
+
+                // 1. 准备撤销记录
                 ctx.Undo.BeginStroke();
+                // 注意：这里需要记录的是最终写入区域的脏矩形，不仅仅是 selectionRect
+                // 但为了简单，我们先标记这个区域。更严谨的做法是记录混合前的背景图。
                 ctx.Undo.AddDirtyRect(_selectionRect);
 
+                // 2. 准备源数据 (处理缩放)
+                byte[] finalData = _selectionData;
+                int finalWidth = _selectionRect.Width;
+                int finalHeight = _selectionRect.Height;
+                int finalStride = finalWidth * 4;
+
+                // 如果选区被缩放过，需要重新采样
                 if (_originalRect.Width != _selectionRect.Width || _originalRect.Height != _selectionRect.Height)
                 {
                     if (_originalRect.Width <= 0 || _originalRect.Height <= 0) return;
 
                     int expectedStride = _originalRect.Width * 4;
                     int actualStride = _selectionData.Length / _originalRect.Height;
-                    int dataStride = Math.Min(expectedStride, actualStride);
+                    int dataStride = Math.Min(expectedStride, actualStride); // 容错处理
+
                     var src = BitmapSource.Create(
                         _originalRect.Width, _originalRect.Height,
                         ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
@@ -260,14 +272,15 @@ namespace TabPaint
                         (double)_selectionRect.Height / _originalRect.Height));
 
                     var resized = new WriteableBitmap(transform);
-                    int newStride = resized.BackBufferStride;
-                    var newData = new byte[_selectionRect.Height * newStride];
-                    resized.CopyPixels(newData, newStride, 0);
-
-                    _selectionData = newData;
-                    ctx.Surface.WriteRegion(_selectionRect, _selectionData, newStride);
+                    finalStride = resized.BackBufferStride;
+                    finalData = new byte[finalHeight * finalStride];
+                    resized.CopyPixels(finalData, finalStride, 0);
                 }
-                else ctx.Surface.WriteRegion(_selectionRect, _selectionData, _selectionRect.Width * 4);
+
+                // 3. 执行透明度混合写入 (Alpha Blending)
+                BlendPixels(ctx.Surface.Bitmap, _selectionRect.X, _selectionRect.Y, finalWidth, finalHeight, finalData, finalStride);
+
+                // 4. 清理现场
                 ctx.Undo.CommitStroke();
                 HidePreview(ctx);
                 _selectionData = null;
@@ -277,6 +290,99 @@ namespace TabPaint
                 _originalRect = new Int32Rect();
                 ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
                 ResetPreviewState(ctx);
+            }
+            private void BlendPixels(WriteableBitmap targetBmp, int x, int y, int w, int h, byte[] sourcePixels, int sourceStride)
+            {
+                targetBmp.Lock();
+                try
+                {
+                    int targetW = targetBmp.PixelWidth;
+                    int targetH = targetBmp.PixelHeight;
+
+                    // 计算裁剪区域（防止画出画布外）
+                    int drawX = Math.Max(0, x);
+                    int drawY = Math.Max(0, y);
+                    int drawW = Math.Min(w, targetW - drawX);
+                    int drawH = Math.Min(h, targetH - drawY);
+
+                    if (drawW <= 0 || drawH <= 0) return;
+
+                    // 计算源数据中的偏移（如果x,y是负数，源数据需要跳过前面部分）
+                    int srcOffsetX = drawX - x;
+                    int srcOffsetY = drawY - y;
+
+                    unsafe
+                    {
+                        byte* pTargetBase = (byte*)targetBmp.BackBuffer;
+                        int targetStride = targetBmp.BackBufferStride;
+
+                        // 并行处理或者简单双重循环
+                        // 这里为了安全和易读使用简单的指针操作
+                        for (int r = 0; r < drawH; r++)
+                        {
+                            // 指向源数据当前行
+                            int srcRowIndex = (srcOffsetY + r) * sourceStride + srcOffsetX * 4;
+
+                            // 指向目标数据当前行
+                            byte* pTargetRow = pTargetBase + (drawY + r) * targetStride + drawX * 4;
+
+                            for (int c = 0; c < drawW; c++)
+                            {
+                                // 获取源像素 Bgra
+                                byte srcB = sourcePixels[srcRowIndex + c * 4 + 0];
+                                byte srcG = sourcePixels[srcRowIndex + c * 4 + 1];
+                                byte srcR = sourcePixels[srcRowIndex + c * 4 + 2];
+                                byte srcA = sourcePixels[srcRowIndex + c * 4 + 3];
+
+                                // 优化：如果源像素完全透明，跳过
+                                if (srcA == 0)
+                                {
+                                    pTargetRow += 4;
+                                    continue;
+                                }
+
+                                // 优化：如果源像素完全不透明，直接覆盖
+                                if (srcA == 255)
+                                {
+                                    pTargetRow[0] = srcB;
+                                    pTargetRow[1] = srcG;
+                                    pTargetRow[2] = srcR;
+                                    pTargetRow[3] = 255; // 强制设为不透明，或者保留 srcA
+                                }
+                                else
+                                {
+                                    // 标准 Alpha Blending 公式:
+                                    // Out = (Src * Alpha + Dst * (255 - Alpha)) / 255
+
+                                    byte dstB = pTargetRow[0];
+                                    byte dstG = pTargetRow[1];
+                                    byte dstR = pTargetRow[2];
+                                    // 忽略目标 Alpha，假设背景是不透明的画布 (255)
+                                    // 如果你的画布本身也是透明的，算法会更复杂 (Premultiplied Alpha)
+
+                                    // 快速整数近似除以255: (v + 1 + (v >> 8)) >> 8  或者简单用 double 计算
+                                    // 这里用浮点计算保证精度，现代CPU很快
+                                    double alpha = srcA / 255.0;
+                                    double invAlpha = 1.0 - alpha;
+
+                                    pTargetRow[0] = (byte)(srcB * alpha + dstB * invAlpha);
+                                    pTargetRow[1] = (byte)(srcG * alpha + dstG * invAlpha);
+                                    pTargetRow[2] = (byte)(srcR * alpha + dstR * invAlpha);
+                                    pTargetRow[3] = 255; // 通常画布保持不透明
+                                }
+
+                                pTargetRow += 4;
+                            }
+                        }
+                    }
+
+                    // 标记脏区域刷新显示
+                    targetBmp.AddDirtyRect(new Int32Rect(drawX, drawY, drawW, drawH));
+                }
+                finally
+                {
+                    targetBmp.Unlock();
+                }
             }
 
             private void HidePreview(ToolContext ctx)

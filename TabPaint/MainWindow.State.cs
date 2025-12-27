@@ -28,8 +28,8 @@ namespace TabPaint
         private CanvasSurface _surface;
         public UndoRedoManager _undo;
         public ToolContext _ctx;
-        private InputRouter _router;
-        private ToolRegistry _tools;
+        public InputRouter _router;
+        public ToolRegistry _tools;
         public double zoomscale = 1;
         private byte[]? _preDrawSnapshot = null;
 
@@ -41,16 +41,17 @@ namespace TabPaint
         private int _currentImageIndex = -1;
         private bool _isEdited = false; // 标记当前画布是否被修改
         private string _currentFileName = "未命名";
-        private string _programVersion = "v0.6.5 alpha"; // 可以从 Assembly 读取
+        private string _programVersion = "v0.7 alpha"; // 可以从 Assembly 读取
         private bool _isFileSaved = true; // 是否有未保存修改
 
-        private string _mousePosition = "X:0, Y:0";
+        private string _mousePosition = "0,0像素";
         public string MousePosition
         {
             get => _mousePosition;
             set { _mousePosition = value; OnPropertyChanged(); }
         }
-
+        private bool _isPanning = false;
+        private Point _lastMousePosition;
         private string _imageSize = "0×0";
         public string ImageSize
         {
@@ -58,7 +59,7 @@ namespace TabPaint
             set { _imageSize = value; OnPropertyChanged(); }
         }
 
-        private string _selectionSize = "0×0";
+        private string _selectionSize = "";
         public string SelectionSize
         {
             get => _selectionSize;
@@ -168,5 +169,11 @@ namespace TabPaint
         private System.Windows.Threading.DispatcherTimer _autoSaveTimer;
         public CanvasResizeManager _canvasResizer;
         private int _savedUndoPoint = 0;
+        private string _currentImageFullInfo;
+        public string CurrentImageFullInfo
+        {
+            get => _currentImageFullInfo;
+            set { _currentImageFullInfo = value; OnPropertyChanged(nameof(CurrentImageFullInfo)); }
+        }
     }
 }

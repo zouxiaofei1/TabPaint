@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -235,6 +236,123 @@ namespace TabPaint
                 return (decoder.Frames[0].PixelWidth, decoder.Frames[0].PixelHeight);
             });
         }
+        private Task<string> GetImageMetadataInfoAsync(byte[] imageBytes, string filePath, BitmapImage bitmap)
+        {
+            return Task.Run(() =>
+            {
+                try
+                {
+                    StringBuilder sb = new StringBuilder();
+                    // 1. 文件与画布信息 (始终显示)
+                    sb.AppendLine("[文件信息]");
+                    sb.AppendLine($"路径: {filePath}");
+                    sb.AppendLine($"大小: {(imageBytes.Length / 1024.0 / 1024.0):F2} MB");
+                    sb.AppendLine();
+                    sb.AppendLine("[画布信息]");
+                    sb.AppendLine($"尺寸: {bitmap.PixelWidth} × {bitmap.PixelHeight} px");
+                    sb.AppendLine($"DPI: {bitmap.DpiX:F0} × {bitmap.DpiY:F0}");
+                    sb.AppendLine($"格式: {bitmap.Format}");
+
+                    // 2. 尝试读取 EXIF 元数据
+                    using var ms = new MemoryStream(imageBytes);
+                    var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+                    var metadata = decoder.Frames[0].Metadata as BitmapMetadata;
+
+                    if (metadata != null)
+                    {
+                        StringBuilder exifSb = new StringBuilder();
+
+                        // 拍摄设备
+                        string device = "";
+                        if (!string.IsNullOrEmpty(metadata.CameraManufacturer)) device += metadata.CameraManufacturer + " ";
+                        if (!string.IsNullOrEmpty(metadata.CameraModel)) device += metadata.CameraModel;
+                        if (!string.IsNullOrEmpty(device)) exifSb.AppendLine($"设备: {device.Trim()}");
+
+                        // 核心摄影参数 (使用 GetQuery)
+                        // 曝光时间 (1/100s)
+                        var expTime = TryGetQuery(metadata, "/app1/ifd/exif/{uint=33434}");
+                        if (expTime != null) exifSb.AppendLine($"曝光时间: {expTime}s");
+
+                        // 光圈值 (f/2.8)
+                        var fNumber = TryGetQuery(metadata, "/app1/ifd/exif/{uint=33437}");
+                        if (fNumber != null) exifSb.AppendLine($"光圈值: f/{Convert.ToDouble(fNumber):F1}");
+
+                        // ISO 速度
+                        var iso = TryGetQuery(metadata, "/app1/ifd/exif/{uint=34855}");
+                        if (iso != null) exifSb.AppendLine($"ISO速度: ISO-{iso}");
+
+                        // 曝光补偿 (EV)
+                        var ev = TryGetQuery(metadata, "/app1/ifd/exif/{uint=37380}");
+                        if (ev != null) exifSb.AppendLine($"曝光补偿: {ev} step");
+
+                        // 焦距 (mm)
+                        var focal = TryGetQuery(metadata, "/app1/ifd/exif/{uint=37386}");
+                        if (focal != null) exifSb.AppendLine($"焦距: {focal}mm");
+
+                        // 35mm等效焦距
+                        var focal35 = TryGetQuery(metadata, "/app1/ifd/exif/{uint=41989}");
+                        if (focal35 != null) exifSb.AppendLine($"35mm焦距: {focal35}mm");
+
+                        // 测光模式
+                        var meter = TryGetQuery(metadata, "/app1/ifd/exif/{uint=37383}");
+                        if (meter != null) exifSb.AppendLine($"测光模式: {MapMeteringMode(meter)}");
+
+                        // 闪光灯
+                        var flash = TryGetQuery(metadata, "/app1/ifd/exif/{uint=37385}");
+                        if (flash != null) exifSb.AppendLine($"闪光灯: {((Convert.ToInt32(flash) & 1) == 1 ? "开启" : "关闭")}");
+
+                        // 软件/后期
+                        if (!string.IsNullOrEmpty(metadata.ApplicationName)) exifSb.AppendLine($"处理软件: {metadata.ApplicationName}");
+                        if (!string.IsNullOrEmpty(metadata.DateTaken)) exifSb.AppendLine($"拍摄日期: {metadata.DateTaken}");
+
+                        // 镜头型号 (部分现代相机支持)
+                        var lens = TryGetQuery(metadata, "/app1/ifd/exif/{uint=42036}");
+                        if (lens != null) exifSb.AppendLine($"镜头: {lens}");
+
+                        // --- 只有当 exifSb 里面有内容时，才添加标题并合并 ---
+                        if (exifSb.Length > 0)
+                        {
+                            sb.AppendLine();
+                            sb.AppendLine("[照片元数据]");
+                            sb.Append(exifSb.ToString());
+                        }
+                    }
+                    return sb.ToString().TrimEnd();
+                }
+                catch (Exception ex)
+                {
+                    return "无法解析详细信息: " + ex.Message;
+                }
+            });
+        }
+
+        // 辅助方法：安全读取 Query
+        private object TryGetQuery(BitmapMetadata metadata, string query)
+        {
+            try
+            {
+                if (metadata.ContainsQuery(query))
+                    return metadata.GetQuery(query);
+            }
+            catch { }
+            return null;
+        }
+
+        // 辅助方法：测光模式映射
+        private string MapMeteringMode(object val)
+        {
+            int code = Convert.ToInt32(val);
+            return code switch
+            {
+                1 => "平均测光",
+                2 => "中央重点平均测光",
+                3 => "点测光",
+                4 => "多点测光",
+                5 => "模式测光",
+                6 => "部分测光",
+                _ => "未知"
+            };
+        }
 
         private readonly object _lockObj = new object();
         private async Task LoadImage(string filePath)
@@ -321,13 +439,15 @@ namespace TabPaint
                 var fullResBitmap = await fullResTask;
                 if (token.IsCancellationRequested || fullResBitmap == null) return;
 
+                string metadataString = await GetImageMetadataInfoAsync(imageBytes, filePath, fullResBitmap);
+
                 await Dispatcher.InvokeAsync(() =>
                 {
                     if (token.IsCancellationRequested) return;
 
                     _bitmap = new WriteableBitmap(fullResBitmap);
                     BackgroundImage.Source = _bitmap;
-
+                    this.CurrentImageFullInfo = metadataString;
                     // 更新所有依赖完整图的状态
                     if (_surface == null)
                         _surface = new CanvasSurface(_bitmap);
@@ -340,7 +460,7 @@ namespace TabPaint
 
                     SetPreviewSlider();
 
-                    _imageSize = $"{_surface.Width}×{_surface.Height}";
+                    _imageSize = $"{_surface.Width}×{_surface.Height}像素";
                     OnPropertyChanged(nameof(ImageSize));
 
                     // 因为尺寸可能因解码有微小差异，最后再校准一次布局是好习惯

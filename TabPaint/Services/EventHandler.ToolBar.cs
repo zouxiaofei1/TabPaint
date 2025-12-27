@@ -41,6 +41,52 @@ namespace TabPaint
             btn.ContextMenu.IsOpen = true;
         }
 
+        private void OnShapeStyleClick(object sender, RoutedEventArgs e)
+        {
+            // 确保发送者是 MenuItem 且 Tag 是字符串
+            if (sender is System.Windows.Controls.MenuItem item && item.Tag is string tag)
+            {
+                // 1. 获取 Shape 工具实例
+                var shapeTool = _tools.Shape as ShapeTool;
+                if (shapeTool == null) return;
+
+                // 2. 解析 Tag 字符串为枚举 (自动支持 Rectangle, Ellipse, Line, Arrow, RoundedRectangle)
+                if (Enum.TryParse(tag, out ShapeTool.ShapeType type))
+                {
+                    // 设置逻辑形状
+                    shapeTool.SetShapeType(type);
+
+                    // 切换当前工具为 ShapeTool
+                    _router.SetTool(shapeTool);
+
+                    // 3. (可选) 更新主按钮图标以反映当前选择
+                    // 只有当你已经在 XAML 资源中定义了这些 Key (如 "Img_Rect", "Img_Arrow" 等) 时才取消注释
+
+                    switch (type)
+                    {
+                        case ShapeTool.ShapeType.Rectangle:
+                            CurrentShapeIcon.Source = (ImageSource)FindResource("Icon_Shape_Rectangle");
+                            break;
+                        case ShapeTool.ShapeType.Ellipse:
+                            CurrentShapeIcon.Source = (ImageSource)FindResource("Icon_Shape_Ellipse");
+                            break;
+                        case ShapeTool.ShapeType.Line:
+                            CurrentShapeIcon.Source = (ImageSource)FindResource("Icon_Shape_Line");
+                            break;
+                        case ShapeTool.ShapeType.Arrow:
+                            CurrentShapeIcon.Source = (ImageSource)FindResource("Icon_Shape_Arrow");
+                            break;
+                        case ShapeTool.ShapeType.RoundedRectangle:
+                            CurrentShapeIcon.Source = (ImageSource)FindResource("Icon_Shape_RoundedRect");
+                            break;
+                    }
+
+                }
+
+                // 4. 关闭下拉菜单
+                ShapeToggle.IsChecked = false;
+            }
+        }
 
         private void FitToWindow_Click(object sender, RoutedEventArgs e)
         {

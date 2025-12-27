@@ -247,6 +247,15 @@ namespace TabPaint
         }
         private void OnMouseWheelZoom(object sender, MouseWheelEventArgs e)
         {
+            if ((Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
+            {
+                e.Handled = true; // 阻止默认垂直滚动
+                                  // 滚轮向上(Delta>0)向左滚，向下(Delta<0)向右滚
+                                  // 48 是常见的行高，你可以根据手感调整倍率
+                double scrollAmount = e.Delta > 0 ? -48 : 48;
+                ScrollContainer.ScrollToHorizontalOffset(ScrollContainer.HorizontalOffset + scrollAmount);
+                return;
+            }
             if ((Keyboard.Modifiers & ModifierKeys.Control) != ModifierKeys.Control) return;
             //s(1);
             e.Handled = false; // 阻止默认滚动
