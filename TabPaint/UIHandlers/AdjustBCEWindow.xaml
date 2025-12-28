@@ -3,40 +3,256 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:local="clr-namespace:TabPaint"
-        Title="亮度 / 对比度 / 曝光" Height="300" Width="400"
-        WindowStartupLocation="CenterOwner">
-    <Grid Margin="10">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+        Title="调整" Height="260" Width="380"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="Transparent"
+        FontFamily="Microsoft YaHei UI, Segoe UI, sans-serif"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="ClearType">
 
-        <StackPanel Orientation="Vertical" Grid.Row="0" Margin="0,0,0,10">
-            <TextBlock Text="亮度" Margin="0,0,0,5"/>
-            <Slider x:Name="BrightnessSlider" Minimum="-100" Maximum="100" Value="0"
-                    TickFrequency="1" IsSnapToTickEnabled="True"
-                    ValueChanged="Slider_ValueChanged"
-                    Thumb.DragStarted="Slider_DragStarted" 
-                    Thumb.DragCompleted="Slider_DragCompleted"/>
+    <!-- 扩展客户区到标题栏 -->
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="32"  
+                      GlassFrameThickness="-1" 
+                      ResizeBorderThickness="4"
+                      CornerRadius="0"/>
+    </WindowChrome.WindowChrome>
 
-            <TextBlock Text="对比度" Margin="0,10,0,5"/>
-            <Slider x:Name="ContrastSlider" Minimum="-100" Maximum="100" Value="0"
-                    TickFrequency="1" IsSnapToTickEnabled="True"
-                    ValueChanged="Slider_ValueChanged"
-                    Thumb.DragStarted="Slider_DragStarted" 
-                    Thumb.DragCompleted="Slider_DragCompleted"/>
+    <Window.Resources>
+        <!-- Fluent 风格按钮 -->
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#fbfbfb"/>
+            <Setter Property="BorderBrush" Value="#d1d1d1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,4"/>
+            <!-- 减小内边距 -->
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#f6f6f6"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#eaeaea"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#bebebe"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-            <TextBlock Text="曝光" Margin="0,10,0,5"/>
-            <Slider x:Name="ExposureSlider" Minimum="-2" Maximum="2" Value="0"
-                    TickFrequency="0.1" IsSnapToTickEnabled="True"
-                    ValueChanged="Slider_ValueChanged"
-                    Thumb.DragStarted="Slider_DragStarted" 
-                    Thumb.DragCompleted="Slider_DragCompleted"/>
-        </StackPanel>
+        <!-- 强调色按钮 -->
+        <Style x:Key="AccentButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#0067C0"/>
+            <!-- 默认文字颜色：白色 -->
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" 
+                                Background="{TemplateBinding Background}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="4">
+                            <!-- 显式绑定 TextBlock 的前景色，确保文字颜色跟随 Style 设置 -->
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center"
+                                              TextElement.Foreground="{TemplateBinding Foreground}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#0078D4"/>
+                                <!-- 悬浮时保持白色文字 -->
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#005A9E"/>
+                                <!-- 按下时稍微变灰一点，体现质感 -->
+                                <Setter Property="Foreground" Value="#E0E0E0"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#CCCCCC"/>
+                                <Setter Property="Foreground" Value="#999999"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-        <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Right">
-            <Button Content="确定" Width="80" Margin="0,0,10,0" Click="Ok_Click"/>
-            <Button Content="取消" Width="80" Click="Cancel_Click"/>
-        </StackPanel>
-    </Grid>
+        <!-- 圆形滑块样式 (让它看起来像 Win11) -->
+        <Style x:Key="SliderThumbStyle" TargetType="{x:Type Thumb}">
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Height" Value="18"/>
+            <Setter Property="Width" Value="18"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Thumb}">
+                        <Ellipse x:Name="Ellipse" Fill="White" Stroke="#888888" StrokeThickness="1"/>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Ellipse" Property="Fill" Value="#f0f0f0"/>
+                                <Setter TargetName="Ellipse" Property="Stroke" Value="#0067C0"/>
+                            </Trigger>
+                            <Trigger Property="IsDragging" Value="True">
+                                <Setter TargetName="Ellipse" Property="Fill" Value="#cccccc"/>
+                                <Setter TargetName="Ellipse" Property="Stroke" Value="#005A9E"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Slider 整体样式 -->
+        <Style TargetType="Slider">
+            <Setter Property="IsMoveToPointEnabled" Value="True"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Slider}">
+                        <Grid Background="Transparent" VerticalAlignment="Center">
+                            <!-- 轨道 -->
+                            <Border x:Name="TrackBackground" Height="4" CornerRadius="2" 
+                                    Background="#E0E0E0" VerticalAlignment="Center" Margin="5,0"/>
+                            <!-- 滑块 -->
+                            <Track x:Name="PART_Track">
+                                <Track.Thumb>
+                                    <Thumb Style="{StaticResource SliderThumbStyle}" VerticalAlignment="Center"/>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="TextBlock" x:Key="LabelStyle">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#1A1A1A"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style TargetType="TextBlock" x:Key="ValueStyle">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#555555"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Width" Value="35"/>
+            <Setter Property="TextAlignment" Value="Right"/>
+        </Style>
+    </Window.Resources>
+
+    <!-- 主体边框：防止白色背景融入浅色壁纸 -->
+    <Border Background="#F3F3F3" BorderBrush="#dcdcdc" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="30"/>
+                <!-- 标题栏更矮 -->
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- 标题栏 -->
+            <Grid Grid.Row="0" MouseLeftButtonDown="TitleBar_MouseDown" Background="Transparent">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- 图标 -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- 标题文字 -->
+                </Grid.ColumnDefinitions>
+
+                <!-- 图标：靠左对齐 -->
+                <Image x:Name="AppIcon" 
+                       Grid.Column="0"
+                       Source="pack://application:,,,/Resources/TabPaint.ico" 
+                       Width="16" Height="16" 
+                       Margin="10,0,8,0"
+                       VerticalAlignment="Center"
+                       RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                <!-- 标题：紧跟图标 -->
+                <TextBlock Grid.Column="1" 
+                           Text="调整图像" 
+                           VerticalAlignment="Center" 
+                           HorizontalAlignment="Left"
+                           FontSize="12" 
+                           Foreground="#666666"/>
+            </Grid>
+
+            <!-- 内容区域：白色背景卡片感 -->
+            <Border Grid.Row="1" Background="#FFFFFF" Margin="0,0,0,0" BorderThickness="0,1,0,0" BorderBrush="#E5E5E5">
+                <StackPanel Orientation="Vertical" Margin="24,15,24,15">
+
+                    <!-- 亮度 -->
+                    <Grid Margin="0,0,0,2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="亮度" Style="{StaticResource LabelStyle}"/>
+                        <TextBlock Text="{Binding ElementName=BrightnessSlider, Path=Value, StringFormat=N0}" Style="{StaticResource ValueStyle}" Grid.Column="1"/>
+                    </Grid>
+                    <Slider x:Name="BrightnessSlider" Minimum="-100" Maximum="100" Value="0"
+                            TickFrequency="1" IsSnapToTickEnabled="True"
+                            ValueChanged="Slider_ValueChanged"
+                            Thumb.DragStarted="Slider_DragStarted" 
+                            Thumb.DragCompleted="Slider_DragCompleted"
+                            Margin="0,0,0,12"/>
+                    <!-- 减少间距 -->
+
+                    <!-- 对比度 -->
+                    <Grid Margin="0,0,0,2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="对比度" Style="{StaticResource LabelStyle}"/>
+                        <TextBlock Text="{Binding ElementName=ContrastSlider, Path=Value, StringFormat=N0}" Style="{StaticResource ValueStyle}" Grid.Column="1"/>
+                    </Grid>
+                    <Slider x:Name="ContrastSlider" Minimum="-100" Maximum="100" Value="0"
+                            TickFrequency="1" IsSnapToTickEnabled="True"
+                            ValueChanged="Slider_ValueChanged"
+                            Thumb.DragStarted="Slider_DragStarted" 
+                            Thumb.DragCompleted="Slider_DragCompleted"
+                            Margin="0,0,0,12"/>
+
+                    <!-- 曝光 -->
+                    <Grid Margin="0,0,0,2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="曝光" Style="{StaticResource LabelStyle}"/>
+                        <TextBlock Text="{Binding ElementName=ExposureSlider, Path=Value, StringFormat=F1}" Style="{StaticResource ValueStyle}" Grid.Column="1"/>
+                    </Grid>
+                    <Slider x:Name="ExposureSlider" Minimum="-2" Maximum="2" Value="0"
+                            TickFrequency="0.1" IsSnapToTickEnabled="True"
+                            ValueChanged="Slider_ValueChanged"
+                            Thumb.DragStarted="Slider_DragStarted" 
+                            Thumb.DragCompleted="Slider_DragCompleted"
+                            Margin="0,0,0,5"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 底部按钮栏 -->
+            <Border Grid.Row="2" Background="#F3F3F3" Padding="15,12" BorderThickness="0,1,0,0" BorderBrush="#e5e5e5">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="确定" Width="80" Margin="0,0,8,0" Click="Ok_Click" Style="{StaticResource AccentButtonStyle}" IsDefault="True"/>
+                    <Button Content="取消" Width="80" Click="Cancel_Click" IsCancel="True"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
 </Window>

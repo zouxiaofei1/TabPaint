@@ -172,12 +172,21 @@ namespace TabPaint
             ColorBtn2.Tag = useSecondColor ? "True" : "False";
         }
 
-        private void OnSourceInitialized(object? sender, EventArgs e)
+        protected override void OnSourceInitialized(EventArgs e)
         {
-            var hwnd = new WindowInteropHelper(this).Handle;
+            base.OnSourceInitialized(e); // 必须调用基类方法
 
-            var src = (HwndSource)PresentationSource.FromVisual(this)!;// 让 WPF 的合成目标透明，否则会被清成黑色
-            src.CompositionTarget.BackgroundColor = Colors.Transparent;
+            a.s("OnSourceInitialized 执行了！");
+
+            // 1. 初始化剪切板监听
+            InitializeClipboardMonitor();
+
+            // 2. 设置透明背景（Mica/Acrylic 必须）
+            var src = (HwndSource)PresentationSource.FromVisual(this);
+            if (src != null)
+            {
+                src.CompositionTarget.BackgroundColor = Colors.Transparent;
+            }
         }
 
         private void SetPenResizeBarVisibility(bool vis)

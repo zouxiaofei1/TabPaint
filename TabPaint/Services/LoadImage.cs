@@ -234,6 +234,7 @@ namespace TabPaint
             {
                 if (originalWidth >= originalHeight) img.DecodePixelWidth = maxSize;
                 else img.DecodePixelHeight = maxSize;
+                Dispatcher.Invoke(() => ShowToast("⚠️ 图片过大，已自动压缩显示"));
             }
 
             img.EndInit();

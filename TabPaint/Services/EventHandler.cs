@@ -1,5 +1,6 @@
 ﻿
 using System.ComponentModel;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -19,6 +20,17 @@ namespace TabPaint
     {
         private void MainWindow_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
+           
+            if (e.Key == Key.V &&
+                (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control &&
+                (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
+            {
+              
+                PasteClipboardAsNewTab();
+                e.Handled = true;
+                return; // 处理完毕，直接返回
+            }
+
             if (Keyboard.Modifiers == ModifierKeys.Control)
             {
                 switch (e.Key)
@@ -43,41 +55,39 @@ namespace TabPaint
                         OnOpenClick(sender, e);
                         e.Handled = true;
                         break;
-                    case Key.V:
-                        if (Keyboard.Modifiers == ModifierKeys.Control)
-                        {
-                            _router.SetTool(_tools.Select); // 切换到选择工具
-
-                            if (_tools.Select is SelectTool st) // 强转成 SelectTool
-                            {
-                                st.PasteSelection(_ctx, true);
-                            }
-                            e.Handled = true;
-                        }
+                    case Key.W:
+                        var currentTab = FileTabs?.FirstOrDefault(t => t.IsSelected);
+                        if (currentTab != null) CloseTab(currentTab);
+                        e.Handled = true;
                         break;
 
+                    // 这里处理普通的 Ctrl + V (画布内粘贴)
+                    case Key.V:
+                        _router.SetTool(_tools.Select);
+                        if (_tools.Select is SelectTool st)
+                        {
+                            st.PasteSelection(_ctx, true);
+                        }
+                        e.Handled = true;
+                        break;
 
                     case Key.A:
-                        if (Keyboard.Modifiers == ModifierKeys.Control)
+                        _router.SetTool(_tools.Select);
+                        if (_tools.Select is SelectTool stSelectAll)
                         {
-                            _router.SetTool(_tools.Select); // 切换到选择工具
-
-                            if (_tools.Select is SelectTool st) // 强转成 SelectTool
-                            {
-                                st.SelectAll(_ctx); // 调用选择工具的特有方法
-                            }
-                            e.Handled = true;
+                            stSelectAll.SelectAll(_ctx);
                         }
+                        e.Handled = true;
                         break;
                 }
             }
-            else
+            else if (Keyboard.Modifiers == ModifierKeys.None)
             {
                 switch (e.Key)
                 {
                     case Key.Left:
                         ShowPrevImage();
-                        e.Handled = true; // 防止焦点导航
+                        e.Handled = true;
                         break;
                     case Key.Right:
                         ShowNextImage();
@@ -86,13 +96,25 @@ namespace TabPaint
                 }
             }
         }
+
         private void EmptyClick(object sender, RoutedEventArgs e)
         {
             RotateFlipMenuToggle.IsChecked = false;
             BrushToggle.IsChecked = false;
         }
 
-
+        private void InitializeClipboardMonitor()
+        {
+           // s();
+            var helper = new WindowInteropHelper(this);
+            if (helper.Handle != IntPtr.Zero)
+            {
+                _hwndSource = HwndSource.FromHwnd(helper.Handle);
+                _hwndSource.AddHook(WndProc);
+                // 默认注册监听，通过 bool 标志控制逻辑
+                AddClipboardFormatListener(helper.Handle);
+            }
+        }
         private void MainWindow_Deactivated(object sender, EventArgs e)
         {
             // When the window loses focus, tell the current tool to stop its action.
@@ -155,6 +177,13 @@ namespace TabPaint
 
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
+            if (msg == WM_CLIPBOARDUPDATE)
+            {
+                if (_isMonitoringClipboard )
+                {
+                    OnClipboardContentChanged();
+                }
+            }
             if (msg == WM_NCHITTEST)
             {
                 if (_maximized)
@@ -195,7 +224,56 @@ namespace TabPaint
                 // 否则返回客户区
                 return (IntPtr)1; // HTCLIENT
             }
+
             return IntPtr.Zero;
+        }
+        private void ClipboardMonitorToggle_Click(object sender, RoutedEventArgs e)
+        {
+            //if (ClipboardMonitorToggle.IsChecked == true)
+            {
+                _isMonitoringClipboard = true;
+                // 开启时立即检查一次剪切板
+                OnClipboardContentChanged();
+            }
+        }
+
+        // 4. 剪切板内容处理核心
+        private async void OnClipboardContentChanged()
+        {
+            try
+            {
+                List<string> filesToLoad = new List<string>();
+
+                // 情况 A: 剪切板是文件列表 (复制了文件)
+                if (System.Windows.Clipboard.ContainsFileDropList())
+                {
+                    var files = System.Windows.Clipboard.GetFileDropList();
+                    foreach (var file in files)if (IsImageFile(file)) filesToLoad.Add(file);
+                }
+                // 情况 B: 剪切板是位图数据 (截图)
+                else if (System.Windows.Clipboard.ContainsImage())
+                {
+                    var bitmapSource = System.Windows.Clipboard.GetImage();
+                    if (bitmapSource != null)
+                    {
+                        // TabPaint 架构依赖文件路径，所以我们需要保存为临时缓存文件
+                        string cachePath = SaveClipboardImageToCache(bitmapSource);
+                        if (!string.IsNullOrEmpty(cachePath))
+                        {
+                            filesToLoad.Add(cachePath);
+                        }
+                    }
+                }
+                if (filesToLoad.Count > 0)
+                {
+                    await InsertImagesToTabs(filesToLoad.ToArray());
+                }
+            }
+            catch (Exception ex)
+            {
+                // 处理剪切板被占用等异常，静默失败即可
+                System.Diagnostics.Debug.WriteLine("Clipboard Access Error: " + ex.Message);
+            }
         }
         private bool IsVisualAncestorOf<T>(DependencyObject node) where T : DependencyObject
         {

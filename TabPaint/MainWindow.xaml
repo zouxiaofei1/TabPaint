@@ -146,6 +146,10 @@
                             <Image x:Name="RedoIcon" Source="{StaticResource Redo_Image}" Width="16" Height="16"/>
                         </Button>
                     </StackPanel>
+                    <Button DockPanel.Dock="Right" Margin="10,0" ToolTip="设置" Click="OnSettingsClick" Style="{StaticResource RoundedMenuButtonStyle}">
+                        <!-- 这里的图片资源你需要添加一下，或者暂时用文字代替 -->
+                        <Image Source="{StaticResource Settings_Image}" Width="18" Height="18"/>
+                    </Button>
                 </DockPanel>
             </Border>
             <!-- #endregion -->
@@ -376,7 +380,7 @@
                     </Border>
 
                     <!-- 图片标签列表 -->
-                    <ScrollViewer x:Name="FileTabsScroller" Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" PanningMode="HorizontalOnly" PreviewMouseWheel="OnFileTabsWheelScroll" ScrollChanged="OnFileTabsScrollChanged" ManipulationBoundaryFeedback="ScrollViewer_ManipulationBoundaryFeedback">
+                    <ScrollViewer FocusVisualStyle="{x:Null}" x:Name="FileTabsScroller" Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" PanningMode="HorizontalOnly" PreviewMouseWheel="OnFileTabsWheelScroll" ScrollChanged="OnFileTabsScrollChanged" ManipulationBoundaryFeedback="ScrollViewer_ManipulationBoundaryFeedback">
                         <StackPanel Orientation="Horizontal">
                             <Button Name="LeftAddBtn" Style="{StaticResource Win11AddButtonStyle}" Click="OnPrependTabClick" ToolTip="在左侧新建"/>
 
@@ -545,9 +549,20 @@
                         </Grid.ColumnDefinitions>
                     </Grid>
                 </StatusBarItem>
-
+                
                 <StatusBarItem HorizontalAlignment="Right">
                     <StackPanel Orientation="Horizontal">
+                        <ToggleButton HorizontalAlignment="Right" x:Name="ClipboardMonitorToggle" 
+                      Width="24" Height="24" 
+                      Margin="2,0" Padding="0"
+                      ToolTip="监听剪切板 (自动粘贴新图片)"
+                      Style="{StaticResource RoundedMenuToggleButtonStyle}"
+                      Checked="ClipboardMonitorToggle_Click"
+                     >
+                            <Grid>
+                                <Image Source="{StaticResource ClipBoard_Image}" Width="16" Height="16" Opacity="0.8"/>
+                            </Grid>
+                        </ToggleButton>
                         <Button Width="24" Height="24" 
                     Style="{StaticResource RoundedMenuButtonStyle}" 
                     Padding="2,0" 
@@ -591,7 +606,7 @@
             <!-- #endregion -->
 
             <!-- #region 6. 主画布区域 (Canvas) -->
-            <ScrollViewer Name="ScrollContainer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" PreviewMouseWheel="OnMouseWheelZoom" Background="Transparent" PreviewMouseDown="OnScrollContainerMouseDown" PreviewMouseMove="OnScrollContainerMouseMove"  PreviewMouseUp="OnScrollContainerMouseUp" AllowDrop="True" PreviewDragOver="OnCanvasDragOver" PreviewDrop="OnCanvasDrop">
+            <ScrollViewer Name="ScrollContainer" FocusVisualStyle="{x:Null}" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" PreviewMouseWheel="OnMouseWheelZoom" Background="Transparent" PreviewMouseDown="OnScrollContainerMouseDown" PreviewMouseMove="OnScrollContainerMouseMove"  PreviewMouseUp="OnScrollContainerMouseUp" AllowDrop="True" PreviewDragOver="OnCanvasDragOver" PreviewDrop="OnCanvasDrop">
                 <ScrollViewer.ContextMenu>
                     <ContextMenu Style="{StaticResource Win11ContextMenuStyle}">
                         <MenuItem Header="复制" InputGestureText="Ctrl+C" Style="{StaticResource Win11MenuItemStyle}" Click="OnCopyClick"/>

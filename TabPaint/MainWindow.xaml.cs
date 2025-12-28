@@ -46,7 +46,6 @@ namespace TabPaint
             StateChanged += MainWindow_StateChanged;
             Select = new SelectTool();
             this.Deactivated += MainWindow_Deactivated;
-
             // 字体事件
             FontFamilyBox.SelectionChanged += FontSettingChanged;
             FontSizeBox.SelectionChanged += FontSettingChanged;
@@ -56,8 +55,8 @@ namespace TabPaint
             ItalicBtn.Unchecked += FontSettingChanged;
             UnderlineBtn.Checked += FontSettingChanged;
             UnderlineBtn.Unchecked += FontSettingChanged;
-
-            SourceInitialized += OnSourceInitialized;
+            
+            //SourceInitialized += OnSourceInitialized;
 
             ZoomSlider.ValueChanged += (s, e) =>
             {
@@ -191,7 +190,151 @@ namespace TabPaint
                 _canvasResizer.UpdateUI();
             }
         }
-       
+        private async void PasteClipboardAsNewTab()
+        {
+            // 准备一个列表来存放待处理的文件路径
+            List<string> filesToProcess = new List<string>();
+
+            try
+            {
+                // ---------------------------------------------------------
+                // 情况 A: 剪切板包含文件列表 (例如在资源管理器中 Ctrl+C)
+                // ---------------------------------------------------------
+                if (Clipboard.ContainsFileDropList())
+                {
+                    var dropList = Clipboard.GetFileDropList();
+                    if (dropList != null)
+                    {
+                        foreach (string file in dropList)
+                        {
+                            // 复用你现有的 IsImageFile 方法检查是否为支持的图片
+                            if (IsImageFile(file))
+                            {
+                                filesToProcess.Add(file);
+                            }
+                        }
+                    }
+                }
+                // ---------------------------------------------------------
+                // 情况 B: 剪切板包含纯图像数据 (例如截图、网页右键复制图片)
+                // ---------------------------------------------------------
+                else if (Clipboard.ContainsImage())
+                {
+                    var bitmapSource = Clipboard.GetImage();
+                    if (bitmapSource != null)
+                    {
+                        // 生成临时文件路径
+                        string cacheDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "TabPaint_Cache");
+                        if (!System.IO.Directory.Exists(cacheDir)) System.IO.Directory.CreateDirectory(cacheDir);
+
+                        string fileName = $"Paste_{DateTime.Now:yyyyMMdd_HHmmss}.png";
+                        string filePath = System.IO.Path.Combine(cacheDir, fileName);
+
+                        // 保存为本地 PNG
+                        using (var fileStream = new System.IO.FileStream(filePath, System.IO.FileMode.Create))
+                        {
+                            System.Windows.Media.Imaging.BitmapEncoder encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                            encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmapSource));
+                            encoder.Save(fileStream);
+                        }
+
+                        filesToProcess.Add(filePath);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"读取剪切板数据失败: {ex.Message}");
+                return;
+            }
+
+            // 如果没有找到任何有效的图片文件，直接返回
+            if (filesToProcess.Count == 0) return;
+
+            // ---------------------------------------------------------
+            // 核心插入逻辑 (逻辑复用自 OnImageBarDrop)
+            // ---------------------------------------------------------
+
+            // 1. 确定插入位置
+            int insertIndex = _imageFiles.Count; // 默认插到最后
+            int uiInsertIndex = FileTabs.Count;
+
+            // 如果当前有选中的 Tab，且不是新建的空文件，则插在它后面
+            if (_currentTabItem != null && !_currentTabItem.IsNew)
+            {
+                int currentIndexInFiles = _imageFiles.IndexOf(_currentTabItem.FilePath);
+                if (currentIndexInFiles >= 0)
+                {
+                    insertIndex = currentIndexInFiles + 1;
+                }
+
+                int currentIndexInTabs = FileTabs.IndexOf(_currentTabItem);
+                if (currentIndexInTabs >= 0)
+                {
+                    uiInsertIndex = currentIndexInTabs + 1;
+                }
+            }
+
+            FileTabItem firstNewTab = null;
+            int addedCount = 0;
+
+            foreach (string file in filesToProcess)
+            {
+                // 去重检查（可选）
+                if (_imageFiles.Contains(file)) continue;
+
+                // 2. 插入到底层数据源
+                _imageFiles.Insert(insertIndex + addedCount, file);
+
+                // 3. 插入到 UI 列表
+                var newTab = new FileTabItem(file);
+                newTab.IsLoading = true;
+                // 如果是剪切板生成的临时文件，最好标记一下，方便后续处理保存逻辑
+                // if (file.Contains("TabPaint_Cache")) newTab.IsTemp = true; 
+
+                if (uiInsertIndex + addedCount <= FileTabs.Count)
+                {
+                    FileTabs.Insert(uiInsertIndex + addedCount, newTab);
+                }
+                else
+                {
+                    FileTabs.Add(newTab);
+                }
+
+                // 异步加载缩略图
+                _ = newTab.LoadThumbnailAsync(100, 60);
+
+                // 记录第一张新图，用于稍后跳转
+                if (firstNewTab == null) firstNewTab = newTab;
+
+                addedCount++;
+            }
+
+            if (addedCount > 0)
+            {
+                // 更新 Slider 范围
+                ImageFilesCount = _imageFiles.Count;
+                SetPreviewSlider();
+
+                // 4. 自动切换到第一张新加入的图片
+                if (firstNewTab != null)
+                {
+                    // 取消当前选中状态
+                    if (_currentTabItem != null) _currentTabItem.IsSelected = false;
+
+                    // 选中新图
+                    firstNewTab.IsSelected = true;
+                    _currentTabItem = firstNewTab;
+
+                    await OpenImageAndTabs(firstNewTab.FilePath);
+
+                    // 确保新加的图片在视野内
+                    FileTabsScroller.ScrollToHorizontalOffset(FileTabsScroller.HorizontalOffset + 1);
+                }
+            }
+        }
+
+
         private string GetPixelFormatString(System.Windows.Media.PixelFormat format)
         {
             // 简单映射常见格式名
@@ -273,6 +416,98 @@ namespace TabPaint
             }
 
             RequestImageLoad(_imageFiles[_currentImageIndex]);
+        }
+        private string SaveClipboardImageToCache(BitmapSource source)
+        {
+            try
+            {
+                // 确保缓存目录存在 (建议放在 TabPaint 的缓存目录中)
+                string cacheDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Cache", "Clipboard");
+                if (!Directory.Exists(cacheDir)) Directory.CreateDirectory(cacheDir);
+
+                string fileName = $"Paste_{DateTime.Now:yyyyMMdd_HHmmss_fff}.png";
+                string filePath = System.IO.Path.Combine(cacheDir, fileName);
+
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    BitmapEncoder encoder = new PngBitmapEncoder();
+                    encoder.Frames.Add(BitmapFrame.Create(source));
+                    encoder.Save(fileStream);
+                }
+                return filePath;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private async Task InsertImagesToTabs(string[] files)
+        {
+            if (files == null || files.Length == 0) return;
+
+            // 1. 确定插入位置
+            int insertIndex = _imageFiles.Count; // 默认插到最后
+            int uiInsertIndex = FileTabs.Count;
+
+            // 如果当前有选中的 Tab，且不是新建的空文件，则插在它后面
+            if (_currentTabItem != null && !_currentTabItem.IsNew)
+            {
+                int currentIndexInFiles = _imageFiles.IndexOf(_currentTabItem.FilePath);
+                if (currentIndexInFiles >= 0) insertIndex = currentIndexInFiles + 1;
+
+                int currentIndexInTabs = FileTabs.IndexOf(_currentTabItem);
+                if (currentIndexInTabs >= 0) uiInsertIndex = currentIndexInTabs + 1;
+            }
+
+            FileTabItem firstNewTab = null;
+            int addedCount = 0;
+
+            foreach (string file in files)
+            {
+                // 去重检查
+                if (_imageFiles.Contains(file)) continue;
+
+                // 2. 插入到底层数据源 _imageFiles
+                _imageFiles.Insert(insertIndex + addedCount, file);
+
+                // 3. 插入到 UI 列表 FileTabs
+                var newTab = new FileTabItem(file);
+                newTab.IsLoading = true;
+
+                if (uiInsertIndex + addedCount <= FileTabs.Count)
+                    FileTabs.Insert(uiInsertIndex + addedCount, newTab);
+                else
+                    FileTabs.Add(newTab);
+
+                // 异步加载缩略图
+                _ = newTab.LoadThumbnailAsync(100, 60);
+
+                if (firstNewTab == null) firstNewTab = newTab;
+                addedCount++;
+            }
+
+            if (addedCount > 0)
+            {
+                // 更新 Slider 范围
+                ImageFilesCount = _imageFiles.Count;
+                SetPreviewSlider(); // 假设你有这个方法更新 ImageBar Slider
+
+                // 4. 自动切换到第一张新加入的图片
+                if (firstNewTab != null)
+                {
+                    if (_currentTabItem != null) _currentTabItem.IsSelected = false;
+
+                    firstNewTab.IsSelected = true;
+                    _currentTabItem = firstNewTab;
+
+                    // 调用你原本的打开逻辑
+                    await OpenImageAndTabs(firstNewTab.FilePath);
+
+                    // 滚动 ImageBar
+                    FileTabsScroller.ScrollToHorizontalOffset(FileTabsScroller.HorizontalOffset + 1);
+                }
+            }
         }
         public static T FindVisualChild<T>(DependencyObject parent) where T : DependencyObject    // 这是一个通用的辅助方法，用于在可视化树中查找特定类型的子控件
         {

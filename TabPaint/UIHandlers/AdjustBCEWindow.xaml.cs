@@ -1,11 +1,12 @@
 using System;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives; // Thumb
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;           // DispatcherTimer
-using System.Threading.Tasks;
 
 namespace TabPaint
 {
@@ -23,7 +24,11 @@ namespace TabPaint
         public double Brightness => BrightnessSlider.Value;
         public double Contrast => ContrastSlider.Value;
         public double Exposure => ExposureSlider.Value;
-
+        private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+                this.DragMove();
+        }
         public AdjustBCEWindow(WriteableBitmap bitmapForPreview,Image targetImage)
         {
             InitializeComponent();

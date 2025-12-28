@@ -401,6 +401,36 @@ namespace TabPaint
             // 强制 GC
             GC.Collect();
         }
+        private void OnTabOpenFolderClick(object sender, RoutedEventArgs e)
+        {
+            // 获取绑定的 Tab 对象
+            if (sender is MenuItem item && item.Tag is FileTabItem tab)
+            {
+                // 1. 检查路径是否有效（防止对 "未命名" 的新建文件操作）
+                if (string.IsNullOrEmpty(tab.FilePath))
+                {
+                    return;
+                }
+
+                // 2. 再次确认文件是否存在（防止文件已被外部删除）
+                if (!System.IO.File.Exists(tab.FilePath))
+                {
+                    System.Windows.MessageBox.Show("文件已不存在，无法定位文件夹。", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                try
+                {
+                    // 3. 使用 explorer.exe 的 /select 参数来打开文件夹并选中文件
+                    string argument = $"/select, \"{tab.FilePath}\"";
+                    System.Diagnostics.Process.Start("explorer.exe", argument);
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show($"无法打开文件夹: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
 
 
         private void OnFileTabPreviewMouseDown(object sender, MouseButtonEventArgs e)

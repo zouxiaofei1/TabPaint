@@ -4,22 +4,51 @@
     <Style x:Key="RoundedMenuToggleButtonStyle" TargetType="ToggleButton">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="8"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ToggleButton">
-                    <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                    <Border x:Name="mainBorder" 
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="3"  
+                        Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
+
                     <ControlTemplate.Triggers>
+                        <!-- 1. 基础悬停效果 (鼠标移上去变浅紫) -->
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#19000000"/>
+                            <Setter TargetName="mainBorder" Property="Background" Value="#159333EA"/>
+                            <Setter TargetName="mainBorder" Property="BorderBrush" Value="#C084FC"/>
                         </Trigger>
+
+                        <!-- 2. 基础按下效果 (鼠标按住瞬间) -->
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="mainBorder" Property="Background" Value="#309333EA"/>
+                            <Setter TargetName="mainBorder" Property="BorderBrush" Value="#A366F2"/>
+                        </Trigger>
+
+                        <!-- 3. 选中/开启状态 (核心修改：使用 IsChecked 替代 Tag) -->
+                        <!-- 当功能开启时，保持深紫色背景，且优先级高于 MouseOver -->
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#10000000"/>
-                            <!-- 选中时稍微深一点的背景 -->
+                            <Setter TargetName="mainBorder" Property="BorderBrush" Value="#9333EA"/>
+                            <Setter TargetName="mainBorder" Property="Background" Value="#28886CE4"/>
                         </Trigger>
+
+                        <!-- 4. (可选) 既选中又悬停时，稍微加亮一点，提升交互质感 -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsChecked" Value="True"/>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="mainBorder" Property="Background" Value="#409333EA"/>
+                            <Setter TargetName="mainBorder" Property="BorderBrush" Value="#B074FC"/>
+                        </MultiTrigger>
+
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
