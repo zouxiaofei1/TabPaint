@@ -4,9 +4,6 @@ using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
-using System.Windows.Forms;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -50,9 +47,10 @@ namespace TabPaint
             {
                 try
                 {
-                    string fileName = $"{fileId}.cache.png";
+                    string fileName = $"{fileId}.png";
                     string fullPath = System.IO.Path.Combine(_cacheDir, fileName);
 
+                   
                     // 确保目录存在
                     if (!Directory.Exists(_cacheDir)) Directory.CreateDirectory(_cacheDir);
 
@@ -306,6 +304,7 @@ namespace TabPaint
         }
         protected async void OnClosing()
         {
+            this.Hide();
             // 立即保存当前的
             if (_currentTabItem != null && _currentTabItem.IsDirty)
             {
@@ -326,50 +325,98 @@ namespace TabPaint
             SaveSession(); // 更新 JSON
             Close();
         }
+        private int GetNextAvailableUntitledNumber()
+        {
+            // 获取当前正在使用的所有“未命名”编号
+            var usedNumbers = new HashSet<int>();
+
+            foreach (var path in _imageFiles)
+            {
+                a.s(path);
+                if (IsVirtualPath(path))
+                {
+                    // 提取 ::TABPAINT_NEW:: 之后的数字
+                    string numPart = path.Replace(VirtualFilePrefix, "");
+                    if (int.TryParse(numPart, out int num))
+                    {
+                        usedNumbers.Add(num);
+                    }
+                }
+            }
+
+            // 从 1 开始找，第一个不在 HashSet 里的数字就是我们要的
+            int candidate = 1;
+            while (usedNumbers.Contains(candidate))
+            {
+                candidate++;
+            }
+            return candidate;
+        }
 
         private void SaveSession()
         {
             // 1. 准备当前内存中的数据
             var currentSessionTabs = new List<SessionTabInfo>();
 
-            // 获取当前上下文目录 (同之前的逻辑)
+            // 获取当前上下文目录：必须基于真实的物理文件路径
             string currentContextDir = null;
-            if (!string.IsNullOrEmpty(_currentTabItem?.FilePath))
+
+            // 优先从 _imageFiles 列表中找第一个真实的文件路径来确定当前“工作目录”
+            string? firstRealFile = _imageFiles?.FirstOrDefault(f => !string.IsNullOrEmpty(f) && !IsVirtualPath(f));
+
+            if (firstRealFile != null)
             {
-                currentContextDir = System.IO.Path.GetDirectoryName(_currentTabItem.FilePath);
+                try
+                {
+                    currentContextDir = System.IO.Path.GetDirectoryName(firstRealFile);
+                    if (currentContextDir != null)
+                        currentContextDir = System.IO.Path.GetFullPath(currentContextDir);
+                }
+                catch { currentContextDir = null; }
             }
-            else if (_imageFiles != null && _imageFiles.Count > 0)
-            {
-                currentContextDir = System.IO.Path.GetDirectoryName(_imageFiles[0]);
-            }
-            // 规范化路径以便比较
-            if (currentContextDir != null) currentContextDir = System.IO.Path.GetFullPath(currentContextDir);
+
             foreach (var tab in FileTabs)
             {
+                // 只有修改过的或新建的才需要记入 Session
                 if (tab.IsDirty || tab.IsNew)
                 {
-                    string tabDir = currentContextDir;
-                    if (!string.IsNullOrEmpty(tab.FilePath))
+                    string? tabDir = null;
+
+                    // 如果是真实文件，获取它的实际目录
+                    if (!string.IsNullOrEmpty(tab.FilePath) && !IsVirtualPath(tab.FilePath))
                     {
-                        tabDir = System.IO.Path.GetDirectoryName(tab.FilePath);
+                        try
+                        {
+                            tabDir = System.IO.Path.GetDirectoryName(tab.FilePath);
+                            if (tabDir != null) tabDir = System.IO.Path.GetFullPath(tabDir);
+                        }
+                        catch { tabDir = null; }
                     }
-                    if (tabDir != null) tabDir = System.IO.Path.GetFullPath(tabDir);
+
+                    // 如果是新建文件（虚拟路径）或者获取目录失败，
+                    // 将其 WorkDirectory 归类为当前活跃目录，这样它会随当前文件夹一起加载
+                    if (string.IsNullOrEmpty(tabDir))
+                    {
+                        tabDir = currentContextDir;
+                    }
 
                     currentSessionTabs.Add(new SessionTabInfo
                     {
                         Id = tab.Id,
-                        OriginalPath = tab.FilePath,
+                        OriginalPath = tab.FilePath, // 这里可能是 ::TABPAINT_NEW::1
                         BackupPath = tab.BackupPath,
                         IsDirty = tab.IsDirty,
                         IsNew = tab.IsNew,
-                        WorkDirectory = tabDir
+                        WorkDirectory = tabDir,
+                        UntitledNumber = tab.UntitledNumber
                     });
                 }
             }
+
             var finalTabsToSave = new List<SessionTabInfo>();
             finalTabsToSave.AddRange(currentSessionTabs);
 
-            // B. 再去旧文件里捞那些“没加载进来的”
+            // 2. 合并旧 Session 数据
             if (File.Exists(_sessionPath))
             {
                 try
@@ -379,35 +426,38 @@ namespace TabPaint
 
                     if (oldSession != null && oldSession.Tabs != null)
                     {
-                        if (!string.IsNullOrEmpty(currentContextDir))
+                        // 如果当前有确定的目录，则保留其他目录的 Tab
+                        foreach (var oldTab in oldSession.Tabs)
                         {
-                            foreach (var oldTab in oldSession.Tabs)
-                            {
-                                string oldTabDir = oldTab.WorkDirectory;
-                                // 兼容旧数据
-                                if (string.IsNullOrEmpty(oldTabDir) && !string.IsNullOrEmpty(oldTab.OriginalPath))
-                                {
-                                    oldTabDir = System.IO.Path.GetDirectoryName(oldTab.OriginalPath);
-                                }
-                                if (oldTabDir != null) oldTabDir = System.IO.Path.GetFullPath(oldTabDir);
-                                if (oldTabDir != null && !oldTabDir.Equals(currentContextDir, StringComparison.OrdinalIgnoreCase))
-                                {
-                                    // 防止 ID 重复添加 (虽然理论上不同目录 ID 不会撞，但为了保险)
-                                    if (!finalTabsToSave.Any(t => t.Id == oldTab.Id)) finalTabsToSave.Add(oldTab);
+                            string? oldTabDir = oldTab.WorkDirectory;
 
-                                }
+                            // 兼容逻辑：处理旧数据中没有 WorkDirectory 的情况
+                            if (string.IsNullOrEmpty(oldTabDir) && !string.IsNullOrEmpty(oldTab.OriginalPath) && !IsVirtualPath(oldTab.OriginalPath))
+                            {
+                                try { oldTabDir = System.IO.Path.GetDirectoryName(oldTab.OriginalPath); } catch { }
+                            }
+
+                            if (oldTabDir != null)
+                            {
+                                try { oldTabDir = System.IO.Path.GetFullPath(oldTabDir); } catch { }
+                            }
+
+                            bool isDifferentDir = (currentContextDir == null) ||
+                                                 (oldTabDir != null && !oldTabDir.Equals(currentContextDir, StringComparison.OrdinalIgnoreCase));
+
+                            if (isDifferentDir)
+                            {
+                                if (!finalTabsToSave.Any(t => t.Id == oldTab.Id))
+                                    finalTabsToSave.Add(oldTab);
                             }
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    // 如果读取旧 Session 失败（比如格式坏了），那只能忍痛丢弃旧数据，保新数据
                     System.Diagnostics.Debug.WriteLine("Merge session failed: " + ex.Message);
                 }
             }
-
-            // 4. 构建最终对象并保存
             var session = new PaintSession
             {
                 LastViewedFile = _currentTabItem?.FilePath ?? (_imageFiles.Count > _currentImageIndex ? _imageFiles[_currentImageIndex] : null),
@@ -416,15 +466,18 @@ namespace TabPaint
 
             try
             {
-                Directory.CreateDirectory(System.IO.Path.GetDirectoryName(_sessionPath));
+                string? dir = System.IO.Path.GetDirectoryName(_sessionPath);
+                if (dir != null) Directory.CreateDirectory(dir);
+
                 string json = System.Text.Json.JsonSerializer.Serialize(session);
                 File.WriteAllText(_sessionPath, json);
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show("保存会话失败: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine("保存会话失败: " + ex.Message);
             }
         }
+
 
         private void LoadSession()
         {
@@ -473,9 +526,10 @@ namespace TabPaint
                                 IsNew = info.IsNew,
                                 IsDirty = info.IsDirty,
                                 BackupPath = info.BackupPath,
+                                UntitledNumber = info.UntitledNumber,
                                 IsLoading = true,
                             };
-
+                            //s(tab.BackupPath);
                             FileTabs.Add(tab);
 
                             _ = tab.LoadThumbnailAsync(100, 60).ContinueWith(t =>
@@ -516,53 +570,99 @@ namespace TabPaint
 
         private void CreateNewTab(bool switchto = false)
         {
-            var newTab = CreateNewUntitledTab();
-            int insertIndex = FileTabs.Count;
+            // 1. 【核心修改】动态计算下一个可用的编号 (找空位)
+            int availableNumber = GetNextAvailableUntitledNumber();
+            string virtualPath = $"{VirtualFilePrefix}{availableNumber}";
+
+            // 2. 创建 Tab 对象
+            var newTab = new FileTabItem(virtualPath)
+            {
+                IsNew = true,
+                UntitledNumber = availableNumber, // 关键：记录这个编号
+                IsDirty = false
+            };
+
+            newTab.Thumbnail = GenerateBlankThumbnail();
+
+            // 3. 确定插入位置 (保持之前的逻辑)
+            int listInsertIndex = _imageFiles.Count;
             if (_currentTabItem != null)
             {
-                int currentIndex = FileTabs.IndexOf(_currentTabItem);
-                if (currentIndex >= 0)
-                {
-                    insertIndex = currentIndex + 1;
-                }
+                int currentListIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
+                if (currentListIndex >= 0) listInsertIndex = currentListIndex + 1;
             }
-            FileTabs.Insert(insertIndex, newTab);
+
+            // 4. 更新数据源
+            _imageFiles.Insert(listInsertIndex, virtualPath);
+
+            // UI 插入逻辑 (这里为了简单，我们插在当前选中项后面，或者末尾)
+            int uiInsertIndex = _currentTabItem != null ? FileTabs.IndexOf(_currentTabItem) + 1 : FileTabs.Count;
+            FileTabs.Insert(uiInsertIndex, newTab);
+
+            // 5. 切换逻辑
             if (switchto)
             {
-                // 更新选中状态
-                foreach (var tab in FileTabs) tab.IsSelected = false;
-                newTab.IsSelected = true;
-
-                // 切换画布数据
-                Clean_bitmap(1200, 900); // 使用默认尺寸
-                _currentFilePath = string.Empty;
-                _currentFileName = "未命名";
-                _currentTabItem = newTab;
-                UpdateWindowTitle();
-               
-
-                // 重置撤销栈
-                ResetDirtyTracker();
-               // ResetCanvasView();
-                System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-                {
-                    if (FileTabsScroller.ViewportWidth > 0)
-                    {
-                        double itemWidth = 124;
-
-                        // 计算让该元素居中的 Offset
-                        double targetOffset = insertIndex * itemWidth - FileTabsScroller.ViewportWidth / 2 + itemWidth / 2;
-
-                        // 边界检查
-                        if (targetOffset < 0) targetOffset = 0;
-                        double maxOffset = FileTabsScroller.ScrollableWidth;
-                        if (targetOffset > maxOffset) targetOffset = maxOffset;
-
-                        FileTabsScroller.ScrollToHorizontalOffset(targetOffset);
-                    }
-                }, System.Windows.Threading.DispatcherPriority.ContextIdle);
+                SwitchToTab(newTab); // 建议封装一下切换逻辑
             }
+
+            UpdateImageBarSliderState();
         }
+
+        private async void SwitchToTab(FileTabItem tab)
+        {
+            if (_currentTabItem == tab) return;
+            if (!tab.IsNew &&
+                !string.IsNullOrEmpty(_currentFilePath) &&
+                tab.FilePath == _currentFilePath)
+            {
+                return;
+            }
+            if (tab == null) return;
+
+            if (_currentTabItem != null)
+            {
+                _autoSaveTimer.Stop();
+
+                if (_currentTabItem.IsDirty || _currentTabItem.IsNew)
+                {
+                    UpdateTabThumbnail(_currentTabItem);
+                    //TriggerBackgroundBackup();
+                }
+            }
+
+            // 1. UI 选中状态同步
+            foreach (var t in FileTabs) t.IsSelected = (t == tab);
+            //_currentTabItem = tab;
+
+            // 2. 核心变量同步
+            _currentFilePath = tab.FilePath;
+            _currentFileName = tab.FileName;
+            _currentImageIndex = _imageFiles.IndexOf(tab.FilePath);
+           // s(1);
+            // 3. 画布内容切换
+            if (tab.IsNew)
+            {
+                // 如果有备份（缓存），加载备份
+                if (!string.IsNullOrEmpty(tab.BackupPath) && File.Exists(tab.BackupPath))
+                {
+                    await OpenImageAndTabs(tab.BackupPath);
+                }
+                else
+                {
+                    // 纯内存新图
+                    Clean_bitmap(1200, 900);
+                }
+            }
+            else
+            {
+                await OpenImageAndTabs(tab.FilePath);
+            }
+
+            // 4. 状态重置
+            ResetDirtyTracker();
+            UpdateWindowTitle();
+        }
+
         // 放在 MainWindow 内部
         private void ResetCanvasView()
         {
@@ -585,36 +685,108 @@ namespace TabPaint
         {
             try
             {
-                if (tab.IsNew && string.IsNullOrEmpty(tab.FilePath)) return;
 
-                // 情况 B: 这是当前正在编辑的 Tab -> 从画布保存
-                if (tab == _currentTabItem)
+                string oldVirtualPath = null;
+                if (tab.IsNew && IsVirtualPath(tab.FilePath))
                 {
-                    var bmp = GetCurrentCanvasSnapshot();
-                    if (bmp != null)
+                    // 获取当前内存里的图
+                    var bmp = GetHighResImageForTab(tab);
+                    if (bmp == null) return;
+                }
+                if (tab.IsNew && IsVirtualPath(tab.FilePath))
+                {
+                    Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
+                    dlg.FileName = tab.FileName;
+                    dlg.DefaultExt = ".png";
+                    dlg.Filter = "PNG Image (.png)|*.png|JPEG Image (.jpg)|*.jpg|All files (*.*)|*.*";
+
+                    if (dlg.ShowDialog() == true)
                     {
-                        using (var fs = new FileStream(tab.FilePath, FileMode.Create))
+                        string realPath = dlg.FileName;
+                        string oldPath = tab.FilePath; // 记录虚拟路径
+
+                        // 1. 保存文件
+                        var bmp = GetHighResImageForTab(tab);
+                        using (var fs = new FileStream(realPath, FileMode.Create))
                         {
-                            BitmapEncoder encoder = new PngBitmapEncoder(); // 或 Jpeg
+                            BitmapEncoder encoder;
+                            if (realPath.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)) encoder = new JpegBitmapEncoder();
+                            else encoder = new PngBitmapEncoder();
+
                             encoder.Frames.Add(BitmapFrame.Create(bmp));
                             encoder.Save(fs);
                         }
+
+                        // 2. 【核心】更新 _imageFiles 列表（转正）
+                        int index = _imageFiles.IndexOf(oldPath);
+                        if (index >= 0)
+                        {
+                            _imageFiles[index] = realPath;
+                        }
+                        else
+                        {
+                            // 理论上不可能找不到，除非 bug，那就加在最后
+                            _imageFiles.Add(realPath);
+                        }
+
+                        // 3. 更新 Tab 属性
+                        tab.FilePath = realPath; // 这会触发 FileName, DisplayName 更新
+                        tab.IsNew = false;
+                        tab.IsDirty = false;
+
+                        // 如果是当前正在编辑的文件，还要更新窗口标题和内部变量
+                        if (tab == _currentTabItem)
+                        {
+                            _currentFilePath = realPath;
+                            _currentFileName = tab.FileName;
+                            UpdateWindowTitle();
+                        }
+
+                        // 清理缓存
+                        if (File.Exists(tab.BackupPath)) File.Delete(tab.BackupPath);
+                        tab.BackupPath = null;
                     }
                 }
-                else if (File.Exists(tab.BackupPath))
+                else
                 {
-                    // 直接将缓存文件覆盖到原文件，这是最快的
-                    File.Copy(tab.BackupPath, tab.FilePath, true);
-                }
-                tab.IsDirty = false;
-                tab.IsNew = false; // 保存后就不算新文件了
+                    // === 普通文件的保存 (或已经是真实路径的新建文件) ===
 
-                // 删除缓存文件，因为已经同步了
-                if (File.Exists(tab.BackupPath)) File.Delete(tab.BackupPath);
-                tab.BackupPath = null;
+                    // 1. 执行保存
+                    if (tab == _currentTabItem)
+                    {
+                        var bmp = GetCurrentCanvasSnapshot();
+                        if (bmp != null)
+                        {
+                            using (var fs = new FileStream(tab.FilePath, FileMode.Create))
+                            {
+                                BitmapEncoder encoder = new PngBitmapEncoder();
+                                if (tab.FilePath.EndsWith(".jpg") || tab.FilePath.EndsWith(".jpeg"))
+                                    encoder = new JpegBitmapEncoder();
+                                else
+                                    encoder.Frames.Add(BitmapFrame.Create(bmp));
+
+                                encoder.Save(fs);
+                            }
+                        }
+                    }
+                    else if (File.Exists(tab.BackupPath))
+                    {
+                        // 后台标签保存：把缓存直接覆盖过去
+                        File.Copy(tab.BackupPath, tab.FilePath, true);
+                    }
+
+                    // 2. 更新状态
+                    tab.IsDirty = false;
+                    tab.IsNew = false; // 确保标记为非新建
+
+                    // 清理缓存
+                    if (File.Exists(tab.BackupPath)) File.Delete(tab.BackupPath);
+                    tab.BackupPath = null;
+                }
             }
             catch (Exception ex)
             {
+                System.Windows.MessageBox.Show($"保存失败: {ex.Message}");
             }
         }
         public void CheckDirtyState()
@@ -638,6 +810,17 @@ namespace TabPaint
                 encoder.Frames.Add(BitmapFrame.Create(bitmap));
                 encoder.Save(fileStream);
             }
+        }
+        private bool IsVirtualPath(string path)
+        {
+            return !string.IsNullOrEmpty(path) && path.StartsWith(VirtualFilePrefix);
+        }
+
+        // 辅助方法：生成唯一的虚拟路径
+        private string GenerateVirtualPath()
+        {
+            // 格式： ::TABPAINT_NEW::{ID}
+            return $"{VirtualFilePrefix}{_nextUntitledIndex++}";
         }
     }
 }

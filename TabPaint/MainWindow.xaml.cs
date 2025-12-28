@@ -55,7 +55,7 @@ namespace TabPaint
             ItalicBtn.Unchecked += FontSettingChanged;
             UnderlineBtn.Checked += FontSettingChanged;
             UnderlineBtn.Unchecked += FontSettingChanged;
-            
+
             //SourceInitialized += OnSourceInitialized;
 
             ZoomSlider.ValueChanged += (s, e) =>
@@ -224,7 +224,7 @@ namespace TabPaint
         {
             if (BackgroundImage.Source != null)
             {
-              //  s(1);
+                //  s(1);
                 double imgWidth = BackgroundImage.Source.Width;
                 double imgHeight = BackgroundImage.Source.Height;
                 //s(ScrollContainer.ViewportWidth);
@@ -235,7 +235,7 @@ namespace TabPaint
                 double scaleY = viewHeight / imgHeight;
 
                 double fitScale = Math.Min(scaleX, scaleY); // 保持纵横比适应
-                zoomscale = fitScale * addscale*0.98;
+                zoomscale = fitScale * addscale * 0.98;
                 // s(fitScale);
 
                 ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
@@ -627,8 +627,5 @@ namespace TabPaint
         {
             DragOverlay.Visibility = Visibility.Collapsed;
         }
-
-
     }
-
 }

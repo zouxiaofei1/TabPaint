@@ -165,7 +165,7 @@ namespace TabPaint
             public string BackupPath { get; set; }
             public bool IsDirty { get; set; }
             public bool IsNew { get; set; }
-
+            public int UntitledNumber { get; set; }
             // [新增] 记录该标签页所属的工作目录
             public string WorkDirectory { get; set; }
         }
@@ -187,5 +187,18 @@ namespace TabPaint
         }
         private double _originalDpiX = 96.0;
         private double _originalDpiY = 96.0;
+        private bool _isFixedZoom = false;
+        public bool IsFixedZoom
+        {
+            get => _isFixedZoom;
+            set
+            {
+                if (_isFixedZoom != value)
+                {
+                    _isFixedZoom = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
     }
 }

@@ -63,7 +63,7 @@ namespace TabPaint
             }
 
             private void CopyToSystemClipboard(ToolContext ctx)
-            { 
+            {
                 if (_selectionData == null) return;
                 int width = _originalRect.Width > 0 ? _originalRect.Width : _selectionRect.Width;
                 int height = _originalRect.Height > 0 ? _originalRect.Height : _selectionRect.Height;
@@ -277,7 +277,7 @@ namespace TabPaint
 
             public void SelectAll(ToolContext ctx, bool cut = true)
             {
-                if (ctx.Surface?.Bitmap == null)return;
+                if (ctx.Surface?.Bitmap == null) return;
 
                 _selectionRect = new Int32Rect(0, 0,
             ctx.Surface.Bitmap.PixelWidth,
@@ -392,6 +392,7 @@ namespace TabPaint
 
             public override void OnPointerDown(ToolContext ctx, Point viewPos)
             {
+                if (lag > 0) { lag--; return; }
                 if (ctx.Surface.Bitmap == null) return;
                 var px = ctx.ToPixel(viewPos);
 
@@ -441,13 +442,14 @@ namespace TabPaint
                 }
 
                 // 开始新框选
+
                 _selecting = true;
                 _startPixel = px;
                 _selectionRect = new Int32Rect((int)px.X, (int)px.Y, 0, 0);
                 HidePreview(ctx);
                 ctx.ViewElement.CaptureMouse();
-                if (_selectionRect.Width != 0 && _selectionRect.Height != 0)
-                    DrawOverlay(ctx, _selectionRect);
+                //if (_selectionRect.Width != 0 && _selectionRect.Height != 0)
+                //   DrawOverlay(ctx, _selectionRect);
                 ((MainWindow)System.Windows.Application.Current.MainWindow).SetCropButtonState();
             }
 
@@ -572,7 +574,8 @@ namespace TabPaint
                 {
                     _hasLifted = false;
                     _selectionRect = MakeRect(_startPixel, px);
-                    DrawOverlay(ctx, _selectionRect);
+                    if (_selectionRect.Width != 0 && _selectionRect.Height != 0)
+                        DrawOverlay(ctx, _selectionRect);
                 }
 
                 else if (_draggingSelection) // 拖动逻辑
@@ -704,6 +707,7 @@ namespace TabPaint
 
             public override void OnPointerUp(ToolContext ctx, Point viewPos)
             {
+                if (lag > 0) { lag--; return; }
                 ctx.ViewElement.ReleaseMouseCapture();
                 var px = ctx.ToPixel(viewPos);
 

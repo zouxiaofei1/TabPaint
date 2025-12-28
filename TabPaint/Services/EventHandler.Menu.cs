@@ -31,12 +31,17 @@ namespace TabPaint
 
         private void OnSaveClick(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(_currentFilePath))
+            // 如果是空路径 OR 是虚拟路径，都视为"从未保存过"，走另存为
+            if (string.IsNullOrEmpty(_currentFilePath) || IsVirtualPath(_currentFilePath))
             {
-                OnSaveAsClick(sender, e); // 如果没有当前路径，就走另存为
+                OnSaveAsClick(sender, e);
             }
-            else SaveBitmap(_currentFilePath);
+            else
+            {
+                SaveBitmap(_currentFilePath);
+            }
         }
+
 
         private void OnSaveAsClick(object sender, RoutedEventArgs e)
         {
@@ -257,6 +262,7 @@ namespace TabPaint
                 _currentFilePath = dlg.FileName;
                 _currentImageIndex = -1;
                 OpenImageAndTabs(_currentFilePath, true);
+                UpdateImageBarSliderState();
             }
         }
         private void OnColorTempTintSaturationClick(object sender, RoutedEventArgs e)

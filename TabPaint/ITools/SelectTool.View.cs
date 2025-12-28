@@ -285,7 +285,7 @@ namespace TabPaint
                 HidePreview(ctx);
                 _selectionData = null;
                 ctx.IsDirty = true;
-
+                lag = 2;
                 _transformStep = 0;
                 _originalRect = new Int32Rect();
                 ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();

@@ -28,76 +28,77 @@ namespace TabPaint
         private bool _isUpdatingUiFromScroll = false;
         private void UpdateImageBarSliderState()
         {
-            // 1. 基础校验
-            if (_imageFiles == null || _imageFiles.Count == 0 || !IsLoaded)
+            // 使用 Dispatcher 延迟执行，确保 WPF 已经完成了 Tab 控件的增删和布局计算
+            Dispatcher.BeginInvoke(new Action(() =>
             {
-                PreviewSlider.Visibility = Visibility.Collapsed;
-                return;
-            }
-
-            // 2. 获取关键参数
-            double itemWidth = 124.0; // 必须与 XAML 或常量保持一致
-            double viewportWidth = FileTabsScroller.ViewportWidth;
-
-            // 如果 Scroller 还没布局好（比如刚启动），可能宽为0，尝试用父容器宽或默认值
-            if (viewportWidth <= 0 && FileTabsScroller.ActualWidth > 0)
-                viewportWidth = FileTabsScroller.ActualWidth;
-
-            // 3. 计算是否填满屏幕
-            // 理论上需要的总宽度
-            double requiredWidth = _imageFiles.Count * itemWidth;
-
-            // 理论上最左侧可能到达的最大索引 (总数 - 可视数量)
-            double visibleItemsCount = viewportWidth / itemWidth;
-            double maxLeftGlobalIndex = _imageFiles.Count - visibleItemsCount;
-
-            // 4. 判断显隐
-            // 如果需要的宽度 < 视口宽度，说明没铺满，不需要 Slider
-            // 或者 maxLeftGlobalIndex <= 0 也是同样的物理意义
-            if (requiredWidth <= viewportWidth)
-            {
-                if (PreviewSlider.Visibility != Visibility.Collapsed)
+                if (_imageFiles == null || _imageFiles.Count == 0)
                 {
                     PreviewSlider.Visibility = Visibility.Collapsed;
+                    return;
                 }
-            }
-            else
-            {
-                if (PreviewSlider.Visibility != Visibility.Visible)
+                a.s(_imageFiles.Count);
+                double itemWidth = 124.0;
+
+                // --- 改进点 1: 更加鲁棒的宽度获取 ---
+                // ViewportWidth 是滚动区域可见宽度。如果为 0，则尝试获取控件实际宽度，
+                // 如果还为 0，则说明控件还没加载，此时不应该执行隐藏逻辑。
+                double viewportWidth = FileTabsScroller.ViewportWidth;
+                if (viewportWidth <= 0) viewportWidth = FileTabsScroller.ActualWidth;
+
+                // 如果依然无法获取宽度（例如控件在后台或者还没初始化），先跳过，等加载后再试
+                if (viewportWidth <= 0) return;
+
+                // 理论上需要的总宽度
+                double requiredWidth = _imageFiles.Count * itemWidth;
+
+                // --- 改进点 2: 逻辑判断 ---
+                // 只有当“所需宽度”明显大于“可见宽度”时才显示 Slider
+                // 增加 5 像素的缓冲区，防止因浮点数计算误差导致的闪烁
+                bool needSlider = requiredWidth > (viewportWidth + 5);
+
+                if (!needSlider)
                 {
-                    PreviewSlider.Visibility = Visibility.Visible;
-
-                    // 重新设置范围（以防图片数量变化）
-                    PreviewSlider.Maximum = _imageFiles.Count - 1;
-                }
-
-                // 5. 更新 Slider 位置 (可选)
-                // 只有当不仅是显隐切换，还需要校准位置时执行（例如删除了当前选中的图）
-                // 这里复用之前的线性映射逻辑来反向推算 Slider 的位置
-                if (FileTabs.Count > 0)
-                {
-                    var firstTab = FileTabs[0];
-                    int firstTabGlobalIndex = _imageFiles.IndexOf(firstTab.FilePath);
-
-                    if (firstTabGlobalIndex >= 0)
+                    if (PreviewSlider.Visibility != Visibility.Collapsed)
                     {
-                        double currentLeftGlobalIndex = firstTabGlobalIndex + (FileTabsScroller.HorizontalOffset / itemWidth);
-                        double ratio = currentLeftGlobalIndex / maxLeftGlobalIndex;
-                        ratio = Math.Max(0, Math.Min(1, ratio));
+                        PreviewSlider.Visibility = Visibility.Collapsed;
+                    }
+                }
+                else
+                {
+                    // 确保先设置 Maximum，再显示，防止滑块瞬间跳变
+                    PreviewSlider.Maximum = Math.Max(0, _imageFiles.Count - 1);
 
-                        double targetValue = ratio * (_imageFiles.Count - 1);
+                    if (PreviewSlider.Visibility != Visibility.Visible)
+                    {
+                        PreviewSlider.Visibility = Visibility.Visible;
+                    }
 
-                        // 加上 _isUpdatingUiFromScroll 锁，防止触发 ValueChanged 导致死循环
-                        if (!_isSyncingSlider)
+                    // 5. 更新 Slider 位置
+                    if (FileTabs.Count > 0 && !_isSyncingSlider)
+                    {
+                        var firstTab = FileTabs[0];
+                        int firstTabGlobalIndex = _imageFiles.IndexOf(firstTab.FilePath);
+
+                        if (firstTabGlobalIndex >= 0)
                         {
-                            _isUpdatingUiFromScroll = true;
-                            PreviewSlider.Value = targetValue;
-                            _isUpdatingUiFromScroll = false;
+                            double maxLeftGlobalIndex = _imageFiles.Count - (viewportWidth / itemWidth);
+
+                            if (maxLeftGlobalIndex > 0)
+                            {
+                                double currentLeftGlobalIndex = firstTabGlobalIndex + (FileTabsScroller.HorizontalOffset / itemWidth);
+                                double ratio = Math.Max(0, Math.Min(1, currentLeftGlobalIndex / maxLeftGlobalIndex));
+                                double targetValue = ratio * (_imageFiles.Count - 1);
+
+                                _isUpdatingUiFromScroll = true;
+                                PreviewSlider.Value = targetValue;
+                                _isUpdatingUiFromScroll = false;
+                            }
                         }
                     }
                 }
-            }
+            }), System.Windows.Threading.DispatcherPriority.Loaded); // 使用 Loaded 优先级确保布局已就绪
         }
+
         private void OnFileTabsScrollChanged(object sender, ScrollChangedEventArgs e)
         {
             

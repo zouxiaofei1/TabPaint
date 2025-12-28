@@ -183,9 +183,9 @@
     </Style>
 
 
-    <!-- Win11 风格 MenuItem 样式 -->
+    <!-- Win11 风格 MenuItem 样式 (支持勾选) -->
     <Style x:Key="Win11MenuItemStyle" TargetType="MenuItem">
-        <Setter Property="Height" Value="28"/>
+        <Setter Property="Height" Value="32"/>
         <Setter Property="Foreground" Value="#1A1A1A"/>
         <Setter Property="Padding" Value="6,0,6,0"/>
         <Setter Property="Template">
@@ -194,42 +194,71 @@
                     <Border x:Name="Bg" 
                         Background="Transparent" 
                         CornerRadius="4" 
-                        Margin="2,1" 
+                        Margin="4,2" 
                         SnapsToDevicePixels="True">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="30" SharedSizeGroup="IconGroup"/>
+                                <!-- 第一列：放置图标或勾选标记 -->
+                                <ColumnDefinition Width="32" SharedSizeGroup="IconGroup"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto" SharedSizeGroup="ShortcutGroup"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- 图标区域 -->
-                            <ContentPresenter x:Name="Icon" ContentSource="Icon" Margin="5,0" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <!-- 勾选标记层 (默认隐藏) -->
+                            <Viewbox x:Name="CheckMark" 
+         Grid.Column="0" 
+         Width="14" Height="14" 
+         Visibility="Collapsed" 
+         VerticalAlignment="Center" 
+         HorizontalAlignment="Center">
+                                <Path Data="M2,8 L6,12 L14,3" 
+          Stroke="{TemplateBinding Foreground}" 
+          StrokeThickness="2" 
+          StrokeStartLineCap="Round" 
+          StrokeEndLineCap="Round" 
+          StrokeLineJoin="Round"
+          Fill="Transparent"/>
+                            </Viewbox>
+
+                            <!-- 图标内容 (如果有的话) -->
+                            <ContentPresenter x:Name="Icon" 
+                                          Grid.Column="0"
+                                          ContentSource="Icon" 
+                                          Margin="5,0" 
+                                          VerticalAlignment="Center" 
+                                          HorizontalAlignment="Center"/>
 
                             <!-- 文字内容 -->
                             <ContentPresenter Grid.Column="1" 
                                           ContentSource="Header" 
                                           VerticalAlignment="Center" 
-                                          Margin="5,0,20,0"/>
+                                          Margin="8,0,20,0"/>
 
                             <!-- 快捷键提示 -->
                             <TextBlock Grid.Column="2" 
                                    Text="{TemplateBinding InputGestureText}" 
                                    VerticalAlignment="Center" 
                                    Foreground="#808080" 
-                                   Margin="10,0,5,0" 
+                                   Margin="10,0,10,0" 
                                    FontSize="11"/>
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
+                        <!-- 当被勾选时显示勾选标记 -->
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="Icon" Property="Visibility" Value="Collapsed"/>
+                        </Trigger>
+
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Bg" Property="Background" Value="#10000000"/>
-                            <!-- 浅灰悬浮 -->
                         </Trigger>
+
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
+
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

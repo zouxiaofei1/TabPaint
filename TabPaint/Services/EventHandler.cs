@@ -372,7 +372,7 @@ namespace TabPaint
         }
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-           // UpdateImageBarSliderState();
+            UpdateImageBarSliderState();
         }
         private void OnMouseWheelZoom(object sender, MouseWheelEventArgs e)
         {

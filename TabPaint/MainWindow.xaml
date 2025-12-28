@@ -10,6 +10,7 @@
         SizeToContent="Manual"
         AllowsTransparency="True"
         WindowStyle="None"
+        SizeChanged="Window_SizeChanged"
         Background="#01000000">
 
     <Window.Resources>
@@ -22,11 +23,13 @@
         </ResourceDictionary>
     </Window.Resources>
 
-    <Grid Background="Transparent">
+    <Grid Background="Transparent" DragOver="OnGlobalDragOver"
+          Drop="OnGlobalDrop"
+          DragLeave="OnGlobalDragLeave">
         <DockPanel LastChildFill="True">
 
             <!-- #region 1. 自定义标题栏 (TitleBar) -->
-            <Border DockPanel.Dock="Top" Height="28" Background="#50FFFFFF" VerticalAlignment="Top" HorizontalAlignment="Stretch" MouseLeftButtonDown="Border_MouseLeftButtonDown" AllowDrop="True" DragOver="OnTopBarDragOver" Drop="OnTopBarDrop">
+            <Border DockPanel.Dock="Top" Height="28" Background="#50FFFFFF" VerticalAlignment="Top" HorizontalAlignment="Stretch" MouseLeftButtonDown="Border_MouseLeftButtonDown" AllowDrop="True" >
                 <DockPanel LastChildFill="True">
                     <!-- Icon -->
                     <Image x:Name="AppIcon" Source="pack://application:,,,/Resources/TabPaint.ico" Width="20" Height="20" Margin="8,0,8,0"/>
@@ -55,7 +58,7 @@
             <!-- #endregion -->
 
             <!-- #region 2. 菜单栏 (MenuBar) -->
-            <Border DockPanel.Dock="Top" Height="36" Background="Transparent" AllowDrop="True" DragOver="OnTopBarDragOver" Drop="OnTopBarDrop">
+            <Border DockPanel.Dock="Top" Height="36" Background="Transparent" AllowDrop="True" >
                 <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,0">
                     <Menu DockPanel.Dock="Left" Background="Transparent" BorderThickness="0" FontSize="14" Padding="0" Margin="0">
                         <!-- 文件菜单 -->
@@ -155,7 +158,7 @@
             <!-- #endregion -->
 
             <!-- #region 3. 工具栏 (ToolBar) -->
-            <Border DockPanel.Dock="Top" Height="36" Background="Transparent" AllowDrop="True" DragOver="OnTopBarDragOver" Drop="OnTopBarDrop">
+            <Border DockPanel.Dock="Top" Height="36" Background="Transparent" AllowDrop="True">
                 <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,0">
                     <!-- 基础工具 -->
                     <Button Margin="6,0,2,0" Name="PenButton" Click="OnPenClick" Style="{StaticResource RoundedMenuButtonStyle}">
@@ -353,7 +356,7 @@
 
             <!-- #region 4. 图片列表栏 (ImageBar) -->
             <Border DockPanel.Dock="Top" Height="100" Background="Transparent">
-                <Grid Background="Transparent" AllowDrop="True" DragOver="OnImageBarDragOver" Drop="OnImageBarDrop">
+                <Grid Background="Transparent" AllowDrop="True" >
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
@@ -607,12 +610,16 @@
             <!-- #endregion -->
 
             <!-- #region 6. 主画布区域 (Canvas) -->
-            <ScrollViewer Name="ScrollContainer" FocusVisualStyle="{x:Null}" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" PreviewMouseWheel="OnMouseWheelZoom" Background="Transparent" PreviewMouseDown="OnScrollContainerMouseDown" PreviewMouseMove="OnScrollContainerMouseMove"  PreviewMouseUp="OnScrollContainerMouseUp" AllowDrop="True" PreviewDragOver="OnCanvasDragOver" PreviewDrop="OnCanvasDrop">
+            <ScrollViewer Name="ScrollContainer" FocusVisualStyle="{x:Null}" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" PreviewMouseWheel="OnMouseWheelZoom" Background="Transparent" PreviewMouseDown="OnScrollContainerMouseDown" PreviewMouseMove="OnScrollContainerMouseMove"  PreviewMouseUp="OnScrollContainerMouseUp" AllowDrop="True" >
                 <ScrollViewer.ContextMenu>
                     <ContextMenu Style="{StaticResource Win11ContextMenuStyle}">
                         <MenuItem Header="复制" InputGestureText="Ctrl+C" Style="{StaticResource Win11MenuItemStyle}" Click="OnCopyClick"/>
                         <Separator Style="{StaticResource Win11MenuSeparatorStyle}"/>
                         <MenuItem Header="粘贴" InputGestureText="Ctrl+V" Style="{StaticResource Win11MenuItemStyle}" Click="OnPasteClick"/>
+                        <MenuItem Header="固定缩放倍数" 
+                      IsCheckable="True" 
+                      IsChecked="{Binding IsFixedZoom, Mode=TwoWay}" 
+                      Style="{StaticResource Win11MenuItemStyle}"/>
                     </ContextMenu>
                 </ScrollViewer.ContextMenu>
 

@@ -36,21 +36,26 @@ namespace TabPaint
         private CancellationTokenSource _loadImageCts;
         public async Task OpenImageAndTabs(string filePath, bool refresh = false)
         {
-            // ... [之前的代码: 扫描文件夹，备份当前图] ...
-            if (_currentImageIndex == -1) ScanFolderImages(filePath);
+            if (_currentImageIndex == -1 && !IsVirtualPath(filePath))
+            {
+                ScanFolderImages(filePath);
+            }
 
-            // 触发当前图的备份 (这是异步的)
+            // 触发当前图的备份
             TriggerBackgroundBackup();
 
-            // ... [中间的代码: 计算索引，刷新列表] ...
-            // 3. 计算新图片的索引
+            // 2. [适配] 确保 _imageFiles 里有这个虚拟路径 (通常 CreateNewTab 已经加进去了，但为了保险)
+            if (IsVirtualPath(filePath) && !_imageFiles.Contains(filePath))
+            {
+                _imageFiles.Add(filePath);
+            }
+
             int newIndex = _imageFiles.IndexOf(filePath);
             _currentImageIndex = newIndex;
             RefreshTabPageAsync(_currentImageIndex, refresh);
 
             var current = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
 
-            // ... [更新选中状态的代码] ...
             if (current != null)
             {
                 foreach (var tab in FileTabs) tab.IsSelected = false;
@@ -58,33 +63,28 @@ namespace TabPaint
                 _currentTabItem = current;
             }
 
-            // --- 修复开始 ---
+            // --- 智能加载逻辑 ---
             string fileToLoad = filePath;
             bool isFileLoadedFromCache = false;
 
             // 检查是否有缓存
-            if (current != null && current.IsDirty && !string.IsNullOrEmpty(current.BackupPath))
+            // 对于虚拟文件，如果它有 BackupPath (例如从 Session 恢复的)，必须读 BackupPath
+            if (current != null && (current.IsDirty || current.IsNew) && !string.IsNullOrEmpty(current.BackupPath))
             {
-                // 修复点：检查这个 Tab 是否正在进行后台保存
                 if (_activeSaveTasks.TryGetValue(current.Id, out Task? pendingSave))
                 {
-                    // 如果正在保存，等待它完成！
-                    // 这样既避免了文件占用冲突，也避免了读取到写了一半的坏图
                     await pendingSave;
                 }
 
                 if (File.Exists(current.BackupPath))
                 {
+                    //s(current.BackupPath);
                     fileToLoad = current.BackupPath;
                     isFileLoadedFromCache = true;
                 }
             }
-            // --- 修复结束 ---
-
-            // 继续加载
             await LoadImage(fileToLoad);
 
-            // ... [之后的代码: 重置 dirty 状态] ...
             ResetDirtyTracker();
 
             if (isFileLoadedFromCache)
@@ -92,7 +92,14 @@ namespace TabPaint
                 _savedUndoPoint = -1;
                 CheckDirtyState();
             }
+
+            // [适配] 如果是纯新建文件，加载后应该是 Clean 状态，但要确保 UI 状态正确
+            if (IsVirtualPath(filePath) && !isFileLoadedFromCache)
+            {
+                // 纯白纸状态，无需做 Dirty 检查
+            }
         }
+
 
 
 
@@ -162,9 +169,13 @@ namespace TabPaint
         }
         private void ScanFolderImages(string filePath)
         {
-            // 扫描同目录图片文件
+            // 如果是虚拟路径，不执行磁盘扫描（除非你想扫描上次打开的文件夹）
+            if (IsVirtualPath(filePath)) return;
+
             string folder = System.IO.Path.GetDirectoryName(filePath)!;
-            _imageFiles = Directory.GetFiles(folder, "*.*")
+
+            // 1. 获取磁盘上的物理文件
+            var diskFiles = Directory.GetFiles(folder, "*.*")
                 .Where(f => f.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
                             f.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
                             f.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
@@ -176,8 +187,21 @@ namespace TabPaint
                 .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
+            // 2. 获取当前已存在于 FileTabs 中的所有虚拟路径 (::TABPAINT_NEW::...)
+            // 这样可以保证即使切换了文件夹，之前新建的未保存标签依然在列表中
+            var virtualPaths = FileTabs.Where(t => IsVirtualPath(t.FilePath))
+                                       .Select(t => t.FilePath)
+                                       .ToList();
+
+            // 3. 整合：虚拟路径在前，磁盘文件在后（或者根据你的喜好排序）
+            var combinedFiles = new List<string>();
+            combinedFiles.AddRange(virtualPaths);
+            combinedFiles.AddRange(diskFiles);
+
+            _imageFiles = combinedFiles;
             _currentImageIndex = _imageFiles.IndexOf(filePath);
         }
+
 
         private BitmapImage DecodePreviewBitmap(byte[] imageBytes, CancellationToken token)
         {
@@ -373,15 +397,74 @@ namespace TabPaint
         private readonly object _lockObj = new object();
         private async Task LoadImage(string filePath)
         {
-            if (!File.Exists(filePath))
-            {
-                s($"找不到图片文件: {filePath}");
-                return;
-            }
-
+           // a.s(filePath);
             _loadImageCts?.Cancel();
             _loadImageCts = new CancellationTokenSource();
             var token = _loadImageCts.Token;
+
+            if (IsVirtualPath(filePath))
+            {
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    if (token.IsCancellationRequested) return;
+
+                    // 1. 创建默认白色画布 (1200x900)
+                    int width = 1200;
+                    int height = 900;
+                    _bitmap = new WriteableBitmap(width, height, 96.0, 96.0, PixelFormats.Bgra32, null);
+
+                    // 填充白色
+                    byte[] pixels = new byte[width * height * 4];
+                    for (int i = 0; i < pixels.Length; i += 4)
+                    {
+                        pixels[i] = 255;     // B
+                        pixels[i + 1] = 255; // G
+                        pixels[i + 2] = 255; // R
+                        pixels[i + 3] = 255; // A
+                    }
+                    _bitmap.WritePixels(new Int32Rect(0, 0, width, height), pixels, width * 4, 0);
+
+                    // 2. 设置状态
+                    _originalDpiX = 96.0;
+                    _originalDpiY = 96.0;
+                    BackgroundImage.Source = _bitmap;
+
+                    // 查找 Tab 以获取正确的显示名 (如 "未命名 1")
+                    var tab = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
+                    _currentFileName = tab?.FileName ?? "未命名";
+                    _currentFilePath = filePath; // 保持虚拟路径
+
+                    this.CurrentImageFullInfo = "[新建图像] 内存文件";
+
+                    if (_surface == null) _surface = new CanvasSurface(_bitmap);
+                    else _surface.Attach(_bitmap);
+
+                    _undo?.ClearUndo();
+                    _undo?.ClearRedo();
+                    _isEdited = false;
+
+                    _imageSize = $"{width}×{height}像素";
+                    OnPropertyChanged(nameof(ImageSize));
+                    UpdateWindowTitle();
+
+                    if (!IsFixedZoom) FitToWindow(1); // 默认 100% 或 适应窗口
+                    CenterImage();
+                    _canvasResizer.UpdateUI();
+                    SetPreviewSlider();
+                });
+                return;
+            }
+
+            // ==========================================
+            // 分支 B: 处理物理文件 (普通图片 或 缓存文件)
+            // ==========================================
+
+            if (!File.Exists(filePath))
+            {
+                // 只有非虚拟路径不存在时才报错
+                s($"找不到图片文件: {filePath}");
+                return;
+            }
 
             try
             {
@@ -417,7 +500,7 @@ namespace TabPaint
                         UpdateWindowTitle();
 
                         // 立即适配并居中
-                        FitToWindow(1);
+                        if (!IsFixedZoom) FitToWindow(1);
                         CenterImage(); // 或者你更新后的 UpdateImagePosition()
                         BackgroundImage.InvalidateVisual();
                         Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
@@ -443,7 +526,7 @@ namespace TabPaint
                         _currentFileName = System.IO.Path.GetFileName(filePath);
                         _currentFilePath = filePath;
                         UpdateWindowTitle();
-                        FitToWindow();
+                        if (!IsFixedZoom) FitToWindow();
                         CenterImage();
                         BackgroundImage.InvalidateVisual();
                         Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
@@ -514,7 +597,7 @@ namespace TabPaint
                     OnPropertyChanged(nameof(ImageSize));
 
                     // 因为尺寸可能因解码有微小差异，最后再校准一次布局是好习惯
-                    FitToWindow();
+                    if (!IsFixedZoom) FitToWindow();
                     CenterImage();
                     _canvasResizer.UpdateUI();
                 });
@@ -528,5 +611,6 @@ namespace TabPaint
                 Dispatcher.Invoke(() => s($"加载图片失败: {ex.Message}"));
             }
         }
+
     }
 }

@@ -22,20 +22,18 @@ namespace TabPaint
 
         private void LoadTabPageAsync(int centerIndex)
         {
-            // a.s("LoadTabPageAsync", centerIndex); // 调试日志
             if (_imageFiles == null || _imageFiles.Count == 0) return;
 
-            // 1. 确定当前“文件夹视图”的范围
             int start = Math.Max(0, centerIndex - PageSize);
             int end = Math.Min(_imageFiles.Count - 1, centerIndex + PageSize);
             var viewportPaths = new HashSet<string>();
 
-            // 获取中心图片路径（用户明确选中的）
             string centerPath = (centerIndex >= 0 && centerIndex < _imageFiles.Count) ? _imageFiles[centerIndex] : null;
 
             for (int i = start; i <= end; i++) viewportPaths.Add(_imageFiles[i]);
 
-            // 2. 清理阶段：只移除那些 "既不在视野内，又不是脏数据，也不是新文件" 的项
+            // 1. 清理：移除不可见 且 不是脏数据/新数据 的Tab
+            // 注意：如果是虚拟路径的Tab，它肯定是IsNew，所以这里会被保留，这是正确的
             for (int i = FileTabs.Count - 1; i >= 0; i--)
             {
                 var tab = FileTabs[i];
@@ -48,65 +46,66 @@ namespace TabPaint
                 }
             }
 
-            // 3. 添加阶段
+            // 2. 添加/排序
             for (int i = start; i <= end; i++)
             {
                 string path = _imageFiles[i];
 
-                // --- [新增逻辑] ---
-                // 如果该文件在黑名单里，且不是用户当前选中的那张图(centerPath)，则跳过不加载
-                if (_explicitlyClosedFiles.Contains(path) && path != centerPath)
-                {
-                    continue;
-                }
-                // 如果用户强行选中了这张图(centerPath)，说明他反悔了，从黑名单移除
-                if (path == centerPath && _explicitlyClosedFiles.Contains(path))
-                {
-                    _explicitlyClosedFiles.Remove(path);
-                }
-                // ------------------
+                // 过滤黑名单
+                if (_explicitlyClosedFiles.Contains(path) && path != centerPath) continue;
+                if (path == centerPath && _explicitlyClosedFiles.Contains(path)) _explicitlyClosedFiles.Remove(path);
 
                 var existingTab = FileTabs.FirstOrDefault(t => t.FilePath == path);
 
+                // 如果存在，不做处理 (位置调整太复杂，暂时忽略，WPF ObservableCollection 会自动处理绑定)
+                // 如果不存在，需要添加
                 if (existingTab == null)
                 {
-                    // 创建新 Tab
-                    var newTab = new FileTabItem(path);
-                    newTab.IsLoading = true;
-                    _ = newTab.LoadThumbnailAsync(100, 60);
+                    // 【核心修正】：如果是虚拟路径，且当前 FileTabs 里没找到，
+                    // 说明这是一个逻辑错误（虚拟文件肯定在内存里），或者是在 Session Restore 刚开始。
+                    // 无论如何，LoadThumbnailAsync 对虚拟路径会返回 null (因为File.Exists为false)，
+                    // 这会导致显示空白缩略图，这是符合预期的。
 
+                    var newTab = new FileTabItem(path);
+
+                    if (IsVirtualPath(path))
+                    {
+                        newTab.IsNew = true;
+                        // 尝试解析 ID 以恢复 UntitledNumber? 
+                        // 暂时不解析，显示 "未命名" 即可，或者你可以存 Session 时把 Number 存进去
+                        newTab.Thumbnail = GenerateBlankThumbnail();
+                    }
+                    else
+                    {
+                        newTab.IsLoading = true;
+                        _ = newTab.LoadThumbnailAsync(100, 60);
+                    }
+
+                    // 插入排序逻辑
                     int insertIndex = 0;
                     bool inserted = false;
-
                     for (int j = 0; j < FileTabs.Count; j++)
                     {
                         var t = FileTabs[j];
-
-                        // 如果遇到新建文件(IsNew)或视野外的脏文件(不在viewportPaths里)，说明如果不插在这里，后面就都是特殊文件了
-                        bool isSpecial = t.IsNew || (!string.IsNullOrEmpty(t.FilePath) && !viewportPaths.Contains(t.FilePath));
-
-                        if (isSpecial)
-                        {
-                            FileTabs.Insert(j, newTab);
-                            inserted = true;
-                            break;
-                        }
-
-                        // 如果是普通视野文件，按索引比较
+                        // 如果当前遍历到的 FileTab 在 _imageFiles 里的位置，比目标 path 的位置靠后，说明 path 应该插在它前面
                         int tIndex = _imageFiles.IndexOf(t.FilePath);
-                        if (tIndex > i)
+
+                        // 如果 tIndex == -1 (说明这个 Tab 可能刚被删了? 或者异常)，把它往后放
+                        if (tIndex == -1 || tIndex > i)
                         {
                             FileTabs.Insert(j, newTab);
                             inserted = true;
                             break;
                         }
                     }
-
                     if (!inserted) FileTabs.Add(newTab);
-                    UpdateImageBarSliderState();
                 }
             }
+
+            // 不在这里频繁调 UpdateImageBarSliderState，防止递归或卡顿
+            // 由外部 Scroll 事件或 Add/Remove 事件去触发 Slider 更新
         }
+
 
         private async Task RefreshTabPageAsync(int centerIndex, bool refresh = false)
         {
@@ -207,85 +206,56 @@ namespace TabPaint
                 if (result == MessageBoxResult.Yes) SaveSingleTab(item);
             }
 
-            // 记录状态
+            // 记录移除前的位置和状态
             string pathToRemove = item.FilePath;
             int removedUiIndex = FileTabs.IndexOf(item);
             bool wasSelected = item.IsSelected;
 
-            // 2. 从 UI 和数据源移除
+            // 2. 从集合中移除
             FileTabs.Remove(item);
             if (!string.IsNullOrEmpty(pathToRemove) && _imageFiles.Contains(pathToRemove))
             {
                 _imageFiles.Remove(pathToRemove);
             }
 
-            // 3. 基本清理
+            // 3. 清理缓存物理文件
             if (!string.IsNullOrEmpty(item.BackupPath) && File.Exists(item.BackupPath))
             {
                 try { File.Delete(item.BackupPath); } catch { }
             }
 
-            // 4. 如果没有 Tab 了，重置画布
+            // 4. 处理极端情况：没有标签页了
             if (FileTabs.Count == 0)
             {
                 _imageFiles.Clear();
-                ResetToNewCanvas();
-                UpdateImageBarSliderState(); // 刷新显隐
+                ResetToNewCanvas(); // ResetToNewCanvas 内部通常会调用 CreateNewTab 确保至少有一个页
+                UpdateImageBarSliderState();
                 return;
             }
 
-            // 5. 处理选中项切换
+            // 5. 【核心改动】处理选中项切换
             if (wasSelected)
             {
+                // 计算新的选中项：优先选择原来位置的前一个，如果已经是第一个，则选现在的第一个
                 int newIndex = Math.Max(0, Math.Min(removedUiIndex - 1, FileTabs.Count - 1));
-                var newTab = FileTabs[newIndex];
+                var nextTab = FileTabs[newIndex];
 
-                foreach (var t in FileTabs) t.IsSelected = false;
-                newTab.IsSelected = true;
-                _currentTabItem = newTab;
-
-                if (!string.IsNullOrEmpty(newTab.FilePath))
-                    _currentImageIndex = _imageFiles.IndexOf(newTab.FilePath);
-                else
-                    _currentImageIndex = -1;
-
-                // 加载新内容
-                if (newTab.IsNew)
-                {
-                    if (!string.IsNullOrEmpty(newTab.BackupPath) && File.Exists(newTab.BackupPath))
-                        await OpenImageAndTabs(newTab.BackupPath);
-                    else
-                    {
-                        Clean_bitmap(1200, 900);
-                        _currentFilePath = string.Empty;
-                        _currentFileName = "未命名";
-                    }
-                }
-                else
-                {
-                    await OpenImageAndTabs(newTab.FilePath);
-                }
-                ResetDirtyTracker();
+                // 直接调用封装好的切换方法
+                SwitchToTab(nextTab);
             }
             else
             {
-                // 即使没删选中项，也要更新当前选中项在总表里的索引
-                if (_currentTabItem != null && !string.IsNullOrEmpty(_currentTabItem.FilePath))
+                // 如果关闭的不是当前选中的，虽然当前选中项没变，但它在 _imageFiles 里的 Index 可能变了
+                if (_currentTabItem != null)
                 {
                     _currentImageIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
                 }
             }
 
-            // 6. 【核心修复】同步 Slider 状态
-            // 此方法内部会处理 PreviewSlider.Maximum 和 Visibility
+            // 6. UI 状态同步
             UpdateImageBarSliderState();
-
-            // 7. 更新标题
             UpdateWindowTitle();
         }
-
-
-
 
 
         private void InitializeScrollPosition()
@@ -300,13 +270,13 @@ namespace TabPaint
         }
        
         private void MarkAsSaved()
-        {
+        {//仅mark不负责保存!!
             if (_currentTabItem == null) return;
             _savedUndoPoint = _undo.UndoCount;
 
             _currentTabItem.IsDirty = false;
 
-            SaveSession();
+           // SaveSession();
         }
     }
 }

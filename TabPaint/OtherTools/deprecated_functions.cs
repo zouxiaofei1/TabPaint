@@ -633,3 +633,177 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 //    Console.WriteLine($"调用者文件路径: {filePath}");
 //    Console.WriteLine($"调用者行号: {lineNumber}");
 //}
+
+
+//private void OnTopBarDragOver(object sender, System.Windows.DragEventArgs e)
+//{
+//    if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop))
+//    {
+//        e.Effects = System.Windows.DragDropEffects.Move; // 鼠标显示移动样式，暗示切换上下文
+//        e.Handled = true;
+//        ShowDragOverlay("切换工作区", "将清空当前画布并打开新文件夹");
+//    }
+//}
+//private void OnTopBarDragLeave(object sender, System.Windows.DragEventArgs e)
+//{
+//    // 当鼠标离开标题栏范围时，立即隐藏遮罩
+//    var element = sender as UIElement;
+//    var pos = e.GetPosition(element);
+
+//    // 只有当鼠标真的移出了 Border 的边界时，才隐藏遮罩
+//    if (pos.X < 0 || pos.Y < 0 || pos.X > element.RenderSize.Width || pos.Y > element.RenderSize.Height)
+//    {
+//        HideDragOverlay();
+//    }
+//}
+//private async void OnTopBarDrop(object sender, System.Windows.DragEventArgs e)
+//{
+//    HideDragOverlay(); // 隐藏遮罩
+//    if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop))
+//    {
+//        string[] files = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
+//        if (files != null && files.Length > 0)
+//        {
+//            string filePath = files[0];
+//            string ext = System.IO.Path.GetExtension(filePath).ToLower();
+
+//            // 简单的格式检查
+//            if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" ||
+//                ext == ".webp" || ext == ".tif" || ext == ".tiff" || ext == ".gif")
+//            {
+//                // 建议：如果当前有未保存的工作，可以在这里加一个 MessageBox 确认
+//                // MessageBoxResult result = MessageBox.Show("是否清空当前工作区并打开新文件？未保存的修改将丢失。", "切换工作区", MessageBoxButton.YesNo);
+//                // if (result != MessageBoxResult.Yes) return;
+
+//                await SwitchWorkspaceToNewFile(filePath);
+//            }
+//        }
+//        e.Handled = true;
+//    }
+//}
+//private void OnImageBarDragOver(object sender, System.Windows.DragEventArgs e)
+//{
+//    if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop) ||
+//        e.Data.GetDataPresent(System.Windows.DataFormats.Bitmap))
+//    {
+//        e.Effects = System.Windows.DragDropEffects.Copy;
+//        ShowDragOverlay("添加到当前列表", "将图片作为新标签页加入");
+//    }
+//    else
+//    {
+//        e.Effects = System.Windows.DragDropEffects.None;
+//    }
+//    e.Handled = true;
+//}
+//private async void OnImageBarDrop(object sender, System.Windows.DragEventArgs e)
+//{
+//    HideDragOverlay();
+//    if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop))
+//    {
+//        string[] files = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
+//        await OpenFilesAsNewTabs(files);
+//        e.Handled = true;
+//    }
+//}
+
+//private void OnCanvasDragOver(object sender, System.Windows.DragEventArgs e)
+//{
+//    // 1. 内部拖拽逻辑拦截
+//    if (e.Data.GetDataPresent("TabPaintInternalDrag"))
+//    {
+//        e.Effects = System.Windows.DragDropEffects.None;
+//        e.Handled = true;
+//        return;
+//    }
+
+//    // 2. 文件拖入检查
+//    if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop))
+//    {
+//        string[] allFiles = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
+
+//        // 过滤出有效的图片文件路径
+//        var imageFiles = allFiles?.Where(f => IsImageFile(f)).ToArray();
+
+//        if (imageFiles != null && imageFiles.Length > 0)
+//        {
+//            e.Effects = System.Windows.DragDropEffects.Copy;
+
+//            // 根据过滤后的有效图片数量显示不同的提示
+//            if (imageFiles.Length > 1)
+//            {
+//                ShowDragOverlay("打开图片", $"作为 {imageFiles.Length} 个新标签页打开");
+//            }
+//            else
+//            {
+//                ShowDragOverlay("插入图片", "在当前画布中插入图片");
+//            }
+//        }
+//        else
+//        {
+//            // 如果一个图片文件都没有，不允许放下
+//            e.Effects = System.Windows.DragDropEffects.None;
+//            HideDragOverlay(); // 必须调用，防止从有效区移到无效区时遮罩残留
+//        }
+//    }
+//    else
+//    {
+//        e.Effects = System.Windows.DragDropEffects.None;
+//        HideDragOverlay();
+//    }
+
+//    e.Handled = true;
+//}
+
+
+
+
+//private async void OnCanvasDrop(object sender, System.Windows.DragEventArgs e)
+//{
+//    HideDragOverlay();
+//    if (e.Data.GetDataPresent("TabPaintInternalDrag"))
+//    {
+//        e.Handled = true;
+//        return;
+//    }
+
+//    if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop))
+//    {
+//        string[] files = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
+//        if (files != null && files.Length > 0)
+//        {
+//            // --- 核心修改：逻辑分流 ---
+//            if (files.Length > 1)
+//            {
+//                // 如果是多文件，走新建标签页逻辑
+//                await OpenFilesAsNewTabs(files);
+//            }
+//            else
+//            {
+//                // 如果是单文件，走原有的“插入当前画布”逻辑
+//                string filePath = files[0];
+//                try
+//                {
+//                    BitmapImage bitmap = new BitmapImage();
+//                    bitmap.BeginInit();
+//                    bitmap.UriSource = new Uri(filePath);
+//                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+//                    bitmap.EndInit();
+//                    bitmap.Freeze(); // 保持你的建议，加上 Freeze
+
+//                    _router.SetTool(_tools.Select);
+
+//                    if (_tools.Select is SelectTool st)
+//                    {
+//                        st.InsertImageAsSelection(_ctx, bitmap);
+//                    }
+//                }
+//                catch (Exception ex)
+//                {
+//                    System.Windows.MessageBox.Show("无法识别的图片格式: " + ex.Message);
+//                }
+//            }
+//            e.Handled = true;
+//        }
+//    }
+//}
+

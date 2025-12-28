@@ -35,7 +35,7 @@ namespace TabPaint
             private bool _resizing = false;
             private Point _startMouse;
             private double _startW, _startH, _startX, _startY;
-
+            private int lag = 0;
             // 句柄尺寸
             private const double HandleSize = 6;
 

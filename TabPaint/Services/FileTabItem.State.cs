@@ -49,25 +49,39 @@ namespace TabPaint
             {
                 get
                 {
-                    if (!string.IsNullOrEmpty(FilePath))
-                        return System.IO.Path.GetFileName(FilePath);
-                    if (IsNew) // 如果是新建文件，显示 "未命名 X"
+                    // 1. 优先检查是否是虚拟路径
+                    if (!string.IsNullOrEmpty(FilePath) && FilePath.StartsWith("::TABPAINT_NEW::"))
                         return $"未命名 {UntitledNumber}";
-                    return "未命名";
+
+                    // 2. 如果是真实存在的物理路径
+                    if (!string.IsNullOrEmpty(FilePath))
+                    {
+                        try { return System.IO.Path.GetFileName(FilePath); }
+                        catch { return FilePath; } // 防止非法路径字符崩溃
+                    }
+
+                    // 3. 兜底逻辑
+                    return IsNew ? $"未命名 {UntitledNumber}" : "未命名";
                 }
             }
 
-            public string DisplayName// 🔄 修改：DisplayName (不带扩展名) 的显示逻辑同理
+            public string DisplayName
             {
                 get
                 {
-                    if (!string.IsNullOrEmpty(FilePath))
-                        return System.IO.Path.GetFileNameWithoutExtension(FilePath);
-
-                    if (IsNew)
+                    // 1. 优先检查是否是虚拟路径
+                    if (!string.IsNullOrEmpty(FilePath) && FilePath.StartsWith("::TABPAINT_NEW::"))
                         return $"未命名 {UntitledNumber}";
 
-                    return "未命名";
+                    // 2. 如果是真实路径，去掉扩展名显示
+                    if (!string.IsNullOrEmpty(FilePath))
+                    {
+                        try { return System.IO.Path.GetFileNameWithoutExtension(FilePath); }
+                        catch { return FilePath; }
+                    }
+
+                    // 3. 兜底
+                    return IsNew ? $"未命名 {UntitledNumber}" : "未命名";
                 }
             }
             private bool _isSelected;
@@ -193,6 +207,7 @@ namespace TabPaint
         // 存储当前会话中被用户手动关闭的图片路径，防止自动滚动时诈尸
         private HashSet<string> _explicitlyClosedFiles = new HashSet<string>();
         private long _currentCanvasVersion = 0;
+        private const string VirtualFilePrefix = "::TABPAINT_NEW::";
 
         // 上次成功备份时的版本号
         private long _lastBackedUpVersion = -1;

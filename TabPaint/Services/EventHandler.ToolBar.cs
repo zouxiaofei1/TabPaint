@@ -18,42 +18,7 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
-        private void OnTopBarDragOver(object sender, System.Windows.DragEventArgs e)
-        {
-            if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop))
-            {
-                e.Effects = System.Windows.DragDropEffects.Move; // 鼠标显示移动样式，暗示切换上下文
-                e.Handled = true;
-                ShowDragOverlay("切换工作区", "将清空当前画布并打开新文件夹");
-            }
-        }
-
-        private async void OnTopBarDrop(object sender, System.Windows.DragEventArgs e)
-        {
-            HideDragOverlay(); // 隐藏遮罩
-            if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop))
-            {
-                string[] files = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
-                if (files != null && files.Length > 0)
-                {
-                    string filePath = files[0];
-                    string ext = System.IO.Path.GetExtension(filePath).ToLower();
-
-                    // 简单的格式检查
-                    if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" ||
-                        ext == ".webp" || ext == ".tif" || ext == ".tiff" || ext == ".gif")
-                    {
-                        // 建议：如果当前有未保存的工作，可以在这里加一个 MessageBox 确认
-                        // MessageBoxResult result = MessageBox.Show("是否清空当前工作区并打开新文件？未保存的修改将丢失。", "切换工作区", MessageBoxButton.YesNo);
-                        // if (result != MessageBoxResult.Yes) return;
-
-                        await SwitchWorkspaceToNewFile(filePath);
-                    }
-                }
-                e.Handled = true;
-            }
-        }
-
+       
         /// <summary>
         /// 清空当前所有状态，并切换到新文件所在的文件夹上下文
         /// </summary>

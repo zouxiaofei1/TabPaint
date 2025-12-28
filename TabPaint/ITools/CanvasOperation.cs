@@ -175,7 +175,7 @@ namespace TabPaint
             OnPropertyChanged(nameof(ImageSize));
             UpdateWindowTitle();
 
-            FitToWindow();
+            if (!IsFixedZoom) FitToWindow();
             SetBrushStyle(BrushStyle.Round);
         }
         private void ResizeCanvas(int newWidth, int newHeight)
