@@ -19,19 +19,16 @@ namespace TabPaint
         private void OnFileTabCloseClick(object sender, RoutedEventArgs e)
         {
             e.Handled = true;
-
-            if (sender is System.Windows.Controls.Button btn && btn.Tag is FileTabItem item)
+            if (e.OriginalSource is FrameworkElement element && element.Tag is FileTabItem clickedItem)
             {
-                CloseTab(item);
+                CloseTab(clickedItem);
             }
         }
         private async void OnFileTabClick(object sender, RoutedEventArgs e)
-        {
-            if (sender is System.Windows.Controls.Button btn && btn.DataContext is FileTabItem clickedItem)
-            {
-
-
-                SwitchToTab(clickedItem);
+        { 
+            if (e.OriginalSource is FrameworkElement element && element.DataContext is FileTabItem clickedItem)
+                {
+                    SwitchToTab(clickedItem);
             }
         }
 
@@ -51,7 +48,7 @@ namespace TabPaint
         {
             var newTab = CreateNewUntitledTab();
             FileTabs.Insert(0, newTab);
-            FileTabsScroller.ScrollToHorizontalOffset(0);
+            MainImageBar.Scroller.ScrollToHorizontalOffset(0);
             UpdateImageBarSliderState();
         }
 
@@ -125,9 +122,9 @@ namespace TabPaint
         {
             var newTab = CreateNewUntitledTab();
             FileTabs.Add(newTab);
-            if (VisualTreeHelper.GetChildrenCount(FileTabList) > 0)
+            if (VisualTreeHelper.GetChildrenCount(MainImageBar.TabList) > 0)
             {
-                FileTabsScroller.ScrollToRightEnd();
+                MainImageBar.Scroller.ScrollToRightEnd();
             }
             UpdateImageBarSliderState();
         }
@@ -281,9 +278,10 @@ namespace TabPaint
         {
             if (e.ChangedButton == MouseButton.Middle)
             {
-                if (sender is System.Windows.Controls.Button btn && btn.DataContext is FileTabItem item)
+                if (e.OriginalSource is FrameworkElement element && element.DataContext is FileTabItem clickedItem)
+
                 {
-                    CloseTab(item); // 复用已有的关闭逻辑
+                    CloseTab(clickedItem); // 复用已有的关闭逻辑
                     e.Handled = true; // 阻止事件冒泡，防止触发其他点击行为
                 }
                 return;
@@ -491,7 +489,7 @@ namespace TabPaint
                         newTab.IsDirty = true; 
                         UpdateTabThumbnail(fullCachePath); 
                         FileTabs.Insert(uiInsertIndex, newTab);
-                        FileTabsScroller.ScrollToHorizontalOffset(FileTabsScroller.HorizontalOffset + 120);
+                        MainImageBar.Scroller.ScrollToHorizontalOffset(MainImageBar.Scroller.HorizontalOffset + 120);
 
                         hasHandled = true;
                     }

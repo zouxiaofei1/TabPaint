@@ -21,18 +21,18 @@ namespace TabPaint
 
         private void UpdateToolSelectionHighlight()
         {
-            var toolControls = new System.Windows.Controls.Control[] { PickColorButton, EraserButton, SelectButton, FillButton, TextButton, BrushToggle, PenButton, ShapeToggle };
+            var toolControls = new System.Windows.Controls.Control[] { MainToolBar.PickColorButton, MainToolBar.EraserButton, MainToolBar.SelectButton, MainToolBar.FillButton, MainToolBar.TextButton, MainToolBar.BrushToggle, MainToolBar.PenButton, MainToolBar.ShapeToggle };
 
             System.Windows.Controls.Control target = _router.CurrentTool switch
             {
-                EyedropperTool => PickColorButton,
-                FillTool => FillButton,
-                SelectTool => SelectButton,
-                TextTool => TextButton,
-                PenTool when _ctx.PenStyle == BrushStyle.Eraser => EraserButton,
-                PenTool when _ctx.PenStyle == BrushStyle.Pencil => PenButton,
-                PenTool => BrushToggle,
-                ShapeTool => ShapeToggle,
+                EyedropperTool => MainToolBar.PickColorButton,
+                FillTool => MainToolBar.FillButton,
+                SelectTool => MainToolBar.SelectButton,
+                TextTool => MainToolBar.TextButton,
+                PenTool when _ctx.PenStyle == BrushStyle.Eraser => MainToolBar.EraserButton,
+                PenTool when _ctx.PenStyle == BrushStyle.Pencil => MainToolBar.PenButton,
+                PenTool => MainToolBar.BrushToggle,
+                ShapeTool => MainToolBar.ShapeToggle,
                 _ => null
             };
 
@@ -45,8 +45,8 @@ namespace TabPaint
                 ctrl.Tag = isTarget;
                 if (_router.CurrentTool == _tools.Pen && _ctx.PenStyle != BrushStyle.Eraser && _ctx.PenStyle != BrushStyle.Pencil)
                 {
-                    BrushToggle.BorderBrush= PurpleHighlightBrush;
-                    BrushToggle.Background= PurpleBackgroundBrush;
+                    MainToolBar.BrushToggle.BorderBrush= PurpleHighlightBrush;
+                    MainToolBar.BrushToggle.Background= PurpleBackgroundBrush;
                 }
 
                 // 2. 关键：清除之前可能存在的本地颜色赋值，让 Style 重新接管控制权
@@ -55,8 +55,8 @@ namespace TabPaint
             }
                 if (_router.CurrentTool == _tools.Shape)
                 {
-                    ShapeToggle.BorderBrush = PurpleHighlightBrush;
-                    ShapeToggle.Background = PurpleBackgroundBrush;
+                    MainToolBar.ShapeToggle.BorderBrush = PurpleHighlightBrush;
+                MainToolBar.ShapeToggle.Background = PurpleBackgroundBrush;
                 }
         }
         

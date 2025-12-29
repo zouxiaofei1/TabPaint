@@ -146,8 +146,8 @@ namespace TabPaint
         }
         private void EmptyClick(object sender, RoutedEventArgs e)
         {
-            RotateFlipMenuToggle.IsChecked = false;
-            BrushToggle.IsChecked = false;
+            MainToolBar.RotateFlipMenuToggle.IsChecked = false;
+            MainToolBar.BrushToggle.IsChecked = false;
         }
 
         private void InitializeClipboardMonitor()

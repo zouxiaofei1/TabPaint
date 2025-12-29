@@ -58,9 +58,9 @@ namespace TabPaint
 
             //SourceInitialized += OnSourceInitialized;
 
-            ZoomSlider.ValueChanged += (s, e) =>
+            MyStatusBar.ZoomSliderControl.ValueChanged += (s, e) =>
             {
-                UpdateSliderBarValue(ZoomSlider.Value);
+                UpdateSliderBarValue(MyStatusBar.ZoomSliderControl.Value);
             };
 
             // Canvas 事件
@@ -133,7 +133,7 @@ namespace TabPaint
                 if (FileTabs.Count > 0)
                 {
                     // 模拟触发一次滚动检查
-                    OnFileTabsScrollChanged(FileTabsScroller, null);
+                    OnFileTabsScrollChanged(MainImageBar.Scroller, null);
                 }
             }
         }
@@ -214,7 +214,7 @@ namespace TabPaint
                     firstNewTab.IsSelected = true;
                     _currentTabItem = firstNewTab;
                     await OpenImageAndTabs(firstNewTab.FilePath);
-                    FileTabsScroller.ScrollToHorizontalOffset(FileTabsScroller.HorizontalOffset + 1);
+                    MainImageBar.Scroller.ScrollToHorizontalOffset(MainImageBar.Scroller.HorizontalOffset + 1);
                 }
             }
         }
@@ -382,7 +382,7 @@ namespace TabPaint
                     await OpenImageAndTabs(firstNewTab.FilePath);
 
                     // 确保新加的图片在视野内
-                    FileTabsScroller.ScrollToHorizontalOffset(FileTabsScroller.HorizontalOffset + 1);
+                    MainImageBar.Scroller.ScrollToHorizontalOffset(MainImageBar.Scroller.HorizontalOffset + 1);
                 }
             }
         }
@@ -558,7 +558,7 @@ namespace TabPaint
                     await OpenImageAndTabs(firstNewTab.FilePath);
 
                     // 滚动 ImageBar
-                    FileTabsScroller.ScrollToHorizontalOffset(FileTabsScroller.HorizontalOffset + 1);
+                    MainImageBar.Scroller.ScrollToHorizontalOffset(MainImageBar.Scroller.HorizontalOffset + 1);
                 }
             }
         }

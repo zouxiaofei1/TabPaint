@@ -212,7 +212,7 @@ namespace TabPaint
             ResetDirtyTracker();
 
             // 6. 滚动视图归位
-            FileTabsScroller.ScrollToHorizontalOffset(0);
+            MainImageBar.Scroller.ScrollToHorizontalOffset(0);
         }
         private void UpdateTabThumbnail(string path)
         {
@@ -610,6 +610,7 @@ namespace TabPaint
 
         private async void SwitchToTab(FileTabItem tab)
         {
+           
             if (_currentTabItem == tab) return;
             if (!tab.IsNew &&
                 !string.IsNullOrEmpty(_currentFilePath) &&
@@ -617,6 +618,7 @@ namespace TabPaint
             {
                 return;
             }
+           
             if (tab == null) return;
 
             if (_currentTabItem != null)
@@ -626,10 +628,9 @@ namespace TabPaint
                 if (_currentTabItem.IsDirty || _currentTabItem.IsNew)
                 {
                     UpdateTabThumbnail(_currentTabItem);
-                    //TriggerBackgroundBackup();
                 }
             }
-
+            
             // 1. UI 选中状态同步
             foreach (var t in FileTabs) t.IsSelected = (t == tab);
             //_currentTabItem = tab;
@@ -638,8 +639,6 @@ namespace TabPaint
             _currentFilePath = tab.FilePath;
             _currentFileName = tab.FileName;
             _currentImageIndex = _imageFiles.IndexOf(tab.FilePath);
-           // s(1);
-            // 3. 画布内容切换
             if (tab.IsNew)
             {
                 // 如果有备份（缓存），加载备份

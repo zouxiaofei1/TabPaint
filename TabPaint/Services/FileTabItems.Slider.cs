@@ -33,7 +33,7 @@ namespace TabPaint
             {
                 if (_imageFiles == null || _imageFiles.Count == 0)
                 {
-                    PreviewSlider.Visibility = Visibility.Collapsed;
+                    MainImageBar.Slider.Visibility = Visibility.Collapsed;
                     return;
                 }
                 a.s(_imageFiles.Count);
@@ -42,8 +42,8 @@ namespace TabPaint
                 // --- 改进点 1: 更加鲁棒的宽度获取 ---
                 // ViewportWidth 是滚动区域可见宽度。如果为 0，则尝试获取控件实际宽度，
                 // 如果还为 0，则说明控件还没加载，此时不应该执行隐藏逻辑。
-                double viewportWidth = FileTabsScroller.ViewportWidth;
-                if (viewportWidth <= 0) viewportWidth = FileTabsScroller.ActualWidth;
+                double viewportWidth = MainImageBar.Scroller.ViewportWidth;
+                if (viewportWidth <= 0) viewportWidth = MainImageBar.Scroller.ActualWidth;
 
                 // 如果依然无法获取宽度（例如控件在后台或者还没初始化），先跳过，等加载后再试
                 if (viewportWidth <= 0) return;
@@ -58,19 +58,19 @@ namespace TabPaint
 
                 if (!needSlider)
                 {
-                    if (PreviewSlider.Visibility != Visibility.Collapsed)
+                    if (MainImageBar.Slider.Visibility != Visibility.Collapsed)
                     {
-                        PreviewSlider.Visibility = Visibility.Collapsed;
+                        MainImageBar.Slider.Visibility = Visibility.Collapsed;
                     }
                 }
                 else
                 {
                     // 确保先设置 Maximum，再显示，防止滑块瞬间跳变
-                    PreviewSlider.Maximum = Math.Max(0, _imageFiles.Count - 1);
+                    MainImageBar.Slider.Maximum = Math.Max(0, _imageFiles.Count - 1);
 
-                    if (PreviewSlider.Visibility != Visibility.Visible)
+                    if (MainImageBar.Slider.Visibility != Visibility.Visible)
                     {
-                        PreviewSlider.Visibility = Visibility.Visible;
+                        MainImageBar.Slider.Visibility = Visibility.Visible;
                     }
 
                     // 5. 更新 Slider 位置
@@ -85,12 +85,12 @@ namespace TabPaint
 
                             if (maxLeftGlobalIndex > 0)
                             {
-                                double currentLeftGlobalIndex = firstTabGlobalIndex + (FileTabsScroller.HorizontalOffset / itemWidth);
+                                double currentLeftGlobalIndex = firstTabGlobalIndex + (MainImageBar.Scroller.HorizontalOffset / itemWidth);
                                 double ratio = Math.Max(0, Math.Min(1, currentLeftGlobalIndex / maxLeftGlobalIndex));
                                 double targetValue = ratio * (_imageFiles.Count - 1);
 
                                 _isUpdatingUiFromScroll = true;
-                                PreviewSlider.Value = targetValue;
+                                MainImageBar.Slider.Value = targetValue;
                                 _isUpdatingUiFromScroll = false;
                             }
                         }
@@ -109,8 +109,8 @@ namespace TabPaint
             double itemWidth = 124; // 请确保这与 XAML 中 Tab 的实际宽度(包含Margin)一致
          
             // 1. 计算当前视图内可见的 Tab 范围（局部索引）
-            int firstLocalIndex = (int)(FileTabsScroller.HorizontalOffset / itemWidth);
-            int visibleCount = (int)(FileTabsScroller.ViewportWidth / itemWidth) + 2;
+            int firstLocalIndex = (int)(MainImageBar.Scroller.HorizontalOffset / itemWidth);
+            int visibleCount = (int)(MainImageBar.Scroller.ViewportWidth / itemWidth) + 2;
 
             // 2. 【核心修复】使用线性映射实现均匀滚动
             if (!_isSyncingSlider && _imageFiles.Count > 0 && FileTabs.Count > 0)
@@ -120,7 +120,7 @@ namespace TabPaint
                 {
                     // A. 获取基础参数
                     double totalCount = _imageFiles.Count;
-                    double viewportWidth = FileTabsScroller.ViewportWidth;
+                    double viewportWidth = MainImageBar.Scroller.ViewportWidth;
 
                     // 计算当前窗口能完整显示多少张图片 (浮点数，例如能显示 5.5 张)
                     double visibleItemsCount = viewportWidth / itemWidth;
@@ -134,7 +134,7 @@ namespace TabPaint
                     {
                         // 加上当前的物理滚动偏移量 (转换为 item 单位)
                         // currentLeftGlobalIndex 代表：屏幕最左侧的那条像素线，对应的是第几张图
-                        double currentLeftGlobalIndex = firstTabGlobalIndex + (FileTabsScroller.HorizontalOffset / itemWidth);
+                        double currentLeftGlobalIndex = firstTabGlobalIndex + (MainImageBar.Scroller.HorizontalOffset / itemWidth);
 
                         // C. 计算映射比例
                         // 当滚动到底部时，左边缘的最大索引应该是 (总数 - 可视数量)
@@ -153,15 +153,15 @@ namespace TabPaint
                             double targetValue = ratio * (totalCount - 1);
 
                             // 只有变化超过微小阈值才赋值，减少计算抖动
-                            if (Math.Abs(PreviewSlider.Value - targetValue) > 0.05)
+                            if (Math.Abs(MainImageBar.Slider.Value - targetValue) > 0.05)
                             {
-                                PreviewSlider.Value = targetValue;
+                                MainImageBar.Slider.Value = targetValue;
                             }
                         }
                         else
                         {
                             // 图片太少，不足以填满一屏，滑块始终在 0 或根据需求处理
-                            PreviewSlider.Value = 0;
+                            MainImageBar.Slider.Value = 0;
                         }
                     }
                 }
@@ -234,7 +234,7 @@ namespace TabPaint
 
                         if (insertCount > 0)
                         {
-                            FileTabsScroller.ScrollToHorizontalOffset(FileTabsScroller.HorizontalOffset + insertCount * itemWidth);
+                            MainImageBar.Scroller.ScrollToHorizontalOffset(MainImageBar.Scroller.HorizontalOffset + insertCount * itemWidth);
                             needLoadThumbnail = true;
                         }
                     }
@@ -304,9 +304,9 @@ namespace TabPaint
         private void SetPreviewSlider()
         {
             if (_imageFiles == null || _imageFiles.Count == 0) return;
-            PreviewSlider.Minimum = 0;
-            PreviewSlider.Maximum = _imageFiles.Count - 1;
-            PreviewSlider.Value = _currentImageIndex;
+            MainImageBar.Slider.Minimum = 0;
+            MainImageBar.Slider.Maximum = _imageFiles.Count - 1;
+            MainImageBar.Slider.Value = _currentImageIndex;
         }
 
         // 补充定义：在类成员里加一个引用，记录当前是谁

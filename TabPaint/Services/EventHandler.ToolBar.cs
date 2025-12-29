@@ -92,26 +92,26 @@ namespace TabPaint
                     switch (type)
                     {
                         case ShapeTool.ShapeType.Rectangle:
-                            CurrentShapeIcon.Source = (ImageSource)FindResource("Icon_Shape_Rectangle");
+                            MainToolBar.CurrentShapeIcon.Source = (ImageSource)FindResource("Icon_Shape_Rectangle");
                             break;
                         case ShapeTool.ShapeType.Ellipse:
-                            CurrentShapeIcon.Source = (ImageSource)FindResource("Icon_Shape_Ellipse");
+                            MainToolBar.CurrentShapeIcon.Source = (ImageSource)FindResource("Icon_Shape_Ellipse");
                             break;
                         case ShapeTool.ShapeType.Line:
-                            CurrentShapeIcon.Source = (ImageSource)FindResource("Icon_Shape_Line");
+                            MainToolBar.CurrentShapeIcon.Source = (ImageSource)FindResource("Icon_Shape_Line");
                             break;
                         case ShapeTool.ShapeType.Arrow:
-                            CurrentShapeIcon.Source = (ImageSource)FindResource("Icon_Shape_Arrow");
+                            MainToolBar.CurrentShapeIcon.Source = (ImageSource)FindResource("Icon_Shape_Arrow");
                             break;
                         case ShapeTool.ShapeType.RoundedRectangle:
-                            CurrentShapeIcon.Source = (ImageSource)FindResource("Icon_Shape_RoundedRect");
+                            MainToolBar.CurrentShapeIcon.Source = (ImageSource)FindResource("Icon_Shape_RoundedRect");
                             break;
                     }
 
                 }
 
                 // 4. 关闭下拉菜单
-                ShapeToggle.IsChecked = false;
+                MainToolBar.ShapeToggle.IsChecked = false;
             }
         }
 
@@ -137,28 +137,28 @@ namespace TabPaint
         }
         private void OnRotateLeftClick(object sender, RoutedEventArgs e)
         {
-            RotateBitmap(-90); RotateFlipMenuToggle.IsChecked = false;
+            RotateBitmap(-90); MainToolBar.RotateFlipMenuToggle.IsChecked = false;
         }
 
         private void OnRotateRightClick(object sender, RoutedEventArgs e)
         {
-            RotateBitmap(90); RotateFlipMenuToggle.IsChecked = false;
+            RotateBitmap(90); MainToolBar.RotateFlipMenuToggle.IsChecked = false;
         }
 
         private void OnRotate180Click(object sender, RoutedEventArgs e)
         {
-            RotateBitmap(180); RotateFlipMenuToggle.IsChecked = false;
+            RotateBitmap(180); MainToolBar.RotateFlipMenuToggle.IsChecked = false;
         }
 
 
         private void OnFlipVerticalClick(object sender, RoutedEventArgs e)
         {
-            FlipBitmap(flipVertical: true); RotateFlipMenuToggle.IsChecked = false;
+            FlipBitmap(flipVertical: true); MainToolBar.RotateFlipMenuToggle.IsChecked = false;
         }
 
         private void OnFlipHorizontalClick(object sender, RoutedEventArgs e)
         {
-            FlipBitmap(flipVertical: false); RotateFlipMenuToggle.IsChecked = false;
+            FlipBitmap(flipVertical: false); MainToolBar.RotateFlipMenuToggle.IsChecked = false;
         }
         private void FontSettingChanged(object? sender, RoutedEventArgs e)
         {
@@ -261,16 +261,20 @@ namespace TabPaint
             UpdateToolSelectionHighlight();
             SetPenResizeBarVisibility(_ctx.PenStyle != BrushStyle.Pencil);
             // 点击后关闭下拉按钮
-            BrushToggle.IsChecked = false;
+            MainToolBar.BrushToggle.IsChecked = false;
         }
         private void ZoomMenu_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (sender is System.Windows.Controls.ComboBox combo && combo.SelectedItem is ComboBoxItem item && item.Tag != null)
+            var combo = MyStatusBar.ZoomComboBox;
+
+            if (combo != null && combo.SelectedItem is ComboBoxItem item && item.Tag != null)
             {
                 double selectedScale = Convert.ToDouble(item.Tag);
+
+                // 这里的 zoomscale, MinZoom, MaxZoom 应该是 MainWindow 里的变量
                 zoomscale = Math.Clamp(selectedScale, MinZoom, MaxZoom);
                 ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
-                // s(zoomscale);
+
                 UpdateSliderBarValue(zoomscale);
             }
         }

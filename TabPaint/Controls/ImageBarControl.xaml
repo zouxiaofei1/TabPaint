@@ -1,0 +1,203 @@
+﻿<UserControl x:Class="TabPaint.Controls.ImageBarControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:TabPaint.Controls"
+             mc:Ignorable="d" 
+             d:DesignHeight="100" d:DesignWidth="1000">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Resources/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Border Height="100" Background="Transparent">
+        <Grid Background="Transparent" AllowDrop="True">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="24" />
+            </Grid.ColumnDefinitions>
+
+            <!-- 1. 左侧控制按钮 -->
+            <Border Grid.Column="0" Margin="4,0,4,0" VerticalAlignment="Center" BorderBrush="#33999999" BorderThickness="0,0,1,0" Padding="0,0,4,0">
+                <UniformGrid Columns="1" Rows="3" Height="80" Width="28">
+                    <Button ToolTip="保存所有已编辑图片" Click="Internal_OnSaveAllClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
+                        <Path Data="M2,0 L12,0 L14,2 L14,14 L0,14 L0,0 L2,0 M3,12 L11,12 L11,9 L3,9 L3,12 M3,0 L3,5 L9,5 L9,0" Fill="#555" Stretch="Uniform" Width="14" Height="14"/>
+                    </Button>
+                    <Button ToolTip="关闭所有未编辑的图片" Click="Internal_OnClearUneditedClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
+                        <Grid Width="16" Height="16">
+                            <Path Data="M5,2 L13,2 L13,10" Stroke="#777" StrokeThickness="1.5" StrokeEndLineCap="Round"/>
+                            <Path Data="M2,5 L10,5 L10,13 L2,13 Z" Stroke="#444" StrokeThickness="1.5"/>
+                            <Path Data="M4.5,7.5 L7.5,10.5 M4.5,10.5 L7.5,7.5" Stroke="#444" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                        </Grid>
+                    </Button>
+                    <Button ToolTip="放弃所有更改" Click="Internal_OnDiscardAllClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
+                        <Image Source="{StaticResource Reset_Image}" Width="16" Height="16"/>
+                    </Button>
+                </UniformGrid>
+            </Border>
+
+            <!-- 2. 图片标签列表 -->
+            <ScrollViewer FocusVisualStyle="{x:Null}" x:Name="FileTabsScroller" Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" PanningMode="HorizontalOnly" 
+                          PreviewMouseWheel="Internal_OnFileTabsWheelScroll" 
+                          ScrollChanged="Internal_OnFileTabsScrollChanged" 
+                          ManipulationBoundaryFeedback="Internal_ScrollViewer_ManipulationBoundaryFeedback">
+                <StackPanel Orientation="Horizontal">
+                    <!-- 左侧添加按钮 -->
+                    <Button Name="LeftAddBtn" Style="{StaticResource Win11AddButtonStyle}" Click="Internal_OnPrependTabClick" ToolTip="在左侧新建"/>
+
+                    <ItemsControl x:Name="FileTabList" ItemsSource="{Binding FileTabs}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel Orientation="Horizontal" VirtualizationMode="Recycling"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <!-- 标签按钮本体 -->
+                                    <Button Width="120" Height="80" Margin="2" Padding="4" 
+                                            Click="Internal_OnFileTabClick" 
+                                            PreviewMouseDown="Internal_OnFileTabPreviewMouseDown" 
+                                            PreviewMouseMove="Internal_OnFileTabPreviewMouseMove" 
+                                            ToolTip="{Binding FileName}" Tag="{Binding}" AllowDrop="True" 
+                                            Drop="Internal_OnFileTabDrop" 
+                                            DragOver="Internal_OnFileTabReorderDragOver">
+
+                                        <Button.ContextMenu>
+                                            <ContextMenu Style="{StaticResource Win11ContextMenuStyle}">
+                                                <MenuItem Header="复制 (Copy)" Click="Internal_OnTabCopyClick" Tag="{Binding}"/>
+                                                <MenuItem Header="剪切 (Cut)" Click="Internal_OnTabCutClick" Tag="{Binding}"/>
+                                                <MenuItem Header="在此处粘贴 (Paste)" Click="Internal_OnTabPasteClick" Tag="{Binding}"/>
+                                                <MenuItem Header="打开所在文件夹 (OpenFolder)" Click="Internal_OnTabOpenFolderClick" Tag="{Binding}"/>
+                                                <Separator/>
+                                                <MenuItem Header="关闭 (Close)" Click="Internal_OnTabDeleteClick" Tag="{Binding}"/>
+                                                <MenuItem Header="删除文件 (Delete)" Click="Internal_OnTabFileDeleteClick" Foreground="Red" Tag="{Binding}"/>
+                                            </ContextMenu>
+                                        </Button.ContextMenu>
+
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Button.Template>
+
+                                        <StackPanel Orientation="Vertical">
+                                            <Image Source="{Binding Thumbnail}" Width="100" Height="60" Stretch="Uniform" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding DisplayName}" FontSize="12" TextAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Setter Property="BorderBrush" Value="#DDD"/>
+                                                <Setter Property="BorderThickness" Value="1"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#11000000"/>
+                                                    </Trigger>
+                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                        <Setter Property="Background" Value="#CCE6F0FF"/>
+                                                        <Setter Property="BorderBrush" Value="#FF0078D7"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+
+                                    <!-- 状态指示器 (Dirty) -->
+                                    <Ellipse Width="8" Height="8" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="6,6,0,0" IsHitTestVisible="False">
+                                        <Ellipse.Style>
+                                            <Style TargetType="Ellipse">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsDirty}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                        <Setter Property="Fill" Value="#FF5555"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Ellipse.Style>
+                                    </Ellipse>
+
+                                    <!-- 悬浮关闭按钮 -->
+                                    <Button x:Name="CloseBtn" Width="18" Height="18" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,4,0" Background="#CCFFFFFF" BorderThickness="0" 
+                                            Click="Internal_OnFileTabCloseClick" Tag="{Binding}" Visibility="Hidden">
+                                        <Button.Resources>
+                                            <Style TargetType="Border">
+                                                <Setter Property="CornerRadius" Value="9"/>
+                                            </Style>
+                                        </Button.Resources>
+                                        <Path Data="M0,0 L8,8 M8,0 L0,8" Stroke="#666" StrokeThickness="1.5" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                    </Button>
+                                </Grid>
+                                <DataTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="CloseBtn" Property="Visibility" Value="Visible"/>
+                                    </Trigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- 新建按钮 -->
+                    <Button x:Name="NewTabBtn" Style="{StaticResource Win11AddButtonStyle}" Click="Internal_OnNewTabClick" ToolTip="新建画布 (Ctrl+N)"/>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- 3. 预览滑块 -->
+            <Slider Grid.Column="2" x:Name="PreviewSlider" Orientation="Vertical" Minimum="0" Maximum="100" Width="24" Margin="0,4,4,4" IsDirectionReversed="True" IsMoveToPointEnabled="True" 
+                    ValueChanged="Internal_PreviewSlider_ValueChanged"  
+                    PreviewMouseWheel="Internal_Slider_PreviewMouseWheel">
+                <Slider.Template>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid Background="Transparent">
+                            <Border Width="4" CornerRadius="2" Background="#333" Opacity="0.1" HorizontalAlignment="Center"/>
+                            <Track x:Name="PART_Track" Orientation="Vertical">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="Slider.DecreaseLarge" Style="{StaticResource SliderRepeatButtonStyle}"/>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb x:Name="PART_Thumb" Height="16" Width="16" VerticalAlignment="Center">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Grid>
+                                                    <Ellipse Fill="#33000000" Margin="0,2,-1,-2"/>
+                                                    <Ellipse Fill="Purple" Stroke="White" StrokeThickness="2"/>
+                                                </Grid>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="Slider.IncreaseLarge" Style="{StaticResource SliderRepeatButtonStyle}"/>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Slider.Template>
+                <Slider.Resources>
+                    <Style x:Key="SliderRepeatButtonStyle" TargetType="RepeatButton">
+                        <Setter Property="OverridesDefaultStyle" Value="true"/>
+                        <Setter Property="IsTabStop" Value="false"/>
+                        <Setter Property="Focusable" Value="false"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="RepeatButton">
+                                    <Border Background="Transparent"/>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Slider.Resources>
+            </Slider>
+        </Grid>
+    </Border>
+</UserControl>

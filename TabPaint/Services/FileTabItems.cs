@@ -125,7 +125,7 @@ namespace TabPaint
             if (selectedIndex < 0) return;
 
             double itemWidth = 124;
-            double viewportWidth = FileTabsScroller.ViewportWidth;
+            double viewportWidth = MainImageBar.Scroller.ViewportWidth;
 
             // 如果窗口还没加载完，ViewportWidth 可能是 0，这时候滚动没意义且可能报错
             if (viewportWidth <= 0) return;
@@ -159,24 +159,24 @@ namespace TabPaint
             {
                 try
                 {
-                    if (FileTabList == null) return;
-                    var container = FileTabList.ItemContainerGenerator.ContainerFromItem(targetTab) as FrameworkElement;
+                    if (MainImageBar.TabList == null) return;
+                    var container = MainImageBar.TabList.ItemContainerGenerator.ContainerFromItem(targetTab) as FrameworkElement;
 
                     if (container != null)
                     {
-                        var transform = container.TransformToAncestor(FileTabList);
+                        var transform = container.TransformToAncestor(MainImageBar.TabList);
                         var rootPoint = transform.Transform(new Point(0, 0));
 
                         double itemLeft = rootPoint.X;
                         double itemWidth = container.ActualWidth;
-                        double viewportWidth = FileTabsScroller.ViewportWidth;
+                        double viewportWidth = MainImageBar.Scroller.ViewportWidth;
 
                         double centerOffset = (itemLeft + itemWidth / 2) - (viewportWidth / 2);
 
                         if (centerOffset < 0) centerOffset = 0;
-                        if (centerOffset > FileTabsScroller.ScrollableWidth) centerOffset = FileTabsScroller.ScrollableWidth;
+                        if (centerOffset > MainImageBar.Scroller.ScrollableWidth) centerOffset = MainImageBar.Scroller.ScrollableWidth;
 
-                        FileTabsScroller.ScrollToHorizontalOffset(centerOffset);
+                        MainImageBar.Scroller.ScrollToHorizontalOffset(centerOffset);
 
                     }
                 }
@@ -261,11 +261,11 @@ namespace TabPaint
         private void InitializeScrollPosition()
         {
             // 强制刷新一次布局，确保 LeftAddBtn.ActualWidth 能取到值
-            FileTabsScroller.UpdateLayout();
-            double hiddenWidth = LeftAddBtn.ActualWidth + LeftAddBtn.Margin.Left + LeftAddBtn.Margin.Right;
-            if (FileTabsScroller.HorizontalOffset == 0)
+            MainImageBar.Scroller.UpdateLayout();
+            double hiddenWidth = MainImageBar.AddButton.ActualWidth + MainImageBar.AddButton.Margin.Left + MainImageBar.AddButton.Margin.Right;
+            if (MainImageBar.Scroller.HorizontalOffset == 0)
             {
-                FileTabsScroller.ScrollToHorizontalOffset(hiddenWidth);
+                MainImageBar.Scroller.ScrollToHorizontalOffset(hiddenWidth);
             }
         }
        

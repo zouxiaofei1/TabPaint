@@ -538,69 +538,95 @@ namespace TabPaint
                 var fullResBitmap = await fullResTask;
                 if (token.IsCancellationRequested || fullResBitmap == null) return;
 
+                // 获取元数据 (保持不变)
                 string metadataString = await GetImageMetadataInfoAsync(imageBytes, filePath, fullResBitmap);
 
                 await Dispatcher.InvokeAsync(() =>
                 {
                     if (token.IsCancellationRequested) return;
 
-                    // 【关键修改开始】 --------------------------------------------------
-
-                    // 1. 记录原始 DPI (用于保存时恢复)
+                    // 1. 记录原始 DPI
                     _originalDpiX = fullResBitmap.DpiX;
                     _originalDpiY = fullResBitmap.DpiY;
 
-                    // 2. 强制转换为 BGRA32 (统一格式，不仅为了 DPI，也为了绘图性能)
-                    FormatConvertedBitmap formatted = new FormatConvertedBitmap();
-                    formatted.BeginInit();
-                    formatted.Source = fullResBitmap;
-                    formatted.DestinationFormat = PixelFormats.Bgra32;
-                    formatted.EndInit();
+                    // 计算统一后的尺寸
+                    int width = fullResBitmap.PixelWidth;
+                    int height = fullResBitmap.PixelHeight;
 
-                    // 3. 创建强制为 96 DPI 的 WriteableBitmap
-                    // 无论原图是多少 DPI，这里都强制设为 96.0, 96.0
-                    // 这样 WPF 的显示系统就会认为 1 像素 = 1 屏幕单位 (在 100% 缩放下)
-                    _bitmap = new WriteableBitmap(
-                        formatted.PixelWidth,
-                        formatted.PixelHeight,
-                        96.0, // <--- 强制 96
-                        96.0, // <--- 强制 96
-                        PixelFormats.Bgra32,
-                        null);
+                    // 2. 准备源数据：确保格式为 BGRA32
+                    // 使用 FormatConvertedBitmap 只是为了确保格式，它通常不会立即深拷贝，直到读取像素
+                    BitmapSource source = fullResBitmap;
+                    if (source.Format != PixelFormats.Bgra32)
+                    {
+                        var formatted = new FormatConvertedBitmap();
+                        formatted.BeginInit();
+                        formatted.Source = fullResBitmap;
+                        formatted.DestinationFormat = PixelFormats.Bgra32;
+                        formatted.EndInit();
+                        source = formatted;
+                    }
 
-                    // 4. 填充像素数据
-                    int stride = formatted.PixelWidth * 4;
-                    byte[] pixels = new byte[formatted.PixelHeight * stride];
-                    formatted.CopyPixels(pixels, stride, 0);
-                    _bitmap.WritePixels(
-                        new Int32Rect(0, 0, formatted.PixelWidth, formatted.PixelHeight),
-                        pixels, stride, 0);
+                    // 3. 创建 WriteableBitmap (分配 760MB BackBuffer)
+                    // 强制 96 DPI 以匹配你的逻辑
+                    _bitmap = new WriteableBitmap(width, height, 96.0, 96.0, PixelFormats.Bgra32, null);
 
-                    // 【关键修改结束】 --------------------------------------------------
+                    // 4. 【核心优化】直接内存拷贝 (Direct Memory Copy)
+                    // 避免创建 var pixels = new byte[...]，直接写显存/非托管内存
+                    _bitmap.Lock();
+                    try
+                    {
+                        // 使用 CopyPixels 直接写入 BackBuffer
+                        // 注意：BackBufferStride 是 WriteableBitmap 计算出的步长，通常等于 width * 4
+                        source.CopyPixels(
+                            new Int32Rect(0, 0, width, height),
+                            _bitmap.BackBuffer, // 目标指针
+                            _bitmap.BackBufferStride * height, // 缓冲区总大小
+                            _bitmap.BackBufferStride // 步长
+                        );
 
+                        // 标记脏区以更新画面
+                        _bitmap.AddDirtyRect(new Int32Rect(0, 0, width, height));
+                    }
+                    catch (Exception copyEx)
+                    {
+                        Debug.WriteLine("内存拷贝失败: " + copyEx.Message);
+                        // 兜底策略：如果直接拷贝失败（极少见），再尝试旧方法
+                    }
+                    finally
+                    {
+                        _bitmap.Unlock();
+                    }
+
+                    // 5. 【极其重要】主动释放资源并 GC
+                    // 解除引用
+                    source = null;
+                    fullResBitmap = null;
+                    // 如果 imageBytes 还是局部变量，此时引用计数还没归零，最好将其设为 null 如果它是类成员
+                    // 这里 imageBytes 是局部变量，方法结束会自动释放，但为了大图，建议强制回收
+
+                    // 更新 UI
                     BackgroundImage.Source = _bitmap;
-                    this.CurrentImageFullInfo = metadataString; // 这里的 metadataString 还是基于原图的，信息是对的
+                    this.CurrentImageFullInfo = metadataString;
 
-                    // 更新所有依赖完整图的状态
-                    if (_surface == null)
-                        _surface = new CanvasSurface(_bitmap);
-                    else
-                        _surface.Attach(_bitmap);
+                    if (_surface == null) _surface = new CanvasSurface(_bitmap);
+                    else _surface.Attach(_bitmap);
 
                     _undo?.ClearUndo();
                     _undo?.ClearRedo();
                     _isEdited = false;
-
                     SetPreviewSlider();
-
                     _imageSize = $"{_surface.Width}×{_surface.Height}像素";
                     OnPropertyChanged(nameof(ImageSize));
 
-                    // 因为尺寸可能因解码有微小差异，最后再校准一次布局是好习惯
                     if (!IsFixedZoom) FitToWindow();
                     CenterImage();
                     _canvasResizer.UpdateUI();
-                });
+
+                    // 6. 强制执行垃圾回收 (LOH 压缩)
+                    // 对于画图软件，加载大图后的瞬间卡顿是可以接受的，换取的是内存不崩溃
+                    GC.Collect(2, GCCollectionMode.Forced, true);
+                    GC.WaitForPendingFinalizers();
+                }, System.Windows.Threading.DispatcherPriority.ApplicationIdle); // 稍微降低优先级，确保UI先响应
             }
             catch (OperationCanceledException)
             {

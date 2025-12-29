@@ -83,7 +83,7 @@ namespace TabPaint
             if (_currentTabItem == null)
             {
                 this.Title = $"TabPaint {_programVersion}";
-                if (TitleTextBlock != null) TitleTextBlock.Text = this.Title;
+                if (AppTitleBar.TitleTextControl != null) AppTitleBar.TitleTextControl.Text = this.Title;
                 return;
             }
 
@@ -118,7 +118,7 @@ namespace TabPaint
 
             // 5. 更新 UI
             this.Title = newTitle;
-            if (TitleTextBlock != null) TitleTextBlock.Text = newTitle;
+            if (AppTitleBar.TitleTextControl != null) AppTitleBar.TitleTextControl.Text = newTitle;
         }
 
 
@@ -142,7 +142,7 @@ namespace TabPaint
         }
         private void SetRestoreIcon()
         {
-            MaxRestoreButton.Content = new Image
+            AppTitleBar.MaxBtn.Content = new Image
             {
                 Source = (DrawingImage)FindResource("Restore_Image"),
                 Width = 12,
@@ -151,7 +151,7 @@ namespace TabPaint
         }
         private void SetMaximizeIcon()
         {
-            MaxRestoreButton.Content = new Viewbox
+            AppTitleBar.MaxBtn.Content = new Viewbox
             {
                 Width = 10,
                 Height = 10,
@@ -168,8 +168,8 @@ namespace TabPaint
         {
 
             // 假设你的两个颜色按钮在 XAML 里设置了 Name="ColorBtn1" 和 Name="ColorBtn2"
-            ColorBtn1.Tag = !useSecondColor ? "True" : "False"; // 如果不是色2，那就是色1选中
-            ColorBtn2.Tag = useSecondColor ? "True" : "False";
+            MainToolBar.ColorBtn1.Tag = !useSecondColor ? "True" : "False"; // 如果不是色2，那就是色1选中
+            MainToolBar.ColorBtn2.Tag = useSecondColor ? "True" : "False";
         }
 
         protected override void OnSourceInitialized(EventArgs e)
@@ -196,14 +196,14 @@ namespace TabPaint
 
         public void SetUndoRedoButtonState()
         {
-            UpdateBrushAndButton(UndoButton, UndoIcon, _undo.CanUndo);
-            UpdateBrushAndButton(RedoButton, RedoIcon, _undo.CanRedo);
+            UpdateBrushAndButton(MainMenu.BtnUndo, MainMenu.IconUndo, _undo.CanUndo);
+            UpdateBrushAndButton(MainMenu.BtnRedo, MainMenu.IconRedo, _undo.CanRedo);
 
         }
 
         public void SetCropButtonState()
         {
-            UpdateBrushAndButton(CutImage, CutImageIcon, _tools.Select is SelectTool st && _ctx.SelectionOverlay.Visibility != Visibility.Collapsed);
+            UpdateBrushAndButton(MainToolBar.CutImage, MainToolBar.CutImageIcon, _tools.Select is SelectTool st && _ctx.SelectionOverlay.Visibility != Visibility.Collapsed);
         }
 
         private void UpdateBrushAndButton(System.Windows.Controls.Button button, Image image, bool isEnabled)
@@ -342,9 +342,9 @@ namespace TabPaint
         }
         private void UpdateSliderBarValue(double newScale)
         {
-            ZoomSlider.Value = newScale;
+            MyStatusBar.ZoomSliderControl.Value = newScale;
             ZoomLevel = newScale.ToString("P0");
-            ZoomMenu.Text = newScale.ToString("P0");
+            MyStatusBar.ZoomComboBox.Text = newScale.ToString("P0");
         }
     }
 }
