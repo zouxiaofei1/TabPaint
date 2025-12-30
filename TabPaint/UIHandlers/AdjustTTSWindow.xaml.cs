@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Windows;
-using System.Windows.Input; // 必须引用，用于 MouseButtonEventArgs
-using System.Windows.Controls.Primitives; // 必须引用，用于 DragStartedEventArgs
+using System.Windows.Input;
+using System.Windows.Controls.Primitives;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions; // 需要引用正则
 
 namespace TabPaint
 {
@@ -16,7 +18,6 @@ namespace TabPaint
         // 公开最终结果供主窗口获取
         public WriteableBitmap FinalBitmap { get; private set; }
 
-        // 获取当前滑块值
         public double Temperature => TemperatureSlider.Value;
         public double Tint => TintSlider.Value;
         public double Saturation => SaturationSlider.Value;
@@ -24,48 +25,22 @@ namespace TabPaint
         public AdjustTTSWindow(WriteableBitmap bitmapForPreview)
         {
             InitializeComponent();
-
-            // 1. 保存原始图像副本用于重置
             _originalBitmap = bitmapForPreview.Clone();
-
-            // 2. 持有主窗口传入的引用用于实时修改
             _previewBitmap = bitmapForPreview;
         }
 
-        // --- 修复 CS1061 错误的关键事件处理程序 ---
-
-        /// <summary>
-        /// 标题栏鼠标按下事件，用于拖拽窗口
-        /// </summary>
         private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Left)
-            {
-                this.DragMove();
-            }
+            if (e.ChangedButton == MouseButton.Left) this.DragMove();
         }
 
-        /// <summary>
-        /// 滑块开始拖拽 (占位符，可用于暂停重绘以提高性能)
-        /// </summary>
-        private void Slider_DragStarted(object sender, DragStartedEventArgs e)
-        {
-            // 如果算法很慢，可以在这里设置一个标志位暂停实时预览
-        }
+        private void Slider_DragStarted(object sender, DragStartedEventArgs e) { }
 
-        /// <summary>
-        /// 滑块拖拽结束 (确保最后一次更新是准确的)
-        /// </summary>
         private void Slider_DragCompleted(object sender, DragCompletedEventArgs e)
         {
             ApplyPreview();
         }
 
-        // ---------------------------------------------
-
-        /// <summary>
-        /// 滑块数值改变时触发实时预览
-        /// </summary>
         private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (this.IsLoaded)
@@ -74,22 +49,72 @@ namespace TabPaint
             }
         }
 
+        // --- 新增：数字输入验证 ---
+        private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
+        {
+            // 仅允许输入数字和负号
+            Regex regex = new Regex("[^0-9-]+");
+            e.Handled = regex.IsMatch(e.Text);
+        }
+
+        // --- 新增：回车键确认输入 ---
+        // --- 1. 输入字符过滤 (防止输入字母等非法字符) ---
+
+
+        // --- 2. 文本变化实时更新 (解决输入不立即生效问题) ---
+        private void Input_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+            if (textBox == null) return;
+
+            // 利用 Tag 属性获取对应的 Slider 控件
+            Slider targetSlider = textBox.Tag as Slider;
+            if (targetSlider == null) return;
+
+            string input = textBox.Text;
+
+            // 情况A：输入为空或只有负号，不进行数值更新，也不报错
+            if (string.IsNullOrEmpty(input) || input == "-")
+                return;
+
+            // 情况B：尝试解析数值
+            if (double.TryParse(input, out double result))
+            {
+                // 限制数值范围 (防止输入 999 导致崩溃或无效)
+                if (result > targetSlider.Maximum) result = targetSlider.Maximum;
+                if (result < targetSlider.Minimum) result = targetSlider.Minimum;
+
+                // 只有当数值真的改变时才赋值，避免光标跳动问题
+                if (Math.Abs(targetSlider.Value - result) > 0.01)
+                {
+                    targetSlider.Value = result;
+                    // Slider.Value 的改变会自动触发 Slider_ValueChanged -> ApplyPreview
+                }
+            }
+        }
+
+
+        // --- 新增：重置功能 ---
+        private void Reset_Click(object sender, RoutedEventArgs e)
+        {
+            // 归零，由于绑定了 Slider_ValueChanged，会自动触发重绘
+            TemperatureSlider.Value = 0;
+            TintSlider.Value = 0;
+            SaturationSlider.Value = 0;
+        }
+
         private void ApplyPreview()
         {
             if (_originalBitmap == null || _previewBitmap == null) return;
 
-            // 1. 从原始副本重置像素数据 (也就是"撤销"之前的修改，基于原始图重新计算)
+            // 1. 还原
             int stride = _originalBitmap.BackBufferStride;
             int byteCount = _originalBitmap.PixelHeight * stride;
-
-            // 注意：频繁分配大数组可能会有GC压力，生产环境可考虑复用buffer
             byte[] pixelData = new byte[byteCount];
             _originalBitmap.CopyPixels(pixelData, stride, 0);
-
-            // 将原始数据写回预览图
             _previewBitmap.WritePixels(new Int32Rect(0, 0, _originalBitmap.PixelWidth, _originalBitmap.PixelHeight), pixelData, stride, 0);
 
-            // 2. 应用新的调整参数
+            // 2. 应用
             AdjustImage(_previewBitmap, Temperature, Tint, Saturation);
         }
 
@@ -102,7 +127,7 @@ namespace TabPaint
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
-            // 点击取消时，必须将图片恢复原状
+            // 还原到初始状态
             if (_originalBitmap != null && _previewBitmap != null)
             {
                 int stride = _originalBitmap.BackBufferStride;
@@ -111,23 +136,14 @@ namespace TabPaint
                 _originalBitmap.CopyPixels(pixelData, stride, 0);
                 _previewBitmap.WritePixels(new Int32Rect(0, 0, _originalBitmap.PixelWidth, _originalBitmap.PixelHeight), pixelData, stride, 0);
             }
-
             DialogResult = false;
             Close();
         }
 
-        /// <summary>
-        /// 核心调整函数：色温、色调、饱和度 (高性能优化版)
-        /// 需要在项目属性中开启 "允许不安全代码 (Allow unsafe code)"
-        /// </summary>
         private void AdjustImage(WriteableBitmap bmp, double temperature, double tint, double saturation)
         {
-            // 1. 预计算调整因子
-            // 色温: -100 (暖) to 100 (冷)。
             double tempAdj = temperature / 2.0;
-            // 色调: -100 (绿) to 100 (品红)。
             double tintAdj = tint / 2.0;
-            // 饱和度: 映射到 0.0 to 2.0 的乘数。
             double satAdj = (saturation + 100.0) / 100.0;
 
             bmp.Lock();
@@ -138,40 +154,27 @@ namespace TabPaint
                 int height = bmp.PixelHeight;
                 int width = bmp.PixelWidth;
 
-                // 2. 使用并行处理加速
                 Parallel.For(0, height, y =>
                 {
                     byte* row = basePtr + y * stride;
                     for (int x = 0; x < width; x++)
                     {
-                        // 假设格式为 BGRA 或 BGR
                         byte b = row[x * 4];
                         byte g = row[x * 4 + 1];
                         byte r = row[x * 4 + 2];
 
-                        // --- 步骤 A: 调整色温和色调 ---
-                        // 色温: 暖色加红，冷色加蓝 (减红)
                         double nr = r + tempAdj;
-                        double ng = g;
+                        double ng = g + tintAdj;
                         double nb = b - tempAdj;
 
-                        // 色调: 绿色加绿，品红减绿 (简化算法)
-                        // 通常 Tint 是调整 G 轴
-                        ng += tintAdj;
-
-                        // --- 步骤 B: 调整饱和度 ---
                         if (saturation != 0)
                         {
-                            // 计算亮度 (Rec.601 luma)
                             double luminance = 0.299 * nr + 0.587 * ng + 0.114 * nb;
-
-                            // 线性插值: newColor = luminance + saturation * (oldColor - luminance)
                             nr = luminance + satAdj * (nr - luminance);
                             ng = luminance + satAdj * (ng - luminance);
                             nb = luminance + satAdj * (nb - luminance);
                         }
 
-                        // --- 步骤 C: 限制范围 [0, 255] ---
                         row[x * 4 + 2] = (byte)(nr < 0 ? 0 : (nr > 255 ? 255 : nr));
                         row[x * 4 + 1] = (byte)(ng < 0 ? 0 : (ng > 255 ? 255 : ng));
                         row[x * 4] = (byte)(nb < 0 ? 0 : (nb > 255 ? 255 : nb));

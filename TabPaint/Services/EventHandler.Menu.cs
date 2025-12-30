@@ -146,7 +146,8 @@ namespace TabPaint
                 int byteCount = adjustedBitmap.PixelHeight * stride;
                 byte[] pixelData = new byte[byteCount];
                 adjustedBitmap.CopyPixels(pixelData, stride, 0);
-                _bitmap.WritePixels(fullRect, pixelData, stride, 0);
+                _bitmap.WritePixels(fullRect, pixelData, stride, 0); 
+                CheckDirtyState();
                 SetUndoRedoButtonState();
             }
             else
@@ -270,7 +271,10 @@ namespace TabPaint
 
 
             if (dialog.ShowDialog() == true) // 更新撤销/重做按钮的状态
+            {
                 SetUndoRedoButtonState();
+                CheckDirtyState();
+            }
             else// 用户点击了 "取消"
             {
                 _undo.Undo();
@@ -284,6 +288,7 @@ namespace TabPaint
             if (_bitmap == null) return;  // 1. 检查图像是否存在
             _undo.PushFullImageUndo();
             ConvertToBlackAndWhite(_bitmap);
+            CheckDirtyState();
             SetUndoRedoButtonState();
         }
         private void OnResizeCanvasClick(object sender, RoutedEventArgs e)
@@ -299,7 +304,9 @@ namespace TabPaint
                 // 3. 如果用户点击了“确定”，获取新尺寸并调用缩放方法
                 int newWidth = dialog.ImageWidth;
                 int newHeight = dialog.ImageHeight;
+
                 ResizeCanvas(newWidth, newHeight);
+                CheckDirtyState();
             }
         }
 

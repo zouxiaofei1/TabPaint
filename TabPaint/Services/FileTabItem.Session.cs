@@ -658,10 +658,7 @@ namespace TabPaint
                     UpdateTabThumbnail(_currentTabItem);
                 }
             }
-            if (_router.CurrentTool is SelectTool selTool && selTool._selectionData != null)
-            {
-                selTool.GiveUpSelection(this._ctx);
-            }
+            _router.CleanUpSelectionandShape();
             // 1. UI 选中状态同步
             foreach (var t in FileTabs) t.IsSelected = (t == tab);
             //_currentTabItem = tab;

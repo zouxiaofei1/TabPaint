@@ -502,10 +502,7 @@ namespace TabPaint
         private void ShowNextImage()
         {
             if (_imageFiles.Count == 0 || _currentImageIndex < 0) return;
-            if (_router.CurrentTool is SelectTool selTool && selTool._selectionData != null)
-            {
-                selTool.GiveUpSelection(this._ctx);
-            }
+            _router.CleanUpSelectionandShape();
             _currentImageIndex++;
             if (_currentImageIndex >= _imageFiles.Count)
             {
@@ -519,10 +516,7 @@ namespace TabPaint
         private void ShowPrevImage()
         {
             if (_imageFiles.Count == 0 || _currentImageIndex < 0) return;
-            if (_router.CurrentTool is SelectTool selTool && selTool._selectionData != null)
-            {
-                selTool.GiveUpSelection(this._ctx);
-            }
+           _router.CleanUpSelectionandShape();
             // 自动保存已编辑图片
             if (_isEdited && !string.IsNullOrEmpty(_currentFilePath))
             {

@@ -220,6 +220,7 @@ namespace TabPaint
                 && menuItem.Tag is string tagString
                 && Enum.TryParse(tagString, out BrushStyle style))
             {
+               
                 _router.SetTool(_tools.Pen);
                 
                 _ctx.PenStyle = style;

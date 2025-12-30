@@ -22,12 +22,13 @@ namespace TabPaint
                 ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
                 // 清空状态
                 _originalRect = new Int32Rect();
+                _selectionRect = new Int32Rect();
                 _selecting = false;
                 _draggingSelection = false;
                 _resizing = false;
                 _currentAnchor = ResizeAnchor.None;
                 _selectionData = null;
-              
+                lag = 0;
             }
             // 在 SelectTool 类内部
             public void RefreshOverlay(ToolContext ctx)
@@ -42,7 +43,7 @@ namespace TabPaint
 
             private void DrawOverlay(ToolContext ctx, Int32Rect rect)
             {
-                //return;
+              
                 double invScale = 1 / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale;
                 var overlay = ctx.SelectionOverlay;
                 overlay.Children.Clear();
@@ -76,7 +77,7 @@ namespace TabPaint
                     RenderOptions.SetEdgeMode(handle, EdgeMode.Unspecified);  // 开抗锯齿混合
                     outline.SnapsToDevicePixels = false; // 让虚线自由落在亚像素
                     Canvas.SetLeft(handle, p.X - HandleSize * invScale / 2);
-                    Canvas.SetTop(handle, p.Y - HandleSize  * invScale/ 2);
+                    Canvas.SetTop(handle, p.Y - HandleSize * invScale / 2);
                     overlay.Children.Add(handle);
                 }
                 ctx.SelectionOverlay.IsHitTestVisible = false;
@@ -245,7 +246,7 @@ namespace TabPaint
                 Cleanup(ctx);
                 ctx.Undo.Undo();
             }
-            public void CommitSelection(ToolContext ctx)
+            public void CommitSelection(ToolContext ctx, bool shape = false)
             {
                 if (_selectionData == null) return;
 
@@ -289,11 +290,12 @@ namespace TabPaint
                 BlendPixels(ctx.Surface.Bitmap, _selectionRect.X, _selectionRect.Y, finalWidth, finalHeight, finalData, finalStride);
 
                 // 4. 清理现场
-                ctx.Undo.CommitStroke();
+
+                ctx.Undo.CommitStroke(shape ? UndoActionType.Draw : UndoActionType.Selection);
                 HidePreview(ctx);
                 _selectionData = null;
                 ctx.IsDirty = true;
-                lag = 2;
+                lag = 1;
                 _transformStep = 0;
                 _originalRect = new Int32Rect();
                 ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
@@ -307,15 +309,24 @@ namespace TabPaint
                     int targetW = targetBmp.PixelWidth;
                     int targetH = targetBmp.PixelHeight;
 
-                    // 计算裁剪区域（防止画出画布外）
+                    // 1. 计算【实际绘制区域】（裁剪逻辑：取 目标画布 和 贴图区域 的交集）
+                    // 左上角坐标（如果小于0，则截断为0）
                     int drawX = Math.Max(0, x);
                     int drawY = Math.Max(0, y);
-                    int drawW = Math.Min(w, targetW - drawX);
-                    int drawH = Math.Min(h, targetH - drawY);
 
+                    // 右下角坐标 (限制在画布宽高雄内，同时不能超过图片本身的右边界 x+w)
+                    int right = Math.Min(targetW, x + w);
+                    int bottom = Math.Min(targetH, y + h);
+
+                    // 实际需要绘制的宽高
+                    int drawW = right - drawX;
+                    int drawH = bottom - drawY;
+
+                    // 2. 如果宽高无效（完全在画布外），直接退出，防止崩溃
                     if (drawW <= 0 || drawH <= 0) return;
 
-                    // 计算源数据中的偏移（如果x,y是负数，源数据需要跳过前面部分）
+                    // 3. 计算源数据的起始偏移量
+                    // 关键修复点：如果 x < 0，说明图片左侧被裁掉了，源数据读取时要跳过左边 -x 个像素
                     int srcOffsetX = drawX - x;
                     int srcOffsetY = drawY - y;
 
@@ -324,59 +335,58 @@ namespace TabPaint
                         byte* pTargetBase = (byte*)targetBmp.BackBuffer;
                         int targetStride = targetBmp.BackBufferStride;
 
-                        // 并行处理或者简单双重循环
-                        // 这里为了安全和易读使用简单的指针操作
                         for (int r = 0; r < drawH; r++)
                         {
-                            // 指向源数据当前行
-                            int srcRowIndex = (srcOffsetY + r) * sourceStride + srcOffsetX * 4;
+                            // 计算源像素行索引：
+                            // (起始Y偏移 + 当前行 r) * stride + (起始X偏移 * 4)
+                            // 这里的 srcOffsetX 已经包含了因 x<0 而产生的偏移，确保不会读取到之前的像素
+                            long srcRowIndex = (long)(srcOffsetY + r) * sourceStride + (long)srcOffsetX * 4;
 
-                            // 指向目标数据当前行
+                            // 目标像素指针：
+                            // Base + (绘制Y + r) * stride + 绘制X * 4
                             byte* pTargetRow = pTargetBase + (drawY + r) * targetStride + drawX * 4;
 
                             for (int c = 0; c < drawW; c++)
                             {
+                                // 安全检查：防止极端情况下数组越界 (防御性)
+                                if (srcRowIndex + c * 4 + 3 >= sourcePixels.Length) break;
+
                                 // 获取源像素 Bgra
                                 byte srcB = sourcePixels[srcRowIndex + c * 4 + 0];
                                 byte srcG = sourcePixels[srcRowIndex + c * 4 + 1];
                                 byte srcR = sourcePixels[srcRowIndex + c * 4 + 2];
                                 byte srcA = sourcePixels[srcRowIndex + c * 4 + 3];
 
-                                // 优化：如果源像素完全透明，跳过
+                                // 优化：全透明跳过
                                 if (srcA == 0)
                                 {
                                     pTargetRow += 4;
                                     continue;
                                 }
 
-                                // 优化：如果源像素完全不透明，直接覆盖
+                                // 优化：全不透明直接覆盖
                                 if (srcA == 255)
                                 {
                                     pTargetRow[0] = srcB;
                                     pTargetRow[1] = srcG;
                                     pTargetRow[2] = srcR;
-                                    pTargetRow[3] = 255; // 强制设为不透明，或者保留 srcA
+                                    pTargetRow[3] = 255;
                                 }
                                 else
                                 {
-                                    // 标准 Alpha Blending 公式:
-                                    // Out = (Src * Alpha + Dst * (255 - Alpha)) / 255
-
+                                    // Alpha Blending
                                     byte dstB = pTargetRow[0];
                                     byte dstG = pTargetRow[1];
                                     byte dstR = pTargetRow[2];
-                                    // 忽略目标 Alpha，假设背景是不透明的画布 (255)
-                                    // 如果你的画布本身也是透明的，算法会更复杂 (Premultiplied Alpha)
 
-                                    // 快速整数近似除以255: (v + 1 + (v >> 8)) >> 8  或者简单用 double 计算
-                                    // 这里用浮点计算保证精度，现代CPU很快
+                                    // 使用浮点运算混合
                                     double alpha = srcA / 255.0;
                                     double invAlpha = 1.0 - alpha;
 
                                     pTargetRow[0] = (byte)(srcB * alpha + dstB * invAlpha);
                                     pTargetRow[1] = (byte)(srcG * alpha + dstG * invAlpha);
                                     pTargetRow[2] = (byte)(srcR * alpha + dstR * invAlpha);
-                                    pTargetRow[3] = 255; // 通常画布保持不透明
+                                    pTargetRow[3] = 255;
                                 }
 
                                 pTargetRow += 4;
@@ -387,11 +397,17 @@ namespace TabPaint
                     // 标记脏区域刷新显示
                     targetBmp.AddDirtyRect(new Int32Rect(drawX, drawY, drawW, drawH));
                 }
+                catch (Exception ex)
+                {
+                    // 捕获异常防止崩溃，仅在调试输出
+                    System.Diagnostics.Debug.WriteLine("BlendPixels Error: " + ex.Message);
+                }
                 finally
                 {
                     targetBmp.Unlock();
                 }
             }
+
 
             private void HidePreview(ToolContext ctx)
             {

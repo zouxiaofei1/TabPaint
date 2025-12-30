@@ -133,7 +133,7 @@ namespace TabPaint
             }
 
             // 在 SelectTool 类中添加
-            public void InsertImageAsSelection(ToolContext ctx, BitmapSource sourceBitmap)
+            public void InsertImageAsSelection(ToolContext ctx, BitmapSource sourceBitmap, bool expandCanvas = true)
             {
                 // 1. 提交当前的选区（如果有）
                 if (_selectionData != null) CommitSelection(ctx);
@@ -149,7 +149,7 @@ namespace TabPaint
                 int canvasW = ctx.Surface.Bitmap.PixelWidth;
                 int canvasH = ctx.Surface.Bitmap.PixelHeight;
 
-                if (imgW > canvasW || imgH > canvasH)
+                if (expandCanvas && (imgW > canvasW || imgH > canvasH))
                 {
                     int newW = Math.Max(imgW, canvasW);
                     int newH = Math.Max(imgH, canvasH);
@@ -397,15 +397,15 @@ namespace TabPaint
                 var px = ctx.ToPixel(viewPos);
 
                 // 在选区外点击 → 提交并清除
-                if (_selectionData != null && !IsPointInSelection(px))
-                {
-                    if (HitTestHandle(px, _selectionRect) == ResizeAnchor.None)
-                    {
-                        CommitSelection(ctx);
-                        ClearSelections(ctx);
-                        return;
-                    }
-                }
+                //if (_selectionData != null && !IsPointInSelection(px))
+                //{
+                //    if (HitTestHandle(px, _selectionRect) == ResizeAnchor.None)
+                //    {
+                //        CommitSelection(ctx);
+                //        ClearSelections(ctx);
+                //        return;
+                //    }
+                //}
 
                 if (_selectionData != null)
                 {
@@ -550,17 +550,24 @@ namespace TabPaint
                         else
                         {
                             var s = tg.Children.OfType<ScaleTransform>().FirstOrDefault();
-                            if (s != null)
+                            if (s == null)
                             {
-                                s.ScaleX = scaleX;
-                                s.ScaleY = scaleY;
+                                s = new ScaleTransform(1, 1);
+                                tg.Children.Insert(0, s); // 插在最前面
                             }
+
+                            // 现在安全地设置属性
+                            s.ScaleX = scaleX;
+                            s.ScaleY = scaleY;
+
                             var t = tg.Children.OfType<TranslateTransform>().FirstOrDefault();
-                            if (t != null)
+                            if (t == null)
                             {
-                                t.X = _selectionRect.X;
-                                t.Y = _selectionRect.Y;
+                                t = new TranslateTransform(0, 0);
+                                tg.Children.Add(t);
                             }
+                            t.X = _selectionRect.X;
+                            t.Y = _selectionRect.Y;
                         }
 
                         ctx.SelectionPreview.Visibility = Visibility.Visible;
@@ -582,7 +589,10 @@ namespace TabPaint
                 {
                     if (!_hasLifted)
                     {
-                        ClearRect(ctx, _originalRect, ctx.EraserColor);
+                        ctx.Undo.BeginStroke(); ctx.Undo.AddDirtyRect(_originalRect); ctx.Undo.CommitStroke();
+
+                        ClearRect(ctx, ClampRect(_originalRect, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight), ctx.EraserColor);
+
                         _hasLifted = true;
                     }
                     var mainWindow = System.Windows.Application.Current.MainWindow;
@@ -627,6 +637,7 @@ namespace TabPaint
                         singleT.Y = newY;
                     }
 
+
                     ctx.SelectionPreview.Clip = new RectangleGeometry(
                         new Rect(0, 0, 1000, 1000)
                     );
@@ -644,11 +655,13 @@ namespace TabPaint
                     double ratioY = (double)_selectionRect.Height / (double)_originalRect.Height;
 
                     // 计算在预览自身坐标系中的有效显示范围
-                    double visibleX = Math.Max(0, -offsetX / ratioX);
-                    double visibleY = Math.Max(0, -offsetY / ratioY);
-                    double visibleW = Math.Min(tmprc.Width, (canvasW - offsetX) / ratioX);
-                    double visibleH = Math.Min(tmprc.Height, (canvasH - offsetY) / ratioY);
-                    Geometry visibleRect = new RectangleGeometry(new Rect(visibleX, visibleY, visibleW, visibleH));
+                    double visibleX = (int)Math.Max(0, -offsetX / ratioX);
+                    double visibleY = (int)Math.Max(0, -offsetY / ratioY);
+                    double visibleW = (int)Math.Min(tmprc.Width, (canvasW - offsetX) / ratioX);
+                    double visibleH = (int)Math.Min(tmprc.Height, (canvasH - offsetY) / ratioY);
+                    Int32Rect intRect = ClampRect(new Int32Rect((int)visibleX, (int)visibleY, (int)visibleW, (int)visibleH), ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
+                    Rect rect = new Rect(intRect.X, intRect.Y, intRect.Width, intRect.Height);
+                    Geometry visibleRect = new RectangleGeometry(rect);
                     if (visibleW > 0 && visibleH > 0)
                     {
                         ctx.SelectionPreview.Clip = visibleRect;
@@ -719,7 +732,7 @@ namespace TabPaint
                     if (_selectionRect.Width > 0 && _selectionRect.Height > 0)
                     {
                         // 1. 提取数据
-                        _selectionData = ctx.Surface.ExtractRegion(_selectionRect);
+                        _selectionData = ctx.Surface.ExtractRegion(ClampRect(_selectionRect, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight));
 
                         // --- 核心修复：记录原始尺寸 ---
                         _originalRect = _selectionRect;

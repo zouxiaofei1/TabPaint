@@ -11,18 +11,14 @@ using static TabPaint.MainWindow;
 public class ShapeTool : ToolBase
 {
     public override string Name => "Shape";
-    public override System.Windows.Input.Cursor Cursor => _isManipulating ? null : System.Windows.Input.Cursors.Cross; // 操控时交由SelectTool决定光标
+    public override System.Windows.Input.Cursor Cursor => _isManipulating ? null : System.Windows.Input.Cursors.Cross;
 
     public enum ShapeType { Rectangle, Ellipse, Line, RoundedRectangle, Arrow }
     private ShapeType _currentShapeType = ShapeType.Rectangle;
 
     private Point _startPoint;
     private bool _isDrawing;
-
-    // 新增：状态标志，是否正在操控刚刚画好的图形
     private bool _isManipulating = false;
-
-    // 预览用的 UI 元素
     private System.Windows.Shapes.Shape _previewShape;
 
     public void SetShapeType(ShapeType type)
@@ -30,7 +26,6 @@ public class ShapeTool : ToolBase
         _currentShapeType = type;
     }
 
-    // 辅助方法：获取 SelectTool 实例
     private SelectTool GetSelectTool()
     {
         var mw = (MainWindow)Application.Current.MainWindow;
@@ -42,29 +37,35 @@ public class ShapeTool : ToolBase
         var selectTool = GetSelectTool();
         var px = ctx.ToPixel(viewPos);
 
-        // --- 逻辑分支 A: 如果当前正在操控上一个图形 ---
+        // --- 逻辑分支 A: 操控模式 ---
         if (_isManipulating && selectTool != null)
         {
-            // 1. 检查点击位置是否在选区内或句柄上
+            // 检查 SelectTool 是否还有有效数据（可能被 Delete 删掉了）
+            if (!selectTool.HasActiveSelection)
+            {
+                _isManipulating = false;
+                goto DrawingLogic; // 跳转到绘制逻辑
+            }
+
             bool hitHandle = selectTool.HitTestHandle(px, selectTool._selectionRect) != SelectTool.ResizeAnchor.None;
             bool hitContent = selectTool.IsPointInSelection(px);
 
             if (hitHandle || hitContent)
             {
-                // 如果点中了图形，将事件转发给 SelectTool 处理拖拽/缩放
+                // 转发事件给 SelectTool
                 selectTool.OnPointerDown(ctx, viewPos);
                 return;
             }
             else
             {
-                // 如果点在了空白处 -> 提交上一个图形，结束操控状态
-                selectTool.GiveUpSelection(ctx);
+                selectTool.CommitSelection(ctx, true);
+                selectTool.Cleanup(ctx);
                 _isManipulating = false;
-                // 继续向下执行，进入逻辑分支 B (开始绘制新图形)
             }
         }
 
-        // --- 逻辑分支 B: 开始绘制新图形 ---
+    DrawingLogic:
+        // --- 逻辑分支 B: 绘制新图形 ---
         _startPoint = ctx.ToPixel(viewPos);
         _isDrawing = true;
         ctx.CapturePointer();
@@ -93,6 +94,7 @@ public class ShapeTool : ToolBase
         _previewShape.StrokeThickness = ctx.PenThickness;
         _previewShape.Fill = null;
 
+        // 初始位置设置（线和箭头不需要设置 Left/Top）
         if (_currentShapeType != ShapeType.Line && _currentShapeType != ShapeType.Arrow)
         {
             Canvas.SetLeft(_previewShape, _startPoint.X);
@@ -102,9 +104,18 @@ public class ShapeTool : ToolBase
         ctx.EditorOverlay.Children.Add(_previewShape);
     }
 
+    public void GiveUpSelection(ToolContext ctx)
+    {
+        if (ctx == null) return;
+    
+        GetSelectTool()?.CommitSelection(ctx,true);
+        GetSelectTool()?.Cleanup(ctx);
+       // ctx.Undo.Undo();
+
+    }
+
     public override void OnPointerMove(ToolContext ctx, Point viewPos)
     {
-        // 如果正在操控，转发给 SelectTool
         if (_isManipulating)
         {
             GetSelectTool()?.OnPointerMove(ctx, viewPos);
@@ -119,7 +130,6 @@ public class ShapeTool : ToolBase
 
     public override void OnPointerUp(ToolContext ctx, Point viewPos)
     {
-        // 如果正在操控，转发给 SelectTool
         if (_isManipulating)
         {
             GetSelectTool()?.OnPointerUp(ctx, viewPos);
@@ -132,57 +142,89 @@ public class ShapeTool : ToolBase
         _isDrawing = false;
         ctx.ReleasePointerCapture();
 
-        ctx.EditorOverlay.Children.Remove(_previewShape);
-        _previewShape = null;
+        if (_previewShape != null)
+        {
+            ctx.EditorOverlay.Children.Remove(_previewShape);
+            _previewShape = null;
+        }
 
-        // 计算包围盒
+        // 计算逻辑包围盒
         var rect = MakeRect(_startPoint, endPoint);
-        // 防止误触（太小的图形不生成）
-        if (rect.Width <= 2 || rect.Height <= 2) return;
+        if (rect.Width <= 1 || rect.Height <= 1) return;
 
-        // 渲染位图
-        var shapeBitmap = RenderShapeToBitmap(_startPoint, endPoint, rect, ctx.PenColor, ctx.PenThickness, ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY);
+        // --- 修复核心 A: 安全的 Padding 计算 ---
+        // 为了防止笔触太粗被裁切，Padding 至少要是笔触的一半，这里给全尺寸+2px余量更安全
+        double padding = ctx.PenThickness + 2;
+
+        // 生成位图
+        var shapeBitmap = RenderShapeToBitmap(_startPoint, endPoint, rect, ctx.PenColor, ctx.PenThickness, padding, ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY);
 
         var selectTool = GetSelectTool();
         if (selectTool != null)
         {
-            // === 核心修改 ===
-            // 不再调用 router.SetTool(selectTool)
+            // 1. 将生成的图片插入选区 (SelectTool 会初始化 _selectionRect 为 0,0,imgW,imgH)
+            selectTool.InsertImageAsSelection(ctx, shapeBitmap,false);
 
-            // 1. 让 SelectTool 把图片加载进选区系统
-            selectTool.InsertImageAsSelection(ctx, shapeBitmap);
+            // 2. 计算 Bitmap 在画布上的真实左上角
+            // 逻辑：用户画的框(rect) - 边距(padding) = 图片左上角
+            int realX = (int)(rect.X - padding);
+            int realY = (int)(rect.Y - padding);
 
-            // 2. 手动修正 SelectTool 的位置数据，使其与刚才画的位置完全重合
-            selectTool._selectionRect.X = rect.X;
-            selectTool._selectionRect.Y = rect.Y;
-            selectTool._originalRect = selectTool._selectionRect; // 这一点很重要，确保缩放比例正确
+            // 3. 强制同步 SelectTool 的数据状态
+            // 这一步非常关键：必须用 shapeBitmap 的实际物理尺寸，而不是 rect 的尺寸
+            selectTool._selectionRect = new Int32Rect(realX, realY, shapeBitmap.PixelWidth, shapeBitmap.PixelHeight);
+            selectTool._originalRect = selectTool._selectionRect;
 
-            // 3. 更新 SelectTool 的预览图位置
+            // 4. --- 修复核心 B: 强制同步 UI 尺寸 ---
+            // 很多时候裁剪是因为 Image 控件的 Width/Height 没更新
+            double zoom = ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale;
+            double scaleX = 1.0; // 这里的 Scale 指的是相对于原图的缩放，刚生成时是 1:1
+            double scaleY = 1.0;
+
+            // 更新 Image 控件的显示大小 (考虑画布缩放 ViewElement 的尺寸)
+            // 注意：ToolContext 里没有直接暴露 zoom，通常通过 ViewElement / Surface 比例计算
+            double uiScaleX = ctx.ViewElement.ActualWidth / ctx.Surface.Bitmap.PixelWidth;
+            double uiScaleY = ctx.ViewElement.ActualHeight / ctx.Surface.Bitmap.PixelHeight;
+
+            ctx.SelectionPreview.Width = selectTool._selectionRect.Width * uiScaleX;
+            ctx.SelectionPreview.Height = selectTool._selectionRect.Height * uiScaleY;
+
+            // 5. 初始化 RenderTransform (包含 ScaleTransform 以便后续 SelectTool 能缩放)
             var tg = new TransformGroup();
-            tg.Children.Add(new TranslateTransform(rect.X, rect.Y));
+            tg.Children.Add(new ScaleTransform(1, 1));
+            tg.Children.Add(new TranslateTransform(realX, realY));
             ctx.SelectionPreview.RenderTransform = tg;
-            Canvas.SetLeft(ctx.SelectionPreview, 0);
-            Canvas.SetTop(ctx.SelectionPreview, 0);
 
-            // 4. 让 SelectTool 绘制虚线框和手柄
+            double canvasW = ctx.Surface.Bitmap.PixelWidth;
+            double canvasH = ctx.Surface.Bitmap.PixelHeight;
+
+            // 这里的 Clip 是相对于 SelectionPreview 控件自身的坐标系 (0,0 是图片左上角)
+            // 图片被放在 (realX, realY)，所以画布左上角相对于图片就是 (-realX, -realY)
+            Rect clipRect = new Rect(
+                -realX,
+                -realY,
+                canvasW,
+                canvasH
+            );
+            ctx.SelectionPreview.Clip = new RectangleGeometry(clipRect);
+
+            // 6. 重新绘制虚线框
             selectTool.RefreshOverlay(ctx);
 
-            // 5. 标记为“操控模式”，接下来的鼠标事件将转发给 SelectTool
             _isManipulating = true;
         }
     }
 
     public override void OnKeyDown(ToolContext ctx, KeyEventArgs e)
     {
-        // 支持在 ShapeTool 下直接按 Delete 删除或者 Ctrl+C/V
         if (_isManipulating)
         {
             var st = GetSelectTool();
             if (st != null)
             {
                 st.OnKeyDown(ctx, e);
-                // 如果 SelectTool 执行了剪切或删除，应该退出操控模式
-                if (st._selectionData == null)
+                // 检查按键后状态：如果选区没了（被剪切或删除），退出操控模式
+                if (!st.HasActiveSelection)
                 {
                     _isManipulating = false;
                 }
@@ -191,7 +233,6 @@ public class ShapeTool : ToolBase
         }
         base.OnKeyDown(ctx, e);
     }
-
 
     private void UpdatePreviewShape(Point start, Point end, double thickness)
     {
@@ -220,15 +261,19 @@ public class ShapeTool : ToolBase
         }
     }
 
-    private BitmapSource RenderShapeToBitmap(Point globalStart, Point globalEnd, Int32Rect rect, Color color, double thickness, double dpiX, double dpiY)
+    private BitmapSource RenderShapeToBitmap(Point globalStart, Point globalEnd, Int32Rect rect, Color color, double thickness, double padding, double dpiX, double dpiY)
     {
-        double padding = thickness;
-        int pixelWidth = rect.Width + (int)(padding * 2);
-        int pixelHeight = rect.Height + (int)(padding * 2);
+        // 位图的总像素尺寸 = 形状宽 + 左边距 + 右边距
+        int pixelWidth = rect.Width + (int)Math.Ceiling(padding * 2);
+        int pixelHeight = rect.Height + (int)Math.Ceiling(padding * 2);
 
+        // 确保尺寸有效
         if (pixelWidth <= 0) pixelWidth = 1;
         if (pixelHeight <= 0) pixelHeight = 1;
 
+        // 计算局部坐标：
+        // 如果 globalStart 在左上角，它相对于 rect.X 是 0，所以 localStart = padding
+        // 加上 padding 是为了把画的内容移到图片中间，防止边缘被切
         Point localStart = new Point(globalStart.X - rect.X + padding, globalStart.Y - rect.Y + padding);
         Point localEnd = new Point(globalEnd.X - rect.X + padding, globalEnd.Y - rect.Y + padding);
 
@@ -236,23 +281,29 @@ public class ShapeTool : ToolBase
         using (DrawingContext dc = drawingVisual.RenderOpen())
         {
             Pen pen = new Pen(new SolidColorBrush(color), thickness);
+            // 设置线帽，防止直角线端点看起来也是切掉的
+            pen.StartLineCap = PenLineCap.Round;
+            pen.EndLineCap = PenLineCap.Round;
+            pen.LineJoin = PenLineJoin.Round;
             pen.Freeze();
 
-            Rect insetRect = new Rect(padding + thickness / 2, padding + thickness / 2,
-                                      Math.Max(0, rect.Width - thickness), Math.Max(0, rect.Height - thickness));
+            // 矩形绘制逻辑：在 padding 偏移处绘制 rect 尺寸的框
+            // 这样笔触的一半 (thickness/2) 会向外延伸，但因为我们 padding > thickness/2，所以它是安全的
+            Rect drawRect = new Rect(padding, padding, rect.Width, rect.Height);
 
             switch (_currentShapeType)
             {
                 case ShapeType.Rectangle:
-                    dc.DrawRectangle(null, pen, insetRect);
+                    dc.DrawRectangle(null, pen, drawRect);
                     break;
                 case ShapeType.RoundedRectangle:
-                    dc.DrawRoundedRectangle(null, pen, insetRect, 20, 20);
+                    dc.DrawRoundedRectangle(null, pen, drawRect, 20, 20);
                     break;
                 case ShapeType.Ellipse:
+                    // 椭圆圆心
                     dc.DrawEllipse(null, pen,
-                        new Point(insetRect.X + insetRect.Width / 2, insetRect.Y + insetRect.Height / 2),
-                        insetRect.Width / 2, insetRect.Height / 2);
+                        new Point(padding + rect.Width / 2.0, padding + rect.Height / 2.0),
+                        rect.Width / 2.0, rect.Height / 2.0);
                     break;
                 case ShapeType.Line:
                     dc.DrawLine(pen, localStart, localEnd);
@@ -273,6 +324,9 @@ public class ShapeTool : ToolBase
     private Geometry BuildArrowGeometry(Point start, Point end, double headSize)
     {
         Vector vec = end - start;
+        // 防止长度为0崩溃
+        if (vec.LengthSquared < 0.001) vec = new Vector(0, 1);
+
         vec.Normalize();
         if (Double.IsNaN(vec.X)) vec = new Vector(1, 0);
 

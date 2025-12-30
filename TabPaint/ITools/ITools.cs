@@ -36,30 +36,30 @@ namespace TabPaint
                 _ => null
             };
 
-           
+
             foreach (var ctrl in toolControls)
             {
-                
+
                 if (ctrl == null) continue;
                 bool isTarget = (ctrl == target);
                 ctrl.Tag = isTarget;
                 if (_router.CurrentTool == _tools.Pen && _ctx.PenStyle != BrushStyle.Eraser && _ctx.PenStyle != BrushStyle.Pencil)
                 {
-                    MainToolBar.BrushToggle.BorderBrush= PurpleHighlightBrush;
-                    MainToolBar.BrushToggle.Background= PurpleBackgroundBrush;
+                    MainToolBar.BrushToggle.BorderBrush = PurpleHighlightBrush;
+                    MainToolBar.BrushToggle.Background = PurpleBackgroundBrush;
                 }
 
                 // 2. 关键：清除之前可能存在的本地颜色赋值，让 Style 重新接管控制权
                 ctrl.ClearValue(System.Windows.Controls.Control.BorderBrushProperty);
                 ctrl.ClearValue(System.Windows.Controls.Control.BackgroundProperty);
             }
-                if (_router.CurrentTool == _tools.Shape)
-                {
-                    MainToolBar.ShapeToggle.BorderBrush = PurpleHighlightBrush;
+            if (_router.CurrentTool == _tools.Shape)
+            {
+                MainToolBar.ShapeToggle.BorderBrush = PurpleHighlightBrush;
                 MainToolBar.ShapeToggle.Background = PurpleBackgroundBrush;
-                }
+            }
         }
-        
+
 
 
 
@@ -174,19 +174,35 @@ namespace TabPaint
             private readonly Brush PurpleHighlightBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#886CE4"));
             private readonly Brush PurpleBackgroundBrush = new SolidColorBrush(Color.FromArgb(40, 136, 108, 228)); // 15% 透明度的紫色背景
 
+            private SelectTool GetSelectTool()
+            {
+                var mw = (MainWindow)Application.Current.MainWindow;
+                return mw._tools.Select as SelectTool;
+            }
 
-   
+            public void CleanUpSelectionandShape()
+            {
+                if (CurrentTool is SelectTool selTool && selTool._selectionData != null)
+                {
+                    selTool.GiveUpSelection(_ctx);
+                }
+                if (CurrentTool is ShapeTool shapetool && GetSelectTool()?._selectionData != null)
+                {
+                    shapetool.GiveUpSelection(_ctx);
+                }
+            }
 
             public void SetTool(ITool tool)
             {
 
                 if (CurrentTool == tool) return; // Optional: Don't do work if it's the same tool.
+                CleanUpSelectionandShape();
                 CurrentTool?.Cleanup(_ctx);
                 CurrentTool = tool;
                 _ctx.ViewElement.Cursor = tool.Cursor;
                 //var mainWindow = (MainWindow)Application.Current.MainWindow;
 
-                ((MainWindow)System.Windows.Application.Current.MainWindow).SetPenResizeBarVisibility((tool is PenTool && _ctx.PenStyle != BrushStyle.Pencil));
+                ((MainWindow)System.Windows.Application.Current.MainWindow).SetPenResizeBarVisibility((tool is PenTool && _ctx.PenStyle != BrushStyle.Pencil)|| tool is ShapeTool);
                 ((MainWindow)System.Windows.Application.Current.MainWindow).UpdateToolSelectionHighlight();
             }
             public void ViewElement_MouseDown(object sender, MouseButtonEventArgs e)

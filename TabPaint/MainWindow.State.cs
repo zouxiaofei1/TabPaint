@@ -113,7 +113,8 @@ namespace TabPaint
             Draw,         // 普通绘图
             Transform,    // 旋转/翻转
             CanvasResize, // 画布拉伸或缩放
-            ReplaceImage  // 整图替换（打开新图）
+            ReplaceImage,  // 整图替换（打开新图）
+            Selection
         }
         public SelectTool Select;
         public SolidColorBrush ForegroundBrush { get; set; } = new SolidColorBrush(Colors.Black);

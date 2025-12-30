@@ -148,6 +148,7 @@ namespace TabPaint
             // --- 核心新增：强制清理物理文件 (Cache & Session) ---
             try
             {
+                _router.CleanUpSelectionandShape();
                 // 1. 删除 Session.json
                 if (File.Exists(_sessionPath))
                 {

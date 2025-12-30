@@ -22,8 +22,6 @@
     </WindowChrome.WindowChrome>
 
     <Window.Resources>
-        <!-- 复用 BCE 的样式资源 -->
-
         <!-- Fluent 风格按钮 -->
         <Style TargetType="Button">
             <Setter Property="Background" Value="#fbfbfb"/>
@@ -143,14 +141,40 @@
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
 
-        <Style TargetType="TextBlock" x:Key="ValueStyle">
+        <!-- 数字输入框样式 -->
+        <Style TargetType="TextBox" x:Key="NumberInputStyle">
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Foreground" Value="#555555"/>
             <Setter Property="HorizontalAlignment" Value="Right"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Width" Value="35"/>
+            <Setter Property="Width" Value="45"/>
+            <Setter Property="Padding" Value="0,2"/>
             <Setter Property="TextAlignment" Value="Right"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ScrollViewer x:Name="PART_ContentHost"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="BorderBrush" Value="#888888"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter Property="BorderBrush" Value="#0067C0"/>
+                                <Setter Property="Background" Value="#FAFAFA"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
+
     </Window.Resources>
 
     <!-- 主体边框 -->
@@ -199,7 +223,11 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="色温" Style="{StaticResource LabelStyle}"/>
-                        <TextBlock Text="{Binding ElementName=TemperatureSlider, Path=Value, StringFormat=N0}" Style="{StaticResource ValueStyle}" Grid.Column="1"/>
+                        <TextBox Style="{StaticResource NumberInputStyle}" Grid.Column="1"
+                             Text="{Binding ElementName=TemperatureSlider, Path=Value, UpdateSourceTrigger=LostFocus, StringFormat=N0}"
+                             PreviewTextInput="NumberValidationTextBox"
+                             TextChanged="Input_TextChanged"
+                             Tag="{Binding ElementName=TemperatureSlider}"/>
                     </Grid>
                     <Slider x:Name="TemperatureSlider" Minimum="-100" Maximum="100" Value="0"
                             TickFrequency="1" IsSnapToTickEnabled="True"
@@ -215,7 +243,11 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="色调" Style="{StaticResource LabelStyle}"/>
-                        <TextBlock Text="{Binding ElementName=TintSlider, Path=Value, StringFormat=N0}" Style="{StaticResource ValueStyle}" Grid.Column="1"/>
+                        <TextBox Style="{StaticResource NumberInputStyle}" Grid.Column="1"
+                             Text="{Binding ElementName=TintSlider, Path=Value, UpdateSourceTrigger=LostFocus, StringFormat=N0}"
+                             PreviewTextInput="NumberValidationTextBox"
+                             TextChanged="Input_TextChanged"
+                             Tag="{Binding ElementName=TintSlider}"/>
                     </Grid>
                     <Slider x:Name="TintSlider" Minimum="-100" Maximum="100" Value="0"
                             TickFrequency="1" IsSnapToTickEnabled="True"
@@ -231,7 +263,11 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="饱和度" Style="{StaticResource LabelStyle}"/>
-                        <TextBlock Text="{Binding ElementName=SaturationSlider, Path=Value, StringFormat=N0}" Style="{StaticResource ValueStyle}" Grid.Column="1"/>
+                        <TextBox Style="{StaticResource NumberInputStyle}" Grid.Column="1"
+                             Text="{Binding ElementName=SaturationSlider, Path=Value, UpdateSourceTrigger=LostFocus, StringFormat=N0}"
+                             PreviewTextInput="NumberValidationTextBox"
+                             TextChanged="Input_TextChanged"
+                             Tag="{Binding ElementName=SaturationSlider}"/>
                     </Grid>
                     <Slider x:Name="SaturationSlider" Minimum="-100" Maximum="100" Value="0"
                             TickFrequency="1" IsSnapToTickEnabled="True"
@@ -244,10 +280,16 @@
 
             <!-- 底部按钮栏 -->
             <Border Grid.Row="2" Background="#F3F3F3" Padding="15,12" BorderThickness="0,1,0,0" BorderBrush="#e5e5e5">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="确定" Width="80" Margin="0,0,8,0" Click="Ok_Click" Style="{StaticResource AccentButtonStyle}" IsDefault="True"/>
-                    <Button Content="取消" Width="80" Click="Cancel_Click" IsCancel="True"/>
-                </StackPanel>
+                <Grid>
+                    <!-- 左侧：重置按钮 -->
+                    <Button Content="重置" Width="80" HorizontalAlignment="Left" Click="Reset_Click"/>
+
+                    <!-- 右侧：确定/取消 -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="确定" Width="80" Margin="0,0,8,0" Click="Ok_Click" Style="{StaticResource AccentButtonStyle}" IsDefault="True"/>
+                        <Button Content="取消" Width="80" Click="Cancel_Click" IsCancel="True"/>
+                    </StackPanel>
+                </Grid>
             </Border>
         </Grid>
     </Border>

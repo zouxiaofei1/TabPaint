@@ -183,7 +183,15 @@
                         <Grid.LayoutTransform>
                             <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1" />
                         </Grid.LayoutTransform>
-
+                        <Image Name="PreviewImage" 
+                     Stretch="Fill" 
+                     Width="{Binding ElementName=BackgroundImage, Path=ActualWidth}"
+                     Height="{Binding ElementName=BackgroundImage, Path=ActualHeight}"
+                     HorizontalAlignment="Left" 
+                     VerticalAlignment="Top" 
+                     IsHitTestVisible="False" 
+                     Visibility="Collapsed"
+                     RenderOptions.BitmapScalingMode="Linear"/>
                         <!-- 1. 基础图片 -->
                         <Image Name="BackgroundImage" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="NearestNeighbor" />
                         <!-- 2. 调整大小层 -->
@@ -216,8 +224,6 @@
 
         <!-- #region 7. 悬浮面板 (Floating UI) -->
 
-        <!-- 文本编辑条 -->
-        <!-- 文本编辑条 -->
         <Border x:Name="TextEditBar" Visibility="Collapsed" MouseDown="TextEditBar_MouseDown" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,80,0,0" Background="#FAFAFA" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="6">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="12" ShadowDepth="4" Direction="270" Color="#20000000" Opacity="0.4"/>

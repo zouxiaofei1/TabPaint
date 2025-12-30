@@ -79,8 +79,9 @@ namespace TabPaint
 
                 if (!hitHandle && !hitInside)
                 {
-                    // 执行提交
-                    selTool.GiveUpSelection(this._ctx);
+                   // s(1);
+                    selTool.CommitSelection(_ctx);
+                    selTool.ClearSelections(_ctx);
                 }
             }
         }
