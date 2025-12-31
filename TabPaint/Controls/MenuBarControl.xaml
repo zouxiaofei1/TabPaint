@@ -16,7 +16,7 @@
     </UserControl.Resources>
 
     <!-- 这里的 Border 不需要 DockPanel.Dock，也不需要 Height (让外部容器决定或自适应) -->
-    <Border Height="36" Background="Transparent" AllowDrop="True">
+    <Border Height="36" Background="#50FFFFFF" AllowDrop="True">
         <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,0">
             <Menu DockPanel.Dock="Left" Background="Transparent" BorderThickness="0" FontSize="14" Padding="0" Margin="0">
                 <!-- 文件菜单 -->
@@ -66,8 +66,8 @@
                             <Image Source="{StaticResource Paste_Image}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                  
                 </MenuItem>
+
 
                 <!-- 效果菜单 -->
                 <MenuItem Header="效果" Style="{StaticResource ModernMenuItemStyle}">
@@ -94,7 +94,6 @@
                     </MenuItem>
                 </MenuItem>
             </Menu>
-
             <!-- 快捷操作按钮 -->
             <Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="2,4"/>
             <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">

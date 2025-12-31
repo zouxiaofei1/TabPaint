@@ -60,11 +60,10 @@
                                      SettingsClick="OnSettingsClick"/>
      
             <!-- #endregion -->
-
+            <Rectangle DockPanel.Dock="Top" Height="1" Fill="#EBEBEB" SnapsToDevicePixels="True"/>
             <!-- #region 3. 工具栏 (ToolBar) -->
             <controls:ToolBarControl x:Name="MainToolBar"
                                      DockPanel.Dock="Top" 
-                                     
                                      PenClick="OnPenClick"
                                      PickColorClick="OnPickColorClick"
                                      EraserClick="OnEraserClick"
@@ -117,7 +116,8 @@
                   TabDeleteClick="OnTabDeleteClick"
                   TabFileDeleteClick="OnTabFileDeleteClick"/>
             <!-- #endregion -->
-
+            <Rectangle DockPanel.Dock="Top" Height="1" Fill="#EBEBEB" SnapsToDevicePixels="True"/>
+            
             <!-- #region 5. 底部状态栏 (StatusBar) -->
             <controls:StatusBarControl x:Name="MyStatusBar" DockPanel.Dock="Bottom"
                                        ClipboardMonitorClick="ClipboardMonitorToggle_Click"
@@ -126,7 +126,7 @@
                                        ZoomInClick="ZoomIn_Click"
                                        ZoomSelectionChanged="ZoomMenu_SelectionChanged"/>
             <!-- #endregion -->
-
+            <Rectangle DockPanel.Dock="Bottom" Height="1" Fill="#EBEBEB" SnapsToDevicePixels="True"/>
             <!-- #region 6. 主画布区域 (Canvas) -->
             <Grid ClipToBounds="True" Background="Transparent">
                 <Grid.Resources>

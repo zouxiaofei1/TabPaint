@@ -122,7 +122,7 @@
                 </Button>
 
                 <!-- 缩放滑块 -->
-                <Slider Name="ZoomSlider" Minimum="0.1" Maximum="8.0" Value="{Binding ZoomScale, Mode=TwoWay}" Width="120" TickFrequency="0.1" SmallChange="0.1" IsSnapToTickEnabled="True"/>
+                <Slider Name="ZoomSlider" Minimum="0.1" Maximum="16.0" Value="{Binding ZoomScale, Mode=TwoWay}" Width="120" TickFrequency="0.1" SmallChange="0.1" IsSnapToTickEnabled="True"/>
 
                 <!-- 放大按钮 -->
                 <Button Width="24" Height="24" ToolTip="放大" Style="{StaticResource RoundedMenuButtonStyle}" Click="OnZoomInClick" Padding="2,0">

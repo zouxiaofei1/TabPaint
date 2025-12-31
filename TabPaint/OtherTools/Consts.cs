@@ -41,6 +41,6 @@ namespace TabPaint
         private const double ZoomStep = 0.1; // 每次滚轮缩放步进
         private const double ZoomTimes = 1.1;
         private const double MinZoom = 0.05;
-        private const double MaxZoom = 16.0;
+        private const double MaxZoom = 50.0;
     }
 }

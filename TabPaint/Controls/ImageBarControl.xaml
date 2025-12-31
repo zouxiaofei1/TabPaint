@@ -15,7 +15,7 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Border Height="100" Background="Transparent">
+    <Border Height="100" Background="#90FFFFFF">
         <Grid Background="Transparent" AllowDrop="True">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />

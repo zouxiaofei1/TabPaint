@@ -15,8 +15,8 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Border Height="36" Background="Transparent" AllowDrop="True">
-        <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,0">
+    <Border Height="40" Background="#90FFFFFF" AllowDrop="True">
+        <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,4,1,0">
             <!-- 基础工具 -->
             <Button Margin="6,0,1,0" Name="PenButton" x:FieldModifier="public" ToolTip="铅笔"  Click="OnPenClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
 				<Image x:Name="PenIcon" x:FieldModifier="public" Source="{StaticResource Pencil_Image}" Width="16" Height="16"/>
@@ -182,12 +182,106 @@
 
 			<Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="2,4"/>
 
-			<!-- 颜色区域 -->
-            <Button ToolTip="自定义颜色" Click="OnCustomColorClick_Forward" Margin="5,2,5,0" Padding="0" Style="{StaticResource RoundedMenuButtonStyle}" HorizontalAlignment="Left" VerticalAlignment="Top" HorizontalContentAlignment="Left">
-                <Image Source="pack://application:,,,/Resources/colorwheel_64x64.png" Width="28" Height="28"/>
+            <Button ToolTip="自定义颜色" 
+        Click="OnCustomColorClick_Forward" 
+        Margin="5,0,2,0" 
+        Padding="0" 
+        Style="{StaticResource RoundedMenuButtonStyle}" 
+        HorizontalAlignment="Left" 
+        VerticalAlignment="Top" 
+        HorizontalContentAlignment="Left">
+
+                <!-- 使用 Viewbox 确保内部矢量图缩放到 28x28 -->
+                <Viewbox Width="36" Height="36">
+                    <Grid Width="100" Height="100">
+                        <!-- 1. 色轮主体 -->
+                        <Grid Margin="2,-7,0,0">
+                            <!-- 圆形裁剪，切掉模糊溢出的部分 -->
+                            <Grid.Clip>
+                                <EllipseGeometry Center="45,55" RadiusX="38" RadiusY="38"/>
+                            </Grid.Clip>
+
+                            <!-- 颜色扇区层：应用模糊效果 -->
+                            <!-- 修正：Grid使用 RenderTransform 进行位移 (45, 55) -->
+                            <Grid>
+                                <Grid.RenderTransform>
+                                    <MatrixTransform Matrix="1,0,0,1,45,55"/>
+                                </Grid.RenderTransform>
+                                <Grid.Effect>
+                                    <BlurEffect Radius="16" KernelType="Gaussian"/>
+                                </Grid.Effect>
+
+                                <!-- 红色 (-30度) -->
+                                <Path Fill="#FF0000" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
+                                    <Path.RenderTransform>
+                                        <RotateTransform Angle="-30"/>
+                                    </Path.RenderTransform>
+                                </Path>
+                                <!-- 黄色 (30度) -->
+                                <Path Fill="#FFFF00" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
+                                    <Path.RenderTransform>
+                                        <RotateTransform Angle="30"/>
+                                    </Path.RenderTransform>
+                                </Path>
+                                <!-- 绿色 (90度) -->
+                                <Path Fill="#00FF00" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
+                                    <Path.RenderTransform>
+                                        <RotateTransform Angle="90"/>
+                                    </Path.RenderTransform>
+                                </Path>
+                                <!-- 青色 (150度) -->
+                                <Path Fill="#00FFFF" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
+                                    <Path.RenderTransform>
+                                        <RotateTransform Angle="150"/>
+                                    </Path.RenderTransform>
+                                </Path>
+                                <!-- 蓝色 (210度) -->
+                                <Path Fill="#0000FF" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
+                                    <Path.RenderTransform>
+                                        <RotateTransform Angle="210"/>
+                                    </Path.RenderTransform>
+                                </Path>
+                                <!-- 洋红 (270度) -->
+                                <Path Fill="#FF00FF" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
+                                    <Path.RenderTransform>
+                                        <RotateTransform Angle="270"/>
+                                    </Path.RenderTransform>
+                                </Path>
+                            </Grid>
+
+                            <!-- 中心高光：使用 Path+EllipseGeometry 以支持 Center 属性 -->
+                            <Path IsHitTestVisible="False">
+                                <Path.Data>
+                                    <EllipseGeometry Center="45,55" RadiusX="38" RadiusY="38"/>
+                                </Path.Data>
+                                <Path.Fill>
+                                    <RadialGradientBrush Center="0.5,0.5" GradientOrigin="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
+                                        <GradientStop Color="#FFFFFFFF" Offset="0" />
+                                        <GradientStop Color="#80FFFFFF" Offset="0.4" />
+                                        <GradientStop Color="#00FFFFFF" Offset="1" />
+                                    </RadialGradientBrush>
+                                </Path.Fill>
+                            </Path>
+                        </Grid>
+
+                        <!-- 2. 右上角的加号图标 -->
+                        <Grid>
+                            <!-- 白色背景圆底 + 灰色描边 -->
+                            <Path Fill="White" Stroke="#666666" StrokeThickness="2">
+                                <Path.Data>
+                                    <EllipseGeometry Center="72,28" RadiusX="14" RadiusY="14"/>
+                                </Path.Data>
+                            </Path>
+                            <!-- 加号符号 -->
+                            <Path Data="M72,20 L72,36 M64,28 L80,28" Stroke="#666666" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                        </Grid>
+                    </Grid>
+                </Viewbox>
             </Button>
 
-			<Button x:Name="ColorBtn1" x:FieldModifier="public" Width="30" Height="30" Margin="2" ToolTip="颜色1" Click="OnColorOneClick_Forward" Tag="True" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding ForegroundBrush, Mode=TwoWay}"/>
+
+
+            <Button x:Name="ColorBtn1" x:FieldModifier="public" Width="30" Height="30" Margin="2" ToolTip="颜色1" Click="OnColorOneClick_Forward" Tag="True" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding ForegroundBrush, Mode=TwoWay}"/>
 			<Button x:Name="ColorBtn2" x:FieldModifier="public" Width="30" Height="30" Margin="2,0,10,0" ToolTip="颜色2" Click="OnColorTwoClick_Forward" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding BackgroundBrush, Mode=TwoWay}"/>
            
             <ItemsControl ItemsSource="{Binding ColorItems}">
