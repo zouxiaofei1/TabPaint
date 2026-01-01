@@ -112,6 +112,7 @@
                   FileTabPreviewMouseDown="OnFileTabPreviewMouseDown"
                   FileTabPreviewMouseMove="OnFileTabPreviewMouseMove"
                   FileTabDrop="OnFileTabDrop"
+                  FileTabLeave ="OnFileTabLeave"
                   FileTabReorderDragOver="OnFileTabReorderDragOver"
                   
                   FileTabsWheelScroll="OnFileTabsWheelScroll"

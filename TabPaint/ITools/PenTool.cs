@@ -1,24 +1,10 @@
-﻿using Microsoft.Win32;
-using System;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics;
-using System.Globalization;
-using System.IO;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
-using System.Windows.Forms;
-using System.Windows.Input;
-using System.Windows.Interop;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using System.Windows.Threading;
-
 //
-//TabPaint主程序
+//画笔工具
 //
 
 namespace TabPaint
@@ -344,9 +330,11 @@ namespace TabPaint
 
                 for (int y = ymin; y <= ymax; y++)
                 {
-                    byte* rowPtr = basePtr + y * stride;
+                    byte* rowPtr = basePtr + y * stride; int rowIdx = y * w;
                     for (int x = xmin; x <= xmax; x++)
                     {
+                        int pixelIndex = rowIdx + x;
+                        if (_currentStrokeMask[pixelIndex]) continue;
                         double t = 0;
                         if (lenSq > 0)
                         {
@@ -359,7 +347,9 @@ namespace TabPaint
 
                         if (distSq <= rSq)
                         {
-                            byte* p = rowPtr + x * 4; if (ca == 255)
+                            _currentStrokeMask[pixelIndex] = true;
+                            byte* p = rowPtr + x * 4; 
+                            if (ca == 255)
                             {
                                 // 不透明优化：直接覆盖
                                 p[0] = cb; p[1] = cg; p[2] = cr; p[3] = 255;
@@ -429,7 +419,7 @@ namespace TabPaint
                 int y = (int)p.Y - half;
 
                 Color c = isEraser ? ((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundColor : ctx.PenColor;
-                byte finalAlpha = GetCurrentAlpha(c.A);
+                byte finalAlpha = GetCurrentAlpha(c.A); float alphaNorm = finalAlpha / 255.0f; float invAlpha = 1.0f - alphaNorm;
                 // 如果完全透明，直接不画，节省性能
                 if (finalAlpha == 0) return;
                 byte cb = c.B, cg = c.G, cr = c.R, ca = isEraser ? c.A : finalAlpha;
@@ -441,11 +431,29 @@ namespace TabPaint
 
                 for (int yy = ystart; yy < yend; yy++)
                 {
-                    byte* row = basePtr + yy * stride;
+                    byte* row = basePtr + yy * stride; int rowIdx = yy * w;
                     for (int xx = xstart; xx < xend; xx++)
                     {
+                        int pixelIndex = rowIdx + xx;
                         byte* ptr = row + xx * 4;
-                        ptr[0] = cb; ptr[1] = cg; ptr[2] = cr; ptr[3] = ca;
+                        if (!isEraser && _currentStrokeMask[pixelIndex]) continue;
+
+                        // 标记该像素已处理
+                        if (!isEraser) _currentStrokeMask[pixelIndex] = true;
+                        if (isEraser && finalAlpha == 255)
+                        {
+                            // 橡皮擦且不透明时，直接覆盖以提高性能
+                            ptr[0] = cb; ptr[1] = cg; ptr[2] = cr; ptr[3] = 255;
+                        }
+                        else
+                        {
+                            // --- 核心修复：混合模式 ---
+                            ptr[0] = (byte)(cb * alphaNorm + ptr[0] * invAlpha);
+                            ptr[1] = (byte)(cg * alphaNorm + ptr[1] * invAlpha);
+                            ptr[2] = (byte)(cr * alphaNorm + ptr[2] * invAlpha);
+                            // 保持完全不透明，除非你想画出半透明图层
+                            ptr[3] = 255;
+                        }
                     }
                 }
             }
@@ -471,11 +479,18 @@ namespace TabPaint
             {
                 if (_sprayPatterns == null) InitializeSprayPatterns();
                 int radius = (int)ctx.PenThickness * 2;
-                int count = 80;
+                int count = 80; // 粒子数量
                 var pattern = _sprayPatterns[_patternIndex];
                 _patternIndex = (_patternIndex + 1) % _sprayPatterns.Count;
 
                 Color c = ctx.PenColor;
+                // --- 核心修复：获取调节后的透明度 ---
+                byte finalAlpha = GetCurrentAlpha(c.A);
+                if (finalAlpha == 0) return;
+
+                float alphaNorm = finalAlpha / 255.0f;
+                float invAlpha = 1.0f - alphaNorm;
+
                 for (int i = 0; i < count && i < pattern.Length; i++)
                 {
                     int xx = (int)(p.X + pattern[i].X * radius);
@@ -483,10 +498,15 @@ namespace TabPaint
                     if (xx >= 0 && xx < w && yy >= 0 && yy < h)
                     {
                         byte* ptr = basePtr + yy * stride + xx * 4;
-                        ptr[0] = c.B; ptr[1] = c.G; ptr[2] = c.R; ptr[3] = c.A;
+                        // --- 核心修复：混合 ---
+                        ptr[0] = (byte)(c.B * alphaNorm + ptr[0] * invAlpha);
+                        ptr[1] = (byte)(c.G * alphaNorm + ptr[1] * invAlpha);
+                        ptr[2] = (byte)(c.R * alphaNorm + ptr[2] * invAlpha);
+                        ptr[3] = (byte)Math.Min(255, ptr[3] + finalAlpha);
                     }
                 }
             }
+
 
             private unsafe void DrawMosaicStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
             {
@@ -526,10 +546,14 @@ namespace TabPaint
             {
                 int radius = (int)ctx.PenThickness;
                 Color baseColor = ctx.PenColor;
-                double globalOpacity = TabPaint.SettingsManager.Instance.Current.PenOpacity;
-                byte alpha = 15;
-                double irregularRadius = radius * (0.9 + _rnd.NextDouble() * 0.2);
 
+                // --- 核心修复：获取全局透明度比例 (0.0 - 1.0) ---
+                double globalOpacityFactor = TabPaint.SettingsManager.Instance.Current.PenOpacity;
+
+                // 基础 Alpha 很低，为了模拟水彩层层叠加的效果
+                byte baseAlpha = 15;
+
+                double irregularRadius = radius * (0.9 + _rnd.NextDouble() * 0.2);
                 int x_start = (int)Math.Max(0, p.X - radius);
                 int x_end = (int)Math.Min(w, p.X + radius);
                 int y_start = (int)Math.Max(0, p.Y - radius);
@@ -537,29 +561,34 @@ namespace TabPaint
 
                 for (int y = y_start; y < y_end; y++)
                 {
+                    byte* rowPtr = basePtr + y * stride;
                     for (int x = x_start; x < x_end; x++)
                     {
                         double dist = Math.Sqrt((x - p.X) * (x - p.X) + (y - p.Y) * (y - p.Y));
                         if (dist < irregularRadius)
                         {
                             double falloff = 1.0 - (dist / irregularRadius);
-                            byte finalAlpha = (byte)(alpha * falloff * falloff);
+
+                            // --- 核心修复：将全局透明度因子乘入最终计算 ---
+                            byte finalAlpha = (byte)(baseAlpha * falloff * falloff * globalOpacityFactor);
 
                             if (finalAlpha > 0)
                             {
-                                byte* pixelPtr = basePtr + y * stride + x * 4;
-                                byte oldB = pixelPtr[0];
-                                byte oldG = pixelPtr[1];
-                                byte oldR = pixelPtr[2];
-                                pixelPtr[0] = (byte)((baseColor.B * finalAlpha + oldB * (255 - finalAlpha)) / 255);
-                                pixelPtr[1] = (byte)((baseColor.G * finalAlpha + oldG * (255 - finalAlpha)) / 255);
-                                pixelPtr[2] = (byte)((baseColor.R * finalAlpha + oldR * (255 - finalAlpha)) / 255);
+                                float alphaNorm = finalAlpha / 255.0f;
+                                float invAlpha = 1.0f - alphaNorm;
+
+                                byte* pixelPtr = rowPtr + x * 4;
+
+                                pixelPtr[0] = (byte)(baseColor.B * alphaNorm + pixelPtr[0] * invAlpha);
+                                pixelPtr[1] = (byte)(baseColor.G * alphaNorm + pixelPtr[1] * invAlpha);
+                                pixelPtr[2] = (byte)(baseColor.R * alphaNorm + pixelPtr[2] * invAlpha);
                                 pixelPtr[3] = 255;
                             }
                         }
                     }
                 }
             }
+
 
             private unsafe void DrawOilPaintStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
             {

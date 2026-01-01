@@ -8,6 +8,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using static TabPaint.MainWindow;
 
 //
 //TabPaint事件处理cs
@@ -147,6 +148,7 @@ private void OpacitySlider_Loaded(object sender, RoutedEventArgs e)
                    // s(1);
                     selTool.CommitSelection(_ctx);
                     selTool.ClearSelections(_ctx);
+                    selTool.lag = 0;
                 }
             }
         }

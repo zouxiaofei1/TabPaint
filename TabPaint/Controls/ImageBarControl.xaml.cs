@@ -1,6 +1,8 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using static TabPaint.MainWindow;
 
 namespace TabPaint.Controls
 {
@@ -103,5 +105,29 @@ namespace TabPaint.Controls
         {
             e.Handled = true;
         }
+
+
+        public event DragEventHandler FileTabLeave;
+        // 1. DragOver: 计算位置并显示竖线
+           private void Internal_OnFileTabDragLeave(object sender, DragEventArgs e) => FileTabLeave?.Invoke(sender, e);
+
+        // 2. DragLeave: 离开时清除线条
+        //private void Internal_OnFileTabDragLeave(object sender, DragEventArgs e)
+        //{
+        //   ClearDragFeedback(sender);
+        //}
+        //private void ClearDragFeedback(object sender)
+        //{
+        //    if (sender is Grid grid)
+        //    {
+        //        var leftLine = FindVisualChild<Border>(grid, "InsertLineLeft");
+        //        var rightLine = FindVisualChild<Border>(grid, "InsertLineRight");
+        //        if (leftLine != null) leftLine.Visibility = Visibility.Collapsed;
+        //        if (rightLine != null) rightLine.Visibility = Visibility.Collapsed;
+        //    }
+        //}
+        // 3. Drop: 根据竖线位置执行插入逻辑
+
+
     }
 }

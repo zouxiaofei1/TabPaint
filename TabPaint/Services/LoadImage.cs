@@ -35,7 +35,7 @@ namespace TabPaint
                 {
                     ScanFolderImages(filePath);
                 }
-
+              
                 // 触发当前图的备份
                 TriggerBackgroundBackup();
 
@@ -274,8 +274,6 @@ namespace TabPaint
             _loadImageCts?.Cancel();
             _loadImageCts = new CancellationTokenSource();
             var token = _loadImageCts.Token;
-            a.s(filePath);
-
             string fileToRead = sourcePath ?? filePath;
             if (IsVirtualPath(filePath) && string.IsNullOrEmpty(sourcePath))
             {// 新建空白图像逻辑，不加载
@@ -326,7 +324,7 @@ namespace TabPaint
                     OnPropertyChanged(nameof(ImageSize));
                     UpdateWindowTitle();
 
-                    if (!SettingsManager.Instance.Current.IsFixedZoom) FitToWindow(1); // 默认 100% 或 适应窗口
+                  FitToWindow(1); // 默认 100% 或 适应窗口
                     CenterImage();
                     _canvasResizer.UpdateUI();
                     SetPreviewSlider();
@@ -370,8 +368,10 @@ namespace TabPaint
                     await Dispatcher.InvokeAsync(() =>
                     {
                         if (token.IsCancellationRequested) return;
+     
 
-                        // 使用已有的、超低分辨率的缩略图作为第一帧
+                        // 2. 将采样模式改为线性 (Linear)，避免马赛克锯齿
+                        RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.Linear);
                         BackgroundImage.Source = tabItem.Thumbnail;
 
                         // 更新窗口标题等基本信息
@@ -382,7 +382,7 @@ namespace TabPaint
                         UpdateWindowTitle();
 
                         // 立即适配并居中
-                        if (!SettingsManager.Instance.Current.IsFixedZoom) FitToWindow(1);
+                        FitToWindow(1);
                         CenterImage(); // 或者你更新后的 UpdateImagePosition()
                         BackgroundImage.InvalidateVisual();
                         Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
@@ -399,16 +399,15 @@ namespace TabPaint
                 await Dispatcher.InvokeAsync(() =>
                 {
                     if (token.IsCancellationRequested) return;
+                    RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.Linear);
 
-                    // 如果阶段 0 没有执行（因为没有缓存的缩略图），
-                    // 那么在这里完成初始布局设置。
                     if (!isInitialLayoutSet)
                     {
                         BackgroundImage.Source = previewBitmap;
                         _currentFileName = System.IO.Path.GetFileName(filePath);
                         _currentFilePath = filePath;
                         UpdateWindowTitle();
-                        if (!SettingsManager.Instance.Current.IsFixedZoom) FitToWindow();
+                        FitToWindow();
                         CenterImage();
                         BackgroundImage.InvalidateVisual();
                         Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
@@ -483,7 +482,8 @@ namespace TabPaint
                     // 解除引用
                     source = null;
                     fullResBitmap = null;
-                    // 更新 UI
+                    RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.NearestNeighbor);
+
                     BackgroundImage.Source = _bitmap;
                     this.CurrentImageFullInfo = metadataString;
 
@@ -497,7 +497,7 @@ namespace TabPaint
                     _imageSize = $"{_surface.Width}×{_surface.Height}像素";
                     OnPropertyChanged(nameof(ImageSize));
 
-                    if (!SettingsManager.Instance.Current.IsFixedZoom) FitToWindow();
+                    FitToWindow();
                     CenterImage();
                     _canvasResizer.UpdateUI();
 

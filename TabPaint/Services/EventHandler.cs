@@ -372,6 +372,9 @@ namespace TabPaint
         {
             try
             {
+                var dataObj = System.Windows.Clipboard.GetDataObject();
+                if (dataObj != null && dataObj.GetDataPresent(InternalClipboardFormat)) return;
+                
                 List<string> filesToLoad = new List<string>();
 
                 // 情况 A: 剪切板是文件列表 (复制了文件)
@@ -507,7 +510,14 @@ namespace TabPaint
             zoomscale = newScale;
             ZoomTransform.ScaleX = ZoomTransform.ScaleY = newScale;
             UpdateUIStatus(zoomscale);
-
+            if (zoomscale < 0.8)
+            {
+                RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.Linear);
+            }
+            else
+            {
+                RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.NearestNeighbor);
+            }
             // 5. 计算并应用滚动条偏移量 (维持锚点相对位置不变的平移公式)
             double offsetX = ScrollContainer.HorizontalOffset;
             double offsetY = ScrollContainer.VerticalOffset;

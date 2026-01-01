@@ -189,7 +189,7 @@ namespace TabPaint
             NotifyCanvasSizeChanged(imgWidth, imgHeight);
             UpdateWindowTitle();
 
-            if (!SettingsManager.Instance.Current.IsFixedZoom) FitToWindow();
+            FitToWindow();
             SetBrushStyle(BrushStyle.Round);
         }
 

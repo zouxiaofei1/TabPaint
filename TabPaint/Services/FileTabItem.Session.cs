@@ -91,6 +91,7 @@ namespace TabPaint
 
             // 3. 将任务加入字典，防止还没存完就去读
             _activeSaveTasks.TryAdd(fileId, saveTask);
+            SaveSession(); // 更新 JSON
         }
 
         private BitmapSource RenderCurrentCanvasToBitmap()
@@ -198,24 +199,7 @@ namespace TabPaint
 
         private void ResetToNewCanvas()
         {
-            // 1. 清理底层画布
-            Clean_bitmap(1200, 900);
-
-            // 2. 重置窗口标题
-            _currentFilePath = string.Empty;
-            _currentFileName = "未命名";
-            UpdateWindowTitle();
-
-            var newTab = CreateNewUntitledTab();
-            newTab.IsSelected = true; // 设为选中态
-            FileTabs.Add(newTab);
-            _currentTabItem = newTab;
-
-            // 5. 重置撤销栈和脏状态追踪
-            ResetDirtyTracker();
-
-            // 6. 滚动视图归位
-            MainImageBar.Scroller.ScrollToHorizontalOffset(0);
+            CreateNewTab(TabInsertPosition.AtEnd, true);
         }
         private void UpdateTabThumbnail(string path)
         {
@@ -334,29 +318,57 @@ namespace TabPaint
         }
         protected async void OnClosing()
         {
-            
-            SaveAppState();
-            // 立即保存当前的
-            if (_currentTabItem != null && _currentTabItem.IsDirty&&!_isSavingFile)
+
+            try
             {
-                _autoSaveTimer.Stop();
-                var bmp = GetCurrentCanvasSnapshot();
-                if (bmp != null)
+                SaveAppState();
+                // 立即保存当前的
+                if (_currentTabItem != null && _currentTabItem.IsDirty && !_isSavingFile)
                 {
-                    string path = System.IO.Path.Combine(_cacheDir, $"{_currentTabItem.Id}.png");
-                    using (var fs = new FileStream(path, FileMode.Create))
+                    _autoSaveTimer.Stop();
+                    var bmp = GetCurrentCanvasSnapshot();
+                    if (bmp != null)
                     {
-                        BitmapEncoder encoder = new PngBitmapEncoder();
-                        encoder.Frames.Add(BitmapFrame.Create(bmp));
-                        encoder.Save(fs);
+                        // 【修复核心】：检查并重建目录
+                        if (!System.IO.Directory.Exists(_cacheDir))
+                        {
+                            System.IO.Directory.CreateDirectory(_cacheDir);
+                        }
+
+                        string path = System.IO.Path.Combine(_cacheDir, $"{_currentTabItem.Id}.png");
+
+                        // 使用 try-catch 包裹具体的文件写入，防止单个文件写入失败导致崩溃
+                        try
+                        {
+                            using (var fs = new FileStream(path, FileMode.Create))
+                            {
+                                BitmapEncoder encoder = new PngBitmapEncoder();
+                                encoder.Frames.Add(BitmapFrame.Create(bmp));
+                                encoder.Save(fs);
+                            }
+                            _currentTabItem.BackupPath = path;
+                        }
+                        catch (Exception ex)
+                        {
+                            // 可以在这里记录日志，但不要抛出异常，让程序继续关闭
+                            System.Diagnostics.Debug.WriteLine($"保存退出缓存失败: {ex.Message}");
+                        }
                     }
-                    _currentTabItem.BackupPath = path;
                 }
+
+                SaveSession(); // 更新 JSON
             }
-            this.Hide();
-            SaveSession(); // 更新 JSON
-            _programClosed = true;
-            Close();
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"OnClosing 全局异常: {ex.Message}");
+            }
+            finally
+            {
+                // 确保无论如何都会执行关闭逻辑
+                this.Hide();
+                _programClosed = true;
+                Close();
+            }
         }
         private int GetNextAvailableUntitledNumber()
         {
@@ -599,8 +611,13 @@ namespace TabPaint
 
             SetUndoRedoButtonState();
         }
-
-        private void CreateNewTab(bool switchto = false)
+        enum TabInsertPosition
+        {
+            AfterCurrent,
+            AtEnd,
+            AtStart
+        }
+        private void CreateNewTab(TabInsertPosition tabposition= TabInsertPosition.AfterCurrent, bool switchto = false)
         {
             // 1. 【核心修改】动态计算下一个可用的编号 (找空位)
             int availableNumber = GetNextAvailableUntitledNumber();
@@ -628,8 +645,19 @@ namespace TabPaint
             _imageFiles.Insert(listInsertIndex, virtualPath);
 
             // UI 插入逻辑 (这里为了简单，我们插在当前选中项后面，或者末尾)
+          
             int uiInsertIndex = _currentTabItem != null ? FileTabs.IndexOf(_currentTabItem) + 1 : FileTabs.Count;
-            FileTabs.Insert(uiInsertIndex, newTab);
+            if (tabposition== TabInsertPosition.AfterCurrent) 
+                FileTabs.Insert(uiInsertIndex, newTab);
+            if (tabposition == TabInsertPosition.AtEnd)
+            {
+                FileTabs.Add(newTab); if (VisualTreeHelper.GetChildrenCount(MainImageBar.TabList) > 0)
+                {
+                    MainImageBar.Scroller.ScrollToRightEnd();
+                }
+            }
+            if (tabposition == TabInsertPosition.AtStart)
+                FileTabs.Insert(0, newTab);
 
             // 5. 切换逻辑
             if (switchto)

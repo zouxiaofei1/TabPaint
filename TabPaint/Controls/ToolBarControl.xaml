@@ -149,12 +149,12 @@
                        PlacementTarget="{Binding ElementName=RotateFlipMenuToggle}" Placement="Bottom" AllowsTransparency="True" PopupAnimation="None" StaysOpen="{Binding IsMouseOver, ElementName=RotateFlipMenuToggle}">
                     <Border Name="SubmenuBorder" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Margin="3,0" Padding="2">
                         <StackPanel>
-                            <MenuItem Header="向左旋转90°" Style="{StaticResource SubMenuItemStyle}" Click="OnRotateLeftClick_Forward">
+                            <MenuItem Header="向左旋转90°(Ctrl + L)" Style="{StaticResource SubMenuItemStyle}" Click="OnRotateLeftClick_Forward">
                                 <MenuItem.Icon>
                                     <Image Source="{StaticResource Rotate_Left_Image}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="向右旋转90°" Style="{StaticResource SubMenuItemStyle}" Click="OnRotateRightClick_Forward">
+                            <MenuItem Header="向右旋转90°(Ctrl + R)" Style="{StaticResource SubMenuItemStyle}" Click="OnRotateRightClick_Forward">
                                 <MenuItem.Icon>
                                     <Image Source="{StaticResource Rotate_Right_Image}" Width="16" Height="16"/>
                                 </MenuItem.Icon>

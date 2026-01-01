@@ -60,7 +60,9 @@ public class ShapeTool : ToolBase
             {
                 selectTool.CommitSelection(ctx, true);
                 selectTool.Cleanup(ctx);
+                selectTool.lag = 0;
                 _isManipulating = false;
+             
             }
         }
 

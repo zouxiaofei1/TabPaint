@@ -55,15 +55,16 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Grid>
-                                    <!-- 标签按钮本体 -->
+                                <Grid Background="Transparent" AllowDrop="True" Margin="0,0,0,0" ClipToBounds="False"
+              Drop="Internal_OnFileTabDrop" 
+              DragOver="Internal_OnFileTabReorderDragOver"
+              DragLeave="Internal_OnFileTabDragLeave">
+
                                     <Button Width="120" Height="80" Margin="2" Padding="4" 
-                                            Click="Internal_OnFileTabClick" 
-                                            PreviewMouseDown="Internal_OnFileTabPreviewMouseDown" 
-                                            PreviewMouseMove="Internal_OnFileTabPreviewMouseMove" 
-                                            ToolTip="{Binding FileName}" Tag="{Binding}" AllowDrop="True" 
-                                            Drop="Internal_OnFileTabDrop" 
-                                            DragOver="Internal_OnFileTabReorderDragOver">
+                    Click="Internal_OnFileTabClick" 
+                    PreviewMouseDown="Internal_OnFileTabPreviewMouseDown" 
+                    PreviewMouseMove="Internal_OnFileTabPreviewMouseMove" 
+                    ToolTip="{Binding FileName}" Tag="{Binding}">
 
                                         <Button.ContextMenu>
                                             <ContextMenu Style="{StaticResource Win11ContextMenuStyle}">
@@ -107,7 +108,10 @@
                                             </Style>
                                         </Button.Style>
                                     </Button>
+                                    <Border x:Name="InsertLine" Width="1" HorizontalAlignment="Left" VerticalAlignment="Stretch" 
+                    Background="#aaa" Visibility="Collapsed" IsHitTestVisible="False" Margin="0,5,0,5" Padding="0,0,2,0" CornerRadius="2"/>
 
+                                  
                                     <!-- 状态指示器 (Dirty) -->
                                     <Ellipse Width="8" Height="8" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="6,6,0,0" IsHitTestVisible="False">
                                         <Ellipse.Style>

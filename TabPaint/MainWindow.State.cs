@@ -220,5 +220,8 @@ namespace TabPaint
         public bool MicaEnabled = false;
         private bool _isLoadingImage = true;//是否正在加载图像,false时不能画图
         private bool _programClosed = false;
+        private string _workingPath;
+        public const string InternalClipboardFormat = "TabPaint_Internal_Copy_Marker";
+        public bool _firstFittoWindowdone = false;
     }
 }

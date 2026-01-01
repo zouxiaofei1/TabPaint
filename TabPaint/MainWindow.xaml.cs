@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
@@ -30,11 +31,12 @@ namespace TabPaint
 
         public MainWindow(string path)
         {
+            _workingPath = path;
             _currentFilePath = path;
-           
-           
-          
-           // 
+
+
+
+            // 
             InitializeComponent();
             DataContext = this;
             InitDebounceTimer(); InitWheelLockTimer();
@@ -53,7 +55,7 @@ namespace TabPaint
             base.OnSourceInitialized(e); // 建议保留 base 调用
 
             MicaAcrylicManager.ApplyEffect(this);
-            MicaEnabled=true;
+            MicaEnabled = true;
             InitializeClipboardMonitor();
 
             var src = (HwndSource)PresentationSource.FromVisual(this);
@@ -70,7 +72,7 @@ namespace TabPaint
             if (!MicaEnabled)
             {
                 MicaAcrylicManager.ApplyEffect(this);
-                MicaEnabled=true;
+                MicaEnabled = true;
             }
         }
         // 修改为 async void，以便使用 await
@@ -98,12 +100,13 @@ namespace TabPaint
                 UnderlineBtn.Checked += FontSettingChanged;
                 UnderlineBtn.Unchecked += FontSettingChanged;
 
-             //   SourceInitialized += OnSourceInitialized;
+                //   SourceInitialized += OnSourceInitialized;
 
                 MyStatusBar.ZoomSliderControl.ValueChanged += (s, e) =>
                 {
                     if (_isInternalZoomUpdate)
-                    { return;
+                    {
+                        return;
                     }
                     double sliderVal = MyStatusBar.ZoomSliderControl.Value;
 
@@ -140,18 +143,23 @@ namespace TabPaint
                 _canvasResizer = new CanvasResizeManager(this);
                 // 1. 先加载上次会话 (Tabs结构)
                 LoadSession();
-                a.s(FileTabs.Count);
-                // 2. 如果有启动参数传入的文件，打开它
-                if (!string.IsNullOrEmpty(_currentFilePath))
+                if (!string.IsNullOrEmpty(_currentFilePath) && Directory.Exists(_currentFilePath))
+                {
+                    _currentFilePath = FindFirstImageInDirectory(_currentFilePath);
+                }
+                if (!string.IsNullOrEmpty(_currentFilePath) && (File.Exists(_currentFilePath)))
                 {
                     // 直接 await，不要用 Task.Run，否则无法操作 UI 集合
                     await OpenImageAndTabs(_currentFilePath, true);
                 }
                 else
                 {
-                    if(FileTabs.Count==0)
-                    CreateNewTab(true);
-                    else SwitchToTab(FileTabs[0]);
+                   
+                    {
+                        if (FileTabs.Count == 0)
+                            CreateNewTab(TabInsertPosition.AfterCurrent, true);
+                        else SwitchToTab(FileTabs[0]);
+                    }
                 }
                 RestoreAppState();
 
@@ -177,7 +185,27 @@ namespace TabPaint
                 }
             }
         }
+        private string FindFirstImageInDirectory(string folderPath)
+        {
+            try
+            {
+                // 获取所有文件
+                var allFiles = Directory.GetFiles(folderPath);
 
+                // 使用你现有的 IsImageFile 方法进行过滤，并按名称排序取第一个
+                var firstImage = allFiles
+                    .Where(f => IsImageFile(f))
+                    .OrderBy(f => f, StringComparer.OrdinalIgnoreCase) // 确保按文件名顺序（如 1.jpg, 2.jpg）
+                    .FirstOrDefault();
+
+                return firstImage; // 如果没找到，返回 null
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"读取文件夹失败: {ex.Message}");
+                return null;
+            }
+        }
         private static IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject
         {  // 工具函数 - 查找所有子元素
             if (depObj != null)
@@ -261,8 +289,10 @@ namespace TabPaint
 
         private void FitToWindow(double addscale = 1)
         {
+            if (!SettingsManager.Instance.Current.IsFixedZoom&& _firstFittoWindowdone) return;
             if (BackgroundImage.Source != null)
             {
+               
                 //  s(1);
                 double imgWidth = BackgroundImage.Source.Width;
                 double imgHeight = BackgroundImage.Source.Height;
@@ -280,6 +310,7 @@ namespace TabPaint
                 ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
                 UpdateSliderBarValue(zoomscale);
                 _canvasResizer.UpdateUI();
+                _firstFittoWindowdone=true;
             }
         }
         private async void PasteClipboardAsNewTab()
@@ -546,7 +577,7 @@ namespace TabPaint
         private void ShowPrevImage()
         {
             if (_imageFiles.Count == 0 || _currentImageIndex < 0) return;
-           _router.CleanUpSelectionandShape();
+            _router.CleanUpSelectionandShape();
             // 自动保存已编辑图片
             if (_isEdited && !string.IsNullOrEmpty(_currentFilePath))
             {
@@ -722,7 +753,9 @@ namespace TabPaint
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            if(!_programClosed)OnClosing();
+            if (!_programClosed) OnClosing();
         }
+
+
     }
 }

@@ -47,12 +47,9 @@ namespace TabPaint
 
         private void OnPrependTabClick(object sender, RoutedEventArgs e)
         {
-            var newTab = CreateNewUntitledTab();
-            FileTabs.Insert(0, newTab);
-            MainImageBar.Scroller.ScrollToHorizontalOffset(0);
-            UpdateImageBarSliderState();
+          
+          CreateNewTab(TabInsertPosition.AtStart, false);
         }
-
 
 
         private void OnSaveAllClick(object sender, RoutedEventArgs e)
@@ -78,56 +75,67 @@ namespace TabPaint
         }
         private void OnClearUneditedClick(object sender, RoutedEventArgs e)
         {
+            var dirtyTabs = FileTabs.Where(t => t.IsDirty).ToList();
+            var dirtyPaths = new HashSet<string>(dirtyTabs.Select(t => t.FilePath));
+
+            var filesToRemove = _imageFiles.Where(f => !dirtyPaths.Contains(f)).ToList();
+
+            foreach (var path in filesToRemove)
+            {
+                if (!IsVirtualPath(path))
+                {
+                    _explicitlyClosedFiles.Add(path);
+                }
+            }
+
+            _imageFiles = _imageFiles.Where(f => dirtyPaths.Contains(f)).ToList();
+
             var originalCurrent = _currentTabItem;
-            bool currentRemoved = false;
+            bool currentWasRemoved = originalCurrent != null && !originalCurrent.IsDirty;
 
             for (int i = FileTabs.Count - 1; i >= 0; i--)
             {
                 var tab = FileTabs[i];
                 if (!tab.IsDirty)
                 {
-                    if (tab == originalCurrent) currentRemoved = true;
+                    if (!string.IsNullOrEmpty(tab.BackupPath) && File.Exists(tab.BackupPath))
+                    {
+                        try { File.Delete(tab.BackupPath); } catch { }
+                    }
                     FileTabs.RemoveAt(i);
                 }
             }
 
-            // 如果列表空了，或者剩下的全是新建未保存的（一般逻辑上不太可能，除非全是脏的新建页）
+            // 5. 处理结果状态
             if (FileTabs.Count == 0)
             {
                 ResetToNewCanvas();
             }
-            else if (currentRemoved)
+            else
             {
-                // 之前选中的被删了，切换到最后一个
-                var newTab = FileTabs.Last();
-                foreach (var t in FileTabs) t.IsSelected = false;
-                newTab.IsSelected = true;
-                _currentTabItem = newTab;
-
-                if (newTab.IsNew)
+                if (currentWasRemoved)
                 {
-                    if (string.IsNullOrEmpty(newTab.BackupPath))
-                        Clean_bitmap(1200, 900);
-                    else
-                        _ = OpenImageAndTabs(newTab.BackupPath); // 尝试加载缓存
+                    var nextTab = FileTabs.Last();
+                    SwitchToTab(nextTab);
                 }
                 else
                 {
-                    _ = OpenImageAndTabs(newTab.FilePath);
+                    if (_currentTabItem != null)
+                    {
+                        _currentImageIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
+                    }
                 }
             }
+
             UpdateImageBarSliderState();
+             ShowToast($"已清理 {filesToRemove.Count} 张未编辑图片");
         }
+
+
 
         private void OnNewTabClick(object sender, RoutedEventArgs e)
         {
-            var newTab = CreateNewUntitledTab();
-            FileTabs.Add(newTab);
-            if (VisualTreeHelper.GetChildrenCount(MainImageBar.TabList) > 0)
-            {
-                MainImageBar.Scroller.ScrollToRightEnd();
-            }
-            UpdateImageBarSliderState();
+            CreateNewTab(TabInsertPosition.AtEnd,true);
         }
 
         // 3. 放弃所有编辑 (Discard All) - 终极清理版
@@ -143,6 +151,7 @@ namespace TabPaint
                 MessageBoxImage.Warning);
 
             if (result != MessageBoxResult.Yes) return;
+         
 
             _autoSaveTimer.Stop();
 
@@ -156,7 +165,6 @@ namespace TabPaint
                     File.Delete(_sessionPath);
                 }
 
-                // 2. 清空 Cache 文件夹下的所有文件 (无论程序是否知道它们)
                 if (Directory.Exists(_cacheDir))
                 {
                     string[] cacheFiles = Directory.GetFiles(_cacheDir);
@@ -168,7 +176,6 @@ namespace TabPaint
                         }
                         catch
                         {
-                            // 忽略占用错误，尽力而为
                         }
                     }
                 }
@@ -179,8 +186,6 @@ namespace TabPaint
             }
             var originalCurrentTab = _currentTabItem;
             bool currentTabAffected = false;
-
-            // 倒序遍历内存中的 Tabs 进行重置
             for (int i = FileTabs.Count - 1; i >= 0; i--)
             {
                 var tab = FileTabs[i];
@@ -192,51 +197,48 @@ namespace TabPaint
                 {
                     // A. 对于新建的文件：直接移除
                     if (tab == originalCurrentTab) currentTabAffected = true;
+
+                    if (_imageFiles.Contains(tab.FilePath))
+                    {
+                        _imageFiles.Remove(tab.FilePath);
+                    }
+
                     FileTabs.RemoveAt(i);
                 }
                 else if (tab.IsDirty)
                 {
-                    // B. 对于磁盘上已有的文件 (且被修改过)：还原状态
                     tab.IsDirty = false;
-
-                    // 标记受影响
                     if (tab == originalCurrentTab) currentTabAffected = true;
-
-                    // 还原缩略图 (重新从原图读取)
                     tab.IsLoading = true;
                     await tab.LoadThumbnailAsync(100, 60);
                     tab.IsLoading = false;
                 }
-                // C. 没改过的文件保持原样
             }
 
-            // 后续 UI 处理
             if (FileTabs.Count == 0)
             {
-                // 如果全删光了，重置为一张白纸
+                _imageFiles.Clear();
                 ResetToNewCanvas();
             }
             else if (currentTabAffected)
             {
-                // 如果当前页没了，或者当前页被重置了
                 if (!FileTabs.Contains(originalCurrentTab))
                 {
-                    // 找个新的选中 (默认第一个)
                     var firstTab = FileTabs.FirstOrDefault();
                     if (firstTab != null)
                     {
                         foreach (var t in FileTabs) t.IsSelected = false;
                         firstTab.IsSelected = true;
-                        _currentTabItem = firstTab;
+                        SwitchToTab(firstTab);
                     }
                 }
-
-                // 刷新画布并清空 Undo
-                if (_currentTabItem != null)
+                else
                 {
-                    // 重新加载原图 (因为缓存已经被删了，OpenImageAndTabs 内部会去读原文件)
-                    await OpenImageAndTabs(_currentTabItem.FilePath);
-                    ResetDirtyTracker();
+                    if (_currentTabItem != null)
+                    {
+                        await OpenImageAndTabs(_currentTabItem.FilePath);
+                        ResetDirtyTracker();
+                    }
                 }
             }
             else
@@ -244,9 +246,14 @@ namespace TabPaint
                 ResetDirtyTracker();
             }
 
-            // 强制 GC
             GC.Collect();
             UpdateImageBarSliderState();
+            if(File.Exists(_workingPath)) await SwitchWorkspaceToNewFile(_workingPath);
+            if (!string.IsNullOrEmpty(_workingPath) && Directory.Exists(_workingPath))
+            {
+                _workingPath = FindFirstImageInDirectory(_workingPath); await SwitchWorkspaceToNewFile(_workingPath);
+                }
+         
         }
         private void OnTabOpenFolderClick(object sender, RoutedEventArgs e)
         {
@@ -332,66 +339,147 @@ namespace TabPaint
         }
 
 
-
+        private void OnFileTabLeave(object sender, DragEventArgs e)
+        {
+            ClearDragFeedback(sender);
+        }
         private void OnFileTabReorderDragOver(object sender, System.Windows.DragEventArgs e)
         {
             if (e.Data.GetDataPresent("TabPaintReorderItem"))
             {
-                e.Effects = System.Windows.DragDropEffects.Move;
+                e.Effects = DragDropEffects.Move;
                 e.Handled = true;
+
+                if (sender is Grid grid)
+                {
+                    // 获取鼠标在当前 Item 内的相对坐标
+                    Point p = e.GetPosition(grid);
+                    double width = grid.ActualWidth;
+
+                    var insLine = FindVisualChild<Border>(grid, "InsertLine");
+                   // var rightLine = FindVisualChild<Border>(grid, "InsertLineRight");
+
+                    if (insLine == null) return;
+                    insLine.Visibility = Visibility.Visible;
+                  //  // 判断是在左半边还是右半边
+                }
             }
             else
             {
-                e.Effects = System.Windows.DragDropEffects.None;
+                e.Effects = DragDropEffects.None;
             }
         }
+        private T FindVisualChild<T>(DependencyObject parent, string childName) where T : FrameworkElement
+        {
+            if (parent == null) return null;
+
+            int childrenCount = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < childrenCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                // 如果是要找的类型且名字匹配 (如果传了名字)
+                if (child is T tChild && (string.IsNullOrEmpty(childName) || tChild.Name == childName))
+                {
+                    return tChild;
+                }
+                // 递归查找 (虽然这里 Grid 只有一层，但通用性更好)
+                var result = FindVisualChild<T>(child, childName);
+                if (result != null) return result;
+            }
+            return null;
+        }
+        private void ClearDragFeedback(object sender)
+        {
+            if (sender is Grid grid)
+            {
+                var leftLine = FindVisualChild<Border>(grid, "InsertLine");
+                if (leftLine != null) leftLine.Visibility = Visibility.Collapsed;
+            }
+        }
+
         private void OnFileTabDrop(object sender, System.Windows.DragEventArgs e)
         {
+            ClearDragFeedback(sender);
+
             if (e.Data.GetDataPresent("TabPaintReorderItem"))
             {
                 var sourceTab = e.Data.GetData("TabPaintReorderItem") as FileTabItem;
-                var targetButton = sender as System.Windows.Controls.Button;
-                var targetTab = targetButton?.DataContext as FileTabItem;
+
+                // 注意：现在 sender 是 Grid，我们需要从 DataContext 拿 Tab
+                var targetGrid = sender as Grid;
+                var targetTab = targetGrid?.DataContext as FileTabItem;
 
                 if (sourceTab != null && targetTab != null && sourceTab != targetTab)
                 {
-                    // --- 1. 更新 UI 集合 (FileTabs) ---
                     int oldUIIndex = FileTabs.IndexOf(sourceTab);
-                    int newUIIndex = FileTabs.IndexOf(targetTab);
+                    int targetUIIndex = FileTabs.IndexOf(targetTab);
 
-                    if (oldUIIndex >= 0 && newUIIndex >= 0)
+                    // 判断是插入到前面(Left)还是后面(Right)
+                    Point p = e.GetPosition(targetGrid);
+                    bool insertAfter = p.X >= targetGrid.ActualWidth / 2;
+
+                    int newUIIndex = targetUIIndex;
+
+                    // 如果是在右侧放置，目标索引+1
+                    if (insertAfter)
+                    {
+                        newUIIndex++;
+                    }
+
+                    // 修正索引：如果是从后面往前拖，索引不变；如果是从前往后拖，因为旧元素删除了，索引需要-1
+                    // 但 ObservableCollection 的 Move 方法处理起来比较直观，我们这里算绝对位置
+                    if (oldUIIndex < newUIIndex)
+                    {
+                        newUIIndex--;
+                    }
+                    // 简单校验
+                    if (newUIIndex < 0) newUIIndex = 0;
+                    if (newUIIndex >= FileTabs.Count) newUIIndex = FileTabs.Count - 1;
+
+                    // 执行移动逻辑 (直接复用你之前的逻辑，只改索引计算)
+                    if (oldUIIndex != newUIIndex)
                     {
                         FileTabs.Move(oldUIIndex, newUIIndex);
 
-                        // --- 2. 核心：更新底层数据集合 (_imageFiles) ---
-                        // 找到对应的文件路径
+                        // 同步更新 _imageFiles 列表
                         string sourcePath = sourceTab.FilePath;
-                        string targetPath = targetTab.FilePath;
-
-                        int srcFileIdx = _imageFiles.IndexOf(sourcePath);
-                        int tgtFileIdx = _imageFiles.IndexOf(targetPath);
-
-                        if (srcFileIdx >= 0 && tgtFileIdx >= 0)
+                        // 注意：这里需要重新获取一次真实的 _imageFiles 顺序，或者直接按新UI顺序重建
+                        // 简单起见，按你原来的逻辑处理:
+                        if (!string.IsNullOrEmpty(sourcePath) && _imageFiles.Contains(sourcePath))
                         {
-                            _imageFiles.RemoveAt(srcFileIdx);
-                            int newTgtIdx = _imageFiles.IndexOf(targetPath);
+                            _imageFiles.Remove(sourcePath);
+                            // 找到现在位于 newUIIndex 位置的元素的 FilePath，插在它附近？
+                            // 更简单的做法：根据 FileTabs 重建 _imageFiles (如果有纯文件列表的话)
+                            // 或者按原有逻辑插入：
 
-                            int finalInsertIdx = (newUIIndex > oldUIIndex) ? newTgtIdx + 1 : newTgtIdx;
-
-                            _imageFiles.Insert(finalInsertIdx, sourcePath);
+                            // 找到现在排在 sourceTab 前面的那个 Tab
+                            int newTgtIdx = -1;
+                            if (newUIIndex > 0)
+                            {
+                                var prevTab = FileTabs[newUIIndex - 1];
+                                newTgtIdx = _imageFiles.IndexOf(prevTab.FilePath);
+                                // 插在它后面
+                                if (newTgtIdx >= 0) _imageFiles.Insert(newTgtIdx + 1, sourcePath);
+                                else _imageFiles.Add(sourcePath); // Fallback
+                            }
+                            else
+                            {
+                                // 插在最前面
+                                _imageFiles.Insert(0, sourcePath);
+                            }
                         }
+
                         if (_currentTabItem != null)
                         {
                             _currentImageIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
                         }
-                        UpdateWindowTitle();
+                         UpdateWindowTitle(); // 如果需要
                     }
                 }
-                e.Effects = System.Windows.DragDropEffects.Move;
+                e.Effects = DragDropEffects.Move;
                 e.Handled = true;
             }
         }
-
         private void OnTabCopyClick(object sender, RoutedEventArgs e)
         {
             if (sender is MenuItem item && item.Tag is FileTabItem tab)
@@ -529,8 +617,6 @@ namespace TabPaint
             }
         }
 
-
-
         private void OnTabDeleteClick(object sender, RoutedEventArgs e)
         {
             // 这里的“关闭”等同于界面上的 X 按钮
@@ -539,7 +625,6 @@ namespace TabPaint
                 CloseTab(tab);
             }
         }
-
         private void OnTabFileDeleteClick(object sender, RoutedEventArgs e)
         {
             // 这里的“删除”是物理删除文件
@@ -582,7 +667,6 @@ namespace TabPaint
                 }
             }
         }
-
         private void CopyTabToClipboard(FileTabItem tab)
         {
             var dataObject = new DataObject();
@@ -616,7 +700,6 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                // 剪贴板不仅内存敏感，还容易被其他程序锁定导致 COMException
                 System.Diagnostics.Debug.WriteLine($"Copy failed: {ex.Message}");
             }
             finally
@@ -633,10 +716,6 @@ namespace TabPaint
             }
         }
 
-
         // #endregion
-
-
-
     }
 }

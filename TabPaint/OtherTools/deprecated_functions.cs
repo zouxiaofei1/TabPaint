@@ -152,3 +152,24 @@
 //    return;
 //}
 // s(1);
+
+
+
+// 1. 清理底层画布
+//Clean_bitmap(1200, 900);
+
+//// 2. 重置窗口标题
+//_currentFilePath = string.Empty;
+//_currentFileName = "未命名";
+//UpdateWindowTitle();
+
+//var newTab = CreateNewUntitledTab();
+//newTab.IsSelected = true; // 设为选中态
+//FileTabs.Add(newTab);
+//_currentTabItem = newTab;
+
+//// 5. 重置撤销栈和脏状态追踪
+//ResetDirtyTracker();
+
+//// 6. 滚动视图归位
+//MainImageBar.Scroller.ScrollToHorizontalOffset(0);

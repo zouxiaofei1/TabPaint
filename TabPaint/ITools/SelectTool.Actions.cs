@@ -83,9 +83,11 @@ namespace TabPaint
                         data,
                         stride
                     );
+                    DataObject dataObj = new DataObject();
+                    dataObj.SetImage(bitmapToCopy);
+                    dataObj.SetData(MainWindow.InternalClipboardFormat, "TabPaintInternal");
 
-                    // 将 BitmapSource 放入系统剪贴板
-                    System.Windows.Clipboard.SetImage(bitmapToCopy);
+                    System.Windows.Clipboard.SetDataObject(dataObj, true);
                 }
                 catch (Exception ex)
                 {
@@ -123,12 +125,7 @@ namespace TabPaint
                 {
                     _clipboardData = null; _clipboardWidth = _clipboardHeight = 0;
                 }
-                HidePreview(ctx);
-                ctx.SelectionOverlay.Children.Clear();
-                ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
-
-                // 清空状态
-                _selectionData = null;
+                DeleteSelection(ctx);
 
             }
 

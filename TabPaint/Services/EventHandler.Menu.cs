@@ -232,13 +232,13 @@ namespace TabPaint
         {
             var dlg = new Microsoft.Win32.OpenFileDialog
             {
-                Filter = PicFilterString
+                Filter = PicFilterString,
+                 Multiselect = true
             };
             if (dlg.ShowDialog() == true)
             {
-                _currentFilePath = dlg.FileName;
-                _currentImageIndex = -1;
-                OpenImageAndTabs(_currentFilePath, true);
+                string[] files= dlg.FileNames;
+                OpenFilesAsNewTabs(files);
                 UpdateImageBarSliderState();
             }
         }
@@ -292,7 +292,7 @@ namespace TabPaint
 
         private void OnNewClick(object sender, RoutedEventArgs e)
         {
-            CreateNewTab(true);
+            CreateNewTab(TabInsertPosition.AfterCurrent,true);
         }
     }
 }

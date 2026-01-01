@@ -242,9 +242,54 @@ namespace TabPaint
                 ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Surface.ReplaceBitmap(newBmp);
                 ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasSizeChanged(newW, newH);
                 // 6. 刷新界面
-                UpdateUI();
+                UpdateUI(); 
+                EnsureEdgeVisible(newBounds);
             }
+            private void EnsureEdgeVisible(Rect resizeRect)
+            {
+                var scrollViewer = ((MainWindow)System.Windows.Application.Current.MainWindow).ScrollContainer;
 
+                if (scrollViewer == null) return;
+                scrollViewer.UpdateLayout();
+                double scale = ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale;
+
+                // 定义留白大小 (比如 50px)
+                double padding = 50;
+
+                // 根据拉伸的方向调整滚动条
+                // resizeRect.X < 0 说明向左扩展了
+                if (resizeRect.X < 0)
+                {
+                    scrollViewer.ScrollToHorizontalOffset(scrollViewer.HorizontalOffset + (resizeRect.X * scale) - padding);
+                }
+                // 向右扩展：检查右边缘是否在视野内
+                else if (resizeRect.Width > _startRect.Width) // 宽度变大了
+                {
+                    double newVisualWidth = resizeRect.Width * scale;
+                    // 如果新宽度超出了视口，且是为了看右边
+                    if (_currentAnchor == ResizeAnchor.RightMiddle ||
+                        _currentAnchor == ResizeAnchor.TopRight ||
+                        _currentAnchor == ResizeAnchor.BottomRight)
+                    {
+                        // 稍微向右滚动一点，露出右边缘，但不一定滚到底
+                        scrollViewer.ScrollToHorizontalOffset(scrollViewer.HorizontalOffset + (resizeRect.Width - _startRect.Width) * scale + padding);
+                    }
+                }
+                if (resizeRect.Y < 0)
+                {
+                    scrollViewer.ScrollToVerticalOffset(scrollViewer.VerticalOffset + (resizeRect.Y * scale) - padding);
+                }
+                // 向下扩展
+                else if (resizeRect.Height > _startRect.Height)
+                {
+                    if (_currentAnchor == ResizeAnchor.BottomMiddle ||
+                        _currentAnchor == ResizeAnchor.BottomLeft ||
+                        _currentAnchor == ResizeAnchor.BottomRight)
+                    {
+                        scrollViewer.ScrollToVerticalOffset(scrollViewer.VerticalOffset + (resizeRect.Height - _startRect.Height) * scale + padding);
+                    }
+                }
+            }
             private Dictionary<ResizeAnchor, Point> GetHandlePositions(double w, double h)
             {
                 return new Dictionary<ResizeAnchor, Point>
