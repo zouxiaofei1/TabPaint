@@ -1,11 +1,34 @@
-﻿using System.Windows;
+﻿using System.Globalization;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using static TabPaint.MainWindow;
 
 namespace TabPaint.Controls
 {
+    public class InverseBooleanToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool b)
+            {
+                // 如果是 True，则隐藏 (Collapsed)；如果是 False，则显示 (Visible)
+                return b ? Visibility.Collapsed : Visibility.Visible;
+            }
+            return Visibility.Visible;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is Visibility v)
+            {
+                return v != Visibility.Visible;
+            }
+            return false;
+        }
+    }
     public partial class ImageBarControl : UserControl
     {
         public ImageBarControl()
@@ -111,22 +134,30 @@ namespace TabPaint.Controls
         // 1. DragOver: 计算位置并显示竖线
            private void Internal_OnFileTabDragLeave(object sender, DragEventArgs e) => FileTabLeave?.Invoke(sender, e);
 
-        // 2. DragLeave: 离开时清除线条
-        //private void Internal_OnFileTabDragLeave(object sender, DragEventArgs e)
-        //{
-        //   ClearDragFeedback(sender);
-        //}
-        //private void ClearDragFeedback(object sender)
-        //{
-        //    if (sender is Grid grid)
-        //    {
-        //        var leftLine = FindVisualChild<Border>(grid, "InsertLineLeft");
-        //        var rightLine = FindVisualChild<Border>(grid, "InsertLineRight");
-        //        if (leftLine != null) leftLine.Visibility = Visibility.Collapsed;
-        //        if (rightLine != null) rightLine.Visibility = Visibility.Collapsed;
-        //    }
-        //}
-        // 3. Drop: 根据竖线位置执行插入逻辑
+        public static readonly DependencyProperty IsViewModeProperty =
+                   DependencyProperty.Register("IsViewMode", typeof(bool), typeof(ImageBarControl), new PropertyMetadata(false));
+
+        public bool IsViewMode
+        {
+            get { return (bool)GetValue(IsViewModeProperty); }
+            set { SetValue(IsViewModeProperty, value); }
+        }
+
+        // 2. IsPinned: 是否锁定展开 (可以通过快捷键或右键菜单触发)
+        public static readonly DependencyProperty IsPinnedProperty =
+            DependencyProperty.Register("IsPinned", typeof(bool), typeof(ImageBarControl), new PropertyMetadata(false));
+
+        public bool IsPinned
+        {
+            get { return (bool)GetValue(IsPinnedProperty); }
+            set { SetValue(IsPinnedProperty, value); }
+        }
+
+        // 公开方法供外部快捷键调用 (比如按下 Ctrl+T 锁定/解锁)
+        public void TogglePin()
+        {
+            IsPinned = !IsPinned;
+        }
 
 
     }

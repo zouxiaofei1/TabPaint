@@ -223,5 +223,14 @@ namespace TabPaint
         private string _workingPath;
         public const string InternalClipboardFormat = "TabPaint_Internal_Copy_Marker";
         public bool _firstFittoWindowdone = false;
+        public static readonly DependencyProperty IsViewModeProperty =
+     DependencyProperty.Register("IsViewMode", typeof(bool), typeof(MainWindow),
+         new PropertyMetadata(false, OnIsViewModeChanged));
+
+        public bool IsViewMode
+        {
+            get { return (bool)GetValue(IsViewModeProperty); }
+            set { SetValue(IsViewModeProperty, value); }
+        }
     }
 }

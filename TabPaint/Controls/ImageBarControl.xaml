@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:TabPaint.Controls"
              mc:Ignorable="d" 
+             x:Name="RootControl"
              d:DesignHeight="100" d:DesignWidth="1000">
 
     <UserControl.Resources>
@@ -12,10 +13,84 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Resources/Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+            <local:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Border Height="100" Background="#90FFFFFF">
+    <Border x:Name="MainContainer" Background="#90FFFFFF" VerticalAlignment="Top" ClipToBounds="True">
+        <Border.Style>
+            <Style TargetType="Border">
+                <Setter Property="Height" Value="100"/>
+                <Setter Property="Opacity" Value="1"/>
+
+                <Style.Triggers>
+
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding IsViewMode, ElementName=RootControl}" Value="True"/>
+                            <Condition Binding="{Binding IsPinned, ElementName=RootControl}" Value="False"/>
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Opacity" Value="0.01"/>
+                        <Setter Property="Background" Value="Transparent"/>
+                    </MultiDataTrigger>
+
+
+                    <!-- 2. 修正后的展开逻辑：使用 MultiDataTrigger 而非 MultiTrigger -->
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <!-- 注意：在 DataTrigger 里判断 IsMouseOver 需要这样写 -->
+                            <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                            <Condition Binding="{Binding IsViewMode, ElementName=RootControl}" Value="True"/>
+                            <Condition Binding="{Binding IsPinned, ElementName=RootControl}" Value="False"/>
+                        </MultiDataTrigger.Conditions>
+
+                        <MultiDataTrigger.EnterActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetProperty="Height" To="100" Duration="0:0:0.2" BeginTime="0:0:0.2">
+                                        <DoubleAnimation.EasingFunction>
+                                            <CubicEase EasingMode="EaseOut"/>
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.2" BeginTime="0:0:0.2"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </MultiDataTrigger.EnterActions>
+
+                        <MultiDataTrigger.ExitActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                 <DoubleAnimation Storyboard.TargetProperty="Height" To="5" Duration="0:0:0.2"/> 
+                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0.01" Duration="0:0:0.2"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </MultiDataTrigger.ExitActions>
+                    </MultiDataTrigger>
+
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding IsViewMode, ElementName=RootControl}" Value="False"/>
+                        </MultiDataTrigger.Conditions>
+
+                        <!-- 使用 EnterActions 里的 0秒动画 来强制覆盖掉上面 Trigger 的 ExitActions -->
+                        <MultiDataTrigger.EnterActions>
+                            <BeginStoryboard x:Name="ForceVisibleStoryboard">
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetProperty="Height" To="100" Duration="0:0:0" />
+                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0" />
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </MultiDataTrigger.EnterActions>
+
+                        <!-- 关键：退出编辑模式时，移除这个强制动画，把控制权交还给 ViewMode 的逻辑 -->
+                        <MultiDataTrigger.ExitActions>
+                            <RemoveStoryboard BeginStoryboardName="ForceVisibleStoryboard"/>
+                        </MultiDataTrigger.ExitActions>
+                    </MultiDataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
+
         <Grid Background="Transparent" AllowDrop="True">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
@@ -24,7 +99,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- 1. 左侧控制按钮 -->
-            <Border Grid.Column="0" Margin="4,0,4,0" VerticalAlignment="Center" BorderBrush="#33999999" BorderThickness="0,0,1,0" Padding="0,0,2,0">
+            <Border Grid.Column="0" Margin="4,0,4,0" VerticalAlignment="Center" BorderBrush="#33999999" BorderThickness="0,0,1,0" Padding="0,0,2,0" Visibility="{Binding IsViewMode, ElementName=RootControl, Converter={StaticResource InverseBoolToVis}}">
                 <UniformGrid Columns="1" Rows="3" Height="80" Width="28">
                     <Button ToolTip="保存所有已编辑图片" Click="Internal_OnSaveAllClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
                         <Image Source="{StaticResource Save_Edit_Image}" Width="16" Height="16"/>
@@ -45,7 +120,7 @@
                           ManipulationBoundaryFeedback="Internal_ScrollViewer_ManipulationBoundaryFeedback">
                 <StackPanel Orientation="Horizontal">
                     <!-- 左侧添加按钮 -->
-                    <Button Name="LeftAddBtn" Style="{StaticResource Win11AddButtonStyle}" Click="Internal_OnPrependTabClick" ToolTip="在左侧新建"/>
+                    <Button Name="LeftAddBtn" Style="{StaticResource Win11AddButtonStyle}" Click="Internal_OnPrependTabClick" ToolTip="在左侧新建" Visibility="{Binding IsViewMode, ElementName=RootControl, Converter={StaticResource InverseBoolToVis}}"/>
 
                     <ItemsControl x:Name="FileTabList" ItemsSource="{Binding FileTabs}">
                         <ItemsControl.ItemsPanel>
@@ -148,7 +223,7 @@
                     </ItemsControl>
 
                     <!-- 新建按钮 -->
-                    <Button x:Name="NewTabBtn" Style="{StaticResource Win11AddButtonStyle}" Click="Internal_OnNewTabClick" ToolTip="新建画布 (Ctrl+N)"/>
+                        <Button x:Name="NewTabBtn" Visibility="{Binding IsViewMode, ElementName=RootControl, Converter={StaticResource InverseBoolToVis}}" Style="{StaticResource Win11AddButtonStyle}" Click="Internal_OnNewTabClick" ToolTip="新建画布 (Ctrl+N)" />
                 </StackPanel>
             </ScrollViewer>
 

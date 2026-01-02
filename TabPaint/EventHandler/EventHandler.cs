@@ -3,9 +3,6 @@ using Microsoft.VisualBasic.FileIO;
 using System.ComponentModel;
 using System.IO;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
-using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -19,9 +16,57 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
-        private void MainWindow_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
-        {
 
+        private bool HandleGlobalShortcuts(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Tab)
+            {
+                // 切换模式
+                IsViewMode = !IsViewMode;
+
+                // 执行切换时的额外逻辑
+                OnModeChanged(IsViewMode);
+                e.Handled = true;
+                return true;
+            }
+            if (Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                switch (e.Key)
+                {
+                    case Key.L:
+                        RotateBitmap(-90);
+                        e.Handled = true;
+                        return true;
+                    case Key.R:
+                        RotateBitmap(90);
+                        e.Handled = true;
+                        return true;
+                }
+            }
+            else if (Keyboard.Modifiers == ModifierKeys.None)
+            {
+                switch (e.Key)
+                {
+                    case Key.Left:
+                        ShowPrevImage();
+                        e.Handled = true;
+                        return true;
+                    case Key.Right:
+                        ShowNextImage();
+                        e.Handled = true;
+                        return true;
+                    case Key.F11:
+                        MaximizeWindowHandler(); e.Handled = true;
+                        return true;
+                }
+            }
+            return false;
+        }
+        private void HandleViewModeShortcuts(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+        }
+        private void HandlePaintModeShortcuts(object sender, System.Windows.Input.KeyEventArgs e)
+        {
             if (e.Key == Key.V &&
                 (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control &&
                 (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
@@ -39,65 +84,38 @@ namespace TabPaint
                 var settings = SettingsManager.Instance.Current;
                 settings.EnableClipboardMonitor = !settings.EnableClipboardMonitor;
 
-                e.Handled = true; 
+                e.Handled = true;
                 return; // 处理完毕，直接返回
             }
-
 
             if (Keyboard.Modifiers == ModifierKeys.Control)
             {
                 switch (e.Key)
                 {
-                    case Key.Z:
-                        Undo();
-                        e.Handled = true;
-                        break;
-                    case Key.Y:
-                        Redo();
-                        e.Handled = true;
-                        break;
-                    case Key.S:
-                        OnSaveClick(sender, e);
-                        e.Handled = true;
-                        break;
-                    case Key.N:
-                        OnNewClick(sender, e);
-                        e.Handled = true;
-                        break;
-                    case Key.O:
-                        OnOpenClick(sender, e);
-                        e.Handled = true;
-                        break;
+                    case Key.Z: Undo(); e.Handled = true; break;
+                    case Key.Y: Redo(); e.Handled = true; break;
+                    case Key.S: OnSaveClick(sender, e); e.Handled = true; break;
+                    case Key.N: OnNewClick(sender, e); e.Handled = true; break;
+                    case Key.O: OnOpenClick(sender, e); e.Handled = true; break;
                     case Key.W:
                         var currentTab = FileTabs?.FirstOrDefault(t => t.IsSelected);
                         if (currentTab != null) CloseTab(currentTab);
                         e.Handled = true;
                         break;
-
-                    // 这里处理普通的 Ctrl + V (画布内粘贴)
-                    case Key.V:
+                    case Key.V:// 这里处理普通的 Ctrl + V (画布内粘贴)
                         bool isMultiFilePaste = false;
-
-                        // 1. 检查剪贴板是否包含文件
                         if (System.Windows.Clipboard.ContainsFileDropList())
                         {
                             var fileList = System.Windows.Clipboard.GetFileDropList();
                             if (fileList != null)
                             {
-                                // 过滤出有效的图片文件 (复用你现有的 IsImageFile 方法)
                                 var validImages = new List<string>();
                                 foreach (string file in fileList)
                                 {
-                                    if (IsImageFile(file))
-                                    {
-                                        validImages.Add(file);
-                                    }
+                                    if (IsImageFile(file)) validImages.Add(file);
                                 }
-
-                                // 2. 如果是多文件 -> 全部变成新标签页
                                 if (validImages.Count > 1)
                                 {
-                                    // OpenFilesAsNewTabs 是 async 的，但在 KeyDown 中我们不等待它 (Fire and forget)
                                     _ = OpenFilesAsNewTabs(validImages.ToArray());
                                     isMultiFilePaste = true;
                                 }
@@ -106,43 +124,23 @@ namespace TabPaint
                         if (!isMultiFilePaste)
                         {
                             _router.SetTool(_tools.Select);
-                            if (_tools.Select is SelectTool st)
-                            {
-                                st.PasteSelection(_ctx, true);
-                            }
+                            if (_tools.Select is SelectTool st) st.PasteSelection(_ctx, true);
                         }
-
                         e.Handled = true;
                         break;
                     case Key.A:
                         _router.SetTool(_tools.Select);
-                        if (_tools.Select is SelectTool stSelectAll)
-                        {
-                            stSelectAll.SelectAll(_ctx);
-                        }
+                        if (_tools.Select is SelectTool stSelectAll) stSelectAll.SelectAll(_ctx);
                         e.Handled = true;
                         break;
-                    case Key.L: RotateBitmap(-90);
-                        e.Handled = true;
-                        break;
-                    case Key.R:
-                        RotateBitmap(90);
-                        e.Handled = true;
-                        break;
+
                 }
             }
             else if (Keyboard.Modifiers == ModifierKeys.None)
             {
                 switch (e.Key)
                 {
-                    case Key.Left:
-                        ShowPrevImage();
-                        e.Handled = true;
-                        break;
-                    case Key.Right:
-                        ShowNextImage();
-                        e.Handled = true;
-                        break;
+
                     case Key.Delete:
                         if (_tools.Select is SelectTool st && st.HasActiveSelection)
                         {
@@ -152,13 +150,28 @@ namespace TabPaint
                         {
                             HandleDeleteFileAction();
                         }
-                        break;
-                    case Key.F11:
-                        MaximizeWindowHandler();
+                        e.Handled = true;
                         break;
 
                 }
             }
+        }
+
+        private void MainWindow_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (HandleGlobalShortcuts(sender, e)) return;
+
+            // 2. 根据模式分发
+            if (IsViewMode)
+            {
+                HandleViewModeShortcuts(sender, e);
+            }
+            else
+            {
+                HandlePaintModeShortcuts(sender, e);
+            }
+
+
         }
         private void HandleDeleteFileAction()
         {
@@ -204,7 +217,7 @@ namespace TabPaint
 
         private void InitializeClipboardMonitor()
         {
-          
+
             var helper = new WindowInteropHelper(this);
             if (helper.Handle != IntPtr.Zero)
             {
@@ -222,10 +235,10 @@ namespace TabPaint
 
         private void Border_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-          //  s(1);
+            //  s(1);
             if (e.ClickCount == 2) // 双击标题栏切换最大化/还原
             {
-               
+
                 MaximizeRestore_Click(sender, null);
                 return;
             }
@@ -251,7 +264,7 @@ namespace TabPaint
 
             if (_draggingFromMaximized && e.LeftButton == MouseButtonState.Pressed)
             {
-               
+
                 // 鼠标移动的阈值，比如 5px
                 var currentPos = e.GetPosition(this);
                 if (Math.Abs(currentPos.X - _dragStartPoint.X) > 5 ||
@@ -284,7 +297,7 @@ namespace TabPaint
         // 状态变量
         private uint _lastClipboardSequenceNumber = 0;
         private DateTime _lastClipboardActionTime = DateTime.MinValue;
-        private const int CLIPBOARD_COOLDOWN_MS = 1000; 
+        private const int CLIPBOARD_COOLDOWN_MS = 1000;
         // 计时器触发事件：真正的执行逻辑
 
 
@@ -307,7 +320,7 @@ namespace TabPaint
                     var timeSinceLast = (DateTime.Now - _lastClipboardActionTime).TotalMilliseconds;
                     if (timeSinceLast < CLIPBOARD_COOLDOWN_MS)
                     {
-                       
+
                         // 虽然跳过逻辑，但要更新序列号，以免冷却结束后把旧消息当新消息
                         _lastClipboardSequenceNumber = currentSeq;
                         return IntPtr.Zero;
@@ -374,7 +387,7 @@ namespace TabPaint
             {
                 var dataObj = System.Windows.Clipboard.GetDataObject();
                 if (dataObj != null && dataObj.GetDataPresent(InternalClipboardFormat)) return;
-                
+
                 List<string> filesToLoad = new List<string>();
 
                 // 情况 A: 剪切板是文件列表 (复制了文件)
@@ -510,7 +523,7 @@ namespace TabPaint
             zoomscale = newScale;
             ZoomTransform.ScaleX = ZoomTransform.ScaleY = newScale;
             UpdateUIStatus(zoomscale);
-            if (zoomscale < 0.8)
+            if (zoomscale < (IsViewMode?1.6: 0.8))
             {
                 RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.Linear);
             }
@@ -532,6 +545,7 @@ namespace TabPaint
             if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
             if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx);
             _canvasResizer.UpdateUI();
+            if (IsViewMode) { ShowToast(newScale.ToString("P0")); }
         }
         private void OnMouseWheelZoom(object sender, MouseWheelEventArgs e)
         {

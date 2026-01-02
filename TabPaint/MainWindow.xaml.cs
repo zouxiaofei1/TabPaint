@@ -478,32 +478,69 @@ namespace TabPaint
         }
 
 
-        private void ShowToast(string message)
+
+
+// 类成员变量
+private DispatcherTimer _toastTimer;
+    private const int ToastDuration = 1500; // 停留时间 ms
+
+    // 在构造函数或者 UserControl_Loaded 中初始化 Timer
+    private void InitializeToastTimer()
+    {
+        _toastTimer = new DispatcherTimer();
+        _toastTimer.Interval = TimeSpan.FromMilliseconds(ToastDuration);
+        _toastTimer.Tick += (s, e) => HideToast(); // 计时结束触发淡出
+    }
+
+    private void ShowToast(string message)
+    {
+        // 如果还没初始化，做个防御性编程（或者确保在构造函数里调用了 InitializeToastTimer）
+        if (_toastTimer == null) InitializeToastTimer();
+
+        // 1. 立即停止之前的倒计时（关键：防止旧的计时器触发淡出）
+        _toastTimer.Stop();
+
+        // 2. 更新文字
+        InfoToastText.Text = message;
+
+        // 3. 判断当前状态，决定是否需要播放淡入动画
+        // 如果当前完全看不见，或者正在消失中，才需要播放“淡入”
+        if (InfoToast.Opacity < 1.0)
         {
-            InfoToastText.Text = message;
+            // 停止之前的淡出动画（防止冲突）
+            InfoToast.BeginAnimation(OpacityProperty, null);
 
-            // 创建渐变动画
             DoubleAnimation fadeIn = new DoubleAnimation(1, TimeSpan.FromMilliseconds(200));
-            DoubleAnimation fadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(500));
-            fadeOut.BeginTime = TimeSpan.FromSeconds(1); // 停留1.5秒后开始消失
-
-            // 播放动画
-            InfoToast.BeginAnimation(OpacityProperty, null); // 清除之前的动画
-            Storyboard sb = new Storyboard();
-            Storyboard.SetTarget(fadeIn, InfoToast);
-            Storyboard.SetTargetProperty(fadeIn, new PropertyPath(OpacityProperty));
-
-            Storyboard.SetTarget(fadeOut, InfoToast);
-            Storyboard.SetTargetProperty(fadeOut, new PropertyPath(OpacityProperty));
-
-            sb.Children.Add(fadeIn);
-            sb.Children.Add(fadeOut);
-            sb.Begin();
+            // 缓动效果会让动画更自然（可选）
+            fadeIn.EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut };
+            InfoToast.BeginAnimation(OpacityProperty, fadeIn);
         }
-        // 在 MainWindow 类中添加
+        else
+        {
+            // 如果已经是亮的（Opacity == 1），直接保持住，不需要动画，只要更新文字即可
+            // 此时因为上面 Stop() 了计时器，它会一直悬停
+        }
 
-        // 统一处理文字对齐点击
-        private void TextAlign_Click(object sender, RoutedEventArgs e)
+        // 4. 重新开始倒计时（重置停留时间）
+        _toastTimer.Start();
+    }
+
+    // 独立的淡出方法
+    private void HideToast()
+    {
+        _toastTimer.Stop(); // 停止计时器
+
+        DoubleAnimation fadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(500));
+        // 缓动效果（可选）
+        fadeOut.EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn };
+
+        InfoToast.BeginAnimation(OpacityProperty, fadeOut);
+    }
+
+    // 在 MainWindow 类中添加
+
+    // 统一处理文字对齐点击
+    private void TextAlign_Click(object sender, RoutedEventArgs e)
         {
             if (sender is ToggleButton btn && btn.Tag is string align)
             {

@@ -45,7 +45,8 @@ namespace TabPaint
             public void UpdateUI()
             {
                 _overlay.Children.Clear();
-
+             
+                
                 // 获取当前画布尺寸
                 double w = ((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundImage.Source.Width;
                 double h = ((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundImage.Source.Height;
@@ -58,7 +59,7 @@ namespace TabPaint
                 double invScale = 1.0 / scale;
                 double size = HandleSize * invScale;
 
-         
+                if (_mainWindow.IsViewMode) return;
                 // 2. 绘制 8 个手柄
                 var handles = GetHandlePositions(w, h);
                 foreach (var kvp in handles)

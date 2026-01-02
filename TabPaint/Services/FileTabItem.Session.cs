@@ -321,6 +321,7 @@ namespace TabPaint
 
             try
             {
+                this.Hide();
                 SaveAppState();
                 // 立即保存当前的
                 if (_currentTabItem != null && _currentTabItem.IsDirty && !_isSavingFile)

@@ -86,9 +86,6 @@ private void OpacitySlider_Loaded(object sender, RoutedEventArgs e)
 
             toolTip.VerticalOffset = offsetFromTop;
 
-            //var placement = toolTip.Placement;
-            //toolTip.Placement = System.Windows.Controls.Primitives.PlacementMode.Absolute;
-            //toolTip.Placement = placement;
         }
 
 
@@ -111,20 +108,58 @@ private void OpacitySlider_Loaded(object sender, RoutedEventArgs e)
             if (_isLoadingImage) return;
             _router.CurrentTool?.StopAction(_ctx);
         }
+        private void OnScrollContainerDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (!IsViewMode) return;
+            if (e.ChangedButton != MouseButton.Left) return;
+            if (_isPanning)
+            {
+                _isPanning = false;
+                ScrollContainer.ReleaseMouseCapture();
+                Mouse.OverrideCursor = null; // 恢复光标
+            }
+
+            MaximizeWindowHandler();
+            e.Handled = true;
+        }
+   
 
         private void OnScrollContainerMouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (Keyboard.IsKeyDown(Key.Space) && e.ChangedButton == MouseButton.Left)
+            if (e.ClickCount == 2) return;
+            if (e.ChangedButton != MouseButton.Left) return;
+            if (Keyboard.IsKeyDown(Key.Space) && e.ChangedButton == MouseButton.Left || IsViewMode)
             {
-                _isPanning = true;
-                _lastMousePosition = e.GetPosition(ScrollContainer);
-                ScrollContainer.CaptureMouse(); // 捕获鼠标，防止拖出控件范围失效
+                bool canScrollX = ScrollContainer.ScrollableWidth > 0.5; // 用 0.5 容错
+                bool canScrollY = ScrollContainer.ScrollableHeight > 0.5;
 
-                // 改变光标样式为抓手
-                Mouse.OverrideCursor = System.Windows.Input.Cursors.ScrollAll;
-                e.Handled = true; // 阻止后续工具逻辑（如开始画画或选区）
-                return;
+                // 情况 A: 图片比窗口大 -> 执行平移 (Pan)
+                if (canScrollX || canScrollY)
+                {
+                    _isPanning = true;
+                    _lastMousePosition = e.GetPosition(ScrollContainer);
+                    ScrollContainer.CaptureMouse();
+
+                    // 改变光标：抓手
+                    Mouse.OverrideCursor = System.Windows.Input.Cursors.ScrollAll;
+                    e.Handled = true;
+                    return;
+                }
+                else
+                {
+                    if (e.ButtonState == MouseButtonState.Pressed)
+                    {
+                        try
+                        {
+                            this.DragMove();
+                        }
+                        catch {  }
+                        e.Handled = true;
+                        return;
+                    }
+                }
             }
+            if (IsViewMode) return;
             if (_router.CurrentTool is SelectTool selTool && selTool._selectionData != null)
             {
                 // 1. 检查点击的是否是左键（通常右键用于弹出菜单，不应触发提交）

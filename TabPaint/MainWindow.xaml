@@ -14,9 +14,11 @@
         Background="Transparent"
         Closing="Window_Closing"
         WindowStyle="None"
-        SizeChanged="Window_SizeChanged">
+        SizeChanged="Window_SizeChanged" 
+        x:Name="RootWindow">
+    
     <WindowChrome.WindowChrome>
-        <!-- GlassFrameThickness="-1" 将 DWM 玻璃效果扩展到整个客户区，这是消除黑色背景的关键 -->
+        
         <shell:WindowChrome 
             GlassFrameThickness="-1" 
             CaptionHeight="32"
@@ -26,10 +28,10 @@
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- 引入全局样式 -->
                 <ResourceDictionary Source="pack://application:,,,/Resources/Styles.xaml"/>
-                <!-- 引入刚刚抽离的局部样式 -->
             </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+            <local:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
         </ResourceDictionary>
     </Window.Resources>
 
@@ -43,13 +45,15 @@
                           DockPanel.Dock="Top" 
                           MinimizeClick="Minimize_Click"
                           MaximizeRestoreClick="MaximizeRestore_Click"
+                                      
                           CloseClick="Close_Click"
-                                        TitleBarMouseDown="Border_MouseLeftButtonDown"/>
+                                        TitleBarMouseDown="Border_MouseLeftButtonDown"
+                             ModeSwitchClick="OnTitleBarModeSwitch" />
             <!-- #endregion -->
             
             <!-- #region 2. 菜单栏 (MenuBar) -->
             <controls:MenuBarControl x:Name="MainMenu" DockPanel.Dock="Top"
-                                     
+                                     Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"
                                      NewClick="OnNewClick"
                                      OpenClick="OnOpenClick"
                                      SaveClick="OnSaveClick"
@@ -70,9 +74,10 @@
                                      SettingsClick="OnSettingsClick"/>
      
             <!-- #endregion -->
-            <Rectangle DockPanel.Dock="Top" Height="1" Fill="#EBEBEB" SnapsToDevicePixels="True"/>
+            <Rectangle DockPanel.Dock="Top" Height="1" Fill="#EBEBEB" SnapsToDevicePixels="True"        Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
             <!-- #region 3. 工具栏 (ToolBar) -->
             <controls:ToolBarControl x:Name="MainToolBar"
+                                      Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"
                                      DockPanel.Dock="Top" 
                                      PenClick="OnPenClick"
                                      PickColorClick="OnPickColorClick"
@@ -99,6 +104,7 @@
 
             <!-- #region 4. 图片列表栏 (ImageBar) -->
             <controls:ImageBarControl x:Name="MainImageBar"
+                                      IsViewMode="{Binding IsViewMode, ElementName=RootWindow}"
                 DockPanel.Dock="Top"
                   SaveAllClick="OnSaveAllClick"
                   ClearUneditedClick="OnClearUneditedClick"
@@ -127,7 +133,7 @@
                   TabDeleteClick="OnTabDeleteClick"
                   TabFileDeleteClick="OnTabFileDeleteClick"/>
             <!-- #endregion -->
-            <Rectangle DockPanel.Dock="Top" Height="1" Fill="#EBEBEB" SnapsToDevicePixels="True"/>
+            <Rectangle DockPanel.Dock="Top" Height="1" Fill="#EBEBEB" SnapsToDevicePixels="True"  Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
             
             <!-- #region 5. 底部状态栏 (StatusBar) -->
             <controls:StatusBarControl x:Name="MyStatusBar" DockPanel.Dock="Bottom"
@@ -135,7 +141,7 @@
                                        FitToWindowClick="FitToWindow_Click"
                                        ZoomOutClick="ZoomOut_Click"
                                        ZoomInClick="ZoomIn_Click"
-                                       ZoomSelectionChanged="ZoomMenu_SelectionChanged"/>
+                                       ZoomSelectionChanged="ZoomMenu_SelectionChanged"  Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
             <!-- #endregion -->
             <Rectangle DockPanel.Dock="Bottom" Height="1" Fill="#EBEBEB" SnapsToDevicePixels="True"/>
             <!-- #region 6. 主画布区域 (Canvas) -->
@@ -145,7 +151,7 @@
                     <local:ScaleToTileRectConverter x:Key="ScaleToTileRectConverter"/>
                 </Grid.Resources>
 
-                <ScrollViewer Name="ScrollContainer" FocusVisualStyle="{x:Null}" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" PreviewMouseWheel="OnMouseWheelZoom" Background="Transparent" PreviewMouseDown="OnScrollContainerMouseDown" PreviewMouseMove="OnScrollContainerMouseMove"  PreviewMouseUp="OnScrollContainerMouseUp" AllowDrop="True" >
+                <ScrollViewer Name="ScrollContainer" FocusVisualStyle="{x:Null}" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" PreviewMouseWheel="OnMouseWheelZoom" Background="Transparent" PreviewMouseDown="OnScrollContainerMouseDown" PreviewMouseMove="OnScrollContainerMouseMove"  PreviewMouseUp="OnScrollContainerMouseUp"     MouseDoubleClick="OnScrollContainerDoubleClick" AllowDrop="True" >
                     <ScrollViewer.ContextMenu>
                         <ContextMenu Style="{StaticResource Win11ContextMenuStyle}">
                             <MenuItem Header="复制" InputGestureText="Ctrl+C" Style="{StaticResource Win11MenuItemStyle}" Click="OnCopyClick"/>
@@ -159,7 +165,6 @@
                         </ContextMenu>
                     </ScrollViewer.ContextMenu>
 
-                    <!-- 修改点：Background 定义在内部并绑定 Viewport -->
                     <Grid Name="CanvasWrapper" HorizontalAlignment="Center" VerticalAlignment="Center" SnapsToDevicePixels="True" UseLayoutRounding="True">
                         <Grid.Background>
                             <DrawingBrush TileMode="Tile" ViewportUnits="Absolute">

@@ -41,6 +41,7 @@ namespace TabPaint
         }
         public void MaximizeWindowHandler()
         {
+            ShowToast(!_maximized ? "进入全屏模式" : "退出全屏模式");
             if (!_maximized)
             {
                 _restoreBounds = new Rect(Left, Top, Width, Height);

@@ -23,6 +23,17 @@
             <TextBlock x:Name="TitleTextBlock" Text="TabPaint" VerticalAlignment="Center" FontSize="12" Style="{StaticResource TitleTextStyle}"/>
             <!-- Window Buttons -->
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+                <Button Width="40" Height="30" x:Name="ModeSwitchButton" 
+                        ToolTip="切换 画图/看图 模式" 
+                        Click="OnModeSwitchClick" 
+                        Style="{StaticResource TitleBarButtonStyle}"
+                        Margin="0,0,8,0">
+                    <Image x:Name="ModeIconImage" 
+           Width="16" Height="16" 
+           Stretch="Uniform"
+           Source="{StaticResource View_Mode_Image}"/>
+                </Button>
+                
                 <Button Width="40" Height="30" ToolTip="最小化" Click="OnMinimizeClick" Style="{StaticResource TitleBarButtonStyle}">
                     <Viewbox Width="10" Height="10">
                         <Path Stroke="Black" StrokeThickness="1" Data="M0,2 L12,2"/>
