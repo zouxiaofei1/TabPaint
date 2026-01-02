@@ -21,11 +21,7 @@ namespace TabPaint
         {
             if (e.Key == Key.Tab)
             {
-                // 切换模式
-                IsViewMode = !IsViewMode;
-
-                // 执行切换时的额外逻辑
-                OnModeChanged(IsViewMode);
+                TriggerModeChange();
                 e.Handled = true;
                 return true;
             }
@@ -339,37 +335,32 @@ namespace TabPaint
                     handled = true;
                     return (IntPtr)1; // HTCLIENT
                 }
-                // 获得鼠标相对于窗口的位置
+
                 var mousePos = PointFromScreen(new Point(
                     (short)(lParam.ToInt32() & 0xFFFF),
                     (short)((lParam.ToInt32() >> 16) & 0xFFFF)));
 
                 double width = ActualWidth;
                 double height = ActualHeight;
-                int resizeBorder = 12; // 可拖动边框宽度
+
+                int cornerArea = 16; // 角落区域大一点，方便对角线拖拽
+                int sideArea = 8;    // 侧边区域非常小，避让滚动条 (推荐4-6px)
 
                 handled = true;
 
-                // 判断边缘区域
-                if (mousePos.Y <= resizeBorder)
-                {
-                    if (mousePos.X <= resizeBorder) return (IntPtr)HTTOPLEFT;
-                    if (mousePos.X >= width - resizeBorder) return (IntPtr)HTTOPRIGHT;
-                    return (IntPtr)HTTOP;
-                }
-                else if (mousePos.Y >= height - resizeBorder)
-                {
-                    if (mousePos.X <= resizeBorder) return (IntPtr)HTBOTTOMLEFT;
-                    if (mousePos.X >= width - resizeBorder) return (IntPtr)HTBOTTOMRIGHT;
-                    return (IntPtr)HTBOTTOM;
-                }
-                else
-                {
-                    if (mousePos.X <= resizeBorder) return (IntPtr)HTLEFT;
-                    if (mousePos.X >= width - resizeBorder) return (IntPtr)HTRIGHT;
-                }
+                if (mousePos.Y <= cornerArea && mousePos.X <= cornerArea) return (IntPtr)HTTOPLEFT;
+                if (mousePos.Y <= cornerArea && mousePos.X >= width - cornerArea) return (IntPtr)HTTOPRIGHT;
+                // 左下
+                if (mousePos.Y >= height - cornerArea && mousePos.X <= cornerArea) return (IntPtr)HTBOTTOMLEFT;
+                // 右下 (这是最常用的调整区域，保持大范围)
+                if (mousePos.Y >= height - cornerArea && mousePos.X >= width - cornerArea) return (IntPtr)HTBOTTOMRIGHT;
 
-                // 否则返回客户区
+
+                if (mousePos.Y <= sideArea) return (IntPtr)HTTOP;
+                if (mousePos.Y >= height - sideArea) return (IntPtr)HTBOTTOM;
+
+                if (mousePos.X <= sideArea) return (IntPtr)HTLEFT;
+                if (mousePos.X >= width - sideArea) return (IntPtr)HTRIGHT;
                 return (IntPtr)1; // HTCLIENT
             }
 

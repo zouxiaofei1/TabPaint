@@ -13,6 +13,8 @@
 	<PublishReadyToRun>true</PublishReadyToRun>
 	<TieredCompilation>true</TieredCompilation> 
 	<TieredCompilationQuickJit>true</TieredCompilationQuickJit>
+	<PublishSingleFile>true</PublishSingleFile> <!-- 单文件 -->
+    <SelfContained>true</SelfContained>       <!-- 包含运行时 -->
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

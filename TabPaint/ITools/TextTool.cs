@@ -289,6 +289,7 @@ namespace TabPaint
 
             public override void OnPointerDown(ToolContext ctx, Point viewPos)
             {
+                if (((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode) return;
                 if (_textBox != null)
                 {
                     Point p = viewPos;

@@ -143,7 +143,7 @@ namespace TabPaint
                 else if (_stopwatch.IsRunning)
                 {
                     _stopwatch.Stop();
-                    a.s($"耗时：{_stopwatch.Elapsed.TotalMilliseconds} 毫秒");
+                    s($"耗时：{_stopwatch.Elapsed.TotalMilliseconds} 毫秒");
 
                     // 可选：如果希望第三次调用重新开始，可以重置
                     // _stopwatch = null; 

@@ -151,7 +151,7 @@
                     <local:ScaleToTileRectConverter x:Key="ScaleToTileRectConverter"/>
                 </Grid.Resources>
 
-                <ScrollViewer Name="ScrollContainer" FocusVisualStyle="{x:Null}" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" PreviewMouseWheel="OnMouseWheelZoom" Background="Transparent" PreviewMouseDown="OnScrollContainerMouseDown" PreviewMouseMove="OnScrollContainerMouseMove"  PreviewMouseUp="OnScrollContainerMouseUp"     MouseDoubleClick="OnScrollContainerDoubleClick" AllowDrop="True" >
+                <ScrollViewer    Style="{StaticResource FluentScrollViewer}"  Name="ScrollContainer" FocusVisualStyle="{x:Null}" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" PreviewMouseWheel="OnMouseWheelZoom" Background="Transparent" PreviewMouseDown="OnScrollContainerMouseDown" PreviewMouseMove="OnScrollContainerMouseMove"  PreviewMouseUp="OnScrollContainerMouseUp"     MouseDoubleClick="OnScrollContainerDoubleClick" AllowDrop="True" >
                     <ScrollViewer.ContextMenu>
                         <ContextMenu Style="{StaticResource Win11ContextMenuStyle}">
                             <MenuItem Header="复制" InputGestureText="Ctrl+C" Style="{StaticResource Win11MenuItemStyle}" Click="OnCopyClick"/>

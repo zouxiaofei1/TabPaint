@@ -42,6 +42,18 @@ namespace TabPaint
     }
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private long _lastModeSwitchTick = 0;
+        private const long ModeSwitchCooldown = 200 * 10000;
+
+        private void TriggerModeChange()
+        {
+            long currentTick = DateTime.Now.Ticks;
+            if (currentTick - _lastModeSwitchTick < ModeSwitchCooldown)return;
+            _lastModeSwitchTick = currentTick;
+            IsViewMode = !IsViewMode;
+            OnModeChanged(IsViewMode);
+        }
+
         private void OnModeChanged(bool isView)
         {
             ShowToast(isView ? "进入看图模式" : "进入画图模式");
@@ -58,12 +70,12 @@ namespace TabPaint
                 {
                     penTool.StopDrawing(_ctx);
                 }
-
+                MainImageBar.MainContainer.Height = 5;
             }
             else
             {
                 SetPenResizeBarVisibility((_router.CurrentTool is PenTool && _ctx.PenStyle != BrushStyle.Pencil) || _router.CurrentTool is ShapeTool);
-                MainImageBar.Height = 100;
+                MainImageBar.MainContainer.Height = 100;
             }
             AppTitleBar.UpdateModeIcon(IsViewMode);
             _canvasResizer.UpdateUI();
@@ -71,10 +83,7 @@ namespace TabPaint
         private void OnTitleBarModeSwitch(object sender, RoutedEventArgs e)
         {
             // 1. 切换布尔值
-            IsViewMode = !IsViewMode;
-
-            // 2. 执行核心切换逻辑 (UI显隐等)
-            OnModeChanged(IsViewMode);
+    TriggerModeChange();
         }
 
         private static void OnIsViewModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

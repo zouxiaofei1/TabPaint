@@ -31,6 +31,7 @@
                             <Condition Binding="{Binding IsPinned, ElementName=RootControl}" Value="False"/>
                         </MultiDataTrigger.Conditions>
                         <Setter Property="Opacity" Value="0.01"/>
+                        <Setter Property="Height" Value="5"/>
                         <Setter Property="Background" Value="Transparent"/>
                     </MultiDataTrigger>
 

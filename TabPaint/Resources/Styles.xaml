@@ -1112,5 +1112,316 @@
             </DrawingGroup>
         </DrawingBrush.Drawing>
     </DrawingBrush>
-    <!-- 如果有引用的颜色，也可以放在这里或引用 Brushes.xaml -->
+
+    <SolidColorBrush x:Key="ScrollBarThumbIdle" Color="#888888" Opacity="0.8"/>
+    <SolidColorBrush x:Key="ScrollBarThumbHover" Color="#666666" Opacity="0.8"/>
+    <SolidColorBrush x:Key="ScrollBarThumbDragging" Color="#444444" Opacity="0.9"/>
+    <SolidColorBrush x:Key="ScrollBarTrackBackground" Color="#F5F5F5" Opacity="0.9"/>
+
+    <!-- 1. 箭头按钮样式 -->
+    <Style x:Key="ScrollBarButton" TargetType="{x:Type RepeatButton}">
+        <Setter Property="OverridesDefaultStyle" Value="true"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Focusable" Value="false"/>
+        <Setter Property="IsTabStop" Value="false"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RepeatButton}">
+                    <Grid Background="{TemplateBinding Background}">
+                        <Path x:Name="Arrow"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              Data="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}"
+                              Fill="{StaticResource ScrollBarThumbIdle}"
+                              Stretch="Uniform" 
+                              Width="8" Height="8"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="true">
+                            <Setter TargetName="Arrow" Property="Fill" Value="{StaticResource ScrollBarThumbHover}"/>
+                            <Setter Property="Background" Value="#11000000"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="true">
+                            <Setter TargetName="Arrow" Property="Fill" Value="{StaticResource ScrollBarThumbDragging}"/>
+                            <Setter Property="Background" Value="#22000000"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 2. Thumb 样式 -->
+    <Style x:Key="FluentScrollThumb" TargetType="{x:Type Thumb}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Thumb}">
+                    <Grid Background="Transparent">
+                        <Border x:Name="ThumbVisual"
+                                Background="{TemplateBinding Background}"
+                               CornerRadius="6"
+                                 Margin="4,3,4,4" 
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 3. ScrollBar 样式 -->
+    <Style x:Key="FluentScrollBar" TargetType="{x:Type ScrollBar}">
+        <Setter Property="Stylus.IsPressAndHoldEnabled" Value="false"/>
+        <Setter Property="Stylus.IsFlicksEnabled" Value="false"/>
+        <Setter Property="Background" Value="{StaticResource ScrollBarTrackBackground}"/>
+        <Setter Property="Foreground" Value="{StaticResource ScrollBarThumbIdle}"/>
+        <Setter Property="Width" Value="Auto"/>
+        <Setter Property="Height" Value="Auto"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ScrollBar}">
+                    <Border x:Name="Bg" SnapsToDevicePixels="true" Background="{TemplateBinding Background}">
+                        <Grid x:Name="GridRoot">
+                            <Grid x:Name="VerticalRoot" Visibility="Collapsed">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="12"/>
+                                    <RowDefinition Height="1*"/>
+                                    <RowDefinition Height="12"/>
+                                </Grid.RowDefinitions>
+                                <RepeatButton Grid.Row="0" Style="{StaticResource ScrollBarButton}"
+                                              Command="{x:Static ScrollBar.LineUpCommand}"
+                                              Content="M 0 4 L 8 4 L 4 0 Z" Height="12"/>
+
+                                <Track x:Name="PART_Track_Vertical" Grid.Row="1" IsDirectionReversed="true" IsEnabled="{TemplateBinding IsEnabled}">
+                                    <Track.Thumb>
+                                        <Thumb Style="{StaticResource FluentScrollThumb}" Background="{TemplateBinding Foreground}"/>
+                                    </Track.Thumb>
+                                    <Track.DecreaseRepeatButton>
+                                        <RepeatButton Command="{x:Static ScrollBar.PageUpCommand}" Opacity="0" IsHitTestVisible="True"/>
+                                    </Track.DecreaseRepeatButton>
+                                    <Track.IncreaseRepeatButton>
+                                        <RepeatButton Command="{x:Static ScrollBar.PageDownCommand}" Opacity="0" IsHitTestVisible="True"/>
+                                    </Track.IncreaseRepeatButton>
+                                </Track>
+
+                                <RepeatButton Grid.Row="2" Style="{StaticResource ScrollBarButton}"
+                                              Command="{x:Static ScrollBar.LineDownCommand}"
+                                              Content="M 0 0 L 4 4 L 8 0 Z" Height="12"/>
+                            </Grid>
+                            <Grid x:Name="HorizontalRoot" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="12"/>
+                                </Grid.ColumnDefinitions>
+                                <RepeatButton Grid.Column="0" Style="{StaticResource ScrollBarButton}"
+                                              Command="{x:Static ScrollBar.LineLeftCommand}"
+                                              Content="M 4 0 L 4 8 L 0 4 Z" Width="12"/>
+
+                                <Track x:Name="PART_Track_Horizontal" Grid.Column="1" IsDirectionReversed="False" IsEnabled="{TemplateBinding IsEnabled}">
+                                    <Track.Thumb>
+                                        <Thumb Style="{StaticResource FluentScrollThumb}" Background="{TemplateBinding Foreground}"/>
+                                    </Track.Thumb>
+                                    <Track.DecreaseRepeatButton>
+                                        <RepeatButton Command="{x:Static ScrollBar.PageLeftCommand}" Opacity="0" IsHitTestVisible="True"/>
+                                    </Track.DecreaseRepeatButton>
+                                    <Track.IncreaseRepeatButton>
+                                        <RepeatButton Command="{x:Static ScrollBar.PageRightCommand}" Opacity="0" IsHitTestVisible="True"/>
+                                    </Track.IncreaseRepeatButton>
+                                </Track>
+
+                                <!-- 右箭头 -->
+                                <RepeatButton Grid.Column="2" Style="{StaticResource ScrollBarButton}"
+                                              Command="{x:Static ScrollBar.LineRightCommand}"
+                                              Content="M 0 0 L 0 8 L 4 4 Z" Width="12"/>
+                            </Grid>
+
+                        </Grid>
+                    </Border>
+
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Orientation" Value="Vertical">
+                            <Setter TargetName="VerticalRoot" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="HorizontalRoot" Property="Visibility" Value="Collapsed"/>
+                            <!-- 绑定系统的 Track -->
+                            <Setter Property="Track.IsDirectionReversed" Value="True"/>
+                        </Trigger>
+
+                        <Trigger Property="Orientation" Value="Horizontal">
+                            <Setter TargetName="VerticalRoot" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="HorizontalRoot" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+
+                        <Trigger Property="IsMouseOver" Value="true">
+                            <Setter Property="Foreground" Value="{StaticResource ScrollBarThumbHover}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="Orientation" Value="Horizontal">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <!-- 水平模板 -->
+                        <ControlTemplate TargetType="{x:Type ScrollBar}">
+                            <Border x:Name="Bg" SnapsToDevicePixels="true" Background="{TemplateBinding Background}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="1*"/>
+                                        <ColumnDefinition Width="12"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <RepeatButton Grid.Column="0" Style="{StaticResource ScrollBarButton}"
+                                                  Command="{x:Static ScrollBar.LineLeftCommand}"
+                                                  Content="M 4 0 L 4 8 L 0 4 Z" Width="12"/>
+
+                                    <Track x:Name="PART_Track" Grid.Column="1" IsDirectionReversed="False">
+                                        <Track.Thumb>
+                                            <Thumb Style="{StaticResource FluentScrollThumb}" Background="{TemplateBinding Foreground}"/>
+                                        </Track.Thumb>
+                                        <Track.DecreaseRepeatButton>
+                                            <RepeatButton Command="{x:Static ScrollBar.PageLeftCommand}" Opacity="0" IsHitTestVisible="True"/>
+                                        </Track.DecreaseRepeatButton>
+                                        <Track.IncreaseRepeatButton>
+                                            <RepeatButton Command="{x:Static ScrollBar.PageRightCommand}" Opacity="0" IsHitTestVisible="True"/>
+                                        </Track.IncreaseRepeatButton>
+                                    </Track>
+
+                                    <RepeatButton Grid.Column="2" Style="{StaticResource ScrollBarButton}"
+                                                  Command="{x:Static ScrollBar.LineRightCommand}"
+                                                  Content="M 0 0 L 0 8 L 4 4 Z" Width="12"/>
+                                </Grid>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="true">
+                                    <Setter Property="Foreground" Value="{StaticResource ScrollBarThumbHover}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+
+            <Trigger Property="Orientation" Value="Vertical">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <!-- 垂直模板 -->
+                        <ControlTemplate TargetType="{x:Type ScrollBar}">
+                            <Border x:Name="Bg" SnapsToDevicePixels="true" Background="{TemplateBinding Background}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="12"/>
+                                        <RowDefinition Height="1*"/>
+                                        <RowDefinition Height="12"/>
+                                    </Grid.RowDefinitions>
+
+                                    <RepeatButton Grid.Row="0" Style="{StaticResource ScrollBarButton}"
+                                                  Command="{x:Static ScrollBar.LineUpCommand}"
+                                                  Content="M 0 4 L 8 4 L 4 0 Z" Height="12"/>
+
+                                    <Track x:Name="PART_Track" Grid.Row="1" IsDirectionReversed="true">
+                                        <Track.Thumb>
+                                            <Thumb Style="{StaticResource FluentScrollThumb}" Background="{TemplateBinding Foreground}"/>
+                                        </Track.Thumb>
+                                        <Track.DecreaseRepeatButton>
+                                            <RepeatButton Command="{x:Static ScrollBar.PageUpCommand}" Opacity="0" IsHitTestVisible="True"/>
+                                        </Track.DecreaseRepeatButton>
+                                        <Track.IncreaseRepeatButton>
+                                            <RepeatButton Command="{x:Static ScrollBar.PageDownCommand}" Opacity="0" IsHitTestVisible="True"/>
+                                        </Track.IncreaseRepeatButton>
+                                    </Track>
+
+                                    <RepeatButton Grid.Row="2" Style="{StaticResource ScrollBarButton}"
+                                                  Command="{x:Static ScrollBar.LineDownCommand}"
+                                                  Content="M 0 0 L 4 4 L 8 0 Z" Height="12"/>
+                                </Grid>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="true">
+                                    <Setter Property="Foreground" Value="{StaticResource ScrollBarThumbHover}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+
+    <!-- 4. ScrollViewer 样式 (处理角落重叠) -->
+    <Style x:Key="FluentScrollViewer" TargetType="{x:Type ScrollViewer}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ScrollViewer}">
+                    <Grid Background="{TemplateBinding Background}">
+                        <!-- 内容区域：铺满 -->
+                        <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
+                                          CanContentScroll="{TemplateBinding CanContentScroll}"
+                                          CanHorizontallyScroll="False"
+                                          CanVerticallyScroll="False"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          Content="{TemplateBinding Content}"
+                                          Margin="{TemplateBinding Padding}"/>
+
+                        <!-- 垂直滚动条：下边距留 14px 避让水平滚动条 -->
+                        <ScrollBar x:Name="PART_VerticalScrollBar"
+                               AutomationProperties.AutomationId="VerticalScrollBar"
+                               Cursor="Arrow"
+                               Maximum="{TemplateBinding ScrollableHeight}"
+                               Minimum="0"
+                               Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"
+                               Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"
+                               ViewportSize="{TemplateBinding ViewportHeight}"
+                               Style="{StaticResource FluentScrollBar}"
+                               HorizontalAlignment="Right" 
+                               VerticalAlignment="Stretch"
+                               Width="12" 
+                               Margin="0,0,0,18"/>
+
+                        <!-- 水平滚动条：右边距留 14px 避让垂直滚动条 -->
+                        <ScrollBar x:Name="PART_HorizontalScrollBar"
+                               AutomationProperties.AutomationId="HorizontalScrollBar"
+                               Cursor="Arrow"
+                               Maximum="{TemplateBinding ScrollableWidth}"
+                               Minimum="0"
+                               Orientation="Horizontal"
+                               Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"
+                               Value="{Binding HorizontalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"
+                               ViewportSize="{TemplateBinding ViewportWidth}"
+                               Style="{StaticResource FluentScrollBar}"
+                               VerticalAlignment="Bottom"
+                               HorizontalAlignment="Stretch"
+                               Height="12"
+                               Margin="0,0,18,0"/>
+
+                        <!-- (可选) 如果你真的想在角落放个方块填补背景 -->
+                        <Border HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                Width="18" Height="18" Margin="0,0,0,0"
+                                Background="{StaticResource ScrollBarTrackBackground}"
+                              
+                                Visibility="{Binding ComputedVerticalScrollBarVisibility, RelativeSource={RelativeSource TemplatedParent}}">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <!-- 只有当横向纵向都出现时才显示这个角 -->
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ComputedHorizontalScrollBarVisibility, RelativeSource={RelativeSource TemplatedParent}}" Value="Collapsed">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+
+
+
 </ResourceDictionary>
