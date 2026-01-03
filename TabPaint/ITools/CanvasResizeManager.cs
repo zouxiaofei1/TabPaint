@@ -231,10 +231,7 @@ namespace TabPaint
 
             private void ApplyResize(Rect newBounds)
             {
-                // newBounds.X / Y 表示原点偏移量。
-                // 如果 X = -50，表示向左扩展了 50px，原图应该画在 (50, 0) 处。
-                // 如果 X = 50，表示向右裁切了 50px，原图应该画在 (-50, 0) 处。
-
+                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
                 int newW = (int)newBounds.Width;
                 int newH = (int)newBounds.Height;
                 int offsetX = -(int)newBounds.X;
@@ -243,11 +240,11 @@ namespace TabPaint
                 if (newW <= 0 || newH <= 0) return;
 
                 // 1. 获取当前图像数据 (Undo 需要)
-                var currentBmp = ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Surface.Bitmap; // 假设这是当前的 WriteableBitmap
+                var currentBmp = mw._ctx.Surface.Bitmap; // 假设这是当前的 WriteableBitmap
                 var rect = new Int32Rect(0, 0, currentBmp.PixelWidth, currentBmp.PixelHeight);
 
                 // 获取全图数据用于 Undo
-                byte[] oldPixels = ((MainWindow)System.Windows.Application.Current.MainWindow)._undo.SafeExtractRegion(rect);
+                byte[] oldPixels = mw._undo.SafeExtractRegion(rect);
 
                 // 2. 创建新位图
                 var newBmp = new WriteableBitmap(newW, newH, currentBmp.DpiX, currentBmp.DpiY, PixelFormats.Bgra32, null);
@@ -273,21 +270,22 @@ namespace TabPaint
                 if (copyW > 0 && copyH > 0)
                 {
                     var srcRect = new Int32Rect(srcX, srcY, copyW, copyH);
-                    var srcPixels = ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Surface.ExtractRegion(srcRect); // 这里需要支持从 Surface 获取指定区域
+                    var srcPixels = mw._ctx.Surface.ExtractRegion(srcRect); // 这里需要支持从 Surface 获取指定区域
 
                     newBmp.WritePixels(new Int32Rect(copyX, copyY, copyW, copyH), srcPixels, copyW * 4, 0);
                 }
                 byte[] newPixels = new byte[newW * newH * 4];
                 newBmp.CopyPixels(newPixels, newBmp.BackBufferStride, 0);
 
-                ((MainWindow)System.Windows.Application.Current.MainWindow)._undo.PushTransformAction(
+                mw._undo.PushTransformAction(
                     rect, oldPixels,                // Undo: 回到旧尺寸，旧像素
                     new Int32Rect(0, 0, newW, newH), newPixels // Redo: 回到新尺寸，新像素
                 );
 
                 // 5. 替换当前显示的位图
-                ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Surface.ReplaceBitmap(newBmp);
-                ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasSizeChanged(newW, newH);
+                mw._ctx.Surface.ReplaceBitmap(newBmp);
+                mw.NotifyCanvasSizeChanged(newW, newH);
+                mw._bitmap = newBmp;
                 // 6. 刷新界面
                 UpdateUI(); 
                 EnsureEdgeVisible(newBounds);

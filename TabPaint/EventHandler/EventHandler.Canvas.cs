@@ -18,6 +18,125 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private async void OnOcrClick(object sender, RoutedEventArgs e)
+        {
+            // 1. 检查是否有图
+            if (_surface?.Bitmap == null) return;
+
+            // 2. 确定要识别的区域
+            // 如果有选区（Selection），则只识别选区；否则识别全图
+            BitmapSource sourceToRecognize = _surface.Bitmap;
+           
+            if (_router.CurrentTool is SelectTool selTool && selTool.HasActiveSelection)
+            {
+                // 假设你有个方法能拿到选区的 CroppedBitmap
+                sourceToRecognize = selTool.GetSelectionCroppedBitmap();
+            }
+
+            try
+            {
+                // 3. UI 提示
+                var oldStatus = _imageSize;
+                _imageSize = "正在提取文字...";
+                this.Cursor = System.Windows.Input.Cursors.Wait;
+
+                // 4. 调用服务
+                var ocrService = new OcrService(); // 也可以作为单例注入
+                string text = await ocrService.RecognizeTextAsync(sourceToRecognize);
+
+                // 5. 结果处理
+                if (!string.IsNullOrWhiteSpace(text))
+                {
+                    System.Windows.Clipboard.SetText(text);
+                    ShowToast($"成功提取 {text.Length} 个字符到剪切板！");
+                }
+                else
+                {
+                    ShowToast("未识别到文字");
+                }
+
+                _imageSize = oldStatus;
+            }
+            catch (Exception ex)
+            {
+                ShowToast($"OCR 错误: {ex.Message}");
+            }
+            finally
+            {
+                this.Cursor = System.Windows.Input.Cursors.Arrow;
+            }
+        }
+
+        private async void OnRemoveBackgroundClick(object sender, RoutedEventArgs e)
+        {
+            if (_surface?.Bitmap == null) return;
+
+            // 1. 简单的加载状态提示 (可以用你的 imagebar 进度条或者状态栏)
+            var statusText = _imageSize; // 暂存状态栏
+            _imageSize = "正在准备 AI 模型...";
+            OnPropertyChanged(nameof(ImageSize));
+
+            try
+            {
+                var aiService = new AiService(_cacheDir);
+
+                // 2. 准备模型 (带进度)
+                var progress = new Progress<double>(p =>
+                {
+                    _imageSize = $"下载模型中: {p:F1}%";
+                    OnPropertyChanged(nameof(ImageSize));
+                });
+
+                string modelPath = await aiService.PrepareModelAsync(progress);
+
+                _imageSize = "AI 正在思考...";
+                OnPropertyChanged(nameof(ImageSize));
+
+                // 3. 执行推理 (后台线程)
+                // 此时锁定UI防止用户乱动
+                this.IsEnabled = false;
+
+                var resultPixels = await aiService.RunInferenceAsync(modelPath, _surface.Bitmap);
+
+                // 4. 应用结果并支持撤销
+                ApplyAiResult(resultPixels);
+
+            }
+            catch (Exception ex)
+            {
+                ShowToast($"抠图失败: {ex.Message}");
+            }
+            finally
+            {
+                this.IsEnabled = true;
+                _imageSize = statusText; // 恢复状态栏
+                OnPropertyChanged(nameof(ImageSize));
+                NotifyCanvasChanged();
+            }
+        }
+
+        private void ApplyAiResult(byte[] newPixels)
+        {
+            // 利用 UndoRedoManager 的全图撤销机制
+            // 先把当前状态压入 Undo 栈
+            _undo.PushFullImageUndo();
+
+            // 更新 Bitmap
+            _surface.Bitmap.Lock();
+            _surface.Bitmap.WritePixels(
+                new Int32Rect(0, 0, _surface.Bitmap.PixelWidth, _surface.Bitmap.PixelHeight),
+                newPixels,
+                _surface.Bitmap.BackBufferStride,
+                0
+            );
+            _surface.Bitmap.AddDirtyRect(new Int32Rect(0, 0, _surface.Bitmap.PixelWidth, _surface.Bitmap.PixelHeight));
+            _surface.Bitmap.Unlock();
+
+            // 标记为脏，更新 UI
+            _ctx.IsDirty = true;
+            CheckDirtyState();
+            SetUndoRedoButtonState();
+        }
         private void TextAlign_Click(object sender, RoutedEventArgs e)
         {
             var mw = (MainWindow)System.Windows.Application.Current.MainWindow;

@@ -33,10 +33,9 @@ namespace TabPaint
             {
                 if (_currentImageIndex == -1 && !IsVirtualPath(filePath))
                 {
-                    ScanFolderImages(filePath);
+                   await ScanFolderImagesAsync(filePath);
                 }
               
-                // 触发当前图的备份
                 TriggerBackgroundBackup();
 
                 // 2. [适配] 确保 _imageFiles 里有这个虚拟路径 (通常 CreateNewTab 已经加进去了，但为了保险)
@@ -152,44 +151,63 @@ namespace TabPaint
                 Debug.WriteLine($"Error loading image {filePath}: {ex.Message}");
             }
         }
-        private void ScanFolderImages(string filePath)
+        // 1. 在类级别定义支持的扩展名（静态只读，利用HashSet的哈希查找，极快）
+        private static readonly HashSet<string> AllowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+{
+    ".png", ".jpg", ".jpeg", ".tif", ".tiff",
+    ".gif", ".webp", ".bmp", ".ico", ".heic"
+};
+
+        // 2. 改为异步方法
+        private async Task ScanFolderImagesAsync(string filePath)
         {
             try
             {
-                // 如果是虚拟路径，不执行磁盘扫描（除非你想扫描上次打开的文件夹）
-                if (IsVirtualPath(filePath)) return;
-                if (string.IsNullOrEmpty(filePath)) return;
+                if (IsVirtualPath(filePath) || string.IsNullOrEmpty(filePath)) return;
+
                 string folder = System.IO.Path.GetDirectoryName(filePath)!;
 
-                // 1. 获取磁盘上的物理文件
-                var diskFiles = Directory.GetFiles(folder, "*.*")
-                    .Where(f => f.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
-                                f.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
-                                f.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
-                                f.EndsWith(".tif", StringComparison.OrdinalIgnoreCase) ||
-                                f.EndsWith(".gif", StringComparison.OrdinalIgnoreCase) ||
-                                f.EndsWith(".webp", StringComparison.OrdinalIgnoreCase) ||
-                                f.EndsWith(".tiff", StringComparison.OrdinalIgnoreCase) ||
-                                f.EndsWith(".bmp", StringComparison.OrdinalIgnoreCase))
-                    .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
-                    .ToList();
+                // 放到后台线程处理，彻底解放 UI 线程
+                var sortedFiles = await Task.Run(() =>
+                {
+                    // 使用 EnumerateFiles，虽然还是要遍历，但配合 LINQ 内存开销略小
+                    // 关键优化：只提取扩展名进 HashSet 查找，比 10 次 EndsWith 快得多
+                    return Directory.EnumerateFiles(folder)
+                        .Where(f => {
+                            var ext = System.IO.Path.GetExtension(f);
+                            return ext != null && AllowedExtensions.Contains(ext);
+                        })
+                        .OrderBy(f => f, StringComparer.OrdinalIgnoreCase) // 既然是看图，自然排序可能更好(WinAPI StrCmpLogicalW)，这里先保持 Ordinal
+                        .ToList();
+                });
 
-                // 2. 获取当前已存在于 FileTabs 中的所有虚拟路径 (::TABPAINT_NEW::...)
-                // 这样可以保证即使切换了文件夹，之前新建的未保存标签依然在列表中
+                // --- 回到 UI 线程更新数据 ---
+
+                // 获取虚拟路径 (内存操作，很快)
                 var virtualPaths = FileTabs.Where(t => IsVirtualPath(t.FilePath))
                                            .Select(t => t.FilePath)
                                            .ToList();
 
-                // 3. 整合：虚拟路径在前，磁盘文件在后（或者根据你的喜好排序）
-                var combinedFiles = new List<string>();
+                // 使用 Capacity 预分配内存，避免 List 扩容
+                var combinedFiles = new List<string>(virtualPaths.Count + sortedFiles.Count);
                 combinedFiles.AddRange(virtualPaths);
-                combinedFiles.AddRange(diskFiles);
+                combinedFiles.AddRange(sortedFiles);
 
                 _imageFiles = combinedFiles;
+
+                // 重新定位索引
                 _currentImageIndex = _imageFiles.IndexOf(filePath);
+
+                // 可以在这里触发一个更新 UI 的事件或方法
+                // UpdateImageNavigationUI(); 
             }
-            catch (Exception ex) { }
+            catch (Exception ex)
+            {
+                // 建议记录日志，防止静默失败
+                System.Diagnostics.Debug.WriteLine($"Scan Error: {ex.Message}");
+            }
         }
+
 
 
         private BitmapImage DecodePreviewBitmap(byte[] imageBytes, CancellationToken token)

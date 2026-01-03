@@ -39,6 +39,7 @@ namespace TabPaint
 
             // 2. 恢复事件订阅 (从你提供的 XAML 逐一搬运)
             MainImageBar.SaveAllClick += OnSaveAllClick;
+            MainImageBar.SaveAllDoubleClick += OnSaveAllDoubleClick;
             MainImageBar.ClearUneditedClick += OnClearUneditedClick;
             MainImageBar.DiscardAllClick += OnDiscardAllClick;
             MainImageBar.PrependTabClick += OnPrependTabClick;
@@ -135,7 +136,9 @@ namespace TabPaint
             // 注入到界面
             StatusBarHolder.Content = MyStatusBar;
 
-
+            _dragWatchdog = new DispatcherTimer();
+            _dragWatchdog.Interval = TimeSpan.FromMilliseconds(200); // 200ms 检查一次，性能消耗可忽略
+            _dragWatchdog.Tick += DragWatchdog_Tick;
         }
     }
 }

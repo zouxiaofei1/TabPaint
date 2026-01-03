@@ -135,26 +135,60 @@ namespace TabPaint
 
                 if (sourceBitmap == null) return;
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
-                // 强制转换为 Bgra32
+
+                // --- FIX START: DPI 归一化与格式转换 ---
+
+                // 1. 确保格式是 Bgra32
                 if (sourceBitmap.Format != PixelFormats.Bgra32)
+                {
                     sourceBitmap = new FormatConvertedBitmap(sourceBitmap, PixelFormats.Bgra32, null, 0);
+                }
+
+                // 2. 检查 DPI 是否匹配，如果不匹配，重建一个具有画布 DPI 的 BitmapSource
+                // 这一步是修复 Preview 大小错位的关键
+                double canvasDpiX = ctx.Surface.Bitmap.DpiX;
+                double canvasDpiY = ctx.Surface.Bitmap.DpiY;
+
+                // 允许一点点浮点误差
+                if (Math.Abs(sourceBitmap.DpiX - canvasDpiX) > 1.0 || Math.Abs(sourceBitmap.DpiY - canvasDpiY) > 1.0)
+                {
+                    int w = sourceBitmap.PixelWidth;
+                    int h = sourceBitmap.PixelHeight;
+                    int stride = w * 4;
+                    byte[] rawPixels = new byte[h * stride];
+
+                    // 提取原始像素
+                    sourceBitmap.CopyPixels(rawPixels, stride, 0);
+
+                    // 使用画布的 DPI 重新创建 BitmapSource
+                    sourceBitmap = BitmapSource.Create(
+                        w, h,
+                        canvasDpiX, canvasDpiY, // 强行使用画布 DPI
+                        PixelFormats.Bgra32,
+                        null,
+                        rawPixels,
+                        stride);
+                }
+                // --- FIX END ---
 
                 int imgW = sourceBitmap.PixelWidth;
                 int imgH = sourceBitmap.PixelHeight;
                 int canvasW = ctx.Surface.Bitmap.PixelWidth;
                 int canvasH = ctx.Surface.Bitmap.PixelHeight;
+
                 bool _canvasChanged = false;
+
+                // ... (中间扩充画布的逻辑保持不变) ...
                 if (expandCanvas && (imgW > canvasW || imgH > canvasH))
                 {
+                    // ... (此处是你原有的画布扩充代码，无需改动) ...
                     _canvasChanged = true;
                     int newW = Math.Max(imgW, canvasW);
                     int newH = Math.Max(imgH, canvasH);
 
-                    // 记录旧状态用于撤销
                     Int32Rect oldRect = new Int32Rect(0, 0, canvasW, canvasH);
                     byte[] oldPixels = ctx.Surface.ExtractRegion(oldRect);
 
-                    // 创建新位图并填充白色
                     var newBmp = new WriteableBitmap(newW, newH, ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32, null);
                     newBmp.Lock();
                     unsafe
@@ -165,7 +199,6 @@ namespace TabPaint
                     }
                     newBmp.Unlock();
 
-                    // 写回旧内容
                     newBmp.WritePixels(oldRect, oldPixels, canvasW * 4, 0);
                     ctx.Surface.ReplaceBitmap(newBmp);
                     Int32Rect redoRect = new Int32Rect(0, 0, newW, newH);
@@ -174,17 +207,19 @@ namespace TabPaint
                     mw.NotifyCanvasSizeChanged(newW, newH);
                     mw.OnPropertyChanged("CanvasWidth");
                     mw.OnPropertyChanged("CanvasHeight");
-                    //mw.BackgroundImage.ActualHeight = newH;
-
                 }
-                int stride = imgW * 4;
-                var newData = new byte[imgH * stride];
-                sourceBitmap.CopyPixels(newData, stride, 0);
+
+                // --- 接下来的部分继续使用归一化后的 sourceBitmap ---
+
+                int strideFinal = imgW * 4;
+                var newData = new byte[imgH * strideFinal];
+                sourceBitmap.CopyPixels(newData, strideFinal, 0);
 
                 _selectionData = newData;
                 _selectionRect = new Int32Rect(0, 0, imgW, imgH);
                 _originalRect = _selectionRect;
 
+                // 这里直接使用 WriteableBitmap 包装归一化后的 bitmap，DPI 已经是正确的了
                 ctx.SelectionPreview.Source = new WriteableBitmap(sourceBitmap);
 
                 // 默认放在左上角 (0,0)
@@ -193,13 +228,17 @@ namespace TabPaint
                 ctx.SelectionPreview.RenderTransform = new TranslateTransform(0, 0);
                 ctx.SelectionPreview.Visibility = Visibility.Visible;
 
+                // 必须确保 Preview 的尺寸被重置，防止之前的 Transform 残留影响
+                // 使用你之前定义的 SetPreviewPosition 或者手动设置
+                ctx.SelectionPreview.Width = imgW;
+                ctx.SelectionPreview.Height = imgH;
+
                 // 绘制 8 个句柄和虚线框
                 DrawOverlay(ctx, _selectionRect);
                 _transformStep = 0;
-               
-                mw.FitToWindow();
+                _hasLifted = true;
+                //mw.FitToWindow();
                 mw._canvasResizer.UpdateUI();
-
             }
 
             public void PasteSelection(ToolContext ctx, bool ins)
@@ -745,77 +784,133 @@ namespace TabPaint
             {
                 if (_selectionData == null || _originalRect.Width == 0 || _originalRect.Height == 0) return;
 
+                // 1. 数据处理部分 (保持不变) ------------------------------
                 int oldW = _originalRect.Width;
                 int oldH = _originalRect.Height;
                 int stride = oldW * 4;
 
-                // 从 byte[] 创建临时源位图
                 var srcBmp = BitmapSource.Create(
                     oldW, oldH,
                     ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
                     PixelFormats.Bgra32, null,
                     _selectionData, stride);
 
-                // 使用 WPF 变换进行旋转
                 var transform = new TransformedBitmap(srcBmp, new RotateTransform(angle));
 
-                // 获取新尺寸
                 int newOriginalW = transform.PixelWidth;
                 int newOriginalH = transform.PixelHeight;
                 int newStride = newOriginalW * 4;
 
-                // 提取旋转后的像素数据
                 byte[] newPixels = new byte[newOriginalH * newStride];
                 transform.CopyPixels(newPixels, newStride, 0);
 
-                // 更新源数据
                 _selectionData = newPixels;
                 _originalRect.Width = newOriginalW;
                 _originalRect.Height = newOriginalH;
 
+                // 计算旋转后的中心点位置，保持中心不变
                 double centerX = _selectionRect.X + _selectionRect.Width / 2.0;
                 double centerY = _selectionRect.Y + _selectionRect.Height / 2.0;
 
                 int newSelectionW = _selectionRect.Width;
                 int newSelectionH = _selectionRect.Height;
 
+                // 如果旋转90或270度，交换选区的宽高
                 if (angle % 180 != 0)
                 {
                     newSelectionW = _selectionRect.Height;
                     newSelectionH = _selectionRect.Width;
                 }
+
                 int newX = (int)Math.Round(centerX - newSelectionW / 2.0);
                 int newY = (int)Math.Round(centerY - newSelectionH / 2.0);
 
-                // 更新选区矩形
                 _selectionRect = new Int32Rect(newX, newY, newSelectionW, newSelectionH);
 
+                // 2. UI 渲染修复部分 (Fix Start) --------------------------
+
+                // 更新源图片
                 var previewBmp = new WriteableBitmap(transform);
                 ctx.SelectionPreview.Source = previewBmp;
 
-                SetPreviewPosition(ctx, newX, newY); // 复用你现有的设置位置方法
+                double dpiScaleX = 96.0 / ctx.Surface.Bitmap.DpiX;
+                double dpiScaleY = 96.0 / ctx.Surface.Bitmap.DpiY;
 
+                ctx.SelectionPreview.Width = newOriginalW * dpiScaleX;
+                ctx.SelectionPreview.Height = newOriginalH * dpiScaleY;
 
                 double scaleX = (double)newSelectionW / newOriginalW;
                 double scaleY = (double)newSelectionH / newOriginalH;
 
-                // 构建变换组：缩放 + 位移
+                // 应用变换：缩放 + 位移
                 var tg = new TransformGroup();
                 tg.Children.Add(new ScaleTransform(scaleX, scaleY));
-                tg.Children.Add(new TranslateTransform(newX, newY)); 
+                // 再位移
+                // 注意：newX, newY 是像素坐标，转换为逻辑坐标
+                tg.Children.Add(new TranslateTransform(newX * dpiScaleX, newY * dpiScaleY));
+
                 ctx.SelectionPreview.RenderTransform = tg;
 
+                // 确保对齐
                 Canvas.SetLeft(ctx.SelectionPreview, 0);
                 Canvas.SetTop(ctx.SelectionPreview, 0);
+                ctx.SelectionPreview.Visibility = Visibility.Visible;
 
                 // 刷新虚线框
                 DrawOverlay(ctx, _selectionRect);
-
-                // 更新状态栏尺寸
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
                 mw.SelectionSize = $"{_selectionRect.Width}×{_selectionRect.Height}像素";
-                mw.SetCropButtonState(); // 确保裁剪按钮状态正确
+                mw.SetCropButtonState();
             }
+            public BitmapSource GetSelectionCroppedBitmap()
+            {
+                if (_selectionData == null || _originalRect.Width <= 0 || _originalRect.Height <= 0)
+                    return null;
+
+                try
+                {
+                    // 1. 从原始字节数据创建基础 BitmapSource
+                    // 注意：_originalRect 的宽高始终对应 _selectionData 的像素维度
+                    int stride = _originalRect.Width * 4;
+
+                    // 获取当前画布的 DPI，确保 OCR 识别精度一致
+                    var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                    double dpiX = mw._surface?.Bitmap.DpiX ?? 96;
+                    double dpiY = mw._surface?.Bitmap.DpiY ?? 96;
+
+                    BitmapSource result = BitmapSource.Create(
+                        _originalRect.Width,
+                        _originalRect.Height,
+                        dpiX,
+                        dpiY,
+                        PixelFormats.Bgra32,
+                        null,
+                        _selectionData,
+                        stride
+                    );
+
+                    // 2. 处理缩放 (Resize)
+                    // 如果视觉矩形 _selectionRect 的尺寸与原始数据 _originalRect 不一致，说明用户拖动了句柄进行缩放
+                    if (_selectionRect.Width != _originalRect.Width || _selectionRect.Height != _originalRect.Height)
+                    {
+                        double scaleX = (double)_selectionRect.Width / _originalRect.Width;
+                        double scaleY = (double)_selectionRect.Height / _originalRect.Height;
+
+                        // 使用 TransformedBitmap 进行高质量缩放
+                        result = new TransformedBitmap(result, new ScaleTransform(scaleX, scaleY));
+                    }
+
+                    // 冻结对象以便跨线程使用（OCR 通常在 Task 中运行）
+                    result.Freeze();
+                    return result;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("OCR 裁剪失败: " + ex.Message);
+                    return null;
+                }
+            }
+
             public override void OnPointerUp(ToolContext ctx, Point viewPos)
             {
                 if (lag > 0) { lag--; return; }

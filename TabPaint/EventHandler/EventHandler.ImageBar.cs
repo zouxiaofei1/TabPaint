@@ -50,28 +50,32 @@ namespace TabPaint
           
           CreateNewTab(TabInsertPosition.AtStart, false);
         }
-
-
-        private void OnSaveAllClick(object sender, RoutedEventArgs e)
+        private void SaveAll(bool isDoubleClick)
         {
             // 筛选出所有脏文件
             var dirtyTabs = FileTabs.Where(t => t.IsDirty).ToList();
             if (dirtyTabs.Count == 0) return;
-
             int successCount = 0;
             foreach (var tab in dirtyTabs)
             {
                 // 跳过没有路径的新建文件 (避免弹出10个保存对话框)
-                if (tab.IsNew && string.IsNullOrEmpty(tab.FilePath)) continue;
+                if (IsVirtualPath(tab.FilePath)&&(!isDoubleClick)) continue;
+                if(SaveSingleTab(tab)) successCount++;
 
-                SaveSingleTab(tab);
-                successCount++;
             }
             SaveSession();
-
             // 简单提示 (实际项目中建议用 Statusbar)
             if (successCount > 0)
-                System.Windows.MessageBox.Show($"已保存 {successCount} 张图片。");
+                ShowToast($"已保存 {successCount} 张图片。");
+        }
+        private void OnSaveAllDoubleClick(object sender, RoutedEventArgs e)
+        {
+            SaveAll(true);
+        }
+
+        private void OnSaveAllClick(object sender, RoutedEventArgs e)
+        {
+            SaveAll(false);
         }
         private void OnClearUneditedClick(object sender, RoutedEventArgs e)
         {
@@ -265,7 +269,7 @@ namespace TabPaint
                 // 2. 再次确认文件是否存在（防止文件已被外部删除）
                 if (!System.IO.File.Exists(tab.FilePath))
                 {
-                    System.Windows.MessageBox.Show("文件已不存在，无法定位文件夹。", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    ShowToast("文件已不存在，无法定位文件夹。");
                     return;
                 }
 
@@ -277,7 +281,7 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    System.Windows.MessageBox.Show($"无法打开文件夹: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    ShowToast($"无法打开文件夹: {ex.Message}");
                 }
             }
         }
@@ -303,6 +307,79 @@ namespace TabPaint
                 _mouseDownTabItem = button?.DataContext as FileTabItem;
             }
         }
+        private string PrepareDragFilePath(FileTabItem tab)
+        {
+            if (!tab.IsDirty && !tab.IsNew && !IsVirtualPath(tab.FilePath))
+            {
+                return tab.FilePath;
+            }
+            try
+            {
+                BitmapSource bitmapToSave = null;
+
+                if (tab == _currentTabItem)
+                {
+                    bitmapToSave = GetCurrentCanvasSnapshotSafe();
+                }
+                else
+                {
+                    // 尝试读取后台备份 (BackupPath)
+                    if (!string.IsNullOrEmpty(tab.BackupPath) && File.Exists(tab.BackupPath))
+                    {
+                        bitmapToSave = LoadBitmapFromFile(tab.BackupPath);
+                    }
+                    else
+                    {
+                        if (!IsVirtualPath(tab.FilePath)) return tab.FilePath;
+                    }
+                }
+
+                if (bitmapToSave != null)
+                {
+                    string tempFolder = System.IO.Path.Combine(_cacheDir, "DragTemp");
+                    if (!Directory.Exists(tempFolder)) Directory.CreateDirectory(tempFolder);
+
+                    string fileName = tab.FileName;
+
+                    if (!fileName.Contains(".")) fileName += ".png";
+
+                    string tempFilePath = System.IO.Path.Combine(tempFolder, fileName);
+
+                    // 保存文件
+                    using (var fs = new FileStream(tempFilePath, FileMode.Create))
+                    {
+                        BitmapEncoder encoder;
+                        if (fileName.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                            fileName.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase))
+                        {
+                            encoder = new JpegBitmapEncoder();
+                        }
+                        else
+                        {
+                            encoder = new PngBitmapEncoder();
+                        }
+
+                        encoder.Frames.Add(BitmapFrame.Create(bitmapToSave));
+                        encoder.Save(fs);
+                    }
+
+                    return tempFilePath;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PrepareDragFilePath Error: {ex.Message}");
+            }
+
+            // 如果上面失败了，且原路径是真实存在的，作为兜底返回原路径
+            if (!IsVirtualPath(tab.FilePath) && File.Exists(tab.FilePath))
+            {
+                return tab.FilePath;
+            }
+
+            return null;
+        }
+
         private void OnFileTabPreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
             if (e.LeftButton != MouseButtonState.Pressed) return;
@@ -319,11 +396,12 @@ namespace TabPaint
                 dataObject.SetData("TabPaintReorderItem", _mouseDownTabItem);
                 dataObject.SetData("TabPaintInternalDrag", true);
 
-                string finalDragPath = _mouseDownTabItem.FilePath;
-                if (!string.IsNullOrEmpty(finalDragPath) && System.IO.File.Exists(finalDragPath))
+                string externalDragPath = PrepareDragFilePath(_mouseDownTabItem);
+
+                if (!string.IsNullOrEmpty(externalDragPath) && System.IO.File.Exists(externalDragPath))
                 {
                     var fileList = new System.Collections.Specialized.StringCollection();
-                    fileList.Add(finalDragPath);
+                    fileList.Add(externalDragPath);
                     dataObject.SetFileDropList(fileList);
                 }
 
@@ -426,8 +504,6 @@ namespace TabPaint
                         newUIIndex++;
                     }
 
-                    // 修正索引：如果是从后面往前拖，索引不变；如果是从前往后拖，因为旧元素删除了，索引需要-1
-                    // 但 ObservableCollection 的 Move 方法处理起来比较直观，我们这里算绝对位置
                     if (oldUIIndex < newUIIndex)
                     {
                         newUIIndex--;
@@ -443,16 +519,9 @@ namespace TabPaint
 
                         // 同步更新 _imageFiles 列表
                         string sourcePath = sourceTab.FilePath;
-                        // 注意：这里需要重新获取一次真实的 _imageFiles 顺序，或者直接按新UI顺序重建
-                        // 简单起见，按你原来的逻辑处理:
                         if (!string.IsNullOrEmpty(sourcePath) && _imageFiles.Contains(sourcePath))
                         {
                             _imageFiles.Remove(sourcePath);
-                            // 找到现在位于 newUIIndex 位置的元素的 FilePath，插在它附近？
-                            // 更简单的做法：根据 FileTabs 重建 _imageFiles (如果有纯文件列表的话)
-                            // 或者按原有逻辑插入：
-
-                            // 找到现在排在 sourceTab 前面的那个 Tab
                             int newTgtIdx = -1;
                             if (newUIIndex > 0)
                             {
@@ -598,7 +667,7 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("粘贴图片失败: " + ex.Message);
+                    ShowToast("粘贴图片失败: " + ex.Message);
                 }
             }
 
@@ -662,7 +731,7 @@ namespace TabPaint
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show("删除失败: " + ex.Message);
+                        ShowToast("删除失败: " + ex.Message);
                     }
                 }
             }

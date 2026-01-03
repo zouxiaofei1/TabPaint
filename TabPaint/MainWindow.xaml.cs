@@ -244,7 +244,7 @@ namespace TabPaint
         }
         private bool IsImageFile(string path)
         {
-            string[] validExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".ico", ".tiff" };
+            string[] validExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".ico", ".tiff",".gif" ,".heic", ".tif" };
             string ext = System.IO.Path.GetExtension(path)?.ToLower();
             return validExtensions.Contains(ext);
         }
@@ -380,7 +380,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"读取剪切板数据失败: {ex.Message}");
+                ShowToast($"读取剪切板数据失败: {ex.Message}");
                 return;
             }
 
@@ -715,22 +715,10 @@ namespace TabPaint
                 Mouse.OverrideCursor = null; // 恢复光标
             }
         }
-        private void ShowDragOverlay(string mainText, string subText, string iconData = null)
-        {
-            if (DragOverlay.Visibility != Visibility.Visible)
-            {
-                DragOverlay.Visibility = Visibility.Visible;
-            }
+        private bool _isDragOverlayVisible = false;
 
-            DragOverlayText.Text = mainText;
-            DragOverlaySubText.Text = subText;
+        // 更新显示方法
 
-        }
-
-        private void HideDragOverlay()
-        {
-            DragOverlay.Visibility = Visibility.Collapsed;
-        }
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {

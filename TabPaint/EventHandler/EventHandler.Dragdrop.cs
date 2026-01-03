@@ -1,11 +1,14 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using static TabPaint.MainWindow;
 
 //
@@ -149,20 +152,101 @@ namespace TabPaint
                 e.Handled = true;
             }
         }
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool GetCursorPos(out POINT lpPoint);
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct POINT
+        {
+            public int X;
+            public int Y;
+        }
+        private DispatcherTimer _dragWatchdog;
+        private void DragWatchdog_Tick(object sender, EventArgs e)
+        {
+            // 如果遮罩本来就是隐藏的，或者窗口关了，停止定时器
+            if (!_isDragOverlayVisible || this.WindowState == WindowState.Minimized)
+            {
+                _dragWatchdog.Stop();
+                return;
+            }
+
+            POINT cursorScreenPos;
+            GetCursorPos(out cursorScreenPos);
+
+            // 获取窗口物理位置
+            Point p1 = this.PointToScreen(new Point(0, 0));
+            Point p2 = this.PointToScreen(new Point(this.ActualWidth, this.ActualHeight));
+
+            // 为了防止边界闪烁，可以给窗口范围加一点“缓冲余量”(Padding)，比如向外扩 5 像素
+            // 只有鼠标真的离开窗口 5 像素远了，才强制隐藏
+            double padding = 5.0;
+
+            bool isInside = (cursorScreenPos.X >= p1.X - padding && cursorScreenPos.X <= p2.X + padding &&
+                             cursorScreenPos.Y >= p1.Y - padding && cursorScreenPos.Y <= p2.Y + padding);
+
+            if (!isInside)
+            {
+                // 鼠标由于移动太快，已经逃逸到窗口外，但 DragLeave 没触发
+                // 手动进行“垃圾回收”
+                HideDragOverlay();
+            }
+        }
 
         private void OnGlobalDragLeave(object sender, DragEventArgs e)
         {
-            // 获取当前鼠标相对于整个窗口的位置
-            var element = sender as FrameworkElement;
-            if (element == null) return;
+            // 获取当前窗口
+            var window = Window.GetWindow(this);
+            if (window == null) return;
 
-            var pos = e.GetPosition(element);
+            // 获取鼠标在屏幕上的物理坐标 (Pixel)
+            POINT cursorScreenPos;
+            GetCursorPos(out cursorScreenPos);
 
-            if (pos.X <= 0 || pos.Y <= 0 || pos.X >= element.ActualWidth || pos.Y >= element.ActualHeight)
+            Point p1 = window.PointToScreen(new Point(0, 0));
+            Point p2 = window.PointToScreen(new Point(window.ActualWidth, window.ActualHeight));
+
+            // 计算物理像素下的窗口范围
+            double left = p1.X;
+            double top = p1.Y;
+            double right = p2.X;
+            double bottom = p2.Y;
+            bool isInside = (cursorScreenPos.X >= left && cursorScreenPos.X <= right &&
+                             cursorScreenPos.Y >= top && cursorScreenPos.Y <= bottom);
+
+            if (!isInside)
             {
                 HideDragOverlay();
             }
         }
+        private void ShowDragOverlay(string title, string subText)
+        {
+            // 更新文字内容
+            DragOverlayText.Text = title;
+            DragOverlaySubText.Text = subText;
+
+            // 如果已经在显示中，就不重复播放动画，直接返回
+            if (_isDragOverlayVisible) return;
+
+            _isDragOverlayVisible = true;
+
+            // 播放淡入动画
+            Storyboard fadeIn = (Storyboard)this.Resources["FadeInDragOverlay"];
+            fadeIn.Begin(); _dragWatchdog.Start();
+        }
+
+        private void HideDragOverlay()
+        {
+            if (!_isDragOverlayVisible) return;
+
+            _isDragOverlayVisible = false;
+
+            // 播放淡出动画
+            Storyboard fadeOut = (Storyboard)this.Resources["FadeOutDragOverlay"];
+            fadeOut.Begin(); _dragWatchdog.Stop();
+        }
+
         private void InsertImageToCanvas(string filePath)
         {
             try
@@ -184,7 +268,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show("无法插入图片: " + ex.Message);
+                ShowToast("无法插入图片: " + ex.Message);
             }
         }
     }

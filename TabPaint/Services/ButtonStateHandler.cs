@@ -353,15 +353,35 @@ namespace TabPaint
             int width = _bitmap.PixelWidth;
             int height = _bitmap.PixelHeight;
             int stride = width * 4;
+
             byte[] pixels = new byte[height * stride];
-            _bitmap.CopyPixels(pixels, stride, 0);
+
+            try
+            {
+                // 现在 stride 是根据 bitmap 自身的宽度计算的，绝对不会报错
+                _bitmap.CopyPixels(pixels, stride, 0);
+            }
+            catch (System.ArgumentOutOfRangeException)
+            {
+                // 防御性编程：如果 _bitmap 还是旧的引用，或者 BackBufferStride 特殊
+                // 尝试直接使用 WriteableBitmap 的 BackBufferStride (如果 _bitmap 是 WriteableBitmap)
+                if (_bitmap is WriteableBitmap wb)
+                {
+                    stride = wb.BackBufferStride;
+                    pixels = new byte[height * stride]; // 重新分配数组大小以匹配 stride
+                    wb.CopyPixels(pixels, stride, 0);
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
             // 2. 创建用于保存的 BitmapSource，并恢复原始 DPI
-            // 这样用看图软件打开时，尺寸信息（英寸/厘米）才是对的
             var saveSource = BitmapSource.Create(
                 width, height,
-                _originalDpiX, // <--- 恢复原始 X DPI
-                _originalDpiY, // <--- 恢复原始 Y DPI
+                _originalDpiX,
+                _originalDpiY,
                 PixelFormats.Bgra32,
                 null,
                 pixels,

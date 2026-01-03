@@ -154,8 +154,6 @@ public class ShapeTool : ToolBase
         var rect = MakeRect(_startPoint, endPoint);
         if (rect.Width <= 1 || rect.Height <= 1) return;
 
-        // --- 修复核心 A: 安全的 Padding 计算 ---
-        // 为了防止笔触太粗被裁切，Padding 至少要是笔触的一半，这里给全尺寸+2px余量更安全
         double padding = ctx.PenThickness + 2;
 
         // 生成位图
@@ -164,27 +162,17 @@ public class ShapeTool : ToolBase
         var selectTool = GetSelectTool();
         if (selectTool != null)
         {
-            // 1. 将生成的图片插入选区 (SelectTool 会初始化 _selectionRect 为 0,0,imgW,imgH)
             selectTool.InsertImageAsSelection(ctx, shapeBitmap,false);
-
-            // 2. 计算 Bitmap 在画布上的真实左上角
-            // 逻辑：用户画的框(rect) - 边距(padding) = 图片左上角
             int realX = (int)(rect.X - padding);
             int realY = (int)(rect.Y - padding);
 
-            // 3. 强制同步 SelectTool 的数据状态
-            // 这一步非常关键：必须用 shapeBitmap 的实际物理尺寸，而不是 rect 的尺寸
             selectTool._selectionRect = new Int32Rect(realX, realY, shapeBitmap.PixelWidth, shapeBitmap.PixelHeight);
             selectTool._originalRect = selectTool._selectionRect;
 
-            // 4. --- 修复核心 B: 强制同步 UI 尺寸 ---
-            // 很多时候裁剪是因为 Image 控件的 Width/Height 没更新
             double zoom = ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale;
             double scaleX = 1.0; // 这里的 Scale 指的是相对于原图的缩放，刚生成时是 1:1
             double scaleY = 1.0;
 
-            // 更新 Image 控件的显示大小 (考虑画布缩放 ViewElement 的尺寸)
-            // 注意：ToolContext 里没有直接暴露 zoom，通常通过 ViewElement / Surface 比例计算
             double uiScaleX = ctx.ViewElement.ActualWidth / ctx.Surface.Bitmap.PixelWidth;
             double uiScaleY = ctx.ViewElement.ActualHeight / ctx.Surface.Bitmap.PixelHeight;
 
@@ -200,8 +188,6 @@ public class ShapeTool : ToolBase
             double canvasW = ctx.Surface.Bitmap.PixelWidth;
             double canvasH = ctx.Surface.Bitmap.PixelHeight;
 
-            // 这里的 Clip 是相对于 SelectionPreview 控件自身的坐标系 (0,0 是图片左上角)
-            // 图片被放在 (realX, realY)，所以画布左上角相对于图片就是 (-realX, -realY)
             Rect clipRect = new Rect(
                 -realX,
                 -realY,
@@ -273,9 +259,6 @@ public class ShapeTool : ToolBase
         if (pixelWidth <= 0) pixelWidth = 1;
         if (pixelHeight <= 0) pixelHeight = 1;
 
-        // 计算局部坐标：
-        // 如果 globalStart 在左上角，它相对于 rect.X 是 0，所以 localStart = padding
-        // 加上 padding 是为了把画的内容移到图片中间，防止边缘被切
         Point localStart = new Point(globalStart.X - rect.X + padding, globalStart.Y - rect.Y + padding);
         Point localEnd = new Point(globalEnd.X - rect.X + padding, globalEnd.Y - rect.Y + padding);
 
@@ -284,13 +267,20 @@ public class ShapeTool : ToolBase
         {
             Pen pen = new Pen(new SolidColorBrush(color), thickness);
             // 设置线帽，防止直角线端点看起来也是切掉的
-            pen.StartLineCap = PenLineCap.Round;
-            pen.EndLineCap = PenLineCap.Round;
-            pen.LineJoin = PenLineJoin.Round;
+            if (_currentShapeType == ShapeType.Rectangle)
+            {
+                // 矩形需要尖角
+                pen.LineJoin = PenLineJoin.Miter;
+                pen.StartLineCap = PenLineCap.Square;
+                pen.EndLineCap = PenLineCap.Square;
+            }
+            else
+            {
+                pen.LineJoin = PenLineJoin.Round;
+                pen.StartLineCap = PenLineCap.Round;
+                pen.EndLineCap = PenLineCap.Round;
+            }
             pen.Freeze();
-
-            // 矩形绘制逻辑：在 padding 偏移处绘制 rect 尺寸的框
-            // 这样笔触的一半 (thickness/2) 会向外延伸，但因为我们 padding > thickness/2，所以它是安全的
             Rect drawRect = new Rect(padding, padding, rect.Width, rect.Height);
 
             switch (_currentShapeType)

@@ -232,6 +232,7 @@ namespace TabPaint
             _ctx.Undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);   // --- 5. 将完整的变换信息压入 Undo 栈 ---
             NotifyCanvasSizeChanged(newWidth, newHeight);
             NotifyCanvasChanged();
+            _bitmap = newBitmap;
             SetUndoRedoButtonState();
             _canvasResizer.UpdateUI();
         }

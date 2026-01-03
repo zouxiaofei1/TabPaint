@@ -122,8 +122,21 @@ namespace TabPaint.Controls
 
         public event MouseWheelEventHandler SliderPreviewMouseWheel;
         private void Internal_Slider_PreviewMouseWheel(object sender, MouseWheelEventArgs e) => SliderPreviewMouseWheel?.Invoke(sender, e);
+        public static readonly RoutedEvent SaveAllDoubleClickEvent =
+    EventManager.RegisterRoutedEvent("SaveAllDoubleClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(ImageBarControl));
 
-        // 防止窗口震动
+        public event RoutedEventHandler SaveAllDoubleClick
+        {
+            add { AddHandler(SaveAllDoubleClickEvent, value); }
+            remove { RemoveHandler(SaveAllDoubleClickEvent, value); }
+        }
+
+        private void Internal_OnSaveAllDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            // 标记事件已处理，防止其继续冒泡或触发其他的 Click 行为（视具体需求而定）
+            e.Handled = true;
+            RaiseEvent(new RoutedEventArgs(SaveAllDoubleClickEvent, sender));
+        }
         private void Internal_ScrollViewer_ManipulationBoundaryFeedback(object sender, ManipulationBoundaryFeedbackEventArgs e)
         {
             e.Handled = true;

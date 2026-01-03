@@ -35,9 +35,9 @@
         </ResourceDictionary>
     </Window.Resources>
 
-    <Grid Background="Transparent" DragOver="OnGlobalDragOver"
-          Drop="OnGlobalDrop"
-          DragLeave="OnGlobalDragLeave">
+    <Grid Background="Transparent" PreviewDragOver="OnGlobalDragOver"
+          PreviewDrop="OnGlobalDrop"
+          PreviewDragLeave="OnGlobalDragLeave">
         <DockPanel LastChildFill="True">
 
             <!-- #region 1. 自定义标题栏 (TitleBar) -->
@@ -93,6 +93,18 @@
                          Style="{StaticResource Win11MenuItemStyle}"
                          DataContext="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current}"
                          IsChecked="{Binding IsFixedZoom, Mode=TwoWay}"/>
+                            <MenuItem Header="AI 一键抠图 (RMBG)" Click="OnRemoveBackgroundClick">
+                                <MenuItem.Icon>
+                                    <!-- 这里可以用 Path 或者 FontIcon -->
+                                    <TextBlock Text="🪄" FontFamily="Segoe UI Emoji"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="提取图中文字 (OCR)" Click="OnOcrClick">
+                                <MenuItem.Icon>
+                                    <!-- 使用 Segoe Fluent Icons 字体图标 (E8C6 是扫描图标) -->
+                                    <TextBlock Text="&#xE8C6;" FontFamily="Segoe Fluent Icons" />
+                                </MenuItem.Icon>
+                            </MenuItem>
                         </ContextMenu>
                     </ScrollViewer.ContextMenu>
 
@@ -352,9 +364,10 @@
         <!-- #endregion -->
         
         <!-- #region 8. 拖拽遮罩层 (Drag Overlay) -->
-        <Grid x:Name="DragOverlay" Visibility="Collapsed" IsHitTestVisible="False" Background="#77111111">
-
-            <!-- 虚线边框背景 -->
+        <Grid x:Name="DragOverlay" Visibility="Collapsed" IsHitTestVisible="False" Background="#77111111" RenderTransformOrigin="0.5,0.5">
+            <Grid.RenderTransform>
+                <ScaleTransform ScaleX="1" ScaleY="1"/>
+            </Grid.RenderTransform>
             <Rectangle Stroke="White" StrokeThickness="3" RadiusX="20" RadiusY="20" Margin="40" StrokeDashArray="4 2"/>
 
             <!-- 文字和图标内容 -->

@@ -201,7 +201,7 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    System.Windows.MessageBox.Show($"删除失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    ShowToast($"删除失败: {ex.Message}");
                 }
             }
         }

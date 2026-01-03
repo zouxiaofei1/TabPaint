@@ -102,7 +102,7 @@
             <!-- 1. 左侧控制按钮 -->
             <Border Grid.Column="0" Margin="4,0,4,0" VerticalAlignment="Center" BorderBrush="#33999999" BorderThickness="0,0,1,0" Padding="0,0,2,0" Visibility="{Binding IsViewMode, ElementName=RootControl, Converter={StaticResource InverseBoolToVis}}">
                 <UniformGrid Columns="1" Rows="3" Height="80" Width="28">
-                    <Button ToolTip="保存所有已编辑图片" Click="Internal_OnSaveAllClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
+                    <Button ToolTip="保存所有已编辑图片" Click="Internal_OnSaveAllClick"  PreviewMouseDoubleClick="Internal_OnSaveAllDoubleClick"  Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
                         <Path Data="{DynamicResource Save_Edit_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                     </Button>
                     <Button ToolTip="关闭所有未编辑的图片" Click="Internal_OnClearUneditedClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">

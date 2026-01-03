@@ -735,20 +735,16 @@ namespace TabPaint
             }, System.Windows.Threading.DispatcherPriority.Loaded);
         }
 
-        private void SaveSingleTab(FileTabItem tab)
+        private bool SaveSingleTab(FileTabItem tab)
         {
             try
             {
-
-                string oldVirtualPath = null;
+                // 1. 虚拟路径处理 (新建文件)
                 if (tab.IsNew && IsVirtualPath(tab.FilePath))
                 {
-                    // 获取当前内存里的图
                     var bmp = GetHighResImageForTab(tab);
-                    if (bmp == null) return;
-                }
-                if (tab.IsNew && IsVirtualPath(tab.FilePath))
-                {
+                    if (bmp == null) return false;
+
                     Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
                     dlg.FileName = tab.FileName;
                     dlg.DefaultExt = ".png";
@@ -759,36 +755,30 @@ namespace TabPaint
                         string realPath = dlg.FileName;
                         string oldPath = tab.FilePath; // 记录虚拟路径
 
-                        // 1. 保存文件
-                        var bmp = GetHighResImageForTab(tab);
+                        // 保存文件
                         using (var fs = new FileStream(realPath, FileMode.Create))
                         {
                             BitmapEncoder encoder;
-                            if (realPath.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)) encoder = new JpegBitmapEncoder();
-                            else encoder = new PngBitmapEncoder();
+                            if (realPath.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                                realPath.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase))
+                                encoder = new JpegBitmapEncoder();
+                            else
+                                encoder = new PngBitmapEncoder();
 
                             encoder.Frames.Add(BitmapFrame.Create(bmp));
                             encoder.Save(fs);
                         }
 
-                        // 2. 【核心】更新 _imageFiles 列表（转正）
+                        // 更新数据列表
                         int index = _imageFiles.IndexOf(oldPath);
-                        if (index >= 0)
-                        {
-                            _imageFiles[index] = realPath;
-                        }
-                        else
-                        {
-                            // 理论上不可能找不到，除非 bug，那就加在最后
-                            _imageFiles.Add(realPath);
-                        }
+                        if (index >= 0) _imageFiles[index] = realPath;
+                        else _imageFiles.Add(realPath);
 
-                        // 3. 更新 Tab 属性
-                        tab.FilePath = realPath; // 这会触发 FileName, DisplayName 更新
+                        // 更新 Tab 状态
+                        tab.FilePath = realPath;
                         tab.IsNew = false;
                         tab.IsDirty = false;
 
-                        // 如果是当前正在编辑的文件，还要更新窗口标题和内部变量
                         if (tab == _currentTabItem)
                         {
                             _currentFilePath = realPath;
@@ -796,53 +786,62 @@ namespace TabPaint
                             UpdateWindowTitle();
                         }
 
-                        // 清理缓存
+                        // 清理备份
                         if (File.Exists(tab.BackupPath)) File.Delete(tab.BackupPath);
                         tab.BackupPath = null;
+
+                        return true; // 保存成功
                     }
+                    return false; // 用户取消了对话框
                 }
                 else
                 {
-                    // === 普通文件的保存 (或已经是真实路径的新建文件) ===
-
-                    // 1. 执行保存
+                    // 2. 普通文件保存 (已有路径)
                     if (tab == _currentTabItem)
                     {
                         var bmp = GetCurrentCanvasSnapshot();
-                        if (bmp != null)
-                        {
-                            using (var fs = new FileStream(tab.FilePath, FileMode.Create))
-                            {
-                                BitmapEncoder encoder = new PngBitmapEncoder();
-                                if (tab.FilePath.EndsWith(".jpg") || tab.FilePath.EndsWith(".jpeg"))
-                                    encoder = new JpegBitmapEncoder();
-                                else
-                                    encoder.Frames.Add(BitmapFrame.Create(bmp));
+                        if (bmp == null) return false;
 
-                                encoder.Save(fs);
-                            }
+                        using (var fs = new FileStream(tab.FilePath, FileMode.Create))
+                        {
+                            BitmapEncoder encoder;
+                            if (tab.FilePath.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                                tab.FilePath.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase))
+                                encoder = new JpegBitmapEncoder();
+                            else
+                                encoder = new PngBitmapEncoder();
+
+                            encoder.Frames.Add(BitmapFrame.Create(bmp)); // 修复：确保 Frame 被添加
+                            encoder.Save(fs);
                         }
                     }
                     else if (File.Exists(tab.BackupPath))
                     {
-                        // 后台标签保存：把缓存直接覆盖过去
+                        // 后台标签：将缓存覆盖到原位
                         File.Copy(tab.BackupPath, tab.FilePath, true);
                     }
+                    else
+                    {
+                        tab.IsDirty = false;
+                        return true;
+                    }
 
-                    // 2. 更新状态
                     tab.IsDirty = false;
-                    tab.IsNew = false; // 确保标记为非新建
+                    tab.IsNew = false;
 
-                    // 清理缓存
                     if (File.Exists(tab.BackupPath)) File.Delete(tab.BackupPath);
                     tab.BackupPath = null;
+
+                    return true;
                 }
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"保存失败: {ex.Message}");
+                ShowToast($"保存失败: {ex.Message}");
+                return false;
             }
         }
+
         public void CheckDirtyState()
         {
             if (_currentTabItem == null || _undo == null) return;
