@@ -35,8 +35,8 @@ namespace TabPaint
         {
             _workingPath = path;
             _currentFilePath = path;
-        
 
+            PerformanceScore = QuickBenchmark.EstimatePerformanceScore();
             InitializeComponent(); 
             this.ContentRendered += MainWindow_ContentRendered;
             DataContext = this;
@@ -249,7 +249,7 @@ namespace TabPaint
             return validExtensions.Contains(ext);
         }
 
-        private async Task OpenFilesAsNewTabs(string[] files)
+        public async Task OpenFilesAsNewTabs(string[] files)
         {
             if (files == null || files.Length == 0) return;
 

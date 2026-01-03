@@ -669,7 +669,7 @@ namespace TabPaint
             UpdateImageBarSliderState();
         }
 
-        private async void SwitchToTab(FileTabItem tab)
+        public async void SwitchToTab(FileTabItem tab)
         {
            
             if (_currentTabItem == tab) return;

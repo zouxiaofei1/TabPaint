@@ -15,7 +15,7 @@ namespace TabPaint
         // 设定存储路径: AppData/Local/TabPaint/settings.json
         private readonly string _folderPath;
         private readonly string _filePath;
-
+        private const int MaxRecentFiles = 10;
         // 当前的设置实例
         public AppSettings Current { get; private set; }
 
@@ -106,9 +106,38 @@ namespace TabPaint
                 Debug.WriteLine($"[Settings] Save failed: {ex.Message}");
             }
         }
+        public void AddRecentFile(string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath)) return;
 
-       
-        
+            var list = Current.RecentFiles ?? new List<string>();
+
+            // 如果已存在，先移除（为了移到最前面）
+            // 忽略大小写比较
+            var existing = list.FirstOrDefault(f => f.Equals(filePath, StringComparison.OrdinalIgnoreCase));
+            if (existing != null)
+            {
+                list.Remove(existing);
+            }
+
+            // 插入到开头
+            list.Insert(0, filePath);
+
+            // 限制数量
+            if (list.Count > MaxRecentFiles)
+            {
+                list = list.Take(MaxRecentFiles).ToList();
+            }
+
+            Current.RecentFiles = list;
+           // Save(); // 立即保存
+        }
+        public void ClearRecentFiles()
+        {
+            Current.RecentFiles = new List<string>();
+            Save();
+        }
+
 
     }
 }

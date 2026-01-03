@@ -82,28 +82,77 @@
                     <local:ScaleToTileRectConverter x:Key="ScaleToTileRectConverter"/>
                 </Grid.Resources>
 
-                <ScrollViewer    Style="{StaticResource FluentScrollViewer}"  Name="ScrollContainer" FocusVisualStyle="{x:Null}" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" PreviewMouseWheel="OnMouseWheelZoom" Background="Transparent" PreviewMouseDown="OnScrollContainerMouseDown" PreviewMouseMove="OnScrollContainerMouseMove"  PreviewMouseUp="OnScrollContainerMouseUp"     MouseDoubleClick="OnScrollContainerDoubleClick" AllowDrop="True" >
+                <ScrollViewer   ContextMenuOpening="OnScrollContainerContextMenuOpening"  Style="{StaticResource FluentScrollViewer}"  Name="ScrollContainer" FocusVisualStyle="{x:Null}" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" PreviewMouseWheel="OnMouseWheelZoom" Background="Transparent" PreviewMouseDown="OnScrollContainerMouseDown" PreviewMouseMove="OnScrollContainerMouseMove"  PreviewMouseUp="OnScrollContainerMouseUp"     MouseDoubleClick="OnScrollContainerDoubleClick" AllowDrop="True" >
                     <ScrollViewer.ContextMenu>
                         <ContextMenu Style="{StaticResource Win11ContextMenuStyle}">
-                            <MenuItem Header="复制" InputGestureText="Ctrl+C" Style="{StaticResource Win11MenuItemStyle}" Click="OnCopyClick"/>
+                            <MenuItem Header="复制" InputGestureText="Ctrl+C" Style="{StaticResource Win11MenuItemStyle}" Click="OnCopyClick">
+                                <MenuItem.Icon>
+                                    <Path Data="{DynamicResource Copy_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="剪切" InputGestureText="Ctrl+V" Style="{StaticResource Win11MenuItemStyle}" Click="OnCutClick">
+                                <MenuItem.Icon>
+                                    <Path Data="{DynamicResource Cut_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="粘贴" InputGestureText="Ctrl+V" Style="{StaticResource Win11MenuItemStyle}" Click="OnPasteClick">
+                                <MenuItem.Icon>
+                                    <Path Data="{DynamicResource Paste_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+              
                             <Separator Style="{StaticResource Win11MenuSeparatorStyle}"/>
-                            <MenuItem Header="粘贴" InputGestureText="Ctrl+V" Style="{StaticResource Win11MenuItemStyle}" Click="OnPasteClick"/>
                             <MenuItem Header="固定缩放倍数" 
                          IsCheckable="True" 
                          Style="{StaticResource Win11MenuItemStyle}"
                          DataContext="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current}"
-                         IsChecked="{Binding IsFixedZoom, Mode=TwoWay}"/>
-                            <MenuItem Header="AI 一键抠图 (RMBG)" Click="OnRemoveBackgroundClick">
+                         IsChecked="{Binding IsFixedZoom, Mode=TwoWay}">
                                 <MenuItem.Icon>
-                                    <!-- 这里可以用 Path 或者 FontIcon -->
-                                    <TextBlock Text="🪄" FontFamily="Segoe UI Emoji"/>
+                                    <Path Data="{DynamicResource Pin_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="提取图中文字 (OCR)" Click="OnOcrClick">
+                            <Separator Style="{StaticResource Win11MenuSeparatorStyle}"/>
+
+                            <!-- 二级菜单：小工具 -->
+                            <MenuItem Header="小工具" Style="{StaticResource Win11MenuItemStyle}">
                                 <MenuItem.Icon>
-                                    <!-- 使用 Segoe Fluent Icons 字体图标 (E8C6 是扫描图标) -->
-                                    <TextBlock Text="&#xE8C6;" FontFamily="Segoe Fluent Icons" />
+                                    <Path Data="{DynamicResource Wrench_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                                 </MenuItem.Icon>
+
+                                <MenuItem Header="AI 一键抠图 (RMBG)" Style="{StaticResource Win11MenuItemStyle}" Click="OnRemoveBackgroundClick">
+                                    <MenuItem.Icon>
+                                        <TextBlock Text="🪄" FontFamily="Segoe UI Emoji"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+
+                                <MenuItem Header="色差抠图 (去除背景)" Style="{StaticResource Win11MenuItemStyle}" Click="OnChromaKeyClick">
+                                    <MenuItem.Icon>
+                                        <TextBlock Text="🪄" FontFamily="Segoe UI Emoji"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+
+                                <MenuItem Header="提取图中文字 (OCR)" Style="{StaticResource Win11MenuItemStyle}" Click="OnOcrClick">
+                                    <MenuItem.Icon>
+                                        <TextBlock Text="&#xE8C6;" FontFamily="Segoe Fluent Icons" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+
+                                <MenuItem Header="屏幕取色器" Style="{StaticResource Win11MenuItemStyle}" Click="OnScreenColorPickerClick">
+                                    <MenuItem.Icon>
+                                        <TextBlock Text="🖌️" FontFamily="Segoe UI Emoji"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+
+                                <MenuItem Header="复制颜色代码 (#HEX)" Style="{StaticResource Win11MenuItemStyle}" Click="OnCopyColorCodeClick">
+                                    <MenuItem.Icon>
+                                        <TextBlock Text="🎨" FontFamily="Segoe UI Emoji"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="智能裁切空白" Style="{StaticResource Win11MenuItemStyle}" Click="OnAutoCropClick">
+                                    <MenuItem.Icon>
+                                        <TextBlock Text="✂" FontFamily="Segoe UI Emoji"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
                             </MenuItem>
                         </ContextMenu>
                     </ScrollViewer.ContextMenu>

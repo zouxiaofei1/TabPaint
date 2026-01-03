@@ -19,6 +19,26 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private void OnRecentFileClick(object sender, string filePath)
+        {
+            if (File.Exists(filePath))
+            {
+                // 调用你现有的打开逻辑
+                // 假设是 OpenImageAndTabs 或类似的入口
+                OpenImageAndTabs(filePath, true);
+            }
+            else
+            {
+                ShowToast($"文件未找到：\n{filePath}");
+                // 可选：如果文件不存在，从列表中移除？
+            }
+        }
+
+        private void OnClearRecentFilesClick(object sender, EventArgs e)
+        {
+            SettingsManager.Instance.ClearRecentFiles();
+        }
+
         private void OnSettingsClick(object sender, RoutedEventArgs e)
         {
             // 打开设置窗口
@@ -239,6 +259,8 @@ namespace TabPaint
             {
                 string[] files= dlg.FileNames;
                 OpenFilesAsNewTabs(files);
+                foreach (var file in files)
+                    SettingsManager.Instance.AddRecentFile(file);
                 UpdateImageBarSliderState();
             }
         }

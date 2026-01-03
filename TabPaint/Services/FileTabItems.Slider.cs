@@ -42,7 +42,7 @@ namespace TabPaint
             };
         }
 
-        private void UpdateImageBarSliderState()
+        public void UpdateImageBarSliderState()
         {
             Dispatcher.BeginInvoke(new Action(() =>
             {

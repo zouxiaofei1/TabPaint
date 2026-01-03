@@ -20,29 +20,35 @@
         <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,0">
             <Menu DockPanel.Dock="Left" Background="Transparent" BorderThickness="0" FontSize="14" Padding="0" Margin="0">
                 <!-- 文件菜单 -->
-                <MenuItem Header="文件" Style="{StaticResource ModernMenuItemStyle}">
-                    <MenuItem Header="新建" Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+N" Click="OnNewClick">
+                <MenuItem Header="文件" Style="{StaticResource ModernMenuItemStyle}" SubmenuOpened="OnFileMenuOpened">
+                    <MenuItem Header="新建" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+N" Click="OnNewClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource NewFile_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="打开" Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+O" Click="OnOpenClick">
+                    <MenuItem Header="打开" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+O" Click="OnOpenClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Open_Folder_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
+                    <MenuItem Header="最近打开" x:Name="RecentFilesMenuItem" Style="{StaticResource Win11MenuItemStyle}">
+                        <MenuItem.Icon>
+                            <Path Data="{DynamicResource Reset_Image}"  Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                        <MenuItem Header="占位符"  Style="{StaticResource Win11MenuItemStyle}" />
+                    </MenuItem>
                     <Separator Style="{StaticResource MenuSeparator}"/>
-                    <MenuItem Header="保存" Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+S" Click="OnSaveClick">
+                    <MenuItem Header="保存" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+S" Click="OnSaveClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Save_Normal_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="另存为" Style="{StaticResource SubMenuItemStyle}" Click="OnSaveAsClick">
+                    <MenuItem Header="另存为" Style="{StaticResource Win11MenuItemStyle}" Click="OnSaveAsClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Save_Button_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="退出" Style="{StaticResource SubMenuItemStyle}" Click="OnExitClick">
+                    <MenuItem Header="退出" Style="{StaticResource Win11MenuItemStyle}" Click="OnExitClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Exit_Image}" Stretch="Uniform" Fill="Transparent"  Stroke="#333"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
                         </MenuItem.Icon>

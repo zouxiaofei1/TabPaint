@@ -78,6 +78,8 @@ namespace TabPaint
             MainMenu.SaveClick += OnSaveClick;
             MainMenu.SaveAsClick += OnSaveAsClick;
             MainMenu.ExitClick += OnExitClick;
+            MainMenu.RecentFileClick += OnRecentFileClick;
+            MainMenu.ClearRecentFilesClick += OnClearRecentFilesClick;
 
             MainMenu.CopyClick += OnCopyClick;
             MainMenu.CutClick += OnCutClick;

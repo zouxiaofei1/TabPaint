@@ -425,42 +425,7 @@ namespace TabPaint
         }
 
 
-        private Color GetPixelColor(int x, int y)
-        {
-            if (x < 0 || y < 0 || x >= _bmpWidth || y >= _bmpHeight) return Colors.Transparent;
-
-            _bitmap.Lock();
-            unsafe
-            {
-                IntPtr pBackBuffer = _bitmap.BackBuffer;
-                int stride = _bitmap.BackBufferStride;
-                byte* p = (byte*)pBackBuffer + y * stride + x * 4;
-                byte b = p[0];
-                byte g = p[1];
-                byte r = p[2];
-                byte a = p[3];
-                _bitmap.Unlock();
-                return Color.FromArgb(a, r, g, b);
-            }
-        }
-        private void DrawPixel(int x, int y, Color color)
-        {
-            if (x < 0 || y < 0 || x >= _bmpWidth || y >= _bmpHeight) return;
-
-            _bitmap.Lock();
-            unsafe
-            {
-                IntPtr pBackBuffer = _bitmap.BackBuffer;
-                int stride = _bitmap.BackBufferStride;
-                byte* p = (byte*)pBackBuffer + y * stride + x * 4;
-                p[0] = color.B;
-                p[1] = color.G;
-                p[2] = color.R;
-                p[3] = color.A;
-            }
-            _bitmap.AddDirtyRect(new Int32Rect(x, y, 1, 1));
-            _bitmap.Unlock();
-        }
+       
         private void UpdateSliderBarValue(double newScale)
         {
            

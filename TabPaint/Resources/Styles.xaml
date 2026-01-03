@@ -220,71 +220,126 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="MenuItem">
-                    <Border x:Name="Bg" 
-                        Background="Transparent" 
-                        CornerRadius="4" 
-                        Margin="4,2" 
-                        SnapsToDevicePixels="True">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <!-- 第一列：放置图标或勾选标记 -->
-                                <ColumnDefinition Width="32" SharedSizeGroup="IconGroup"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto" SharedSizeGroup="ShortcutGroup"/>
-                            </Grid.ColumnDefinitions>
+                    <Grid>
+                        <!-- 主体部分：鼠标悬停的那个条目 -->
+                        <Border x:Name="Bg" 
+                            Background="Transparent" 
+                            CornerRadius="4" 
+                            Margin="4,2" 
+                            SnapsToDevicePixels="True">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <!-- 图标列 -->
+                                    <ColumnDefinition Width="32" SharedSizeGroup="IconGroup"/>
+                                    <!-- 文字列 -->
+                                    <ColumnDefinition Width="*"/>
+                                    <!-- 快捷键列 -->
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="ShortcutGroup"/>
+                                    <!-- 箭头列：用于指示有子菜单 -->
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
-                            <!-- 勾选标记层 (默认隐藏) -->
-                            <Viewbox x:Name="CheckMark" 
-         Grid.Column="0" 
-         Width="14" Height="14" 
-         Visibility="Collapsed" 
-         VerticalAlignment="Center" 
-         HorizontalAlignment="Center">
-                                <Path Data="M2,8 L6,12 L14,3" 
-          Stroke="{TemplateBinding Foreground}" 
-          StrokeThickness="2" 
-          StrokeStartLineCap="Round" 
-          StrokeEndLineCap="Round" 
-          StrokeLineJoin="Round"
-          Fill="Transparent"/>
-                            </Viewbox>
+                                <!-- 勾选标记 -->
+                                <Viewbox x:Name="CheckMark" 
+                                     Grid.Column="0" 
+                                     Width="14" Height="14" 
+                                     Visibility="Collapsed" 
+                                     VerticalAlignment="Center" 
+                                     HorizontalAlignment="Center">
+                                    <Path Data="M2,8 L6,12 L14,3" 
+                                      Stroke="{TemplateBinding Foreground}" 
+                                      StrokeThickness="2" 
+                                      StrokeStartLineCap="Round" 
+                                      StrokeEndLineCap="Round" 
+                                      StrokeLineJoin="Round"
+                                      Fill="Transparent"/>
+                                </Viewbox>
 
-                            <!-- 图标内容 (如果有的话) -->
-                            <ContentPresenter x:Name="Icon" 
-                                          Grid.Column="0"
-                                          ContentSource="Icon" 
-                                          Margin="5,0" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center"/>
+                                <!-- 图标 -->
+                                <ContentPresenter x:Name="Icon" 
+                                              Grid.Column="0"
+                                              ContentSource="Icon" 
+                                              Margin="5,0" 
+                                              VerticalAlignment="Center" 
+                                              HorizontalAlignment="Center"/>
 
-                            <!-- 文字内容 -->
-                            <ContentPresenter Grid.Column="1" 
-                                          ContentSource="Header" 
-                                          VerticalAlignment="Center" 
-                                          Margin="8,0,20,0"/>
+                                <!-- 标题 -->
+                                <ContentPresenter Grid.Column="1" 
+                                              ContentSource="Header" 
+                                              VerticalAlignment="Center" 
+                                              Margin="8,0,20,0"/>
 
-                            <!-- 快捷键提示 -->
-                            <TextBlock Grid.Column="2" 
-                                   Text="{TemplateBinding InputGestureText}" 
-                                   VerticalAlignment="Center" 
-                                   Foreground="#808080" 
-                                   Margin="10,0,10,0" 
-                                   FontSize="11"/>
-                        </Grid>
-                    </Border>
+                                <!-- 快捷键 -->
+                                <TextBlock Grid.Column="2" 
+                                       Text="{TemplateBinding InputGestureText}" 
+                                       VerticalAlignment="Center" 
+                                       Foreground="#808080" 
+                                       Margin="10,0,10,0" 
+                                       FontSize="11"/>
+
+                                <!-- 子菜单指示箭头 -->
+                                <TextBlock x:Name="RightArrow" 
+                                       Grid.Column="3"
+                                       Text="&#xE76C;" 
+                                       FontFamily="Segoe Fluent Icons" 
+                                       FontSize="10"
+                                       VerticalAlignment="Center" 
+                                       Margin="0,0,8,0"
+                                       Visibility="Collapsed"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- ★★★ 修正后的子菜单弹出层 ★★★ -->
+                        <Popup x:Name="PART_Popup"
+                           AllowsTransparency="True"
+                           Focusable="False"
+                           HorizontalOffset="-2" 
+                           VerticalOffset="-4"
+                           IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                           Placement="Right"
+                           PopupAnimation="{DynamicResource {x:Static SystemParameters.MenuPopupAnimationKey}}">
+
+                            <!-- 这里的 Background 可以换成你的主题色资源 -->
+                            <Border Background="#F9F9F9" 
+                                BorderBrush="#E5E5E5" 
+                                BorderThickness="1" 
+                                CornerRadius="8" 
+                                Padding="2">
+
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="16" ShadowDepth="4" Opacity="0.15" Direction="270" Color="Black"/>
+                                </Border.Effect>
+
+                                <!-- 移除了 Style 引用，直接使用默认 ScrollViewer -->
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" PanningMode="Both">
+                                    <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle" 
+                                                Grid.IsSharedSizeScope="True" 
+                                                SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+
                     <ControlTemplate.Triggers>
-                        <!-- 当被勾选时显示勾选标记 -->
+                        <!-- 勾选状态 -->
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
                             <Setter TargetName="Icon" Property="Visibility" Value="Collapsed"/>
                         </Trigger>
 
-                        <Trigger Property="IsMouseOver" Value="True">
+                        <!-- 鼠标高亮 -->
+                        <Trigger Property="IsHighlighted" Value="True">
                             <Setter TargetName="Bg" Property="Background" Value="#10000000"/>
                         </Trigger>
 
+                        <!-- 禁用状态 -->
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+
+                        <!-- 父级菜单状态：显示箭头 -->
+                        <Trigger Property="Role" Value="SubmenuHeader">
+                            <Setter TargetName="RightArrow" Property="Visibility" Value="Visible"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
 
@@ -292,6 +347,8 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+
 
     <!-- 分隔条样式 -->
     <Style x:Key="Win11MenuSeparatorStyle" TargetType="Separator">

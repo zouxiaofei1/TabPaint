@@ -1,4 +1,5 @@
 ﻿
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -7,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 using System.Windows.Threading;
 
 //
@@ -25,6 +27,7 @@ namespace TabPaint
         // 标志位：表示图像加载“引擎”是否正在工作中
         private bool _isProcessingQueue = false;
         private CancellationTokenSource _loadImageCts;
+        private CancellationTokenSource _progressCts;
         public async Task OpenImageAndTabs(string filePath, bool refresh = false)
         {
             _isLoadingImage = true;
@@ -43,7 +46,10 @@ namespace TabPaint
                 {
                     _imageFiles.Add(filePath);
                 }
-
+                if (File.Exists(filePath))
+                {
+                    SettingsManager.Instance.AddRecentFile(filePath);
+                }
                 int newIndex = _imageFiles.IndexOf(filePath);
                 _currentImageIndex = newIndex;
                 RefreshTabPageAsync(_currentImageIndex, refresh);
@@ -292,6 +298,12 @@ namespace TabPaint
             _loadImageCts?.Cancel();
             _loadImageCts = new CancellationTokenSource();
             var token = _loadImageCts.Token;
+            if (_progressCts != null)
+            {
+                _progressCts.Cancel();
+                _progressCts.Dispose();
+                _progressCts = null;
+            }
             string fileToRead = sourcePath ?? filePath;
             if (IsVirtualPath(filePath) && string.IsNullOrEmpty(sourcePath))
             {// 新建空白图像逻辑，不加载
@@ -354,9 +366,11 @@ namespace TabPaint
             if (!File.Exists(fileToRead))
             {
                 // 只有非虚拟路径不存在时才报错
-                s($"找不到图片文件: {fileToRead}");
+                ShowToast($"找不到图片文件: {fileToRead}");
                 return;
             }
+            CancellationTokenSource progressCts = null;
+            Task progressTask = null;
 
             try
             {
@@ -370,6 +384,39 @@ namespace TabPaint
 
                 var (originalWidth, originalHeight) = await GetImageDimensionsAsync(imageBytes);
                 if (token.IsCancellationRequested) return;
+
+                long totalPixels = (long)originalWidth * originalHeight;
+                bool showProgress = totalPixels > 8000000;
+                if (showProgress)
+                {
+                    // 创建新的进度条控制源
+                    _progressCts = new CancellationTokenSource();
+                    var progressToken = _progressCts.Token; // 捕获当前Token
+
+                    // 启动模拟任务（不 await）
+                    _ = SimulateProgressAsync(progressToken, totalPixels, (msg) =>
+                    {
+                        // 【双重保险】在更新 UI 前，再次检查当前任务是否已被取消
+                        // 如果用户已经切到下一张图，progressToken.IsCancellationRequested 会变成 true
+                        if (progressToken.IsCancellationRequested) return;
+
+                        Dispatcher.Invoke(() =>
+                        {
+                            if (!_isLoadingImage) return;
+
+                            _imageSize = msg;
+                            OnPropertyChanged(nameof(ImageSize));
+                        });
+                    });
+                }
+                else
+                {
+                    // 小图直接显示尺寸
+                    await Dispatcher.InvokeAsync(() => {
+                        _imageSize = $"{originalWidth}×{originalHeight}像素";
+                        OnPropertyChanged(nameof(ImageSize));
+                    });
+                }
 
                 // 步骤 2: 并行启动中等预览图和完整图的解码任务
                 Task<BitmapImage> previewTask = Task.Run(() => DecodePreviewBitmap(imageBytes, token), token);
@@ -435,6 +482,12 @@ namespace TabPaint
 
                 // --- 阶段 2: 等待完整图并最终更新 ---
                 var fullResBitmap = await fullResTask;
+                if (_progressCts != null)
+                {
+                    _progressCts.Cancel(); // 停止循环
+                    _progressCts.Dispose();
+                    _progressCts = null;
+                }
                 if (token.IsCancellationRequested || fullResBitmap == null) return;
 
                 // 获取元数据 (保持不变)
@@ -532,6 +585,54 @@ namespace TabPaint
             catch (Exception ex)
             {
                 Dispatcher.Invoke(() => s($"加载图片失败: {ex.Message}"));
+            }
+            finally
+            {
+                // 清理进度条资源
+                progressCts?.Dispose();
+            }
+        }
+
+        private async Task SimulateProgressAsync(CancellationToken token, long totalPixels, Action<string> progressCallback)
+        {
+            // 1. 初始进度 (假设元数据和缩略图已完成)
+            double currentProgress = 30.0;
+            progressCallback($"正在加载 {currentProgress:0}%");
+            int performanceScore = PerformanceScore; // 假设这是之前定义的全局静态变量
+            if (performanceScore <= 0) performanceScore = 5; // 默认值
+
+            double scoreFactor = 0.5 + (performanceScore * 0.25);
+            double estimatedMs = (totalPixels / 40000.0) / scoreFactor;
+
+            // 限制最小和最大模拟时间，避免太快看不见或太慢像死机
+            if (estimatedMs < 500) estimatedMs = 500;
+            if (estimatedMs > 10000) estimatedMs = 10000;
+
+            // 3. 计算步长 (假设每 50ms 更新一次)
+            int interval = 50;
+            double steps = estimatedMs / interval;
+            // 目标只跑到 95%，留 5% 给最后完成的一瞬间
+            double incrementPerStep = (95.0 - currentProgress) / steps;
+
+            try
+            {
+                while (!token.IsCancellationRequested && currentProgress < 95.0)
+                {
+                    await Task.Delay(interval, token);
+
+                    // 增加进度，为了视觉效果，可以在后期减速 (这里使用简单线性)
+                    currentProgress += incrementPerStep;
+
+                    // 确保不溢出
+                    if (currentProgress > 99) currentProgress = 99;
+
+                    // 回调更新 UI
+                    progressCallback($"正在加载 {(int)currentProgress}%");
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                // 正常取消，不做处理
             }
         }
 

@@ -150,6 +150,20 @@ namespace TabPaint
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+        private List<string> _recentFiles = new List<string>();
 
+        [JsonPropertyName("recent_files")]
+        public List<string> RecentFiles
+        {
+            get => _recentFiles;
+            set
+            {
+                if (_recentFiles != value)
+                {
+                    _recentFiles = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
     }
 }

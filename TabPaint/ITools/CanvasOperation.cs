@@ -71,6 +71,45 @@ namespace TabPaint
         }
 
 
+        private Color GetPixelColor(int x, int y)
+        {
+            if (x < 0 || y < 0 || x >= _bitmap.PixelWidth || y >= _bitmap.PixelHeight) return Colors.Transparent;
+            _bitmap.Lock();
+            try
+            {
+                unsafe
+                {
+                    byte* ptr = (byte*)_bitmap.BackBuffer;
+                    int stride = _bitmap.BackBufferStride;
+                    byte* pixel = ptr + y * stride + x * 4;
+                    // BGRA 格式
+                    return Color.FromArgb(pixel[3], pixel[2], pixel[1], pixel[0]);
+                }
+            }
+            finally
+            {
+                _bitmap.Unlock();
+            }
+        }
+
+        private void DrawPixel(int x, int y, Color color)
+        {
+            if (x < 0 || y < 0 || x >= _bitmap.PixelWidth || y >= _bitmap.PixelHeight) return;
+
+            _bitmap.Lock();
+            unsafe
+            {
+                IntPtr pBackBuffer = _bitmap.BackBuffer;
+                int stride = _bitmap.BackBufferStride;
+                byte* p = (byte*)pBackBuffer + y * stride + x * 4;
+                p[0] = color.B;
+                p[1] = color.G;
+                p[2] = color.R;
+                p[3] = color.A;
+            }
+            _bitmap.AddDirtyRect(new Int32Rect(x, y, 1, 1));
+            _bitmap.Unlock();
+        }
         private void FlipBitmap(bool flipVertical)
         {
             double cx = _bitmap.PixelWidth / 2.0;
@@ -269,5 +308,150 @@ namespace TabPaint
             bmp.AddDirtyRect(new Int32Rect(0, 0, bmp.PixelWidth, bmp.PixelHeight));
             bmp.Unlock();
         }
+
+        private void AutoCrop()
+        {
+            if (_surface?.Bitmap == null) return;
+
+            var bmp = _surface.Bitmap;
+            int width = bmp.PixelWidth;
+            int height = bmp.PixelHeight;
+
+            bmp.Lock();
+            Int32Rect cropRect = new Int32Rect(0, 0, width, height);
+            bool contentFound = false;
+
+            unsafe
+            {
+                byte* basePtr = (byte*)bmp.BackBuffer;
+                int stride = bmp.BackBufferStride;
+
+                // 定义什么是"空白"。通常是全透明 (0) 或全白 (255,255,255)
+                // 这里我们可以稍微宽松一点，或者只认定完全透明/白色
+                // 为了演示，这里检查 Alpha=0 或者 (R=255,G=255,B=255)
+                bool IsEmpty(byte* pixel)
+                {
+                    byte b = pixel[0];
+                    byte g = pixel[1];
+                    byte r = pixel[2];
+                    byte a = pixel[3];
+
+                    // 判定条件：完全透明 或 完全白色
+                    // 你也可以扩展判定，比如跟随当前背景色 BackgroundColor
+                    return a == 0 || (r == 255 && g == 255 && b == 255);
+                }
+
+                int top = 0, bottom = height - 1, left = 0, right = width - 1;
+
+                // 1. 扫描 Top
+                for (; top < height; top++)
+                {
+                    bool rowHasContent = false;
+                    byte* rowPtr = basePtr + top * stride;
+                    for (int x = 0; x < width; x++)
+                    {
+                        if (!IsEmpty(rowPtr + x * 4)) { rowHasContent = true; break; }
+                    }
+                    if (rowHasContent) break;
+                }
+
+                // 如果 top 到底都没找到内容，说明全是空白
+                if (top == height)
+                {
+                    bmp.Unlock();
+                    ShowToast("未检测到有效内容，无需裁剪");
+                    return;
+                }
+
+                // 2. 扫描 Bottom
+                for (; bottom >= top; bottom--)
+                {
+                    bool rowHasContent = false;
+                    byte* rowPtr = basePtr + bottom * stride;
+                    for (int x = 0; x < width; x++)
+                    {
+                        if (!IsEmpty(rowPtr + x * 4)) { rowHasContent = true; break; }
+                    }
+                    if (rowHasContent) break;
+                }
+
+                // 3. 扫描 Left (只扫描 Top 到 Bottom 之间的行)
+                for (; left < width; left++)
+                {
+                    bool colHasContent = false;
+                    for (int y = top; y <= bottom; y++)
+                    {
+                        byte* pixel = basePtr + y * stride + left * 4;
+                        if (!IsEmpty(pixel)) { colHasContent = true; break; }
+                    }
+                    if (colHasContent) break;
+                }
+
+                // 4. 扫描 Right
+                for (; right >= left; right--)
+                {
+                    bool colHasContent = false;
+                    for (int y = top; y <= bottom; y++)
+                    {
+                        byte* pixel = basePtr + y * stride + right * 4;
+                        if (!IsEmpty(pixel)) { colHasContent = true; break; }
+                    }
+                    if (colHasContent) break;
+                }
+
+                // 计算裁剪区域
+                // +1 是因为坐标是 0-based，宽度长度需要包含当前像素
+                cropRect = new Int32Rect(left, top, right - left + 1, bottom - top + 1);
+            }
+            bmp.Unlock();
+
+            // 检查是否需要裁剪
+            if (cropRect.Width == width && cropRect.Height == height)
+            {
+                ShowToast("已是最小尺寸");
+                return;
+            }
+
+            // 执行裁剪 (复用 ResizeCanvas 的逻辑或者创建新逻辑)
+            ApplyAutoCrop(cropRect);
+        }
+
+        // 专门用于裁剪的辅助方法，支持 Undo
+        private void ApplyAutoCrop(Int32Rect cropRect)
+        {
+            var oldBitmap = _surface.Bitmap;
+
+            // --- 1. 捕获当前整图状态 (Undo) ---
+            var undoRect = new Int32Rect(0, 0, oldBitmap.PixelWidth, oldBitmap.PixelHeight);
+            var undoPixels = _surface.ExtractRegion(undoRect);
+
+            // --- 2. 提取裁剪区域作为新图 ---
+            var newPixels = _surface.ExtractRegion(cropRect);
+
+            // 创建新位图
+            var newBitmap = new WriteableBitmap(cropRect.Width, cropRect.Height, oldBitmap.DpiX, oldBitmap.DpiY, PixelFormats.Bgra32, null);
+            newBitmap.WritePixels(new Int32Rect(0, 0, cropRect.Width, cropRect.Height), newPixels, newBitmap.BackBufferStride, 0);
+
+            // --- 3. 准备 Redo 数据 ---
+            var redoRect = new Int32Rect(0, 0, cropRect.Width, cropRect.Height);
+
+            // --- 4. 替换画布 ---
+            _surface.ReplaceBitmap(newBitmap);
+            _bitmap = newBitmap;
+            BackgroundImage.Source = _bitmap;
+
+            // --- 5. 推入撤销栈 (利用 Transform 类型，因为它处理尺寸变化) ---
+            // 这里要注意：Redo 时不仅仅是贴像素，画布尺寸也变了，所以需要 UndoActionType.Transform 或 CanvasResize 逻辑
+            // 你现有的 PushTransformAction 逻辑非常适合这里
+            _undo.PushTransformAction(undoRect, undoPixels, redoRect, newPixels);
+
+            // 更新 UI
+            NotifyCanvasSizeChanged(newBitmap.PixelWidth, newBitmap.PixelHeight);
+            NotifyCanvasChanged();
+            _canvasResizer.UpdateUI();
+
+            ShowToast($"已裁剪至 {cropRect.Width}x{cropRect.Height}");
+        }
     }
 }
+   

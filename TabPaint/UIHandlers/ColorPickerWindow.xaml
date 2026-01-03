@@ -1,0 +1,35 @@
+﻿<Window x:Class="TabPaint.ColorPickerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ColorPicker" 
+        WindowStyle="None" 
+        ResizeMode="NoResize" 
+        Topmost="True" 
+        ShowInTaskbar="False"
+        Cursor="Cross"
+        WindowState="Maximized"
+        Background="Transparent"
+        AllowsTransparency="True"
+        KeyDown="Window_KeyDown"
+        MouseDown="Window_MouseDown"
+        MouseMove="Window_MouseMove">
+    <Grid>
+        <!-- 显示截图作为背景 -->
+        <Image Name="ScreenShotImage" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+
+        <!-- 放大镜预览（可选，增强体验） -->
+        <Border Name="Magnifier" Width="100" Height="100" BorderBrush="White" BorderThickness="2" CornerRadius="50" IsHitTestVisible="False" Visibility="Collapsed">
+            <Border.Background>
+                <SolidColorBrush x:Name="MagnifierBrush" Color="Black"/>
+            </Border.Background>
+            <Grid>
+                <Ellipse Width="4" Height="4" Fill="Red" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <TextBlock Name="ColorText" Text="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,20" Foreground="White" FontWeight="Bold" FontSize="10">
+                    <TextBlock.Effect>
+                        <DropShadowEffect ShadowDepth="0" BlurRadius="2"/>
+                    </TextBlock.Effect>
+                </TextBlock>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

@@ -1,14 +1,14 @@
 ﻿using System;
 using System.IO;
-using System.Runtime.InteropServices.WindowsRuntime; // 需要此命名空间
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Windows.Globalization;
-using Windows.Graphics.Imaging; // UWP 图像处理
-using Windows.Media.Ocr; // UWP OCR 引擎
-using Windows.Storage.Streams;
+using Windows.Graphics.Imaging;
+using Windows.Media.Ocr;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace TabPaint
 {
@@ -18,69 +18,107 @@ namespace TabPaint
 
         public OcrService()
         {
-            // 尝试初始化为系统当前语言
-            TryInitEngine();
+            InitBestEngine();
         }
 
-        private void TryInitEngine()
+        private void InitBestEngine()
         {
-            // 检查系统是否支持 OCR
-            if (OcrEngine.IsLanguageSupported(new Windows.Globalization.Language(Language.CurrentInputMethodLanguageTag)))
+            // 策略优化：
+            // 1. 优先尝试使用用户配置的首选语言（通常是系统显示语言）
+            // 2. 如果失败，尝试使用当前输入法语言
+            // 3. 最后尝试使用 OCR 引擎支持的第一个可用语言
+            
+            // Windows截图工具通常默认使用 UserProfileLanguages
+            _ocrEngine = OcrEngine.TryCreateFromUserProfileLanguages();
+
+            if (_ocrEngine == null)
             {
-                _ocrEngine = OcrEngine.TryCreateFromLanguage(new Windows.Globalization.Language(Language.CurrentInputMethodLanguageTag));
+                // 尝试当前输入法
+                try 
+                {
+                    _ocrEngine = OcrEngine.TryCreateFromLanguage(new Language(Language.CurrentInputMethodLanguageTag));
+                }
+                catch { }
+            }
+
+            if (_ocrEngine == null)
+            {
+                // 最后的保底，随便找一个支持的
+                var firstLang = OcrEngine.AvailableRecognizerLanguages.FirstOrDefault();
+                if (firstLang != null)
+                {
+                    _ocrEngine = OcrEngine.TryCreateFromLanguage(firstLang);
+                }
+            }
+        }
+
+        private bool IsCjk(char c)
+        {
+            // 包含中日韩字符范围
+            if (c >= 0x4E00 && c <= 0x9FFF) return true;
+            if (c >= 0xFF00 && c <= 0xFFEF) return true;
+            if (c >= 0x3000 && c <= 0x303F) return true;
+            return false;
+        }
+
+        // 辅助方法：放大图片以提高识别率
+        private BitmapSource PreprocessImage(BitmapSource source)
+        {
+            // 如果图片太小，OCR 效果极差。
+            // 这里简单的逻辑是：如果宽或高较小，强制放大 2 倍。
+            // 也可以更激进，统一放大 1.5x - 2.0x，这对小字体识别提升巨大。
+            
+            double scale = 1.0;
+            if (source.PixelHeight < 400 || source.PixelWidth < 400)
+            {
+                scale = 2.0; 
             }
             else
             {
-                // 如果当前输入法语言不支持，尝试用英语兜底，或者取第一个可用的语言
-                _ocrEngine = OcrEngine.TryCreateFromUserProfileLanguages();
+                // 即使是大图，稍微放大一点通常也有助于提升清晰度
+                scale = 1.5;
             }
+
+            if (scale > 1.0)
+            {
+                return new TransformedBitmap(source, new ScaleTransform(scale, scale));
+            }
+            return source;
         }
-        private bool IsCjk(char c)
-        {
-            // 基本汉字范围 (\u4E00-\u9FFF)
-            if (c >= 0x4E00 && c <= 0x9FFF) return true;
 
-            // 扩展A区、兼容区等 (可选，视需求添加)
-            // 也可以简单粗暴判断 c > 127，虽然不严谨但对区分中英很有效
-
-            // 包含中文标点符号范围 (FF00-FFEF 包含全角标点)
-            if (c >= 0xFF00 && c <= 0xFFEF) return true;
-
-            // CJK 标点符号 (3000-303F)
-            if (c >= 0x3000 && c <= 0x303F) return true;
-
-            return false;
-        }
         public async Task<string> RecognizeTextAsync(BitmapSource wpfBitmap)
         {
             if (_ocrEngine == null)
             {
-                // 再次尝试初始化，或者抛出异常提示用户安装语言包
-                TryInitEngine();
-                if (_ocrEngine == null) return "错误：未找到支持 OCR 的语言包，请在 Windows 设置中添加。";
+                InitBestEngine();
+                if (_ocrEngine == null) return "错误：未安装 OCR 语言包，请在 Windows 设置 -> 时间和语言 -> 语言中添加语言包。";
             }
 
             try
             {
-                // 1. 将 WPF BitmapSource 转换为 UWP SoftwareBitmap
+                // 1. 预处理：放大图片
+                var processedBitmap = PreprocessImage(wpfBitmap);
+
                 using (var ms = new MemoryStream())
                 {
-                    var encoder = new PngBitmapEncoder();
-                    encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(wpfBitmap));
+                    // 2. 优化：使用 BMP 编码器，速度比 PNG 快，且无压缩损耗
+                    var encoder = new BmpBitmapEncoder();
+                    encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(processedBitmap));
                     encoder.Save(ms);
                     ms.Seek(0, SeekOrigin.Begin);
 
-                    // 使用 AsRandomAccessStream (需要引用 Windows.Storage.Streams)
                     var randomAccessStream = ms.AsRandomAccessStream();
                     var decoder = await Windows.Graphics.Imaging.BitmapDecoder.CreateAsync(randomAccessStream);
 
                     // 获取 SoftwareBitmap
                     using (var softwareBitmap = await decoder.GetSoftwareBitmapAsync())
                     {
-                        // 2. 执行 OCR 识别
+                        // 3. 执行 OCR 识别
                         var ocrResult = await _ocrEngine.RecognizeAsync(softwareBitmap);
 
-                        // 3. 拼接结果
+                        if (ocrResult.Lines.Count == 0) return null;
+
+                        // 4. 拼接结果
                         StringBuilder sb = new StringBuilder();
                         foreach (var line in ocrResult.Lines)
                         {
@@ -89,23 +127,24 @@ namespace TabPaint
                                 var currentWord = line.Words[i];
                                 sb.Append(currentWord.Text);
 
-                                // 如果不是这行的最后一个词，需要判断是否加空格
+                                // 智能空格处理
                                 if (i < line.Words.Count - 1)
                                 {
                                     var nextWord = line.Words[i + 1];
+                                    // 只有当前字和下一个字都不是CJK字符时，才加空格
+                                    // (比如 "Hello" 和 "World" 之间加，"你" 和 "好" 之间不加)
+                                    bool currentIsCjk = currentWord.Text.Any(IsCjk);
+                                    bool nextIsCjk = nextWord.Text.Any(IsCjk);
 
-                                    // 核心逻辑：
-                                    // 只有当“当前词”结尾是英文/数字 AND “下一个词”开头是英文/数字时，才加空格
-                                    // 只要有一方是中文（CJK字符），就不加空格
-                                    if (!IsCjk(currentWord.Text.Last()) && !IsCjk(nextWord.Text.First()))
+                                    if (!currentIsCjk && !nextIsCjk)
                                     {
                                         sb.Append(" ");
                                     }
                                 }
                             }
-                            sb.AppendLine(); // 每一行识别完换行
+                            sb.AppendLine(); 
                         }
-                            return sb.ToString().Trim();
+                        return sb.ToString().Trim();
                     }
                 }
             }

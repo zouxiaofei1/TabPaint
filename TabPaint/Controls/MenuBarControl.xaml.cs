@@ -103,5 +103,63 @@ namespace TabPaint.Controls
         private void OnUndoClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(UndoClickEvent));
         private void OnRedoClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(RedoClickEvent));
         private void OnSettingsClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(SettingsClickEvent));
+        public event EventHandler<string> RecentFileClick;
+        public event EventHandler ClearRecentFilesClick;
+        private void OnFileMenuOpened(object sender, RoutedEventArgs e)
+        {
+            // 防止事件冒泡导致的多次触发（如果子菜单也有Opened事件）
+            var menuItem = e.OriginalSource as MenuItem;
+            if (menuItem == null || menuItem.Header.ToString() != "文件") return;
+        
+            UpdateRecentFilesMenu();
+        }
+
+        private void UpdateRecentFilesMenu()
+        {
+            RecentFilesMenuItem.Items.Clear();
+
+            var files = TabPaint.SettingsManager.Instance.Current.RecentFiles;
+
+            if (files == null || files.Count == 0)
+            {
+                var emptyItem = new MenuItem { Header = "(无最近文件)", IsEnabled = false, Style = (Style)FindResource("SubMenuItemStyle") };
+                RecentFilesMenuItem.Items.Add(emptyItem);
+            }
+            else
+            {
+                // 1. 添加文件列表
+                foreach (var file in files)
+                {
+                    // 为了美观，菜单文字可以截断过长的路径，但 ToolTip 显示全路径
+                    var headerText = file.Length > 50 ? "..." + file.Substring(file.Length - 50) : file;
+
+                    var item = new MenuItem
+                    {
+                        Header = headerText,
+                        ToolTip = file,
+                        Tag = file, // 将路径存在 Tag 中
+                        Style = (Style)FindResource("SubMenuItemStyle")
+                    };
+                    item.Click += OnRecentFileItemClick;
+                    RecentFilesMenuItem.Items.Add(item);
+                }
+
+                // 2. 添加分割线
+                RecentFilesMenuItem.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
+
+                // 3. 添加清除按钮
+                var clearItem = new MenuItem { Header = "清除最近文件列表", Style = (Style)FindResource("SubMenuItemStyle") };
+                clearItem.Click += (s, e) => { ClearRecentFilesClick?.Invoke(this, EventArgs.Empty); };
+                RecentFilesMenuItem.Items.Add(clearItem);
+            }
+        }
+
+        private void OnRecentFileItemClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem item && item.Tag is string path)
+            {
+                RecentFileClick?.Invoke(this, path);
+            }
+        }
     }
 }

@@ -176,6 +176,7 @@ namespace TabPaint
                     {
                         try
                         {
+                            if (file.EndsWith(".onnx")) continue;
                             File.Delete(file);
                         }
                         catch

@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -16,7 +17,109 @@ using System.Windows.Forms;
 
 namespace TabPaint
 {
-   
+    public static class QuickBenchmark
+    {
+        [DllImport("kernel32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        static extern bool GetPhysicallyInstalledSystemMemory(out long TotalMemoryInKilobytes);
+
+        /// <summary>
+        /// 严苛版性能评估 (< 1ms)
+        /// 目标：将普通办公本压在 3-5 分，主流游戏本 6-8 分，顶级工作站 9-10 分。
+        /// </summary>
+        public static int EstimatePerformanceScore()
+        {
+            double score = 0;
+            var sw = Stopwatch.StartNew();
+
+            try
+            {
+                // ==========================================
+                // 1. CPU 核心数 (权重: 2.5分) - 考察多图并发能力
+                // ==========================================
+                int coreCount = Environment.ProcessorCount;
+                if (coreCount >= 20) score += 2.5;       // i7-13700K, i9, R9 等
+                else if (coreCount >= 12) score += 2.0;  // 现代标压 i5/i7, R7
+                else if (coreCount >= 8) score += 1.5;   // 主流轻薄本
+                else if (coreCount >= 4) score += 0.5;   // 入门级/老旧双核
+                // 4核以下 0分
+
+                // ==========================================
+                // 2. 内存大小 (权重: 1.5分) - 考察大图缓存能力
+                // ==========================================
+                long memKb = 0;
+                if (GetPhysicallyInstalledSystemMemory(out memKb))
+                {
+                    long memGb = memKb / 1024 / 1024;
+                    if (memGb >= 30) score += 1.5;       // 32GB及以上
+                    else if (memGb >= 15) score += 1.0;  // 16GB
+                    else if (memGb >= 7) score += 0.5;   // 8GB
+                    // 8GB以下 0分
+                }
+                long cpuTicks = RunStrictMicroTest();
+
+                if (cpuTicks < 1800) score += 6.0;
+                else if (cpuTicks < 2200) score += 5.0;
+                else if (cpuTicks < 3000) score += 4.0;
+                else if (cpuTicks < 4500) score += 3.0;
+                else if (cpuTicks < 6500) score += 2.0;   // 普通办公本区间
+                else if (cpuTicks < 9000) score += 1.0;   // 老旧机器
+                // > 9000 ticks: 0分
+
+                // ==========================================
+                // 4. 惩罚项：高分辨率低能惩罚
+                // ==========================================
+                double screenWidth = SystemParameters.PrimaryScreenWidth;
+                double screenHeight = SystemParameters.PrimaryScreenHeight;
+                // 大于 2K 分辨率 (约360万像素)
+                if (screenWidth * screenHeight > 3600000)
+                {
+                    // 如果刚才的 CPU 跑分低于 3.0 (即 ticks > 4500)，说明 CPU 较弱
+                    // 弱 U 带高分屏，WPF 渲染压力极大，扣分
+                    if (cpuTicks > 4500)
+                    {
+                        score -= 1.5;
+                    }
+                }
+
+                // 兜底修正
+                if (score > 10) score = 10;
+                if (score < 1) score = 1;
+            }
+            catch
+            {
+                return 4; // 发生异常给个及格分下的保守值
+            }
+            finally
+            {
+                sw.Stop();
+                // 开发阶段建议保留此行，观察不同机器的真实 Ticks 数据以便微调
+                Debug.WriteLine($"[Benchmark] Ticks: {RunStrictMicroTest()} | Score: {score} | Time: {sw.Elapsed.TotalMilliseconds:F4}ms");
+            }
+
+            return (int)Math.Round(score);
+        }
+
+        private static long RunStrictMicroTest()
+        {
+            var sw = Stopwatch.StartNew();
+            int result = 0;
+            // 15万次循环
+            // 引入乘法 (* 3) 和 取模 (% 7) 以及 异或 (^)
+            // 这种混合运算难以被 CPU 分支预测完全吞掉，且取模指令相对耗时
+            // 在 4GHz CPU 上耗时约 0.1ms - 0.2ms
+            for (int i = 1; i < 150000; i++)
+            {
+                result += (i * 3) ^ (i % 7);
+            }
+            sw.Stop();
+
+            // 防止 JIT 优化移除循环
+            if (result == 999999) Debug.WriteLine("");
+
+            return sw.ElapsedTicks;
+        }
+    }
     public class NonLinearRangeConverter : IValueConverter
     {
         // 最小粗细
