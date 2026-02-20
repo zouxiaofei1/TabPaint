@@ -11,7 +11,7 @@ namespace TabPaint
     public static class AppConsts
     {
         // --- 版本信息 ---
-        public const string ProgramVersion = "v0.9.5.2";
+        public const string ProgramVersion = "v0.9.5.4";
 
         // --- Win32 消息常量 ---
         public const int WM_NCHITTEST = 0x0084;

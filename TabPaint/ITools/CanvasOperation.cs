@@ -471,7 +471,7 @@ namespace TabPaint
             var drawingVisual = new DrawingVisual();
             using (var context = drawingVisual.RenderOpen())
             {
-                var rect = new Rect(0, 0, source.PixelWidth, source.PixelHeight);
+                var rect = new Rect(0, 0, source.Width, source.Height);
                 context.DrawRectangle(Brushes.White, null, rect);
                 context.DrawImage(source, rect);
             }
