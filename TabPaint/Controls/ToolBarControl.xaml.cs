@@ -88,9 +88,9 @@ namespace TabPaint.Controls
                 var btn = new Button
                 {
                     Style = swatchStyle,
-                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(colors[i])),
-                    ToolTip = TryFindResource(tooltips[i]) ?? tooltips[i]
+                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(colors[i]))
                 };
+                btn.SetResourceReference(FrameworkElement.ToolTipProperty, tooltips[i]);
                 btn.Click += Swatch_Click;
                 BasicColorsGrid.Children.Add(btn);
             }
@@ -130,10 +130,10 @@ namespace TabPaint.Controls
         {
             var item = new MenuItem
             {
-                Header = TryFindResource(headerKey) ?? headerKey,
                 Style = (Style)FindResource("SubMenuItemStyle"),
                 Tag = tag
             };
+            item.SetResourceReference(HeaderedItemsControl.HeaderProperty, headerKey);
 
             if (clickHandler != null) item.Click += clickHandler;
 

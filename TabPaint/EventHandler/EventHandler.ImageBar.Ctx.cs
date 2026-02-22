@@ -50,7 +50,7 @@ namespace TabPaint
                             Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
                     }
                 }
-                catch (Exception ex) { ShowToast(string.Format(LocalizationManager.GetString("L_Toast_DeleteFailed"), ex.Message)); }
+                catch (Exception ex) { ShowToast(string.Format(LocalizationManager.GetString("L_Toast_DeleteFailed"), ex.Message),ex); }
 
             }
         }
@@ -114,11 +114,11 @@ namespace TabPaint
                     fileList.Add(pathForClipboard);
                     dataObject.SetFileDropList(fileList);
                 }
-                Clipboard.SetDataObject(dataObject, true);
+                ClipboardHelper.SetDataObjectWithRetry(dataObject, true);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                ShowToast("L_Toast_CopyFailed");
+                ShowToast("L_Toast_CopyFailed", ex);
             }
             finally
             {
@@ -168,8 +168,8 @@ namespace TabPaint
             bool hasHandled = false;
             FileTabItem tabToSelect = null; // 用于记录最后需要选中的 Tab
 
-            IDataObject data = Clipboard.GetDataObject();
-            if (data.GetDataPresent(DataFormats.FileDrop))
+            IDataObject data = ClipboardHelper.GetDataObjectWithRetry();
+            if (data != null && data.GetDataPresent(DataFormats.FileDrop))
             {
                 string[] files = (string[])data.GetData(DataFormats.FileDrop);
                 if (files != null && files.Length > 0)
@@ -213,11 +213,11 @@ namespace TabPaint
                     if (addedCount > 0 || tabToSelect != null) hasHandled = true;
                 }
             }
-            else if (data.GetDataPresent(DataFormats.Bitmap))
+            else if (data != null && data.GetDataPresent(DataFormats.Bitmap))
             {
                 try
                 {
-                    BitmapSource source = Clipboard.GetImage();
+                    BitmapSource source = data.GetData(DataFormats.Bitmap) as BitmapSource;
 
                     if (source != null)
                     {
@@ -247,7 +247,7 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_PasteFailed"), ex.Message));
+                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_PasteFailed"), ex.Message),ex);
                 }
             }
 
@@ -280,7 +280,7 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_OpenFolderFailed_Prefix"), ex.Message));
+                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_OpenFolderFailed_Prefix"), ex.Message), ex);
                 }
             }
         }

@@ -11,6 +11,7 @@ using System.Windows.Threading;
 using XamlAnimatedGif; // 添加这一行
 using SkiaSharp;
 using Svg.Skia;
+using TabPaint.Services;
 //
 //图片加载机制
 //
@@ -77,10 +78,10 @@ namespace TabPaint
                     if (_activeSaveTasks.TryGetValue(current.Id, out Task? pendingSave))
                     {
                         try { await pendingSave;  }
-                        catch (Exception ex)
-                        {
-                            Debug.WriteLine("Wait save failed: " + ex.Message);
-                        }
+                catch (Exception ex)
+                {
+                    Logger.Error("Wait save failed", ex);
+                }
                     }
 
                 // 等待结束后，优先检查 MemorySnapshot，其次是 BackupPath
@@ -192,7 +193,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error loading image {filePath}: {ex.Message}");
+                Logger.Error($"Error loading image {filePath}", ex);
             }
         }
 
@@ -231,7 +232,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Scan Error: {ex.Message}");
+                Logger.Error("Scan folder images failed", ex);
             }
         }
    
@@ -374,12 +375,11 @@ namespace TabPaint
                     }
                     return null;
                 }
-                catch (Exception ex)
-                {
-                    // 可以在这里打个断点或者输出日志，看看是不是 SVG 格式真的有问题
-                    System.Diagnostics.Debug.WriteLine($"GetDimensions Error: {ex.Message}");
-                    return null;
-                }
+            catch (Exception ex)
+            {
+                Logger.Error($"GetDimensions Error for {filePath}", ex);
+                return null;
+            }
             });
         }
 
@@ -455,7 +455,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error loading image {filePath}: {ex.Message}");
+                Logger.Error($"Error loading image {filePath}", ex);
                 StopProgressSimulation();
                 await LoadBlankCanvasAsync(filePath, LocalizationManager.GetString("L_Load_Reason_Corrupt"));
             }
@@ -473,7 +473,7 @@ namespace TabPaint
 
             if (!File.Exists(fileToRead))
             {
-                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_FileNotFound_Format"), fileToRead));
+                ShowToast("L_Toast_FileNotFound_Format");
                 return (false, null);
             }
 

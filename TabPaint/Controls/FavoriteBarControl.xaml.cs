@@ -172,17 +172,23 @@ namespace TabPaint.Controls
         {
             if (e.Key == Key.V && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
             {
-                if (Clipboard.ContainsImage())
+                var dataObj = ClipboardHelper.GetDataObjectWithRetry();
+                if (dataObj == null) return;
+
+                if (dataObj.GetDataPresent(DataFormats.Bitmap))
                 {
-                    var bitmap = Clipboard.GetImage();
-                    SaveAndAddImage(bitmap);
+                    var bitmap = dataObj.GetData(DataFormats.Bitmap) as BitmapSource;
+                    if (bitmap != null) SaveAndAddImage(bitmap);
                 }
-                else if (Clipboard.ContainsFileDropList())
+                else if (dataObj.GetDataPresent(DataFormats.FileDrop))
                 {
-                    var files = Clipboard.GetFileDropList();
-                    foreach (var file in files)
+                    var files = dataObj.GetData(DataFormats.FileDrop) as string[];
+                    if (files != null)
                     {
-                        AddFavoriteFile(file);
+                        foreach (var file in files)
+                        {
+                            AddFavoriteFile(file);
+                        }
                     }
                 }
             }

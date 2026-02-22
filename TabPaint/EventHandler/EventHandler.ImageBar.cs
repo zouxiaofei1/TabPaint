@@ -15,6 +15,7 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using TabPaint.Services;
 using TabPaint.Windows;
 using static TabPaint.MainWindow;
 
@@ -133,7 +134,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_PrepareDragFailed_Prefix"), ex.Message));
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_PrepareDragFailed_Prefix"), ex.Message),ex);
             }
 
             // 如果上面失败了，且原路径是真实存在的，作为兜底返回原路径
@@ -222,7 +223,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_DragStartFailed_Prefix"), ex.Message));
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_DragStartFailed_Prefix"), ex.Message),ex);
                 if (_dropZone != null) _dropZone.Hide();
             }
         }
@@ -261,7 +262,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast("Failed to create new window from selection: " + ex.Message);
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_NewWindowFromSelectionFailed"), ex.Message), ex);
             }
         }
 
@@ -288,7 +289,8 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast("Failed to create new window: " + ex.Message);
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_NewWindowFailed"), ex.Message), ex);
+
             }
         }
         private void OnFileTabLeave(object sender, DragEventArgs e)

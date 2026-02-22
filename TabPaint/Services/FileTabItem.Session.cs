@@ -10,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using TabPaint.Services;
 using TabPaint.UIHandlers;
 using static TabPaint.MainWindow;
 
@@ -109,7 +110,7 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"AutoBackup Failed: {ex.Message}");
+                    Logger.Error("AutoBackup Failed", ex);
                 }
                 finally
                 {
@@ -1077,7 +1078,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_SaveFailed_Prefix"), ex.Message));
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_SaveFailed_Prefix"), ex.Message), ex);
                 return false;
             }
         }

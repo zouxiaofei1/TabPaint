@@ -229,7 +229,8 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_CleanupFailed_Prefix"), ex.Message));
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_CleanupFailed_Prefix"), ex.Message),ex);
+
             }
             var originalCurrentTab = _currentTabItem;
             bool currentTabAffected = false;

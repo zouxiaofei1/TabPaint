@@ -141,11 +141,14 @@ namespace TabPaint
                         e.Handled = true;
                         break;
                     case Key.V:
-                        if (Clipboard.ContainsData(DataFormats.Rtf))
+                        var dataObj = ClipboardHelper.GetDataObjectWithRetry();
+                        if (dataObj == null) break;
+
+                        if (dataObj.GetDataPresent(DataFormats.Rtf))
                         {
                             try
                             {
-                                string rtfData = Clipboard.GetData(DataFormats.Rtf) as string;
+                                string rtfData = dataObj.GetData(DataFormats.Rtf) as string;
                                 var styleInfo = TextFormatHelper.ParseRtf(rtfData);
 
                                 if (styleInfo != null && !string.IsNullOrWhiteSpace(styleInfo.Text))
@@ -164,9 +167,9 @@ namespace TabPaint
                             }
                             catch { /* 解析失败则回退到纯文本 */ }
                         }
-                        if (Clipboard.ContainsText())
+                        if (dataObj.GetDataPresent(DataFormats.Text))
                         {
-                            string text = Clipboard.GetText();
+                            string text = dataObj.GetData(DataFormats.Text) as string;
                             if (!string.IsNullOrWhiteSpace(text))
                             {
                                 if (!(_router.CurrentTool is TextTool)) _router.SetTool(_tools.Text);
@@ -180,7 +183,7 @@ namespace TabPaint
                             }
                         }
                         bool isMultiFilePaste = false;
-                        if (System.Windows.Clipboard.ContainsFileDropList())
+                        if (dataObj.GetDataPresent(DataFormats.FileDrop))
                         {
                         }
                         if (!isMultiFilePaste)

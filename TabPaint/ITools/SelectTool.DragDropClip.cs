@@ -122,7 +122,7 @@ namespace TabPaint
                     // 3. 内部标记
                     dataObj.SetData(MainWindow.InternalClipboardFormat, "TabPaintInternal");
 
-                    System.Windows.Clipboard.SetDataObject(dataObj, true);
+                    ClipboardHelper.SetDataObjectWithRetry(dataObj, true);
                 }
                 catch (Exception) { }
             }
@@ -167,15 +167,12 @@ namespace TabPaint
 
                 BitmapSource? sourceBitmap = null;
                 bool isInternalCopy = false;
-                try
+                
+                var dataObj = ClipboardHelper.GetDataObjectWithRetry();
+                if (dataObj != null && dataObj.GetDataPresent(MainWindow.InternalClipboardFormat))
                 {
-                    var dataObj = System.Windows.Clipboard.GetDataObject();
-                    if (dataObj != null && dataObj.GetDataPresent(MainWindow.InternalClipboardFormat))
-                    {
-                        isInternalCopy = true;
-                    }
+                    isInternalCopy = true;
                 }
-                catch { }
 
                 if (isInternalCopy && _clipboardData != null && _clipboardWidth > 0 && _clipboardHeight > 0)
                 {
@@ -188,7 +185,6 @@ namespace TabPaint
                 {
                     try
                     {
-                        var dataObj = System.Windows.Clipboard.GetDataObject();
                         if (dataObj != null && dataObj.GetDataPresent("PNG"))
                         {
                             var pngStream = dataObj.GetData("PNG") as System.IO.Stream;
@@ -208,15 +204,15 @@ namespace TabPaint
                     catch { }
 
                     // ★ 优先级3：标准图像格式（会丢失透明度，但兼容外部程序）
-                    if (sourceBitmap == null && System.Windows.Clipboard.ContainsImage())
+                    if (sourceBitmap == null && dataObj != null && dataObj.GetDataPresent(DataFormats.Bitmap))
                     {
-                        sourceBitmap = System.Windows.Clipboard.GetImage();
+                        sourceBitmap = dataObj.GetData(DataFormats.Bitmap) as BitmapSource;
                     }
 
                     // ★ 优先级4：文件拖放
-                    if (sourceBitmap == null && System.Windows.Clipboard.ContainsData(System.Windows.DataFormats.FileDrop))
+                    if (sourceBitmap == null && dataObj != null && dataObj.GetDataPresent(DataFormats.FileDrop))
                     {
-                        var fileList = System.Windows.Clipboard.GetData(System.Windows.DataFormats.FileDrop) as string[];
+                        var fileList = dataObj.GetData(DataFormats.FileDrop) as string[];
                         if (fileList != null && fileList.Length > 0)
                         {
                             string filePath = fileList[0];

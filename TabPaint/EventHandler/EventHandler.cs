@@ -229,7 +229,7 @@ namespace TabPaint
 
         private BitmapSource GetBestImageFromClipboard()
         {
-            var dataObj = System.Windows.Clipboard.GetDataObject();
+            var dataObj = ClipboardHelper.GetDataObjectWithRetry();
             if (dataObj == null) return null;
 
             if (dataObj.GetDataPresent("System.Drawing.Bitmap"))
@@ -259,7 +259,10 @@ namespace TabPaint
                 catch { }
             }
 
-            if (System.Windows.Clipboard.ContainsImage()) return System.Windows.Clipboard.GetImage();
+            if (dataObj.GetDataPresent(DataFormats.Bitmap))
+            {
+                return dataObj.GetData(DataFormats.Bitmap) as BitmapSource;
+            }
             return null;
         }
 
@@ -295,19 +298,22 @@ namespace TabPaint
             try
             {
                 if (IsViewMode) return;
-                var dataObj = System.Windows.Clipboard.GetDataObject();
+                var dataObj = ClipboardHelper.GetDataObjectWithRetry();
                 if (dataObj != null && dataObj.GetDataPresent(InternalClipboardFormat)) return;
 
                 List<string> filesToLoad = new List<string>();
 
                 // 情况 A: 剪切板是文件列表 (复制了文件)
-                if (System.Windows.Clipboard.ContainsFileDropList())
+                if (dataObj != null && dataObj.GetDataPresent(DataFormats.FileDrop))
                 {
-                    var files = System.Windows.Clipboard.GetFileDropList();
-                    foreach (var file in files) if (IsImageFile(file)) filesToLoad.Add(file);
+                    var files = dataObj.GetData(DataFormats.FileDrop) as string[];
+                    if (files != null)
+                    {
+                        foreach (var file in files) if (IsImageFile(file)) filesToLoad.Add(file);
+                    }
                 }
                 // 情况 B: 剪切板是位图数据 (截图)
-                else if (System.Windows.Clipboard.ContainsImage())
+                else if (dataObj != null && dataObj.GetDataPresent(DataFormats.Bitmap))
                 {
                     var bitmapSource = GetBestImageFromClipboard();
                     if (bitmapSource != null)
@@ -325,7 +331,8 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_ClipboardError_Prefix"), ex.Message));
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_ClipboardError_Prefix"), ex.Message), ex);
+
             }
         }
         private bool IsVisualAncestorOf<T>(DependencyObject node) where T : DependencyObject

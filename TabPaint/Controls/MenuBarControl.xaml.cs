@@ -116,9 +116,9 @@ namespace TabPaint.Controls
         {
             var item = new MenuItem
             {
-                Header = TryGetResource(headerResKey) ?? headerResKey,
                 Style = (Style)FindResource("Win11MenuItemStyle")
             };
+            item.SetResourceReference(HeaderedItemsControl.HeaderProperty, headerResKey);
 
             if (!string.IsNullOrEmpty(shortcutKey)) ShortcutService.SetShortcutKey(item, shortcutKey);
 
@@ -166,9 +166,10 @@ namespace TabPaint.Controls
                 menuItem.Items.Add(CreateMenuItem("L_Menu_File_NewWindow", "New_Window_Image", OnNewWindowClick));
                 RecentFilesMenuItem = new MenuItem
                 {
-                    Header = TryGetResource("L_Menu_File_Recent"),
                     Style = (Style)FindResource("Win11MenuItemStyle")
                 };
+                RecentFilesMenuItem.SetResourceReference(HeaderedItemsControl.HeaderProperty, "L_Menu_File_Recent");
+
                 var resetPath = new Path { Stretch = Stretch.Uniform, Width = 16, Height = 16 };
                 resetPath.SetResourceReference(Shape.FillProperty, "IconFillBrush");
                 resetPath.SetResourceReference(Path.DataProperty, "Reset_Image");
@@ -232,9 +233,10 @@ namespace TabPaint.Controls
             menuItem.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
             var filterItem = new MenuItem
             {
-                Header = TryGetResource("L_Menu_Effect_Filter"),
                 Style = (Style)FindResource("Win11MenuItemStyle")
             };
+            filterItem.SetResourceReference(HeaderedItemsControl.HeaderProperty, "L_Menu_Effect_Filter");
+
             var filterIcon = new Path { Stretch = Stretch.Uniform, Width = 16, Height = 16 };
             filterIcon.SetResourceReference(Path.DataProperty, "Filter_Image");
             filterIcon.SetResourceReference(Shape.FillProperty, "IconFillBrush");
@@ -308,10 +310,11 @@ namespace TabPaint.Controls
             {
                 var emptyItem = new MenuItem
                 {
-                    Header = LocalizationManager.GetString("L_Menu_Recent_None"),
                     IsEnabled = false,
                     Style = (Style)FindResource("SubMenuItemStyle")
                 };
+                emptyItem.SetResourceReference(HeaderedItemsControl.HeaderProperty, "L_Menu_Recent_None");
+
                 RecentFilesMenuItem.Items.Add(emptyItem);
             }
             else
@@ -331,7 +334,9 @@ namespace TabPaint.Controls
                     RecentFilesMenuItem.Items.Add(item);
                 }
                 RecentFilesMenuItem.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
-                var clearItem = new MenuItem { Header = LocalizationManager.GetString("L_Menu_Recent_Clear"), Style = (Style)FindResource("SubMenuItemStyle") };
+                var clearItem = new MenuItem { Style = (Style)FindResource("SubMenuItemStyle") };
+                clearItem.SetResourceReference(HeaderedItemsControl.HeaderProperty, "L_Menu_Recent_Clear");
+
                 clearItem.Click += (s, e) => { ClearRecentFilesClick?.Invoke(this, EventArgs.Empty); };
                 RecentFilesMenuItem.Items.Add(clearItem);
             }

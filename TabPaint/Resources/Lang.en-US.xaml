@@ -20,6 +20,9 @@
     <sys:String x:Key="L_Settings_Nav_Plugins">Plugins</sys:String>
     <sys:String x:Key="L_ImgBar_NewImage">New Image</sys:String>
     <sys:String x:Key="L_CreateNewWorkSpate">Create New WorkSpace</sys:String>
+    <sys:String x:Key="L_Toast_NewWindowFromSelectionFailed">Failed to create new window from selection:</sys:String>
+    <sys:String x:Key="L_Toast_NewWindowFailed">Failed to create new window:</sys:String>
+    
     <!-- SettingsWindow Navigation -->
     <sys:String x:Key="L_Settings_Title">Settings</sys:String>
     <sys:String x:Key="L_Settings_Nav_General">General</sys:String>
@@ -339,6 +342,13 @@
     <sys:String x:Key="L_ToolBar_Shape_Ellipse">Ellipse</sys:String>
     <sys:String x:Key="L_ToolBar_Shape_Line">Line</sys:String>
     <sys:String x:Key="L_ToolBar_Shape_Arrow">Arrow</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Triangle">Triangle</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Diamond">Diamond</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Pentagon">Pentagon</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Star">Star</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Bubble">Bubble</sys:String>
+
+
     <sys:String x:Key="L_ToolBar_AIEraser" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI Eraser</sys:String>
     <sys:String x:Key="L_ToolBar_Crop">Crop selection</sys:String>
     <sys:String x:Key="L_ToolBar_RotateFlip">Rotate/Flip</sys:String>

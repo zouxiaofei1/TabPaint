@@ -103,34 +103,48 @@ namespace TabPaint
 
                 AutoCrop();
             }
-            catch (Exception ex) { ShowToast(string.Format(LocalizationManager.GetString("L_Toast_CropFailed_Prefix"), ex.Message)); }
+            catch (Exception ex)
+            {
+                ShowToast("L_Toast_CropFailed_Prefix", ex);
+            }
         }
         private void OnCopyColorCodeClick(object sender, RoutedEventArgs e)
         {
-            if (_bitmap == null) return;
+            if (_bitmap == null || BackgroundImage.ActualWidth <= 0 || BackgroundImage.ActualHeight <= 0) return;
 
             try
             {
+                Point targetPoint;
+                // 判断是否为快捷键触发 (通过 sender 类型或特定的路由事件参数判断)
+                if (sender is MenuItem)
+                {
+                    targetPoint = _lastRightClickPosition;
+                }
+                else
+                {
+                    // 快捷键或其他方式触发，获取当前鼠标位置
+                    targetPoint = Mouse.GetPosition(BackgroundImage);
+                }
+                a.s(_lastRightClickPosition, targetPoint);
                 double scaleX = _bitmap.PixelWidth / BackgroundImage.ActualWidth;
                 double scaleY = _bitmap.PixelHeight / BackgroundImage.ActualHeight;
 
-                int x = (int)(_lastRightClickPosition.X * scaleX);
-                int y = (int)(_lastRightClickPosition.Y * scaleY);
+                int x = (int)(targetPoint.X * scaleX);
+                int y = (int)(targetPoint.Y * scaleY);
 
-                if (x < 0 || x >= _bitmap.PixelWidth || y < 0 || y >= _bitmap.PixelHeight)
-                {
-                    ShowToast("L_Toast_NoSelection");
-                    return;
-                }
+                // 增加边界保护，防止微小误差导致越界
+                x = Math.Clamp(x, 0, _bitmap.PixelWidth - 1);
+                y = Math.Clamp(y, 0, _bitmap.PixelHeight - 1);
+
                 Color color = GetPixelColor(x, y);
                 string hexCode = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
 
-                System.Windows.Clipboard.SetText(hexCode);
+                ClipboardHelper.SetTextWithRetry(hexCode);
                 ShowToast(string.Format(LocalizationManager.GetString("L_Toast_ColorCopied_Format"), hexCode));
             }
             catch (Exception ex)
             {
-                ShowToast(string.Format(LocalizationManager.GetString("L_Common_Error") + ": {0}", ex.Message));
+                ShowToast(string.Format(LocalizationManager.GetString("L_Common_Error") + ": {0}", ex.Message), ex);
             }
         }
         private void OnScreenColorPickerClick(object sender, RoutedEventArgs e)
@@ -184,27 +198,27 @@ namespace TabPaint
         {
             try
             {
-                if (_bitmap == null) return;
+                if (_bitmap == null || BackgroundImage.ActualWidth <= 0 || BackgroundImage.ActualHeight <= 0) return;
                 _router.CleanUpSelectionandShape();
-                Point targetPoint = new Point(0, 0);
+                Point targetPoint;
 
-                if (sender is MainWindow || e is System.Windows.Input.KeyEventArgs) // 快捷键触发
-                {
-                    targetPoint = Mouse.GetPosition(CanvasWrapper);
-                }
-                else
+                if (sender is MenuItem)
                 {
                     targetPoint = _lastRightClickPosition;
                 }
-
-                int x = (int)targetPoint.X;
-                int y = (int)targetPoint.Y;
-
-                if (x < 0 || x >= _bitmap.PixelWidth || y < 0 || y >= _bitmap.PixelHeight)
+                else
                 {
-                    x = Math.Clamp(x, 0, _bitmap.PixelWidth - 1);
-                    y = Math.Clamp(y, 0, _bitmap.PixelHeight - 1);
+                    targetPoint = Mouse.GetPosition(BackgroundImage);
                 }
+
+                double scaleX = _bitmap.PixelWidth / BackgroundImage.ActualWidth;
+                double scaleY = _bitmap.PixelHeight / BackgroundImage.ActualHeight;
+
+                int x = (int)(targetPoint.X * scaleX);
+                int y = (int)(targetPoint.Y * scaleY);
+
+                x = Math.Clamp(x, 0, _bitmap.PixelWidth - 1);
+                y = Math.Clamp(y, 0, _bitmap.PixelHeight - 1);
 
                 Color targetColor = GetPixelColor(x, y);
 
@@ -212,7 +226,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_RemoveBgFailed_Prefix"), ex.Message));
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_RemoveBgFailed_Prefix"), ex.Message), ex);
             }
         }
         private async void OnAiOcrClick(object sender, RoutedEventArgs e)
@@ -291,7 +305,7 @@ namespace TabPaint
 
                 if (!string.IsNullOrWhiteSpace(text))
                 {
-                    System.Windows.Clipboard.SetText(text);
+                    ClipboardHelper.SetTextWithRetry(text);
                     ShowToast(string.Format(LocalizationManager.GetString("L_Toast_OCR_Success_Format"), text.Length));
                 }
                 else ShowToast("L_Toast_OCR_NoText");
@@ -301,13 +315,13 @@ namespace TabPaint
             {
                 if (ex.Message.Contains("0x80004005") || ex.Message.Contains("Language"))
                 {
-                    ShowToast("L_Toast_OCR_InitFailed");
+                    ShowToast("L_Toast_OCR_InitFailed", ex);
                 }
                 else if (ex is PlatformNotSupportedException)
                 {
-                    ShowToast("L_Toast_OCR_NotSupported");
+                    ShowToast("L_Toast_OCR_NotSupported", ex);
                 }
-                else ShowToast(string.Format(LocalizationManager.GetString("L_Toast_OCR_Error_Prefix"), ex.Message));
+                else ShowToast(string.Format(LocalizationManager.GetString("L_Toast_OCR_Error_Prefix"), ex.Message), ex);
             }
             finally
             {
@@ -379,7 +393,8 @@ namespace TabPaint
             {
                 string errorMsg = ex.Message;
                 if (ex is OverflowException) errorMsg = "图片尺寸超出硬件/软件限制";
-                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_Upscale_Error_Prefix"), errorMsg));
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_Upscale_Error_Prefix"), errorMsg),ex);
+
             }
             finally
             {
@@ -504,11 +519,12 @@ namespace TabPaint
                     ex.InnerException is DllNotFoundException ||
                     ex.Message.Contains("onnxruntime"))
                 {
-                    ShowToast(LocalizationManager.GetString("L_AI_Error_DllNotFound"));
+                    ShowToast("L_AI_Error_DllNotFound", ex);
                 }
                 else
                 {
-                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_RemoveBgFailed_Prefix"), ex.Message));
+                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_RemoveBgFailed_Prefix"), ex.Message),ex);
+
                 }
             }
             finally

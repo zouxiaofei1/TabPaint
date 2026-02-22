@@ -14,6 +14,8 @@
     <sys:String x:Key="L_Settings_Nav_Plugins">插件</sys:String>
     <sys:String x:Key="L_ImgBar_NewImage">新图片</sys:String>
     <sys:String x:Key="L_CreateNewWorkSpate">选择图片以建立新工作区</sys:String>
+    <sys:String x:Key="L_Toast_NewWindowFromSelectionFailed">从选区创建新窗口失败:</sys:String>
+    <sys:String x:Key="L_Toast_NewWindowFailed">创建新窗口失败:</sys:String>
     
     <!-- 插件面板 -->
     <sys:String x:Key="L_Settings_Plugins_Title">插件与 AI 模型</sys:String>

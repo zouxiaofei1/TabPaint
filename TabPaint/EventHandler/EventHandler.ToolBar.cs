@@ -61,7 +61,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_SwitchWorkspaceFailed_Prefix"), ex.Message));
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_SwitchWorkspaceFailed_Prefix"), ex.Message), ex);
             }
         }
 
@@ -283,7 +283,7 @@ namespace TabPaint
             catch (Exception ex)
             {
                 TaskProgressPopup.Finish();
-                ShowToast(string.Format(LocalizationManager.GetString("L_AI_Eraser_Error_Prefix"), ex.Message));
+                ShowToast(string.Format(LocalizationManager.GetString("L_AI_Eraser_Error_Prefix"), ex.Message), ex);
                 return false;
             }
             finally

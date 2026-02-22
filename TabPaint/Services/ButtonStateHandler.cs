@@ -584,6 +584,7 @@ namespace TabPaint
 
         private void HandleSaveError(string message, string failedPath)
         {
+            Logger.Error($"Save failed for {failedPath}: {message}");
             var result = FluentMessageBox.Show(
                 string.Format(LocalizationManager.GetString("L_Msg_SaveError_Content"), message),
                 LocalizationManager.GetString("L_Msg_SaveError_Title"),

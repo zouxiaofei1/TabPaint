@@ -33,7 +33,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast($"{LocalizationManager.GetString("L_Common_Error")}: {ex.Message}");
+                ShowToast(string.Format(LocalizationManager.GetString("L_Common_Error"), ex.Message), ex);
             }
         }
         private async void OnRecentFileClick(object sender, string filePath)

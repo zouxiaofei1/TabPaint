@@ -215,8 +215,7 @@ public partial class PenTool : ToolBase
         }
         catch (Exception ex)
         {
-            string errorFormat = LocalizationManager.GetString("L_AI_Eraser_Error_Prefix");
-            mw.ShowToast(string.Format(errorFormat, ex.Message));
+            mw.ShowToast(string.Format(LocalizationManager.GetString("L_AI_Eraser_Error_Prefix"), ex.Message), ex);
         }
         finally
         {

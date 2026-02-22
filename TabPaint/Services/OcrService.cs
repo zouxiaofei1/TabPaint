@@ -20,20 +20,32 @@ namespace TabPaint
         {
             InitBestEngine();
         }
+        private string? _initError;
         private void InitBestEngine()
         {
-            _ocrEngine = OcrEngine.TryCreateFromUserProfileLanguages();
-
-            if (_ocrEngine == null)
+            try
             {
-                try  {  _ocrEngine = OcrEngine.TryCreateFromLanguage(new Language(Language.CurrentInputMethodLanguageTag));}
-                catch { }
+                _ocrEngine = OcrEngine.TryCreateFromUserProfileLanguages();
+
+                if (_ocrEngine == null)
+                {
+                    _ocrEngine = OcrEngine.TryCreateFromLanguage(new Language(Language.CurrentInputMethodLanguageTag));
+                }
+
+                if (_ocrEngine == null)
+                {
+                    var firstLang = OcrEngine.AvailableRecognizerLanguages.FirstOrDefault();
+                    if (firstLang != null) _ocrEngine = OcrEngine.TryCreateFromLanguage(firstLang);
+                }
             }
-
-            if (_ocrEngine == null)
+            catch (Exception ex)
             {
-                var firstLang = OcrEngine.AvailableRecognizerLanguages.FirstOrDefault();
-                if (firstLang != null)  _ocrEngine = OcrEngine.TryCreateFromLanguage(firstLang);
+                _initError = ex.Message;
+                // 特别处理 DLL 缺失的情况
+                if (ex is FileNotFoundException || ex is DllNotFoundException || ex.Message.Contains("Microsoft.Windows.SDK.NET"))
+                {
+                    _initError = "Missing Windows SDK Runtime (Microsoft.Windows.SDK.NET.dll).";
+                }
             }
         }
         private bool IsCjk(char c)
@@ -57,7 +69,11 @@ namespace TabPaint
             if (_ocrEngine == null)
             {
                 InitBestEngine();
-                if (_ocrEngine == null) return LocalizationManager.GetString("L_OCR_Error_NoLangPack");
+                if (_ocrEngine == null)
+                {
+                    if (!string.IsNullOrEmpty(_initError)) return _initError;
+                    return LocalizationManager.GetString("L_OCR_Error_NoLangPack");
+                }
             }
             try
             {

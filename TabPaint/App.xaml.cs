@@ -9,6 +9,7 @@ using System.Runtime.InteropServices; // 必须引用，用于置顶窗口
 using System.Text;
 using System.Windows;
 using System.Windows.Threading;
+using TabPaint.Services;
 using static TabPaint.MainWindow;
 
 namespace TabPaint
@@ -74,6 +75,7 @@ namespace TabPaint
             try
             {
                 if (ex == null) return;
+                Logger.Fatal($"Unhandled crash from {source}", ex);
                 if (!Directory.Exists(LogDirectory))
                 {
                     Directory.CreateDirectory(LogDirectory);

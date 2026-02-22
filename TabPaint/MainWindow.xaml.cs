@@ -24,6 +24,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using TabPaint.Controls;
+using TabPaint.Services;
 using TabPaint.UIHandlers;
 using static TabPaint.MainWindow;
 
@@ -340,12 +341,10 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_LoadFailed_Prefix"), ex.Message));
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_LoadFailed_Prefix"), ex.Message), ex);
             }
             finally
             {
-               
-
                 _isInitialLayoutComplete = true;
                 if (FileTabs.Count > 0 && MainImageBar != null && MainImageBar.Scroller != null)
                 { // 模拟触发一次滚动检查
@@ -356,6 +355,12 @@ namespace TabPaint
         }
         private void OnSettingsPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
+            if (e.PropertyName == nameof(AppSettings.Language))
+            {
+                // 刷新依赖于语言的硬编码属性
+                OnPropertyChanged(nameof(PicFilterString));
+            }
+
             if (e.PropertyName == nameof(TabPaint.SettingsManager.Instance.Current.ViewUseDarkCanvasBackground) ||
                 e.PropertyName == nameof(TabPaint.SettingsManager.Instance.Current.ViewShowTransparentGrid))
             {
@@ -409,7 +414,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_ReadFolderFailed_Prefix"), ex.Message));
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_ReadFolderFailed_Prefix"), ex.Message), ex);
                 return null;
             }
         }
@@ -545,9 +550,12 @@ namespace TabPaint
 
             try
             {
-                if (Clipboard.ContainsFileDropList())
+                var dataObj = ClipboardHelper.GetDataObjectWithRetry();
+                if (dataObj == null) return;
+
+                if (dataObj.GetDataPresent(DataFormats.FileDrop))
                 {
-                    var dropList = Clipboard.GetFileDropList();
+                    var dropList = dataObj.GetData(DataFormats.FileDrop) as string[];
                     if (dropList != null)
                     {
                         foreach (string file in dropList)
@@ -556,9 +564,9 @@ namespace TabPaint
                         }
                     }
                 }
-                else if (Clipboard.ContainsImage())
+                else if (dataObj.GetDataPresent(DataFormats.Bitmap))
                 {
-                    var bitmapSource = Clipboard.GetImage();
+                    var bitmapSource = dataObj.GetData(DataFormats.Bitmap) as BitmapSource;
                     if (bitmapSource != null)
                     {
                         string cacheDir = AppConsts.CacheDir;
@@ -580,7 +588,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_ClipboardReadFailed_Prefix"), ex.Message));
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_ClipboardReadFailed_Prefix"), ex.Message), ex);
                 return;
             }
 
@@ -705,11 +713,28 @@ namespace TabPaint
             _toastTimer.Tick += (s, e) => HideToast(); // 计时结束触发淡出
         }
 
-        public void ShowToast(string messageOrKey)
+        public void ShowToast(string messageOrKey, Exception ex = null)
         {
             if (_toastTimer == null) InitializeToastTimer();
             _toastTimer.Stop();
             string message = LocalizationManager.GetString(messageOrKey);
+
+            if (ex != null)
+            {
+                Logger.Error($"[ToastError] {message} (Key: {messageOrKey})", ex);
+            }
+            else
+            {
+                // 即使没有 Exception，如果是报错类的 Key，也按 Error 记录
+                bool isError = messageOrKey.Contains("Error", StringComparison.OrdinalIgnoreCase) ||
+                               messageOrKey.Contains("Failed", StringComparison.OrdinalIgnoreCase) ||
+                               messageOrKey.StartsWith("L_Error_", StringComparison.OrdinalIgnoreCase) ||
+                               messageOrKey.Contains("Exception", StringComparison.OrdinalIgnoreCase);
+
+                if (isError) Logger.Error($"[ToastError] {message} (Key: {messageOrKey})");
+                else Logger.Info($"[ToastInfo] {message} (Key: {messageOrKey})");
+            }
+
             InfoToastText.Text = message;
 
             if (InfoToast.Opacity < 1.0)
@@ -988,6 +1013,7 @@ namespace TabPaint
                 if (ScrollContainer.ContextMenu == null) LoadCanvasContextMenu();// 再次检查（因为加载可能失败），如果成功则打开
                 if (ScrollContainer.ContextMenu != null)
                 {
+                    _lastRightClickPosition = Mouse.GetPosition(BackgroundImage);
                     ScrollContainer.ContextMenu.PlacementTarget = ScrollContainer; // 确保定位准确
                     ScrollContainer.ContextMenu.IsOpen = true;
                 }
@@ -1017,6 +1043,9 @@ namespace TabPaint
 
                 if (menu != null)
                 {
+                    // 确保资源字典被加入到菜单的资源中，这样 DynamicResource 才能在语言切换时正常工作
+                    menu.Resources.MergedDictionaries.Add(dictionary);
+
                     foreach (var item in menu.Items)
                     {
                         BindCanvasMenuEvents(item);
@@ -1213,7 +1242,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_RestoreSelectionFailed_Prefix"), ex.Message));
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_RestoreSelectionFailed_Prefix"), ex.Message), ex);
             }
             finally
             {

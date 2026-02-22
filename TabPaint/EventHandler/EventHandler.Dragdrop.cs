@@ -198,7 +198,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_InsertFailed"), ex.Message));
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_InsertFailed"), ex.Message),ex);
             }
         }
 
@@ -494,7 +494,8 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_CannotInsertImage"), ex.Message));
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_CannotInsertImage"), ex.Message),ex);
+
             }
         }
     }

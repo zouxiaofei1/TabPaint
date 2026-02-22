@@ -70,7 +70,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast($"Stick Image Failed: {ex.Message}");
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_StickImageFailed"), ex.Message), ex);
             }
         }
     }

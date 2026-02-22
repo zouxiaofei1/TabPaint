@@ -133,7 +133,7 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_DragFailed"), ex.Message));
+                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_DragFailed"), ex.Message), ex);
                 }
             }
         }
