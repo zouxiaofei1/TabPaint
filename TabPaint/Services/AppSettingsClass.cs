@@ -76,6 +76,21 @@ namespace TabPaint
                 }
             }
         }
+
+        private string _lastLaunchedVersion = string.Empty;
+        [JsonPropertyName("last_launched_version")]
+        public string LastLaunchedVersion
+        {
+            get => _lastLaunchedVersion;
+            set
+            {
+                if (_lastLaunchedVersion != value)
+                {
+                    _lastLaunchedVersion = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
         private bool _isImageBarCompact = true; // 默认为 false (展开状态)
 
         [JsonPropertyName("is_image_bar_compact")]

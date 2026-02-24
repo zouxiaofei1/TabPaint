@@ -10,6 +10,8 @@ namespace TabPaint
     {
         private static readonly Uri ZhCnDict = new Uri("pack://application:,,,/Resources/Lang.zh-CN.xaml", UriKind.Absolute);
         private static readonly Uri EnUsDict = new Uri("pack://application:,,,/Resources/Lang.en-US.xaml", UriKind.Absolute);
+        private static readonly Uri WhatsNewZhCnDict = new Uri("pack://application:,,,/Resources/WhatsNew.zh_cn.xaml", UriKind.Absolute);
+        private static readonly Uri WhatsNewEnUsDict = new Uri("pack://application:,,,/Resources/WhatsNew.en_us.xaml", UriKind.Absolute);
 
         public static void ApplyLanguage(AppLanguage language)
         {
@@ -32,25 +34,45 @@ namespace TabPaint
             if (app == null) return;
 
             var target = language == AppLanguage.English ? EnUsDict : ZhCnDict;
+            var whatsNewTarget = language == AppLanguage.English ? WhatsNewEnUsDict : WhatsNewZhCnDict;
 
             // remove existing language dictionaries
             var existing = app.Resources.MergedDictionaries
                 .FirstOrDefault(d => d.Source != null && IsLanguageDictionary(d.Source));
 
-            if (existing != null && existing.Source == target) return;
+            var existingWhatsNew = app.Resources.MergedDictionaries
+                .FirstOrDefault(d => d.Source != null && IsWhatsNewDictionary(d.Source));
+
+            bool sameMain = existing != null && existing.Source == target;
+            bool sameWhatsNew = existingWhatsNew != null && existingWhatsNew.Source == whatsNewTarget;
+
+            if (sameMain && sameWhatsNew) return;
 
             if (existing != null)
             {
                 app.Resources.MergedDictionaries.Remove(existing);
             }
 
+            if (existingWhatsNew != null)
+            {
+                app.Resources.MergedDictionaries.Remove(existingWhatsNew);
+            }
+
             app.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = target });
+            app.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = whatsNewTarget });
         }
 
         private static bool IsLanguageDictionary(Uri source)
         {
             var s = source.OriginalString;
             return s.Contains("/Resources/Lang.", StringComparison.OrdinalIgnoreCase)
+                   && s.EndsWith(".xaml", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsWhatsNewDictionary(Uri source)
+        {
+            var s = source.OriginalString;
+            return s.Contains("/Resources/WhatsNew.", StringComparison.OrdinalIgnoreCase)
                    && s.EndsWith(".xaml", StringComparison.OrdinalIgnoreCase);
         }
 

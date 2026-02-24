@@ -10,6 +10,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Threading;
 using TabPaint.Services;
+using TabPaint.Windows;
 using static TabPaint.MainWindow;
 
 namespace TabPaint
@@ -222,10 +223,65 @@ namespace TabPaint
             // 3. 创建并启动主窗口
             base.OnStartup(e);//<0.1ms
             _mainWindow = new MainWindow(filePath, fileExists);//240ms
-                _mainWindow.Show();//340ms
+            _mainWindow.Show();//340ms
+
+            _mainWindow.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                TryShowWhatsNew(currentSettings);
+            }), DispatcherPriority.ApplicationIdle);
          
 
         }
+
+        private void TryShowWhatsNew(AppSettings settings)
+        {
+            if (settings == null) return;
+
+            try
+            {
+                string currentVersion = NormalizeVersionText(AppConsts.ProgramVersion);
+                string previousVersion = NormalizeVersionText(settings.LastLaunchedVersion);
+
+                bool hasPreviousVersion = !string.IsNullOrWhiteSpace(previousVersion);
+                bool isUpgrade = CompareVersion(currentVersion, previousVersion) > 0;
+
+                if (hasPreviousVersion && isUpgrade)
+                {
+                    var win = new WhatsNewWindow(previousVersion, currentVersion)
+                    {
+                        Owner = _mainWindow
+                    };
+                    win.ShowDialog();
+                }
+
+                settings.LastLaunchedVersion = currentVersion;
+                SettingsManager.Instance.Save();
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("[WhatsNew] Failed to process upgrade popup.", ex);
+            }
+        }
+
+        private static string NormalizeVersionText(string version)
+        {
+            if (string.IsNullOrWhiteSpace(version)) return string.Empty;
+            return version.Trim().TrimStart('v', 'V');
+        }
+
+        private static int CompareVersion(string current, string previous)
+        {
+            var currentVer = ParseVersionOrZero(current);
+            var previousVer = ParseVersionOrZero(previous);
+            return currentVer.CompareTo(previousVer);
+        }
+
+        private static Version ParseVersionOrZero(string text)
+        {
+            string normalized = NormalizeVersionText(text);
+            return Version.TryParse(normalized, out var v) ? v : new Version(0, 0, 0, 0);
+        }
+
         protected override void OnExit(ExitEventArgs e)
         {
             try

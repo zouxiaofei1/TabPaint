@@ -156,6 +156,7 @@ namespace TabPaint
                     writer.Write((int)Current.Language);
                     writer.Write((int)Current.SelectionClearMode);
                     writer.Write(Current.IsFirstRun);
+                    writer.Write(Current.LastLaunchedVersion ?? "");
                     writer.Write(Current.IsImageBarCompact);
                     writer.Write(Current.AlwaysShowTabCloseButton);
                     writer.Write(Current.StartInViewMode);
@@ -180,6 +181,7 @@ namespace TabPaint
                     writer.Write(Current.AutoLoadFolderImages);
                     writer.Write(Current.ViewShowTransparentGrid);
                     writer.Write(Current.SkipResetConfirmation);
+                    writer.Write(Current.DiscardAllOnExit);
                     writer.Write(Current.AutoPopupOnClipboardImage);
                     writer.Write(Current.EnableFileDeleteInPaintMode);
                     writer.Write(Current.IsShapeToolProMode);
@@ -243,6 +245,7 @@ namespace TabPaint
                     settings.Language = (AppLanguage)reader.ReadInt32();
                     settings.SelectionClearMode = (SelectionClearMode)reader.ReadInt32();
                     settings.IsFirstRun = reader.ReadBoolean();
+                    settings.LastLaunchedVersion = reader.ReadString();
                     settings.IsImageBarCompact = reader.ReadBoolean();
                     settings.AlwaysShowTabCloseButton = reader.ReadBoolean();
                     settings.StartInViewMode = reader.ReadBoolean();
@@ -267,6 +270,7 @@ namespace TabPaint
                     settings.AutoLoadFolderImages = reader.ReadBoolean();
                     settings.ViewShowTransparentGrid = reader.ReadBoolean();
                     settings.SkipResetConfirmation = reader.ReadBoolean();
+                    settings.DiscardAllOnExit = reader.ReadBoolean();
                     settings.AutoPopupOnClipboardImage = reader.ReadBoolean();
                     settings.EnableFileDeleteInPaintMode = reader.ReadBoolean();
                     settings.IsShapeToolProMode = reader.ReadBoolean();

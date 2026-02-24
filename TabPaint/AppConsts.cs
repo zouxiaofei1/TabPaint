@@ -308,7 +308,7 @@ namespace TabPaint
 
         // --- 服务与性能配置 ---
         public const int MaxDiskConcurrency = 4;
-        public const int AppSettingsBinaryVersion = 2;
+        public const int AppSettingsBinaryVersion = 4;
 
         public static bool IsSupportedImage(string path)
         {
