@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
@@ -157,9 +158,9 @@ namespace TabPaint
             UpdateImageBarSliderState();
             ShowToast(string.Format(LocalizationManager.GetString("L_Toast_CleanedCount_Format"), filesToRemove.Count));
         }
-        private async void OnDiscardAllClick(object sender, RoutedEventArgs e)
+        private async Task DiscardAllInternalAsync(bool skipConfirmation = false)
         {
-            if (!SettingsManager.Instance.Current.SkipResetConfirmation)
+            if (!skipConfirmation && !SettingsManager.Instance.Current.SkipResetConfirmation)
             {
                 var result = FluentMessageBox.Show(
                   LocalizationManager.GetString("L_Msg_ResetWorkspace_Content"),
@@ -295,6 +296,11 @@ namespace TabPaint
             {
                 _workingPath = FindFirstImageInDirectory(_workingPath); await SwitchWorkspaceToNewFile(_workingPath);
             }
+        }
+
+        private async void OnDiscardAllClick(object sender, RoutedEventArgs e)
+        {
+            await DiscardAllInternalAsync();
         }
 
         private async void OnDiscardImageClick(object sender, RoutedEventArgs e)

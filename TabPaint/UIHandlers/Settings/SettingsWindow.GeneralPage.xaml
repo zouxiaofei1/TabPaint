@@ -317,6 +317,28 @@
                       VerticalAlignment="Center"/>
         </Grid>
 
+        <!-- 添加到系统右键菜单（状态从注册表读取，不走 settings.bin/json） -->
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <TextBlock Text="{DynamicResource L_Settings_General_ShellIntegration_Title}"/>
+                <TextBlock Text="{DynamicResource L_Settings_General_ShellIntegration_Desc}"
+                           Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <CheckBox x:Name="ShellIntegrationCheckBox"
+                      Grid.Column="2"
+                      Style="{StaticResource FluentCheckBoxStyle}"
+                      VerticalAlignment="Center"
+                      Checked="OnShellIntegrationChecked"
+                      Unchecked="OnShellIntegrationUnchecked"/>
+        </Grid>
+
         <Separator Margin="0,10,0,10" Background="{DynamicResource BorderLightBrush}"/>
 
         <!-- 滚轮行为 (注：保留了原始代码的 ResamplingMode 绑定，虽然看起来可能与 ViewMode 重复，此处按原样迁移) -->

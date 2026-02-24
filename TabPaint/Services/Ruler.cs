@@ -77,7 +77,9 @@ namespace TabPaint
         }
         private void DrawSelectionHighlight(DrawingContext drawingContext, double zoom)
         {
-            if (SelectionStart < 0 || SelectionEnd <= SelectionStart) return;
+            // 允许 SelectionStart 为负值：当选区拖出画布左/上边界时，
+            // 通过后续屏幕坐标裁剪逻辑（offset/maxVal）来决定可见高亮范围。
+            if (SelectionEnd <= SelectionStart) return;
             double screenStart = SelectionStart * zoom + OriginOffset;
             double screenEnd = SelectionEnd * zoom + OriginOffset;
 
@@ -178,7 +180,8 @@ namespace TabPaint
             int safetyCount = 0;
 
             double selScreenStart = -1, selScreenEnd = -1;
-            bool hasSelection = SelectionStart >= 0 && SelectionEnd > SelectionStart;
+            // 同样允许负起点，只要区间有效即可参与刻度高亮判断。
+            bool hasSelection = SelectionEnd > SelectionStart;
             if (hasSelection)
             {
                 selScreenStart = SelectionStart * zoom + OriginOffset;

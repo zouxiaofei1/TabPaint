@@ -32,6 +32,43 @@
             <BooleanToVisibilityConverter x:Key="BoolToVis"/>
             <local:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
             <local:ZoomToInverseValueConverter x:Key="ZoomToInverseValueConverter"/>
+
+            <Style x:Key="ViewModeNavButtonStyle" TargetType="Button">
+                <Setter Property="Width" Value="42"/>
+                <Setter Property="Height" Value="80"/>
+                <Setter Property="Background" Value="{DynamicResource GlassBackgroundMediumBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderMediumBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                <Setter Property="FontSize" Value="28"/>
+                <Setter Property="FontWeight" Value="Light"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Opacity" Value="0"/>
+                <Setter Property="IsHitTestVisible" Value="False"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="NavButtonBorder"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="22"
+                                    Padding="0">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="NavButtonBorder" Property="Background" Value="{DynamicResource ToolAccentSubtleHoverBrush}"/>
+                                    <Setter TargetName="NavButtonBorder" Property="BorderBrush" Value="{DynamicResource ToolAccentHoverBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="NavButtonBorder" Property="Background" Value="{DynamicResource ToolAccentSubtlePressedBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
             
             <Storyboard x:Key="FadeInDragOverlay">
                 <ObjectAnimationUsingKeyFrames Storyboard.TargetName="DragOverlay" Storyboard.TargetProperty="Visibility">
@@ -269,6 +306,71 @@
                                     </Canvas>
                                 </Grid>
                             </ScrollViewer>
+                        </Grid>
+
+                        <Grid x:Name="ViewModeNavOverlay"
+                              Panel.ZIndex="120"
+                              Background="{x:Null}"
+                              Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource BoolToVis}}">
+                            <Border x:Name="PrevImageHoverZone"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center"
+                                    Width="90"
+                                    Height="150"
+                                    Background="Transparent"/>
+
+                            <Border x:Name="NextImageHoverZone"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Width="90"
+                                    Height="150"
+                                    Background="Transparent"/>
+
+                            <Button x:Name="PrevImageButton"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center"
+                                    Margin="12,0,0,0"
+                                    Click="OnViewModePrevImageClick"
+                                    ToolTip="上一张">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource ViewModeNavButtonStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsMouseOver, ElementName=PrevImageHoverZone}" Value="True">
+                                                <Setter Property="Opacity" Value="0.88"/>
+                                                <Setter Property="IsHitTestVisible" Value="True"/>
+                                            </DataTrigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Opacity" Value="0.96"/>
+                                                <Setter Property="IsHitTestVisible" Value="True"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <TextBlock Text="&lt;" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,-2,0,0"/>
+                            </Button>
+
+                            <Button x:Name="NextImageButton"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,12,0"
+                                    Click="OnViewModeNextImageClick"
+                                    ToolTip="下一张">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource ViewModeNavButtonStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsMouseOver, ElementName=NextImageHoverZone}" Value="True">
+                                                <Setter Property="Opacity" Value="0.88"/>
+                                                <Setter Property="IsHitTestVisible" Value="True"/>
+                                            </DataTrigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Opacity" Value="0.96"/>
+                                                <Setter Property="IsHitTestVisible" Value="True"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <TextBlock Text=">" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,-2,0,0"/>
+                            </Button>
                         </Grid>
 
                         <Rectangle x:Name="ThicknessPreview" IsHitTestVisible="False" Fill="Transparent" Stroke="{DynamicResource ToolAccentBrush}" StrokeThickness="2" Width="40" Height="40" Visibility="Collapsed" Opacity="0.6" StrokeDashArray="3 2" HorizontalAlignment="Center" VerticalAlignment="Center"/>

@@ -32,6 +32,8 @@
     <sys:String x:Key="L_Settings_Nav_Advanced">Advanced</sys:String>
     <sys:String x:Key="L_Settings_Nav_About">About</sys:String>
     <sys:String x:Key="L_Settings_Toast_Saved">Settings Saved</sys:String>
+    <sys:String x:Key="L_Settings_Toast_ShellIntegration_EnableFailed">Failed to enable system context menu: {0}</sys:String>
+    <sys:String x:Key="L_Settings_Toast_ShellIntegration_DisableFailed">Failed to remove system context menu: {0}</sys:String>
     <sys:String x:Key="L_Untitled">Untitled</sys:String>
     <!-- General Settings -->
     <sys:String x:Key="L_Settings_General_Title">General</sys:String>
@@ -40,6 +42,8 @@
     <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Desc">Automatically scan and load other images in the same directory</sys:String>
     <sys:String x:Key="L_Settings_General_StartInViewMode_Title">Start in view mode</sys:String>
     <sys:String x:Key="L_Settings_General_StartInViewMode_Desc">Hide toolbars on startup (useful as a default image viewer)</sys:String>
+    <sys:String x:Key="L_Settings_General_ShellIntegration_Title">Add to system context menu</sys:String>
+    <sys:String x:Key="L_Settings_General_ShellIntegration_Desc">Add Open with TabPaint in Context Menu for Images</sys:String>
     <sys:String x:Key="L_ImgBar_ToggleView" xmlns:sys="clr-namespace:System;assembly=mscorlib">Expand / Fold</sys:String>
     <sys:String x:Key="L_Settings_General_MouseWheel_Title">Mouse wheel</sys:String>
     <sys:String x:Key="L_Settings_General_MouseWheel_Desc">Responds to mouse wheel scrolling</sys:String>
@@ -165,7 +169,15 @@
     <sys:String x:Key="L_Settings_Advanced_Habits_Header">Interaction</sys:String>
     <sys:String x:Key="L_Settings_Advanced_SkipResetConfirm_Title">Skip reset confirmation</sys:String>
     <sys:String x:Key="L_Settings_Advanced_SkipResetConfirm_Desc">Skip the second confirmation when clearing tabs</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_DiscardAllOnExit_Title">Discard all changes on restart</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_DiscardAllOnExit_Desc">Automatically run “Discard All” when closing the app</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Maintenance_Header">Maintenance</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_Title">Collect Report</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_Desc">Collect system info, process info, and today's logs.</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_WindowTitle">System Report</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_Copy">Copy to Clipboard</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_Regenerate">Regenerate</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_Tip">The content is editable. Remove sensitive info before sharing if needed.</sys:String>
     <sys:String x:Key="L_Settings_Advanced_FactoryReset_Button">Clear all caches and settings</sys:String>
     <sys:String x:Key="L_Settings_Advanced_FactoryReset">Factory reset</sys:String>
     <sys:String x:Key="L_Settings_ResetShortcuts">Reset shortcuts to default</sys:String>
@@ -182,6 +194,7 @@
     <sys:String x:Key="L_Common_Reset">Reset</sys:String>
     <sys:String x:Key="L_Common_No">No</sys:String>
     <sys:String x:Key="L_Common_Cancel">Cancel</sys:String>
+    <sys:String x:Key="L_Common_Close">Close</sys:String>
     <sys:String x:Key="L_Common_Error">Error</sys:String>
     <sys:String x:Key="L_Common_Tip">Tip</sys:String>
 

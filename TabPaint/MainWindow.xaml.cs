@@ -779,6 +779,19 @@ namespace TabPaint
                 return string.Format(LocalizationManager.GetString("L_Format_Size_KB"), bytes / 1024.0);
             return string.Format(LocalizationManager.GetString("L_Format_Size_MB"), bytes / 1024.0 / 1024.0);
         }
+
+        private void OnViewModePrevImageClick(object sender, RoutedEventArgs e)
+        {
+            ShowPrevImage();
+            e.Handled = true;
+        }
+
+        private void OnViewModeNextImageClick(object sender, RoutedEventArgs e)
+        {
+            ShowNextImage();
+            e.Handled = true;
+        }
+
         private void ShowNextImage() { MoveImageIndex(1); }
         private void ShowPrevImage() { MoveImageIndex(-1);  }
         private void MoveImageIndex(int direction) // direction: 1 or -1

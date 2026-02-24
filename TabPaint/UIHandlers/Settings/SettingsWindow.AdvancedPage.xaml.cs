@@ -110,6 +110,21 @@ namespace TabPaint.Pages
                 win.NavListBox.SelectedIndex = 5; // Plugins item index
             }
         }
+
+        private void CollectSystemReport_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var reportWindow = new TabPaint.Windows.SystemReportWindow();
+                reportWindow.Owner = Window.GetWindow(this);
+                reportWindow.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MainWindow.GetCurrentInstance()?.ShowToast(string.Format(LocalizationManager.GetString("L_Common_Error") + ": {0}", ex.Message), ex);
+            }
+        }
+
         // 打开缓存文件夹
         private void OpenCacheFolder_Click(object sender, RoutedEventArgs e)
         {

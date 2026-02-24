@@ -337,7 +337,7 @@
                             </Border.RenderTransform>
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="{DynamicResource L_Settings_Toast_Saved}" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="TxtSavedToast" Text="{DynamicResource L_Settings_Toast_Saved}" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Border>
                         <Border x:Name="ConflictToast" 

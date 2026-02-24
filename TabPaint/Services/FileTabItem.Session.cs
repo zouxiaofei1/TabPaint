@@ -390,6 +390,11 @@ namespace TabPaint
 
             try
             {
+                if (SettingsManager.Instance.Current.DiscardAllOnExit)
+                {
+                    await DiscardAllInternalAsync(skipConfirmation: true);
+                }
+
                 SaveAppState();
                 var favWin = FavoriteWindowManager.GetInstance();
                 if (favWin != null && favWin.IsLoaded)

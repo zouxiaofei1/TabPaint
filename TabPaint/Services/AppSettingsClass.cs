@@ -508,6 +508,22 @@ namespace TabPaint
                 }
             }
         }
+
+        private bool _discardAllOnExit = false; // 默认关闭
+
+        [JsonPropertyName("discard_all_on_exit")]
+        public bool DiscardAllOnExit
+        {
+            get => _discardAllOnExit;
+            set
+            {
+                if (_discardAllOnExit != value)
+                {
+                    _discardAllOnExit = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
         private bool _autoPopupOnClipboardImage = false; // 默认不弹出
 
         [JsonPropertyName("auto_popup_on_clipboard_image")]

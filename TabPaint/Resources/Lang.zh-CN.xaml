@@ -11,6 +11,8 @@
     <sys:String x:Key="L_Settings_Nav_About">关于</sys:String>
     <sys:String x:Key="L_Settings_Toast_Saved">设置已保存</sys:String>
     <sys:String x:Key="L_Settings_Toast_Conflict">快捷键与“{0}”冲突，已自动重置旧项</sys:String>
+    <sys:String x:Key="L_Settings_Toast_ShellIntegration_EnableFailed">启用系统右键菜单失败：{0}</sys:String>
+    <sys:String x:Key="L_Settings_Toast_ShellIntegration_DisableFailed">移除系统右键菜单失败：{0}</sys:String>
     <sys:String x:Key="L_Settings_Nav_Plugins">插件</sys:String>
     <sys:String x:Key="L_ImgBar_NewImage">新图片</sys:String>
     <sys:String x:Key="L_CreateNewWorkSpate">选择图片以建立新工作区</sys:String>
@@ -39,6 +41,8 @@
     <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Desc">打开图片时，扫描并加载同级目录下的其他图片</sys:String>
     <sys:String x:Key="L_Settings_General_StartInViewMode_Title">默认进入看图模式</sys:String>
     <sys:String x:Key="L_Settings_General_StartInViewMode_Desc">隐藏工具栏，作为看图软件使用</sys:String>
+    <sys:String x:Key="L_Settings_General_ShellIntegration_Title">添加到系统右键菜单</sys:String>
+    <sys:String x:Key="L_Settings_General_ShellIntegration_Desc">为所有图片加入到右键菜单和打开方式</sys:String>
 
     <sys:String x:Key="L_Settings_General_MouseWheel_Title">鼠标滚轮操作</sys:String>
     <sys:String x:Key="L_Settings_General_MouseWheel_Desc">滑动鼠标滚轮时程序的响应</sys:String>
@@ -159,7 +163,15 @@
     <sys:String x:Key="L_Settings_Advanced_Habits_Header">交互习惯</sys:String>
     <sys:String x:Key="L_Settings_Advanced_SkipResetConfirm_Title">重置工作区时不弹窗提示</sys:String>
     <sys:String x:Key="L_Settings_Advanced_SkipResetConfirm_Desc">清空所有标签页或重置工作区时跳过二次确认弹窗</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_DiscardAllOnExit_Title">重启后放弃所有更改</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_DiscardAllOnExit_Desc">关闭程序时自动放弃所有更改</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Maintenance_Header">系统维护</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_Title">收集报告</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_Desc">收集系统信息、进程信息与当日日志</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_WindowTitle">系统报告</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_Copy">复制到剪切板</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_Regenerate">重新生成</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_Tip">内容可编辑，可按需删改信息。</sys:String>
     <sys:String x:Key="L_Settings_Advanced_FactoryReset_Button">清除所有缓存和设置</sys:String>
     <sys:String x:Key="L_Settings_Advanced_FactoryReset">恢复出厂设置</sys:String>
     <sys:String x:Key="L_Settings_ResetShortcuts">恢复默认快捷键</sys:String>
@@ -548,6 +560,7 @@
     <!-- Common Buttons -->
     <sys:String x:Key="L_Common_Reset">重置</sys:String>
     <sys:String x:Key="L_Common_Cancel">返回</sys:String>
+    <sys:String x:Key="L_Common_Close">关闭</sys:String>
     <sys:String x:Key="L_Common_No">取消</sys:String>
     <sys:String x:Key="L_Settings_Advanced_FactoryReset_Confirm">此操作将删除所有缓存、临时文件和用户配置，并将软件恢复到初始状态。确定要继续吗？</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Reset_Confirm">确定要将所有快捷键恢复为默认设置吗？此操作无法撤销。</sys:String>

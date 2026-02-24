@@ -103,9 +103,18 @@ namespace TabPaint
             }
         }
 
-        private void ShowToast()
+        public void ShowToast(string customMessage = null)
         {
             _toastTimer.Stop();
+
+            var txtSavedToast = this.FindName("TxtSavedToast") as TextBlock;
+            if (txtSavedToast != null)
+            {
+                txtSavedToast.Text = string.IsNullOrWhiteSpace(customMessage)
+                    ? LocalizationManager.GetString("L_Settings_Toast_Saved")
+                    : customMessage;
+            }
+
             if (SavedToast.Visibility != Visibility.Visible)
             {
                 AnimateShow(SavedToast);
