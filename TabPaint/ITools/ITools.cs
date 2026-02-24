@@ -498,7 +498,7 @@ namespace TabPaint
                 if (CurrentTool is SelectTool selTool)
                 {
                     if (selTool._selectionData != null)
-                        selTool.GiveUpSelection(_ctx);
+                        selTool.CommitSelection(_ctx);
                     selTool.Cleanup(_ctx);
 
                 }

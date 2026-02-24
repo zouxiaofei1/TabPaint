@@ -25,6 +25,12 @@ namespace TabPaint
         private bool HandleGlobalShortcuts(object sender, KeyEventArgs e)
         {
             if (IsShortcut("View.ToggleMode", e)) { TriggerModeChange(); e.Handled = true; return true; }
+            if (IsShortcut("View.ToggleImageBar", e))
+            {
+                MainImageBar.IsCompactMode = !MainImageBar.IsCompactMode;
+                e.Handled = true;
+                return true;
+            }
             if (IsShortcut("View.RotateLeft", e)) { RotateBitmap(-90); e.Handled = true; return true; }
             if (IsShortcut("View.RotateRight", e)) { RotateBitmap(90); e.Handled = true; return true; }
             if (IsShortcut("View.VerticalFlip", e)) { OnFlipVerticalClick(sender, e); e.Handled = true; return true; }

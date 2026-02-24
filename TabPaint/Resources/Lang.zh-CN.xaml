@@ -100,6 +100,7 @@
     <sys:String x:Key="L_Settings_Shortcuts_Title">快捷键设置</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Group_ViewNav">视图与导航</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_ToggleMode">切换看图/画图模式</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_ToggleImageBar">展开/收起图片栏</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_PrevImage">上一张图片</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_NextImage">下一张图片</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_FullScreen">全屏显示</sys:String>

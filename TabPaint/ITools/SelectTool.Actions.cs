@@ -139,8 +139,8 @@ namespace TabPaint
                     });
                 }
             }
-     
-         
+
+
             public void SelectAll(ToolContext ctx, bool cut = true)
             {
                 if (ctx.Surface?.Bitmap == null) return;
@@ -236,9 +236,9 @@ namespace TabPaint
                     finalStride = finalWidth * 4;
                 }
 
-                var newBitmap = new WriteableBitmap(finalWidth,finalHeight, ctx.Surface.Bitmap.DpiX,  ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32,null);
+                var newBitmap = new WriteableBitmap(finalWidth, finalHeight, ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32, null);
 
-                newBitmap.WritePixels(new Int32Rect(0, 0, finalWidth, finalHeight),finalSelectionData,finalStride,  0 );
+                newBitmap.WritePixels(new Int32Rect(0, 0, finalWidth, finalHeight), finalSelectionData, finalStride, 0);
 
                 var redoRect = new Int32Rect(0, 0, newBitmap.PixelWidth, newBitmap.PixelHeight);
                 int redoStride = newBitmap.BackBufferStride;
@@ -297,7 +297,7 @@ namespace TabPaint
                     }
                     else if (IsPointInSelection(px))
                     {
-                        if (_transformStep == 0)  _originalRect = _selectionRect;
+                        if (_transformStep == 0) _originalRect = _selectionRect;
                         _transformStep++;
                         _draggingSelection = true; mw.UpdateSelectionToolBarPosition();
                         _clickOffset = new Point(px.X - _selectionRect.X, px.Y - _selectionRect.Y);
@@ -373,7 +373,7 @@ namespace TabPaint
                     }
                     else
                     {
-                        if (_pendingTab != null)  ResetSwitchTimer();
+                        if (_pendingTab != null) ResetSwitchTimer();
                     }
                 }
                 else
@@ -474,8 +474,8 @@ namespace TabPaint
                             _currentAnchor == ResizeAnchor.BottomLeft || _currentAnchor == ResizeAnchor.BottomRight)
                         {
                             // 取变化幅度较大的一边作为主导
-                            if (Math.Abs(proposedW / _startW) > Math.Abs(proposedH / _startH))  proposedH = proposedW / aspectRatio;
-                            else  proposedW = proposedH * aspectRatio;
+                            if (Math.Abs(proposedW / _startW) > Math.Abs(proposedH / _startH)) proposedH = proposedW / aspectRatio;
+                            else proposedW = proposedH * aspectRatio;
                         }
                     }
 
@@ -571,7 +571,7 @@ namespace TabPaint
                         }
                         DrawOverlay(ctx, _selectionRect);
                     }
-                    
+
                     UpdateStatusBarSelectionSize(mw); mw.UpdateSelectionToolBarPosition();
                     mw.UpdateRulerSelection();
                     return;
@@ -622,9 +622,9 @@ namespace TabPaint
                 }
                 else if (_draggingSelection) // 拖动逻辑
                 {
-                    
-                    if (!_hasLifted)LiftSelectionFromCanvas(ctx);
-                   
+
+                    if (!_hasLifted) LiftSelectionFromCanvas(ctx);
+
                     var mainWindow = mw;
                     if (mainWindow != null)
                     {
@@ -729,7 +729,7 @@ namespace TabPaint
                         $"{_selectionRect.Width}×{_selectionRect.Height}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
                 });
             }
-            private void LiftSelectionFromCanvas(ToolContext ctx)
+            public void LiftSelectionFromCanvas(ToolContext ctx)
             {
                 if (_hasLifted) return;
 
@@ -743,7 +743,7 @@ namespace TabPaint
                 {
                     ClearLassoRegion(ctx, ClampRect(_originalRect, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight), ctx.EraserColor);
                 }
-                else  ClearRect(ctx, ClampRect(_originalRect, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight), ctx.EraserColor);
+                else ClearRect(ctx, ClampRect(_originalRect, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight), ctx.EraserColor);
                 _hasLifted = true;
             }
 
@@ -774,11 +774,9 @@ namespace TabPaint
                             e.Handled = true;
                             break;
                         case Key.Escape:
-                            if (SelectionType == SelectionType.MagicWand)
-                            {
-                                Cleanup(ctx);
-                                e.Handled = true;
-                            }
+                            GiveUpSelection(ctx);
+                          //  Cleanup(ctx);
+                            e.Handled = true;
                             break;
                     }
                 }
@@ -981,8 +979,8 @@ namespace TabPaint
                     double dpiX = mw._surface?.Bitmap.DpiX ?? AppConsts.StandardDpi;
                     double dpiY = mw._surface?.Bitmap.DpiY ?? AppConsts.StandardDpi;
 
-                    BitmapSource result = BitmapSource.Create( _originalRect.Width,  _originalRect.Height, dpiX, dpiY,
-                        PixelFormats.Bgra32,  null,   _selectionData,stride  );
+                    BitmapSource result = BitmapSource.Create(_originalRect.Width, _originalRect.Height, dpiX, dpiY,
+                        PixelFormats.Bgra32, null, _selectionData, stride);
 
                     if (_selectionRect.Width != _originalRect.Width || _selectionRect.Height != _originalRect.Height)
                     {
@@ -1001,7 +999,7 @@ namespace TabPaint
                     return null;
                 }
             }
-            
+
             private void CreatePreviewFromSelectionData(ToolContext ctx)
             {
                 var mw = ctx.ParentWindow;
@@ -1012,7 +1010,6 @@ namespace TabPaint
                                        _selectionData, _selectionRect.Width * 4, 0);
 
                 ctx.SelectionPreview.Source = previewBmp;
-                ctx.SelectionPreview.RenderTransform = new TranslateTransform(0, 0);
 
                 SetPreviewPosition(ctx, _selectionRect.X, _selectionRect.Y);
                 mw.UpdateSelectionScalingMode();

@@ -155,12 +155,14 @@ namespace TabPaint
                     var (existingWindow, existingTab) = TabPaint.MainWindow.FindWindowHostingFile(filePath);
                     if (existingWindow != null && existingTab != null)
                     {
+                        RestoreWindow(existingWindow);
                         existingWindow.FocusAndSelectTab(existingTab);
                         return;
                     }
                     var targetWindow = TabPaint.MainWindow.GetCurrentInstance();
                     if (targetWindow != null)
                     {
+                        RestoreWindow(targetWindow);
                         var tab = targetWindow.FileTabs.FirstOrDefault(t => t.FilePath == filePath);
 
                         if (tab == null)

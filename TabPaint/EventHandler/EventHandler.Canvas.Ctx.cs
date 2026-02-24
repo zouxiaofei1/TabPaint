@@ -503,6 +503,9 @@ namespace TabPaint
                         resultPixels = await aiService.RunInferenceAsync(modelPath, cropBmp);
                         selectTool.ReplaceSelectionData(_ctx, resultPixels, newW, newH);
                     }
+
+                    // AI 抠图完成后主动刷新选区预览与叠加层，避免依赖拖动事件触发重绘
+                    if (!selectTool._hasLifted) selectTool.LiftSelectionFromCanvas(_ctx);
                 }
                 else
                 {

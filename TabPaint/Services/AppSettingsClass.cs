@@ -713,6 +713,7 @@ namespace TabPaint
         { "View.ZoomIn",         new ShortcutItem { Key = Key.OemPlus, Modifiers = ModifierKeys.Control } },
         { "View.ZoomOut",        new ShortcutItem { Key = Key.OemMinus, Modifiers = ModifierKeys.Control } },
         { "View.ToggleMode",           new ShortcutItem { Key = Key.Tab, Modifiers = ModifierKeys.None } },
+        { "View.ToggleImageBar",       new ShortcutItem { Key = Key.Tab, Modifiers = ModifierKeys.Shift } },
         // 2. 高级工具 (Ctrl + Alt 系列)
         { "Tool.ClipMonitor",    new ShortcutItem { Key = Key.P, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 剪贴板监听开关
         { "Tool.RemoveBg",       new ShortcutItem { Key = Key.D1, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 抠图

@@ -109,6 +109,7 @@
     <sys:String x:Key="L_Settings_Shortcuts_Title">Shortcuts</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Group_ViewNav">View &amp; Navigation</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_ToggleMode">Toggle view/paint mode</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_ToggleImageBar">Expand/Collapse Image Bar</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_PrevImage">Previous image</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_NextImage">Next image</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_FullScreen">Fullscreen</sys:String>

@@ -278,9 +278,9 @@ namespace TabPaint.Controls
             filterItem.Items.Add(blurItem);
 
             filterItem.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
-            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_RedEye", null, OnRedEyeClick));
-            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Sketch", null, OnSketchClick));
-            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Edge", null, OnEdgeClick));
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_RedEye", "Eye_Image", OnRedEyeClick));
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Sketch", "Crayon_Image", OnSketchClick));
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Edge", "FitToWindow_Image", OnEdgeClick));
 
             menuItem.Items.Add(filterItem);
             menuItem.Items.Add(CreateMenuItem("L_Menu_Effect_Resize", "Resize_Image", OnResizeCanvasClick, "Effect.Resize"));

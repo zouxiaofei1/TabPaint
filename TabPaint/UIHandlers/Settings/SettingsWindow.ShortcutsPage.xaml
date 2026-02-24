@@ -37,6 +37,14 @@
                     <ColumnDefinition Width="180"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_ToggleImageBar}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.ToggleImageBar], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
                 <TextBlock Text="{DynamicResource L_Settings_Shortcuts_PrevImage}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.PrevImage], Source={x:Static local:SettingsManager.Instance}}"/>
             </Grid>
