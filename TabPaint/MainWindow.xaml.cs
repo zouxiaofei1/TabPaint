@@ -1,7 +1,6 @@
 ﻿
 //
 //MainWindow.xaml.cs
-//主窗口的逻辑实现，负责界面交互、工具初始化、文件打开与标签管理等核心功能。
 //
 using System;
 using System.Collections.Generic;
@@ -157,7 +156,7 @@ namespace TabPaint
             OnModeChanged(IsViewMode, isSilent: true);
 
 
-            if (_shouldLoadSession) LoadSessionAsync(); //8ms
+            if (_shouldLoadSession) await LoadSessionAsync(); //8ms
 
            if (!string.IsNullOrEmpty(_currentFilePath) && Directory.Exists(_currentFilePath))//0.2ms
             {
@@ -1310,12 +1309,10 @@ namespace TabPaint
         {
             if (SelectionRotatePopup != null)
             {
-                if (int.TryParse(SelectionRotatePopup.RotateValueText.Text, out int angle))
+                int angle = SelectionRotatePopup.CurrentAngle;
+                if (_router?.CurrentTool is SelectTool st)
                 {
-                    if (_router?.CurrentTool is SelectTool st)
-                    {
-                        st.UpdateRotation(_ctx, angle, false);
-                    }
+                    st.UpdateRotation(_ctx, angle, false);
                 }
             }
         }
@@ -1383,7 +1380,7 @@ namespace TabPaint
                 if (rotateHolder != null && _selectionRotatePopup != null && _selectionRotatePopup.Visibility == Visibility.Visible)
                 {
                     double rotateHeight = 40;
-                    double rotateWidth = 240;
+                    double rotateWidth = 280;
 
                     // 默认放在选区底部下方
                     double rTop = rootPosEnd.Y + 10;

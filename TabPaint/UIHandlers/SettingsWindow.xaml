@@ -263,14 +263,34 @@
                                 <TextBlock Grid.Column="1" Margin="8,0,0,0" Foreground="{DynamicResource TextPrimaryBrush}" Text="{DynamicResource L_Settings_Nav_Advanced}" VerticalAlignment="Center" x:Name="TxtAdvanced"/>
                             </Grid>
                         </ListBoxItem>
-                        <ListBoxItem Tag="Plugins" Visibility="Collapsed">
+                        <ListBoxItem x:Name="NavPluginsItem" Tag="Plugins" Visibility="Collapsed">
                             <Grid Width="212" Height="40">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="40"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <Path Data="{DynamicResource View_Mode_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                <Path Data="{DynamicResource Plugins_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                 <TextBlock Grid.Column="1" Margin="8,0,0,0" Foreground="{DynamicResource TextPrimaryBrush}" Text="{DynamicResource L_Settings_Nav_Plugins}" VerticalAlignment="Center" x:Name="TxtPlugins"/>
+                            </Grid>
+                        </ListBoxItem>
+                        <ListBoxItem x:Name="NavSystemReportItem" Tag="SystemReport" Visibility="Collapsed">
+                            <Grid Width="212" Height="40">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Path Data="{DynamicResource Report_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                <TextBlock Grid.Column="1" Margin="8,0,0,0" Foreground="{DynamicResource TextPrimaryBrush}" Text="{DynamicResource L_Settings_Advanced_CollectReport_Title}" VerticalAlignment="Center" x:Name="TxtSystemReport"/>
+                            </Grid>
+                        </ListBoxItem>
+                        <ListBoxItem x:Name="NavAgreementItem" Tag="Agreement" Visibility="Collapsed">
+                            <Grid Width="212" Height="40">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Path Data="{DynamicResource Agreement_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                <TextBlock Grid.Column="1" Margin="8,0,0,0" Foreground="{DynamicResource TextPrimaryBrush}" Text="{DynamicResource L_Settings_Nav_Agreement}" VerticalAlignment="Center" x:Name="TxtAgreement"/>
                             </Grid>
                         </ListBoxItem>
                     </ListBox>

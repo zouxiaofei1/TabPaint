@@ -56,5 +56,13 @@ namespace TabPaint.Pages
                 }
             }
         }
+
+        private void OnOpenAgreementClick(object sender, RoutedEventArgs e)
+        {
+            if (Window.GetWindow(this) is SettingsWindow settingsWindow)
+            {
+                settingsWindow.NavigateToTag("Agreement");
+            }
+        }
     }
 }

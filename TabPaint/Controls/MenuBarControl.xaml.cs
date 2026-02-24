@@ -71,7 +71,7 @@ namespace TabPaint.Controls
             if (e.LeftButton == MouseButtonState.Pressed)
             { try
                 { window.DragMove(); }
-                catch{ }
+                catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
             }
         }
         public Button BtnUndo => UndoButton;

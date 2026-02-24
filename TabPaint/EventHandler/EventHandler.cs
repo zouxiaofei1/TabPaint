@@ -256,7 +256,7 @@ namespace TabPaint
                         return ConvertDrawingBitmapToWPF(drawingBitmap);
                     }
                 }
-                catch { }
+                catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
             }
 
             if (dataObj.GetDataPresent(DataFormats.Bitmap))

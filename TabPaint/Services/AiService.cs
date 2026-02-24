@@ -346,7 +346,7 @@ namespace TabPaint
                 else
                 {
                     System.Diagnostics.Debug.WriteLine($"[AI] MD5 mismatch for existing file. Deleting {modelName}...");
-                    try { File.Delete(finalPath); } catch { } // 校验失败，删除坏文件，准备重新下载
+                    try { File.Delete(finalPath); } catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); } // 校验失败，删除坏文件，准备重新下载
                 }
             }
 
@@ -446,13 +446,13 @@ namespace TabPaint
             }
             catch (OperationCanceledException)
             {
-                try { if (File.Exists(tempPath)) File.Delete(tempPath); } catch { }
+                try { if (File.Exists(tempPath)) File.Delete(tempPath); } catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
                 throw;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[AI] Download error: {ex.Message}");
-                try { if (File.Exists(tempPath)) File.Delete(tempPath); } catch { }
+                try { if (File.Exists(tempPath)) File.Delete(tempPath); } catch (global::System.Exception cleanupEx) { global::System.Diagnostics.Debug.WriteLine(cleanupEx); }
                 return false;
             }
         }

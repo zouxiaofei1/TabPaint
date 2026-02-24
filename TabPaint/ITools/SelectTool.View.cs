@@ -180,6 +180,10 @@ namespace TabPaint
             private void SetPreviewPosition(ToolContext ctx, int pixelX, int pixelY)
             {
                 ctx.SelectionPreview.UseLayoutRounding = false;
+                // Clear stale clip from previous drag/transform state so new preview is visible immediately.
+                ctx.SelectionPreview.Clip = null;
+                Canvas.SetLeft(ctx.SelectionPreview, 0);
+                Canvas.SetTop(ctx.SelectionPreview, 0);
                 var bitmap = ctx.Surface.Bitmap;
                 ctx.SelectionPreview.Stretch = System.Windows.Media.Stretch.Fill;
 

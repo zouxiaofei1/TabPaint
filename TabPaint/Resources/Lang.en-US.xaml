@@ -31,6 +31,7 @@
     <sys:String x:Key="L_Settings_Nav_Shortcuts">Shortcuts</sys:String>
     <sys:String x:Key="L_Settings_Nav_Advanced">Advanced</sys:String>
     <sys:String x:Key="L_Settings_Nav_About">About</sys:String>
+    <sys:String x:Key="L_Settings_Nav_Agreement">Agreement</sys:String>
     <sys:String x:Key="L_Settings_Toast_Saved">Settings Saved</sys:String>
     <sys:String x:Key="L_Settings_Toast_ShellIntegration_EnableFailed">Failed to enable system context menu: {0}</sys:String>
     <sys:String x:Key="L_Settings_Toast_ShellIntegration_DisableFailed">Failed to remove system context menu: {0}</sys:String>
@@ -325,6 +326,44 @@
     <sys:String x:Key="L_Settings_About_Github">GitHub</sys:String>
     <sys:String x:Key="L_Settings_About_CheckUpdate">Check updates</sys:String>
     <sys:String x:Key="L_Settings_About_Help">Help</sys:String>
+
+    <!-- Agreement -->
+    <sys:String x:Key="L_Settings_Agreement_Title">Open Source License &amp; Policies</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Desc">Click each section to expand full text. Collapsed mode shows only three key points.</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_MIT_Title">MIT License</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_MIT_Key1">Commercial use, modification, distribution, and private use are permitted.</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_MIT_Key2">Redistributions must include the original copyright and license notice.</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_MIT_Key3">The software is provided “as is” without warranty or liability.</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_MIT_Full" xml:space="preserve">MIT License
+
+Copyright (c) 2025 TabPaint Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Privacy_Title">Privacy Policy</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Privacy_Key1">Will describe what data is collected and why.</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Privacy_Key2">Will describe how data is stored, transmitted, and protected.</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Privacy_Key3">Will describe user rights for access and deletion.</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Terms_Title">Terms of Use</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Terms_Key1">Will describe product usage scope and restrictions.</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Terms_Key2">Will describe downtime, updates, and liability boundaries.</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Terms_Key3">Will describe dispute handling and terms update rules.</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Placeholder">(Placeholder) This section is not published yet and will be added in a future version.</sys:String>
 
     <!-- ToolBar -->
     <sys:String x:Key="L_ToolBar_Tool_Select">Select area</sys:String>

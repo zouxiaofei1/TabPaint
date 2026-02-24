@@ -54,6 +54,27 @@
                                        Foreground="{DynamicResource TextPrimaryBrush}" FontSize="11"/>
                         </StackPanel>
                     </Border>
+                    <Button Cursor="Hand"
+                            Margin="8,0,0,0"
+                            Padding="8,4"
+                            Height="Auto"
+                            MinHeight="0"
+                            Background="{DynamicResource GlassBackgroundMediumBrush}"
+                            BorderBrush="{DynamicResource BorderLightBrush}"
+                            BorderThickness="1"
+                            Click="OnOpenAgreementClick">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{DynamicResource Agreement_Image}"
+                                  Width="13"
+                                  Height="13"
+                                  Stretch="Uniform"
+                                  Fill="{DynamicResource IconFillBrush}"
+                                  Margin="8,0,4,0"/>
+                            <TextBlock Text="MIT"
+                                       FontSize="11" Margin="0,0,8,0"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        </StackPanel>
+                    </Button>
 
                 </StackPanel>
 

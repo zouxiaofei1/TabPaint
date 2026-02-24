@@ -175,7 +175,7 @@ namespace TabPaint
                     {
                         EmptyWorkingSet(System.Diagnostics.Process.GetCurrentProcess().Handle);
                     }
-                    catch { }
+                    catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
                 }, System.Windows.Threading.DispatcherPriority.Background);
             }
         }
@@ -210,7 +210,7 @@ namespace TabPaint
             {
             //    s(item.BackupPath);
                 try { File.Delete(item.BackupPath); }
-                catch { }
+                catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
             }
             if (FileTabs.Count == 0)
             {

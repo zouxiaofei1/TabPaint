@@ -83,7 +83,7 @@ namespace TabPaint
                     successCount++;
 
                     // 清理已同步的备份
-                    try { File.Delete(info.BackupPath); info.BackupPath = null; } catch { }
+                    try { File.Delete(info.BackupPath); info.BackupPath = null; } catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
                 }
                 catch (Exception ex)
                 {
@@ -136,7 +136,7 @@ namespace TabPaint
                 {
                     if (!string.IsNullOrEmpty(tab.BackupPath) && File.Exists(tab.BackupPath))
                     {
-                        try { File.Delete(tab.BackupPath); } catch { }
+                        try { File.Delete(tab.BackupPath); } catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
                     }
                     FileTabs.RemoveAt(i);
                 }
@@ -195,7 +195,7 @@ namespace TabPaint
                     _surface.Bitmap.AddDirtyRect(new Int32Rect(0, 0, w, h));
                     _surface.Bitmap.Unlock();
                 }
-                catch { }
+                catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
             }
             if (_currentTabItem != null)
             {
@@ -224,7 +224,7 @@ namespace TabPaint
                             if (file.EndsWith(".onnx")) continue;
                             File.Delete(file);
                         }
-                        catch { }
+                        catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
                     }
                 }
             }
@@ -346,7 +346,7 @@ namespace TabPaint
                         _surface.Bitmap.AddDirtyRect(new Int32Rect(0, 0, w, h));
                         _surface.Bitmap.Unlock();
                     }
-                    catch { }
+                    catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
                 }
 
                 _currentTabItem.Thumbnail = GenerateBlankThumbnail();

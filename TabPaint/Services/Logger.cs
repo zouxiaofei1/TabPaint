@@ -22,7 +22,7 @@ namespace TabPaint.Services
                     Directory.CreateDirectory(LogDirectory);
                 }
             }
-            catch { }
+            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
         }
 
         public static void Info(string message)
@@ -100,7 +100,7 @@ namespace TabPaint.Services
                     }
                 }
             }
-            catch { }
+            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
         }
 
         public static string GetLogDirectory() => LogDirectory;

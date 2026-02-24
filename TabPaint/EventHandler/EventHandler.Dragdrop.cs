@@ -316,7 +316,7 @@ namespace TabPaint
                                 textToInsert = styleInfo.Text;
                             }
                         }
-                        catch { }
+                        catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
                     }
 
                     // 2. 如果 RTF 失败或没有，回退到普通文本
@@ -436,7 +436,7 @@ namespace TabPaint
                 Storyboard fadeOut = (Storyboard)this.Resources["FadeOutDragOverlay"];
                 fadeOut.Begin(); _dragWatchdog.Stop();
             }
-            catch { }
+            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
         }
 
         private void InsertImageToCanvas(string filePath, Point? dropPos = null)

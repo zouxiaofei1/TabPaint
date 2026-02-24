@@ -118,7 +118,7 @@ namespace TabPaint
                     {
                         _enDict = new ResourceDictionary { Source = new Uri("pack://application:,,,/Resources/Lang.en-US.xaml") };
                     }
-                    catch { }
+                    catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
                 }
                 if (_enDict != null && _enDict.Contains(key)) return _enDict[key] as string;
             }
@@ -284,7 +284,7 @@ namespace TabPaint
                         var color = (Color)ColorConverter.ConvertFromString(hex);
                         _customColors.Add(color);
                     }
-                    catch { }
+                    catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
                 }
             }
             RenderCustomColors();
@@ -732,7 +732,7 @@ namespace TabPaint
                     SelectedColor = c;
                     if (InputAlpha != null) InputAlpha.Text = "255";
                 }
-                catch { }
+                catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
             }
             else if (hex.Length == 8)
             {
@@ -749,7 +749,7 @@ namespace TabPaint
                     SelectedColor = c;
                     if (InputAlpha != null) InputAlpha.Text = a.ToString();
                 }
-                catch { }
+                catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
             }
         }
 

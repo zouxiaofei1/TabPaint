@@ -14,8 +14,6 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using System.Net.Http;
-using System.Threading.Tasks;
-using System.Text.RegularExpressions;
 
 //设置窗口
 
@@ -46,6 +44,7 @@ namespace TabPaint
             this.Loaded += (s, e) =>
             {
                 CheckUpdateOnLoad(); // <--- 调用自动检查
+                UpdateSpecialNavItemsVisibility("General");
                     if (MainContent.Content == null)
                 { 
                     if (NavListBox.Items.Count > 0)
@@ -298,7 +297,10 @@ namespace TabPaint
             if (TxtView != null) TxtView.Visibility = textVis;
             if (TxtShortcuts != null) TxtShortcuts.Visibility = textVis;
             if (TxtAdvanced != null) TxtAdvanced.Visibility = textVis;
-            if (TxtAbout != null) TxtAbout.Visibility = textVis; if (TxtPlugins != null) TxtPlugins.Visibility = textVis;
+            if (TxtAbout != null) TxtAbout.Visibility = textVis;
+            if (TxtPlugins != null) TxtPlugins.Visibility = textVis;
+            if (TxtSystemReport != null) TxtSystemReport.Visibility = textVis;
+            if (FindName("TxtAgreement") is TextBlock txtAgreement) txtAgreement.Visibility = textVis;
         }
 
         protected override void OnSourceInitialized(EventArgs e)
@@ -363,6 +365,7 @@ namespace TabPaint
 
         private void NavigateToPage(string tag)
         {
+            UpdateSpecialNavItemsVisibility(tag);
             UserControl page = null;
 
             // 懒加载：如果缓存里没有，就创建新的
@@ -380,6 +383,12 @@ namespace TabPaint
                     case "Plugins":
                         page = new Pages.PluginPage();
                         break;
+                    case "SystemReport":
+                        page = new Pages.SystemReportPage();
+                        break;
+                    case "Agreement":
+                        page = new Pages.AgreementPage();
+                        break;
                     case "About":
                         page = new Pages.AboutPage();
                         break;
@@ -392,6 +401,67 @@ namespace TabPaint
             if (page != null)
             {
                 MainContent.Content = page;
+            }
+        }
+
+        public bool NavigateToTag(string tag)
+        {
+            if (string.IsNullOrWhiteSpace(tag)) return false;
+
+            var item = FindNavItemByTag(tag);
+            if (item == null)
+            {
+                NavigateToPage(tag);
+                return MainContent.Content != null;
+            }
+
+            _isInternalChange = true;
+            NavListBox.SelectedItem = item;
+            BottomListBox.SelectedIndex = -1;
+            _isInternalChange = false;
+
+            NavigateToPage(tag);
+            return true;
+        }
+
+        private ListBoxItem? FindNavItemByTag(string tag)
+        {
+            foreach (var obj in NavListBox.Items)
+            {
+                if (obj is ListBoxItem item && string.Equals(item.Tag?.ToString(), tag, StringComparison.Ordinal))
+                {
+                    return item;
+                }
+            }
+
+            return null;
+        }
+
+        private void UpdateSpecialNavItemsVisibility(string tag)
+        {
+            var pluginsItem = FindNavItemByTag("Plugins");
+            var systemReportItem = FindNavItemByTag("SystemReport");
+            var agreementItem = FindNavItemByTag("Agreement");
+
+            if (pluginsItem != null)
+            {
+                pluginsItem.Visibility = string.Equals(tag, "Plugins", StringComparison.Ordinal)
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
+            }
+
+            if (systemReportItem != null)
+            {
+                systemReportItem.Visibility = string.Equals(tag, "SystemReport", StringComparison.Ordinal)
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
+            }
+
+            if (agreementItem != null)
+            {
+                agreementItem.Visibility = string.Equals(tag, "Agreement", StringComparison.Ordinal)
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
             }
         }
 

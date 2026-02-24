@@ -28,7 +28,7 @@ namespace TabPaint
                 Thread.CurrentThread.CurrentCulture = ci;
                 Thread.CurrentThread.CurrentUICulture = ci;
             }
-            catch   {   }
+            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
 
             var app = Application.Current;
             if (app == null) return;

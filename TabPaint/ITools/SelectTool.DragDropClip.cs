@@ -201,7 +201,7 @@ namespace TabPaint
                             }
                         }
                     }
-                    catch { }
+                    catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
 
                     // ★ 优先级3：标准图像格式（会丢失透明度，但兼容外部程序）
                     if (sourceBitmap == null && dataObj != null && dataObj.GetDataPresent(DataFormats.Bitmap))

@@ -620,11 +620,11 @@ namespace TabPaint
                             string? oldTabDir = oldTab.WorkDirectory;
                             if (string.IsNullOrEmpty(oldTabDir) && !string.IsNullOrEmpty(oldTab.OriginalPath) && !IsVirtualPath(oldTab.OriginalPath))
                             {
-                                try { oldTabDir = System.IO.Path.GetDirectoryName(oldTab.OriginalPath); } catch { }
+                                try { oldTabDir = System.IO.Path.GetDirectoryName(oldTab.OriginalPath); } catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
                             }
                             if (oldTabDir != null)
                             {
-                                try { oldTabDir = System.IO.Path.GetFullPath(oldTabDir); } catch { }
+                                try { oldTabDir = System.IO.Path.GetFullPath(oldTabDir); } catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
                             }
 
                             bool isDifferentDir = (currentContextDir == null) ||
@@ -681,7 +681,7 @@ namespace TabPaint
                 }
                 if (File.Exists(AppConsts.LegacySessionPath))
                 {
-                    try { File.Delete(AppConsts.LegacySessionPath); } catch { }
+                    try { File.Delete(AppConsts.LegacySessionPath); } catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
                 }
             }
             catch (Exception ex)
@@ -1141,7 +1141,7 @@ namespace TabPaint
                         string tabDir = info.WorkDirectory;
                         if (string.IsNullOrEmpty(tabDir) && !string.IsNullOrEmpty(info.OriginalPath) && !IsVirtualPath(info.OriginalPath))
                         {
-                            try { tabDir = System.IO.Path.GetDirectoryName(info.OriginalPath); } catch { }
+                            try { tabDir = System.IO.Path.GetDirectoryName(info.OriginalPath); } catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
                         }
                         if (tabDir != null) tabDir = System.IO.Path.GetFullPath(tabDir);
 

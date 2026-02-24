@@ -173,7 +173,7 @@ namespace TabPaint
                 uint colorDefault = 0xFFFFFFFF;
                 DwmSetWindowAttribute(hwnd, AppConsts.DWMWA_BORDER_COLOR, ref colorDefault, sizeof(uint));
             }
-            catch { }
+            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
         }
         public static void HideBorder(Window window)
         {
@@ -185,7 +185,7 @@ namespace TabPaint
                 uint colorNone = 0xFFFFFFFE;
                 DwmSetWindowAttribute(hwnd, AppConsts.DWMWA_BORDER_COLOR, ref colorNone, sizeof(uint));
             }
-            catch { }
+            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
         }
     }
 

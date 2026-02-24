@@ -1010,6 +1010,7 @@ namespace TabPaint
                                        _selectionData, _selectionRect.Width * 4, 0);
 
                 ctx.SelectionPreview.Source = previewBmp;
+                ctx.SelectionPreview.Clip = null;
 
                 SetPreviewPosition(ctx, _selectionRect.X, _selectionRect.Y);
                 mw.UpdateSelectionScalingMode();

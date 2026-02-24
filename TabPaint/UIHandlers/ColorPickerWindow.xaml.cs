@@ -132,7 +132,7 @@ namespace TabPaint
                     if (_colorTextRgb != null) _colorTextRgb.Text = $"RGB: {c.R}, {c.G}, {c.B}";
                     if (_outerRing != null) _outerRing.Stroke = new SolidColorBrush(c);
                 }
-                catch { }
+                catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
             }
         }
 
@@ -152,7 +152,7 @@ namespace TabPaint
                     this.DialogResult = true;
                     this.Close();
                 }
-                catch { }
+                catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
             }
             else if (e.RightButton == MouseButtonState.Pressed)
             {

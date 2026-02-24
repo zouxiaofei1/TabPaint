@@ -485,9 +485,7 @@ namespace TabPaint
                     return (false, null);
                 }
             }
-            catch
-            {
-            }
+            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
 
             return (true, fileToRead);
         }

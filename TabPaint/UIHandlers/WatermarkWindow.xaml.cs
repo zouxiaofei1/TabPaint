@@ -305,7 +305,7 @@ namespace TabPaint
                 if (TxtImageName != null) TxtImageName.Text = System.IO.Path.GetFileName(path);
                 UpdatePreview();
             }
-            catch { }
+            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
         }
 
         private void HexInput_TextChanged(object sender, TextChangedEventArgs e)
@@ -324,7 +324,7 @@ namespace TabPaint
                 _isUpdatingColor = false;
                 UpdatePreview();
             }
-            catch { }
+            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
         }
 
         private void UpdateColorInternal(Color color, bool isCustom)
@@ -346,7 +346,7 @@ namespace TabPaint
 
             // 获取当前 DPI 以确保 FormattedText 渲染准确
             double pixelsPerDip = 1.0;
-            try { pixelsPerDip = VisualTreeHelper.GetDpi(this).PixelsPerDip; } catch { }
+            try { pixelsPerDip = VisualTreeHelper.GetDpi(this).PixelsPerDip; } catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
 
             // 实时预览优化：生成统一的全尺寸矢量 Drawing 指令
             var fullDrawing = CreateWatermarkDrawing(_originalBitmap, settings, true, pixelsPerDip);

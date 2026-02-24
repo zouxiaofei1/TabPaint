@@ -256,9 +256,11 @@ namespace TabPaint
 
                                 double xBase = ActualWidth - text.Height - 2;
                                 double yBase = screenPos + (text.Width / 2) + 10;
+                                double textTop = yBase - text.Width;
+                                double textBottom = yBase;
 
                                 // ★ 文字不超出偏移区域
-                                if (yBase - text.Width >= offset)
+                                if (textTop >= offset && textBottom <= maxVal)
                                 {
                                     drawingContext.PushTransform(new RotateTransform(-90, xBase, yBase));
                                     drawingContext.DrawText(text, new Point(xBase, yBase));

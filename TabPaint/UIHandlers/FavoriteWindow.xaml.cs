@@ -100,7 +100,7 @@ namespace TabPaint.UIHandlers
                     this.Owner = null;
                 }
             }
-            catch { }
+            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
         }
         private void SetOwnerSafe(Window newOwner)
         {
@@ -114,7 +114,7 @@ namespace TabPaint.UIHandlers
                     this.Owner = newOwner;
                 }
             }
-            catch { }
+            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
         }
 
         private void OnSnapStateChanged(SnapEdge edge, bool isSnapped)
@@ -319,7 +319,7 @@ namespace TabPaint.UIHandlers
                                 GetFavoriteContent()?.LoadFavorites(_activePage);
                                 RefreshPageTabs();
                             }
-                            catch { }
+                            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
                         };
                         grid.Children.Add(delBtn);
                     }
@@ -338,7 +338,7 @@ namespace TabPaint.UIHandlers
                                 GetFavoriteContent()?.LoadFavorites(_activePage);
                                 RefreshPageTabs();
                             }
-                            catch { }
+                            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
                         }
                     };
                     menu.Items.Add(deleteItem);
@@ -363,7 +363,7 @@ namespace TabPaint.UIHandlers
                 GetFavoriteContent()?.LoadFavorites(_activePage);
                 RefreshPageTabs();
             }
-            catch { }
+            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)

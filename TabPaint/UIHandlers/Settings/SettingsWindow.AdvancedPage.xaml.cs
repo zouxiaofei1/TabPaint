@@ -105,19 +105,15 @@ namespace TabPaint.Pages
         private void OpenPlugins_Click(object sender, RoutedEventArgs e)
         {
             var win = Window.GetWindow(this) as SettingsWindow;
-            if (win != null)
-            {
-                win.NavListBox.SelectedIndex = 5; // Plugins item index
-            }
+            win?.NavigateToTag("Plugins");
         }
 
         private void CollectSystemReport_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                var reportWindow = new TabPaint.Windows.SystemReportWindow();
-                reportWindow.Owner = Window.GetWindow(this);
-                reportWindow.ShowDialog();
+                var win = Window.GetWindow(this) as SettingsWindow;
+                win?.NavigateToTag("SystemReport");
             }
             catch (Exception ex)
             {

@@ -281,7 +281,7 @@ namespace TabPaint.Controls
                             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                         method?.Invoke(LargePreviewPopup, null);
                     }
-                    catch { }
+                    catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
                 }), System.Windows.Threading.DispatcherPriority.Render);
             }
         }
@@ -302,7 +302,7 @@ namespace TabPaint.Controls
                     return (frame.PixelWidth, frame.PixelHeight);
                 }
             }
-            catch { }
+            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
             return (0, 0);
         }
 
@@ -414,9 +414,7 @@ namespace TabPaint.Controls
                     }
                 }
             }
-            catch
-            {
-            }
+            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
             return res;
         }
         private int GetLargestFrameIndex(BitmapDecoder decoder)
@@ -443,7 +441,7 @@ namespace TabPaint.Controls
                         bestIndex = i;
                     }
                 }
-                catch { }
+                catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
             }
             return bestIndex;
         }

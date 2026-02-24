@@ -140,7 +140,7 @@ namespace TabPaint
         }
         private object TryGetQuery(BitmapMetadata metadata, string query)
         {
-            try { if (metadata.ContainsQuery(query)) return metadata.GetQuery(query); } catch { }
+            try { if (metadata.ContainsQuery(query)) return metadata.GetQuery(query); } catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
             return null;
         }
         private double ParseUnsignedRational(object value)    // 解析无符号分数 (RATIONAL)

@@ -181,7 +181,7 @@ namespace TabPaint
                                 _mouseDownTabItem.BackupPath = System.IO.Path.Combine(_cacheDir, cacheFileName);
                             }
                             _ = Task.Run(() => {
-                                try { SaveBitmapToPng(bmp, _mouseDownTabItem.BackupPath); } catch { }
+                                try { SaveBitmapToPng(bmp, _mouseDownTabItem.BackupPath); } catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
                             });
                             
                             _mouseDownTabItem.LastBackupTime = DateTime.Now;

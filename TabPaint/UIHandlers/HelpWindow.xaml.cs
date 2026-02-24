@@ -185,7 +185,7 @@ namespace TabPaint
                         _gifDelayTimer.Start();
                     }
                 }
-                catch { }
+                catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
             }));
         }
 
@@ -197,7 +197,7 @@ namespace TabPaint
                 var controller = AnimationBehavior.GetAnimator(MainImageDisplay);
                 if (controller != null) controller.Play();
             }
-            catch { }
+            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
         }
         private void Next()
         {

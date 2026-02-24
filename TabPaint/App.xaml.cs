@@ -18,6 +18,14 @@ namespace TabPaint
     public partial class App : Application
     {
         private static bool _isExiting = false;
+        private static bool _isHandlingFatalException = false;
+
+        private enum ExceptionSeverity
+        {
+            Recoverable,
+            Fatal
+        }
+
         public static void GlobalExit()
         {
             if (_isExiting) return;
@@ -32,7 +40,7 @@ namespace TabPaint
                 }
                 else
                 {
-                    try { window.Close(); } catch { }
+                    try { window.Close(); } catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
                 }
             }
             Application.Current.Shutdown();
@@ -55,23 +63,121 @@ namespace TabPaint
             this.DispatcherUnhandledException += (s, e) =>
             {
                 LogException(e.Exception, "UIThread");
-                e.Handled = true; // 设置为 true 可以防止程序直接闪退，但建议视情况决定是否继续运行
-                ShutdownAppWithErrorMessage(e.Exception);
+                var severity = ClassifyException(e.Exception, "UIThread");
+
+                if (severity == ExceptionSeverity.Recoverable)
+                {
+                    e.Handled = true;
+                    //NotifyRecoverableException(e.Exception);
+                    return;
+                }
+
+                e.Handled = true;
+                HandleFatalException(e.Exception, "UIThread");
             };
 
             AppDomain.CurrentDomain.UnhandledException += (s, e) =>
             {
                 var exception = e.ExceptionObject as Exception;
                 LogException(exception, "AppDomain");
+                HandleFatalException(exception, "AppDomain");
             };
 
             TaskScheduler.UnobservedTaskException += (s, e) =>
             {
                 LogException(e.Exception, "TaskScheduler");
-                e.SetObserved(); 
+                var severity = ClassifyException(e.Exception, "TaskScheduler");
+                e.SetObserved();
+
+                if (severity == ExceptionSeverity.Fatal)
+                {
+                    HandleFatalException(e.Exception, "TaskScheduler");
+                }
             };
         }
-        private static void LogException(Exception ex, string source)
+
+        private static ExceptionSeverity ClassifyException(Exception ex, string source)
+        {
+            if (ex == null)
+            {
+                return source == "UIThread" ? ExceptionSeverity.Recoverable : ExceptionSeverity.Fatal;
+            }
+
+            return IsFatalException(ex) ? ExceptionSeverity.Fatal : ExceptionSeverity.Recoverable;
+        }
+
+        private static bool IsFatalException(Exception ex)
+        {
+            if (ex is OutOfMemoryException
+                or StackOverflowException
+                or AccessViolationException
+                or SEHException)
+            {
+                return true;
+            }
+
+            if (ex is AggregateException aggregate)
+            {
+                var flattened = aggregate.Flatten();
+                return flattened.InnerExceptions.Any(IsFatalException);
+            }
+
+            return ex.InnerException != null && IsFatalException(ex.InnerException);
+        }
+
+        private void NotifyRecoverableException(Exception ex)
+        {
+            try
+            {
+                string errorMessage = ex?.Message ?? "未知异常";
+                string msg = $"TabPaint 捕获到可恢复异常，程序将继续运行。\n\n错误信息: {errorMessage}\n\n建议先保存当前工作。\n日志位置: {LogDirectory}";
+                FluentMessageBox.Show(msg, "已恢复异常", MessageBoxButton.OK, MessageBoxImage.Warning, null, LogDirectory);
+            }
+            catch (Exception notifyEx)
+            {
+                Debug.WriteLine($"Failed to show recoverable exception notification: {notifyEx}");
+            }
+        }
+
+        private void HandleFatalException(Exception ex, string source)
+        {
+            if (_isHandlingFatalException) return;
+            _isHandlingFatalException = true;
+
+            try
+            {
+                Debug.WriteLine($"Fatal exception from {source}: {ex}");
+
+                if (Application.Current?.Dispatcher != null)
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        ShutdownAppWithErrorMessage(ex ?? new Exception($"Fatal exception from {source}"));
+                    });
+                }
+                else
+                {
+                    Debug.WriteLine($"Dispatcher unavailable when handling fatal exception from {source}.");
+                }
+            }
+            catch (Exception handleEx)
+            {
+                Debug.WriteLine($"Failed to process fatal exception: {handleEx}");
+            }
+            finally
+            {
+                try
+                {
+                    GlobalExit();
+                }
+                catch (Exception exitEx)
+                {
+                    Debug.WriteLine($"GlobalExit failed: {exitEx}");
+                }
+            }
+        }
+
+        private static void LogException(Exception? ex, string source)
         {
             try
             {
@@ -120,7 +226,7 @@ namespace TabPaint
             try
             {
             }
-            catch { }
+            catch (global::System.Exception ignoredEx) { global::System.Diagnostics.Debug.WriteLine(ignoredEx); }
 
           //  Environment.Exit(1);
         }
@@ -136,7 +242,7 @@ namespace TabPaint
                 System.Runtime.ProfileOptimization.SetProfileRoot(profileRoot);
                 System.Runtime.ProfileOptimization.StartProfile("Startup.profile");
             }//4ms
-            catch { }
+            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
  
             SetupExceptionHandling();//检查单实例0.9ms
             if (!SingleInstance.IsFirstInstance())//0.3ms
@@ -291,7 +397,7 @@ namespace TabPaint
                 AiService.Instance.ReleaseAllModels();
                 SingleInstance.Release();
             }
-            catch { }
+            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
             base.OnExit(e);
             Environment.Exit(0);
         }

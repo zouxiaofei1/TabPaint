@@ -141,7 +141,7 @@ namespace TabPaint.Controls
                     if (ComputeFileHash(existing) == sourceHash)
                         return true;
                 }
-                catch { }
+                catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
             }
             return false;
         }
@@ -163,7 +163,7 @@ namespace TabPaint.Controls
                     if (ComputeFileHash(existing) == sourceHash)
                         return true;
                 }
-                catch { }
+                catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
             }
             return false;
         }
@@ -252,7 +252,7 @@ namespace TabPaint.Controls
                         }
                     }
                 }
-                catch { }
+                catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
             }
             var remaining = allFiles.OrderByDescending(f => File.GetCreationTime(f)).ToList();
             result.AddRange(remaining);
@@ -283,7 +283,7 @@ namespace TabPaint.Controls
                 }
                 File.WriteAllLines(orderFilePath, files);
             }
-            catch { }
+            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
         }
 
         private void AddPlusButton()
@@ -441,7 +441,7 @@ namespace TabPaint.Controls
                 bitmap.EndInit();
                 img.Source = bitmap;
             }
-            catch { }
+            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
 
             Action doDelete = () =>
             {
@@ -491,7 +491,7 @@ namespace TabPaint.Controls
                         SaveOrder();
                         FavoritesChanged?.Invoke(this, EventArgs.Empty);
                     }
-                    catch { }
+                    catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
                 };
 
                 removeStoryboard.Begin();
@@ -522,7 +522,7 @@ namespace TabPaint.Controls
                 RenderTransformOrigin = new Point(0.5, 0.5),
                 RenderTransform = new ScaleTransform(0.7, 0.7)
             };
-            try { deleteBtn.Style = (Style)FindResource("OtherCloseButtonStyle"); } catch { }
+            try { deleteBtn.Style = (Style)FindResource("OtherCloseButtonStyle"); } catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
 
             grid.Children.Add(deleteBtn);
             grid.MouseEnter += (s, e) =>
@@ -593,7 +593,7 @@ namespace TabPaint.Controls
                     string argument = "/select,\"" + filePath + "\"";
                     System.Diagnostics.Process.Start("explorer.exe", argument);
                 }
-                catch { }
+                catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
             };
 
             menu.Items.Add(openItem);
@@ -722,7 +722,7 @@ namespace TabPaint.Controls
                 AddImageToUI(destPath);
                 FavoritesChanged?.Invoke(this, EventArgs.Empty);
             }
-            catch { }
+            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
         }
 
         private void ScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
@@ -753,7 +753,7 @@ namespace TabPaint.Controls
                 AddImageToUI(destPath);
                 FavoritesChanged?.Invoke(this, EventArgs.Empty);
             }
-            catch { }
+            catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
         }
     }
 }

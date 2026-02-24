@@ -1,0 +1,85 @@
+<UserControl x:Class="TabPaint.Pages.AgreementPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="500"
+             Background="Transparent">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style x:Key="AgreementPreviewStyle" TargetType="StackPanel">
+                <Setter Property="Visibility" Value="Visible"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsExpanded, RelativeSource={RelativeSource AncestorType=Expander}}" Value="True">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style x:Key="AgreementFullStyle" TargetType="TextBlock">
+                <Setter Property="Visibility" Value="Collapsed"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsExpanded, RelativeSource={RelativeSource AncestorType=Expander}}" Value="True">
+                        <Setter Property="Visibility" Value="Visible"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <StackPanel Margin="24,24,44,24">
+        <TextBlock Text="{DynamicResource L_Settings_Agreement_Title}"
+                   FontSize="20"
+                   FontWeight="SemiBold"
+                   Foreground="{DynamicResource TextPrimaryBrush}"
+                   Margin="0,0,0,8"/>
+
+        <TextBlock Text="{DynamicResource L_Settings_Agreement_Desc}"
+                   Margin="0,0,0,14"
+                   Foreground="{DynamicResource TextTertiaryBrush}"
+                   TextWrapping="Wrap"/>
+
+        <Expander IsExpanded="True" Margin="0,0,0,10">
+            <Expander.Header>
+                <StackPanel>
+                    <TextBlock Text="{DynamicResource L_Settings_Agreement_MIT_Title}" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold"/>
+                    <StackPanel Style="{StaticResource AgreementPreviewStyle}" Margin="0,4,0,0">
+                        <TextBlock Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,4"><Run Text="• "/><Run Text="{DynamicResource L_Settings_Agreement_MIT_Key1}"/></TextBlock>
+                        <TextBlock Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,4"><Run Text="• "/><Run Text="{DynamicResource L_Settings_Agreement_MIT_Key2}"/></TextBlock>
+                        <TextBlock Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap"><Run Text="• "/><Run Text="{DynamicResource L_Settings_Agreement_MIT_Key3}"/></TextBlock>
+                    </StackPanel>
+                </StackPanel>
+            </Expander.Header>
+            <Border Margin="0,8,0,0" Padding="12" CornerRadius="6" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Foreground="{DynamicResource TextSecondaryBrush}" Style="{StaticResource AgreementFullStyle}" TextWrapping="Wrap" xml:space="preserve" Text="{DynamicResource L_Settings_Agreement_MIT_Full}"/>
+                </StackPanel>
+            </Border>
+        </Expander>
+
+
+        <Expander  IsExpanded="True" >
+            <Expander.Header>
+                <StackPanel>
+                    <TextBlock Foreground="{DynamicResource TextPrimaryBrush}" Text="{DynamicResource L_Settings_Agreement_Terms_Title}" FontWeight="SemiBold"/>
+                    <StackPanel Style="{StaticResource AgreementPreviewStyle}" Margin="0,4,0,0">
+                        <TextBlock Foreground="{DynamicResource TextPrimaryBrush}"  TextWrapping="Wrap" Margin="0,0,0,4"><Run Text="• "/><Run Text="{DynamicResource L_Settings_Agreement_Terms_Key1}"/></TextBlock>
+                        <TextBlock  Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,4"><Run Text="• "/><Run Text="{DynamicResource L_Settings_Agreement_Terms_Key2}"/></TextBlock>
+                        <TextBlock Foreground="{DynamicResource TextPrimaryBrush}"  TextWrapping="Wrap"><Run Text="• "/><Run Text="{DynamicResource L_Settings_Agreement_Terms_Key3}"/></TextBlock>
+                    </StackPanel>
+                </StackPanel>
+            </Expander.Header>
+            <Border Margin="0,8,0,0" Padding="12" CornerRadius="6" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Foreground="{DynamicResource TextSecondaryBrush}" Style="{StaticResource AgreementFullStyle}" TextWrapping="Wrap" Text="{DynamicResource L_Settings_Agreement_Placeholder}"/>
+                </StackPanel>
+            </Border>
+        </Expander>
+    </StackPanel>
+</UserControl>

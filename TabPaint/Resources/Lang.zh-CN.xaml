@@ -9,6 +9,7 @@
     <sys:String x:Key="L_Settings_Nav_Shortcuts">快捷键设置</sys:String>
     <sys:String x:Key="L_Settings_Nav_Advanced">高级</sys:String>
     <sys:String x:Key="L_Settings_Nav_About">关于</sys:String>
+    <sys:String x:Key="L_Settings_Nav_Agreement">协议</sys:String>
     <sys:String x:Key="L_Settings_Toast_Saved">设置已保存</sys:String>
     <sys:String x:Key="L_Settings_Toast_Conflict">快捷键与“{0}”冲突，已自动重置旧项</sys:String>
     <sys:String x:Key="L_Settings_Toast_ShellIntegration_EnableFailed">启用系统右键菜单失败：{0}</sys:String>
@@ -278,6 +279,44 @@
     <sys:String x:Key="L_Settings_About_Github">GitHub 主页</sys:String>
     <sys:String x:Key="L_Settings_About_CheckUpdate">检查更新</sys:String>
     <sys:String x:Key="L_Settings_About_Help">帮助文档</sys:String>
+
+    <!-- Agreement -->
+    <sys:String x:Key="L_Settings_Agreement_Title">开源协议与政策</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Desc">点击可展开查看完整内容</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_MIT_Title">MIT 协议</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_MIT_Key1">允许商业使用、修改、分发与私有化使用。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_MIT_Key2">分发时需附带原始版权声明与许可声明。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_MIT_Key3">软件按“原样”提供，作者不承担任何担保责任。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_MIT_Full" xml:space="preserve">MIT License
+
+Copyright (c) 2025 TabPaint Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Privacy_Title">隐私政策</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Privacy_Key1">将说明收集的信息类型与使用目的。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Privacy_Key2">将说明数据存储、传输与保护方式。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Privacy_Key3">将说明用户对数据的访问与删除权利。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Terms_Title">用户条款</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Terms_Key1">将说明产品的使用范围与限制。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Terms_Key2">将说明服务中断、更新与责任边界。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Terms_Key3">将说明争议处理方式与条款变更规则。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Placeholder">（占位符）暂未发布，后续版本补充。</sys:String>
 
     <!-- ToolBar -->
     <sys:String x:Key="L_ToolBar_Tool_Select">选择区域</sys:String>
