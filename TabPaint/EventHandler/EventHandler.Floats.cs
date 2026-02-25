@@ -26,6 +26,8 @@ namespace TabPaint
 
         private bool _isTextBarDragging = false;
         private System.Windows.Point _textBarLastPoint;
+        private bool _isOcrBarDragging = false;
+        private System.Windows.Point _ocrBarLastPoint;
         private const double DragSafetyMargin = AppConsts.DragSafetyMargin;
         private void FontSettingChanged(object sender, RoutedEventArgs e)
         {
@@ -111,6 +113,21 @@ namespace TabPaint
                 _isTextBarDragging = false;
                 TextMenu.TextEditBar.ReleaseMouseCapture(); // 释放鼠标捕获
             }
+        }
+
+        private void OcrFloatBar_BarMouseDown(object sender, MouseButtonEventArgs e)
+        {
+
+        }
+
+        private void OcrFloatBar_BarMouseMove(object sender, MouseEventArgs e)
+        {
+
+        }
+
+        private void OcrFloatBar_BarMouseUp(object sender, MouseButtonEventArgs e)
+        {
+
         }
 
         private void TextAlign_Click(object sender, RoutedEventArgs e)

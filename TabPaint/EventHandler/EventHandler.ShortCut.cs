@@ -240,6 +240,16 @@ namespace TabPaint
         }
         private void MainWindow_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
+            if (e.Key == Key.Escape)
+            {
+                var ocrHolder = GetOcrFloatBarHolder();
+                if (ocrHolder != null && ocrHolder.Visibility == Visibility.Visible)
+                {
+                    HideOcrOverlay();
+                    e.Handled = true;
+                    return;
+                }
+            }
             if (IsEditingTextField())
             {
                 // 1. 允许基础光标导航和删除键穿透给输入框

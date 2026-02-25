@@ -206,7 +206,20 @@ namespace TabPaint
                 bitmap.Freeze();
                 return bitmap;
             }
-            catch { return null; }
+            catch
+            {
+                try
+                {
+                    using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+                    if (!IsWebpFileOrStream(path, fs)) return null;
+                    fs.Position = 0;
+                    return DecodeWebpWithSkia(fs);
+                }
+                catch
+                {
+                    return null;
+                }
+            }
         }
 
         private void InitializeAutoSave()

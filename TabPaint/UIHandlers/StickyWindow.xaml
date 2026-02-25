@@ -5,6 +5,8 @@
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Topmost="True" ShowInTaskbar="False"
         MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        MouseEnter="Window_MouseEnter"
+        MouseLeave="Window_MouseLeave"
         MouseDoubleClick="Window_MouseDoubleClick"
         MouseWheel="Window_MouseWheel">
     <Window.Resources>
@@ -12,6 +14,27 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+
+            <Style x:Key="StickyCloseButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Foreground" Value="#E6FFFFFF"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Foreground" Value="White"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
     <Grid>
@@ -69,5 +92,19 @@
 
             <Image x:Name="DisplayImage" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
         </Border>
+
+        <Button x:Name="HoverCloseButton"
+                Width="24"
+                Height="24"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="0,8,8,0"
+                Opacity="0"
+                Visibility="Collapsed"
+                Style="{StaticResource StickyCloseButtonStyle}"
+                Click="OnCloseClick"
+                ToolTip="Close">
+            <TextBlock Text="✕" FontSize="15" FontWeight="SemiBold"/>
+        </Button>
     </Grid>
 </Window>

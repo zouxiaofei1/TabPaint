@@ -268,6 +268,10 @@
                                             <Image Name="BackgroundImage" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="NearestNeighbor" />
                                             <Image Name="WatermarkPreviewLayer" Stretch="Fill" HorizontalAlignment="Left" VerticalAlignment="Top" SnapsToDevicePixels="True" IsHitTestVisible="False" Visibility="Collapsed" RenderOptions.BitmapScalingMode="Linear"/>
                                             <Image Name="GifPlayerImage" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" SnapsToDevicePixels="True" Visibility="Collapsed" gif:AnimationBehavior.AutoStart="True" gif:AnimationBehavior.RepeatBehavior="Forever" />
+                                            <Canvas Name="OcrOverlayCanvas" Background="{x:Null}" Visibility="Collapsed" IsHitTestVisible="False" Panel.ZIndex="70">
+                                                <Canvas.Width><Binding ElementName="BackgroundImage" Path="ActualWidth"/></Canvas.Width>
+                                                <Canvas.Height><Binding ElementName="BackgroundImage" Path="ActualHeight"/></Canvas.Height>
+                                            </Canvas>
                                             <Canvas Name="EditorOverlayCanvas" Background="Transparent" IsHitTestVisible="False" Visibility="Visible"/>
                                             <Image Name="SelectionPreview" Stretch="Fill" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False" RenderOptions.BitmapScalingMode="NearestNeighbor" UseLayoutRounding="True" RenderOptions.EdgeMode="Aliased" Margin="0" SnapsToDevicePixels="True" Visibility="Collapsed"/>
                                         </Grid>
@@ -440,6 +444,7 @@
                 <ContentControl x:Name="TaskProgressHolder" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,60" Panel.ZIndex="150" IsTabStop="False" Focusable="False"/>
                 <ContentControl x:Name="SelectionToolHolder" Visibility="Collapsed" HorizontalAlignment="Left" VerticalAlignment="Top" Panel.ZIndex="300" IsTabStop="False" Focusable="False" IsHitTestVisible="True"/>
                 <ContentControl x:Name="SelectionRotateHolder" HorizontalAlignment="Left" VerticalAlignment="Top" Panel.ZIndex="300" IsTabStop="False" Focusable="False"/>
+                <ContentControl x:Name="OcrFloatBarHolder" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,80,0,0" Panel.ZIndex="260" IsTabStop="False" Focusable="False"/>
                 <controls:WandToleranceFloat x:Name="WandTolerancePopup" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,80,0,0" Panel.ZIndex="250" IsTabStop="False" Focusable="False"/>
                 
                 <Border x:Name="ThicknessTip" Background="{DynamicResource TextControlBrush}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="30,0,0,0" Visibility="Collapsed">

@@ -157,6 +157,7 @@ namespace TabPaint
                     writer.Write((int)Current.SelectionClearMode);
                     writer.Write(Current.IsFirstRun);
                     writer.Write(Current.LastLaunchedVersion ?? "");
+                    writer.Write(Current.NewestInstalledVersion ?? "");
                     writer.Write(Current.IsImageBarCompact);
                     writer.Write(Current.AlwaysShowTabCloseButton);
                     writer.Write(Current.StartInViewMode);
@@ -165,6 +166,7 @@ namespace TabPaint
                     writer.Write(Current.EnableIccColorCorrection);
                     writer.Write((int)Current.ThemeMode);
                     writer.Write(Current.IsFixedZoom);
+                    writer.Write(Current.IsWindowTopmost);
                     writer.Write(Current.EnableClipboardMonitor);
                     writer.Write(Current.LastToolName ?? "");
                     writer.Write((int)Current.LastBrushStyle);
@@ -184,6 +186,9 @@ namespace TabPaint
                     writer.Write(Current.DiscardAllOnExit);
                     writer.Write(Current.AutoPopupOnClipboardImage);
                     writer.Write(Current.EnableFileDeleteInPaintMode);
+                    writer.Write(Current.AiOcrPromptShown);
+                    writer.Write(Current.EnableAiOcr);
+                    writer.Write((int)Current.OcrResultAction);
                     writer.Write(Current.IsShapeToolProMode);
                     writer.Write(Current.ViewUseDarkCanvasBackground);
                     writer.Write(Current.ThemeAccentColor ?? "");
@@ -239,13 +244,15 @@ namespace TabPaint
                 using (var stream = File.OpenRead(_binPath))
                 using (var reader = new BinaryReader(stream))
                 {
-                    if (reader.ReadInt32() != AppConsts.AppSettingsBinaryVersion) return false;
+                    int dataVersion = reader.ReadInt32();
+                    if (dataVersion < 7 || dataVersion > AppConsts.AppSettingsBinaryVersion) return false;
 
                     var settings = new AppSettings();
                     settings.Language = (AppLanguage)reader.ReadInt32();
                     settings.SelectionClearMode = (SelectionClearMode)reader.ReadInt32();
                     settings.IsFirstRun = reader.ReadBoolean();
                     settings.LastLaunchedVersion = reader.ReadString();
+                    settings.NewestInstalledVersion = dataVersion >= 8 ? reader.ReadString() : settings.LastLaunchedVersion;
                     settings.IsImageBarCompact = reader.ReadBoolean();
                     settings.AlwaysShowTabCloseButton = reader.ReadBoolean();
                     settings.StartInViewMode = reader.ReadBoolean();
@@ -254,6 +261,7 @@ namespace TabPaint
                     settings.EnableIccColorCorrection = reader.ReadBoolean();
                     settings.ThemeMode = (AppTheme)reader.ReadInt32();
                     settings.IsFixedZoom = reader.ReadBoolean();
+                    settings.IsWindowTopmost = reader.ReadBoolean();
                     settings.EnableClipboardMonitor = reader.ReadBoolean();
                     settings.LastToolName = reader.ReadString();
                     settings.LastBrushStyle = (BrushStyle)reader.ReadInt32();
@@ -273,6 +281,11 @@ namespace TabPaint
                     settings.DiscardAllOnExit = reader.ReadBoolean();
                     settings.AutoPopupOnClipboardImage = reader.ReadBoolean();
                     settings.EnableFileDeleteInPaintMode = reader.ReadBoolean();
+                    settings.AiOcrPromptShown = reader.ReadBoolean();
+                    settings.EnableAiOcr = reader.ReadBoolean();
+                    settings.OcrResultAction = dataVersion >= 10
+                        ? (OcrResultAction)reader.ReadInt32()
+                        : OcrResultAction.EditText;
                     settings.IsShapeToolProMode = reader.ReadBoolean();
                     settings.ViewUseDarkCanvasBackground = reader.ReadBoolean();
                     settings.ThemeAccentColor = reader.ReadString();

@@ -151,6 +151,14 @@ namespace TabPaint
                     HideDragOverlay();
                 }
             }
+            else if (HasBitmapLikeData(e.Data))
+            {
+                e.Effects = DragDropEffects.Copy;
+                ShowDragOverlay(
+                    LocalizationManager.GetString("L_Drag_Insert_Title"),
+                    LocalizationManager.GetString("L_Drag_Insert_Desc")
+                );
+            }
             else if (e.Data.GetDataPresent(DataFormats.Text) || e.Data.GetDataPresent(DataFormats.UnicodeText) || e.Data.GetDataPresent(DataFormats.Rtf))
             {
                 if ((e.AllowedEffects & DragDropEffects.Copy) == DragDropEffects.Copy)
@@ -291,6 +299,16 @@ namespace TabPaint
                             }
                         }
                     }
+                }
+                e.Handled = true;
+            }
+            else if (TryExtractBitmapFromDataObject(e.Data, out var droppedBitmap) && droppedBitmap != null)
+            {
+                _router.SetTool(_tools.Select);
+                if (_tools.Select is SelectTool st)
+                {
+                    Point canvasPos = e.GetPosition(BackgroundImage);
+                    st.InsertImageAsSelection(_ctx, droppedBitmap, true, canvasPos);
                 }
                 e.Handled = true;
             }
@@ -494,7 +512,33 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_CannotInsertImage"), ex.Message),ex);
+                try
+                {
+                    using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                    if (!IsWebpFileOrStream(filePath, fs))
+                    {
+                        ShowToast(string.Format(LocalizationManager.GetString("L_Toast_CannotInsertImage"), ex.Message), ex);
+                        return;
+                    }
+
+                    fs.Position = 0;
+                    var webpBitmap = DecodeWebpWithSkia(fs);
+                    if (webpBitmap == null)
+                    {
+                        ShowToast(string.Format(LocalizationManager.GetString("L_Toast_CannotInsertImage"), ex.Message), ex);
+                        return;
+                    }
+
+                    _router.SetTool(_tools.Select);
+                    if (_tools.Select is SelectTool st)
+                    {
+                        st.InsertImageAsSelection(_ctx, webpBitmap, true, dropPos);
+                    }
+                }
+                catch
+                {
+                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_CannotInsertImage"), ex.Message), ex);
+                }
 
             }
         }

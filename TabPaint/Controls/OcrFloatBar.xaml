@@ -1,0 +1,34 @@
+<UserControl x:Class="TabPaint.Controls.OcrFloatBar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="40" d:DesignWidth="220">
+    <Border Background="{DynamicResource PanelBackgroundBrush}"
+            BorderBrush="{DynamicResource BorderMediumBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Padding="4"
+            x:Name="RootBorder"
+            MouseDown="RootBorder_MouseDown"
+            MouseMove="RootBorder_MouseMove"
+            MouseUp="RootBorder_MouseUp"
+            Cursor="SizeAll">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="10" Opacity="0.15" ShadowDepth="2"/>
+        </Border.Effect>
+        <StackPanel Orientation="Horizontal">
+            <Button x:Name="CopyAllBtn"
+                    Style="{StaticResource RoundedMenuButtonStyle}"
+                    MinWidth="96"
+                    Cursor="Arrow"
+                    Content="{DynamicResource L_OCR_Overlay_CopyAll}"/>
+            <Button x:Name="ConfirmBtn"
+                    Style="{StaticResource RoundedMenuButtonStyle}"
+                    MinWidth="72"
+                    Cursor="Arrow"
+                    Content="{DynamicResource L_Common_OK}"/>
+        </StackPanel>
+    </Border>
+</UserControl>

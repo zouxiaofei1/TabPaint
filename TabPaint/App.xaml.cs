@@ -31,6 +31,8 @@ namespace TabPaint
             if (_isExiting) return;
             _isExiting = true;
 
+            TrayIconService.Dispose();
+
             var windows = Application.Current.Windows.Cast<Window>().ToList();
             foreach (Window window in windows)
             {
@@ -245,6 +247,8 @@ namespace TabPaint
             catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
  
             SetupExceptionHandling();//检查单实例0.9ms
+            TrayIconService.Initialize();
+
             if (!SingleInstance.IsFirstInstance())//0.3ms
             {
                 SingleInstance.SendArgsToFirstInstance(e.Args);
@@ -258,9 +262,18 @@ namespace TabPaint
             {
                 Application.Current.Dispatcher.InvokeAsync(() =>
                 {
+                    static void EnsureWindowVisible(MainWindow window)
+                    {
+                        if (window != null && !window.IsVisible)
+                        {
+                            window.Show();
+                        }
+                    }
+
                     var (existingWindow, existingTab) = TabPaint.MainWindow.FindWindowHostingFile(filePath);
                     if (existingWindow != null && existingTab != null)
                     {
+                        EnsureWindowVisible(existingWindow);
                         RestoreWindow(existingWindow);
                         existingWindow.FocusAndSelectTab(existingTab);
                         return;
@@ -268,6 +281,7 @@ namespace TabPaint
                     var targetWindow = TabPaint.MainWindow.GetCurrentInstance();
                     if (targetWindow != null)
                     {
+                        EnsureWindowVisible(targetWindow);
                         RestoreWindow(targetWindow);
                         var tab = targetWindow.FileTabs.FirstOrDefault(t => t.FilePath == filePath);
 
@@ -294,6 +308,13 @@ namespace TabPaint
                         {
                             targetWindow.FocusAndSelectTab(tab);
                         }
+                    }
+                    else
+                    {
+                        bool inputExists = File.Exists(filePath) || Directory.Exists(filePath);
+                        var newWindow = new MainWindow(filePath, fileExists: inputExists, loadSession: false);
+                        newWindow.Show();
+                        RestoreWindow(newWindow);
                     }
                 });
             });
@@ -332,6 +353,7 @@ namespace TabPaint
             base.OnStartup(e);//<0.1ms
             _mainWindow = new MainWindow(filePath, fileExists);//240ms
             _mainWindow.Show();//340ms
+            TrayIconService.UpdateVisibility();
 
             _mainWindow.Dispatcher.BeginInvoke(new Action(() =>
             {
@@ -349,11 +371,14 @@ namespace TabPaint
             {
                 string currentVersion = NormalizeVersionText(AppConsts.ProgramVersion);
                 string previousVersion = NormalizeVersionText(settings.LastLaunchedVersion);
+                string newestInstalledVersion = NormalizeVersionText(settings.NewestInstalledVersion);
 
                 bool hasPreviousVersion = !string.IsNullOrWhiteSpace(previousVersion);
-                bool isUpgrade = CompareVersion(currentVersion, previousVersion) > 0;
 
-                if (hasPreviousVersion && isUpgrade)
+                // 仅当当前版本超过“历史最高已安装版本”时才显示，避免多版本并存反复触发。
+                bool shouldShowWhatsNew = hasPreviousVersion && CompareVersion(currentVersion, newestInstalledVersion) > 0;
+
+                if (shouldShowWhatsNew)
                 {
                     var win = new WhatsNewWindow(previousVersion, currentVersion)
                     {
@@ -363,6 +388,10 @@ namespace TabPaint
                 }
 
                 settings.LastLaunchedVersion = currentVersion;
+                if (CompareVersion(currentVersion, newestInstalledVersion) > 0)
+                {
+                    settings.NewestInstalledVersion = currentVersion;
+                }
                 SettingsManager.Instance.Save();
             }
             catch (Exception ex)
@@ -394,6 +423,7 @@ namespace TabPaint
         {
             try
             {
+                TrayIconService.Dispose();
                 AiService.Instance.ReleaseAllModels();
                 SingleInstance.Release();
             }

@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:TabPaint"
+             xmlns:controls="clr-namespace:TabPaint.Controls"
              mc:Ignorable="d" 
              d:DesignHeight="600" d:DesignWidth="500"
              Background="Transparent">
@@ -118,6 +119,7 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
+    <Grid>
     <StackPanel Margin="24,24,44,24">
         <TextBlock Text="{DynamicResource L_Settings_Advanced_Title}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20" Foreground="{DynamicResource TextPrimaryBrush}"/>
         <TextBlock Text="{DynamicResource L_Settings_Advanced_Render_Header}" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
@@ -410,4 +412,10 @@
         </Grid>
 
     </StackPanel>
+    <controls:TaskProgressFloat x:Name="FloatFactoryReset"
+                                IsDraggable="False"
+                                Margin="24,0,44,20"
+                                VerticalAlignment="Bottom"
+                                HorizontalAlignment="Stretch"/>
+    </Grid>
 </UserControl>

@@ -19,6 +19,104 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private static bool IsWebpPath(string? filePath)
+        {
+            return string.Equals(System.IO.Path.GetExtension(filePath), ".webp", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsWebpStream(Stream stream)
+        {
+            if (stream == null || !stream.CanSeek) return false;
+
+            long oldPos = stream.Position;
+            try
+            {
+                stream.Position = 0;
+                Span<byte> header = stackalloc byte[12];
+                int read = stream.Read(header);
+                if (read < 12) return false;
+
+                return header[0] == (byte)'R' && header[1] == (byte)'I' && header[2] == (byte)'F' && header[3] == (byte)'F'
+                    && header[8] == (byte)'W' && header[9] == (byte)'E' && header[10] == (byte)'B' && header[11] == (byte)'P';
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                stream.Position = oldPos;
+            }
+        }
+
+        private static bool IsWebpFileOrStream(string? filePath, Stream stream)
+        {
+            return IsWebpPath(filePath) || IsWebpStream(stream);
+        }
+
+        private BitmapSource DecodeWebpWithSkia(Stream stream, int? targetMaxWidth = null, int? targetMaxHeight = null)
+        {
+            try
+            {
+                stream.Position = 0;
+                using var codec = SKCodec.Create(stream);
+                if (codec == null || codec.EncodedFormat != SKEncodedImageFormat.Webp) return null;
+
+                int srcW = codec.Info.Width;
+                int srcH = codec.Info.Height;
+                int dstW = srcW;
+                int dstH = srcH;
+
+                double scale = 1.0;
+                if (targetMaxWidth.HasValue && srcW > targetMaxWidth.Value)
+                {
+                    scale = Math.Min(scale, (double)targetMaxWidth.Value / srcW);
+                }
+                if (targetMaxHeight.HasValue && srcH > targetMaxHeight.Value)
+                {
+                    scale = Math.Min(scale, (double)targetMaxHeight.Value / srcH);
+                }
+
+                if (scale < 1.0)
+                {
+                    dstW = Math.Max(1, (int)Math.Round(srcW * scale));
+                    dstH = Math.Max(1, (int)Math.Round(srcH * scale));
+                }
+
+                using var colorSpace = SKColorSpace.CreateSrgb();
+                var info = new SKImageInfo(dstW, dstH, SKColorType.Bgra8888, SKAlphaType.Premul, colorSpace);
+                using var skBitmap = new SKBitmap(info);
+
+                var result = codec.GetPixels(info, skBitmap.GetPixels());
+                if (result != SKCodecResult.Success && result != SKCodecResult.IncompleteInput)
+                {
+                    return null;
+                }
+
+                return SkiaBitmapToWpfSource(skBitmap);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"WebP Skia Decode Error: {ex.Message}");
+                return null;
+            }
+        }
+
+        private (int Width, int Height)? GetWebpDimensionsWithSkia(Stream stream)
+        {
+            try
+            {
+                stream.Position = 0;
+                using var codec = SKCodec.Create(stream);
+                if (codec == null || codec.EncodedFormat != SKEncodedImageFormat.Webp) return null;
+                return (codec.Info.Width, codec.Info.Height);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         private int GetLargestFrameIndex(BitmapDecoder decoder)
         {
             if (decoder.Frames == null || decoder.Frames.Count == 0) return 0;

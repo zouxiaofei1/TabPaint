@@ -14,7 +14,32 @@
 
     <UserControl.Resources>
         <ResourceDictionary>
+            <Storyboard x:Key="OcrBusyStoryboard" RepeatBehavior="Forever">
+                <DoubleAnimation Storyboard.TargetName="OcrFlowTransform"
+                                 Storyboard.TargetProperty="X"
+                                 From="-1.2" To="1.2" Duration="0:0:1.4"/>
 
+                <DoubleAnimation Storyboard.TargetName="OcrDot1"
+                                 Storyboard.TargetProperty="Opacity"
+                                 From="0.25" To="1"
+                                 Duration="0:0:0.45"
+                                 AutoReverse="True"
+                                 RepeatBehavior="Forever"/>
+                <DoubleAnimation Storyboard.TargetName="OcrDot2"
+                                 Storyboard.TargetProperty="Opacity"
+                                 BeginTime="0:0:0.15"
+                                 From="0.25" To="1"
+                                 Duration="0:0:0.45"
+                                 AutoReverse="True"
+                                 RepeatBehavior="Forever"/>
+                <DoubleAnimation Storyboard.TargetName="OcrDot3"
+                                 Storyboard.TargetProperty="Opacity"
+                                 BeginTime="0:0:0.3"
+                                 From="0.25" To="1"
+                                 Duration="0:0:0.45"
+                                 AutoReverse="True"
+                                 RepeatBehavior="Forever"/>
+            </Storyboard>
         </ResourceDictionary>
     </UserControl.Resources>
     <StatusBar Background="{DynamicResource GlassBackgroundMediumBrush}" 
@@ -47,6 +72,39 @@
                 <TextBlock Margin="4,0,0,0" Text="{Binding ImageSize}" 
                            VerticalAlignment="Center" FontSize="11"
                            Foreground="{DynamicResource TextControlBrush}"/>
+
+                <!-- OCR 等待态特效：流光条 + 三点呼吸 -->
+                <Grid x:Name="OcrBusyEffect" Width="32" Height="12" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="Collapsed">
+                    <Border Height="3"
+                            Width="32"
+                            VerticalAlignment="Center"
+                            CornerRadius="2"
+                            Opacity="0.75"
+                            Background="{DynamicResource BorderLightBrush}"/>
+
+                    <Border Height="3"
+                            Width="32"
+                            VerticalAlignment="Center"
+                            CornerRadius="2"
+                            ClipToBounds="True">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Offset="0" Color="#00FFFFFF"/>
+                                <GradientStop Offset="0.5" Color="#CC66D9FF"/>
+                                <GradientStop Offset="1" Color="#00FFFFFF"/>
+                                <LinearGradientBrush.RelativeTransform>
+                                    <TranslateTransform x:Name="OcrFlowTransform" X="-1.2"/>
+                                </LinearGradientBrush.RelativeTransform>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,1,0">
+                        <Ellipse x:Name="OcrDot1" Width="3" Height="3" Fill="{DynamicResource SystemAccentBrush}" Opacity="0.25" Margin="0,0,2,0"/>
+                        <Ellipse x:Name="OcrDot2" Width="3" Height="3" Fill="{DynamicResource SystemAccentBrush}" Opacity="0.25" Margin="0,0,2,0"/>
+                        <Ellipse x:Name="OcrDot3" Width="3" Height="3" Fill="{DynamicResource SystemAccentBrush}" Opacity="0.25"/>
+                    </StackPanel>
+                </Grid>
             </StackPanel>
         </StatusBarItem>
 

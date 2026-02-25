@@ -26,6 +26,7 @@ namespace TabPaint
         private TaskProgressFloat _taskProgressPopup;
         private SelectionToolBar _selectionToolBar;
         private SelectionRotateFloat _selectionRotatePopup;
+        private OcrFloatBar _ocrFloatBar;
         public TaskProgressFloat TaskProgressPopup
         {
             get
@@ -73,6 +74,26 @@ namespace TabPaint
                     SelectionRotateHolder.Content = _selectionRotatePopup;
                 }
                 return _selectionRotatePopup;
+            }
+        }
+
+        public OcrFloatBar OcrFloatBar
+        {
+            get
+            {
+                if (_ocrFloatBar == null)
+                {
+                    _ocrFloatBar = new OcrFloatBar();
+                    _ocrFloatBar.HorizontalAlignment = HorizontalAlignment.Left;
+                    _ocrFloatBar.VerticalAlignment = VerticalAlignment.Top;
+                    _ocrFloatBar.CopyAllClick += OcrFloatBar_CopyAllClick;
+                    _ocrFloatBar.ConfirmClick += OcrFloatBar_ConfirmClick;
+                    _ocrFloatBar.BarMouseDown += OcrFloatBar_BarMouseDown;
+                    _ocrFloatBar.BarMouseMove += OcrFloatBar_BarMouseMove;
+                    _ocrFloatBar.BarMouseUp += OcrFloatBar_BarMouseUp;
+                    OcrFloatBarHolder.Content = _ocrFloatBar;
+                }
+                return _ocrFloatBar;
             }
         }
 

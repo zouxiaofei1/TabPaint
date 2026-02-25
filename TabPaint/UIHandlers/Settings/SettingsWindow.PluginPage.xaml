@@ -23,14 +23,60 @@
                 <Setter Property="Padding" Value="16"/>
                 <Setter Property="Margin" Value="0,0,0,12"/>
             </Style>
+
+            <Style x:Key="PluginQuickActionTextButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Foreground" Value="{DynamicResource SystemAccentBrush}"/>
+                    </Trigger>
+                    <Trigger Property="IsPressed" Value="True">
+                        <Setter Property="Foreground" Value="{DynamicResource SystemAccentBrush}"/>
+                    </Trigger>
+                    <Trigger Property="IsEnabled" Value="False">
+                        <Setter Property="Opacity" Value="0.65"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
         </ResourceDictionary>
     </UserControl.Resources>
 
     <Grid>
-        <ScrollViewer Style="{StaticResource FluentScrollViewer}">
+        <ScrollViewer x:Name="PluginScrollViewer"
+                      Style="{StaticResource FluentScrollViewer}"
+                      PreviewMouseWheel="PluginScrollViewer_PreviewMouseWheel">
             <StackPanel Margin="24,24,44,24">
                 <TextBlock Text="{DynamicResource L_Settings_Plugins_Title}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                <TextBlock Text="{DynamicResource L_Settings_Plugins_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,24"/>
+                <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               Text="{DynamicResource L_Settings_Plugins_Desc}"
+                               Foreground="{DynamicResource TextTertiaryBrush}"
+                               FontSize="12"
+                               TextWrapping="Wrap"
+                               Margin="0,0,12,0"/>
+                    <Button x:Name="BtnInstallAllPlugins"
+                            Grid.Column="1"
+                            Click="InstallAllPlugins_Click"
+                            Style="{StaticResource PluginQuickActionTextButtonStyle}"
+                            VerticalAlignment="Top"/>
+                </Grid>
 
                 <!-- RMBG 1.4 -->
                 <Border Style="{StaticResource PluginCardStyle}">
@@ -102,6 +148,30 @@
                             <Button x:Name="BtnUninstallInpaint" Content="{DynamicResource L_Settings_Plugins_Uninstall}" Click="UninstallInpaint_Click" Style="{StaticResource Win11SecondaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
                         </StackPanel>
                         <controls:TaskProgressFloat x:Name="FloatInpaint" IsDraggable="False" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,8,0,0"/>
+                    </Grid>
+                </Border>
+
+                <!-- AI OCR Runtime (PaddleOCR) -->
+                <Border Style="{StaticResource PluginCardStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0" Grid.Column="0">
+                            <TextBlock Text="{DynamicResource L_Settings_Plugins_Model_OCR_Title}" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{DynamicResource L_Settings_Plugins_Model_OCR_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="12" Margin="0,4,0,8" TextWrapping="Wrap"/>
+                            <TextBlock x:Name="TxtStatusOcrRuntime" Text="Checking..." FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="0" Grid.Column="1" VerticalAlignment="Center">
+                            <Button x:Name="BtnInstallOcrRuntime" Content="{DynamicResource L_Settings_Plugins_InstallReal}" Click="InstallOcrRuntime_Click" Style="{StaticResource Win11PrimaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
+                            <Button x:Name="BtnUninstallOcrRuntime" Content="{DynamicResource L_Settings_Plugins_Uninstall}" Click="UninstallOcrRuntime_Click" Style="{StaticResource Win11SecondaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
+                        </StackPanel>
+                        <controls:TaskProgressFloat x:Name="FloatOcrRuntime" IsDraggable="False" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,8,0,0"/>
                     </Grid>
                 </Border>
 

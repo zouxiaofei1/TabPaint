@@ -2,23 +2,37 @@
 using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using TabPaint;
-using System.Windows.Input;
 using System.Windows.Media;
+
 namespace TabPaint.Pages
 {
     public partial class AdvancedPage : UserControl
     {
         private enum MemoryUnit { KB, MB, GB }
+        private sealed class FactoryResetDeleteProgress
+        {
+            public int DeletedFiles { get; init; }
+            public int TotalFiles { get; init; }
+            public string CurrentFileName { get; init; } = string.Empty;
+        }
+
+        private const int FactoryResetFloatDelayMs = 350;
+        private const int FactoryResetFloatFadeOutMs = 550;
+
         private MemoryUnit _currentUnit = MemoryUnit.MB;
+        private CancellationTokenSource? _factoryResetCts;
 
         public AdvancedPage()
         {
             InitializeComponent();
             this.Loaded += AdvancedPage_Loaded;
+            FloatFactoryReset.CancelRequested += (s, e) => _factoryResetCts?.Cancel();
         }
 
         private void AdvancedPage_Loaded(object sender, RoutedEventArgs e)
@@ -140,7 +154,7 @@ namespace TabPaint.Pages
         }
 
         // 恢复出厂设置
-        private void FactoryReset_Click(object sender, RoutedEventArgs e)
+        private async void FactoryReset_Click(object sender, RoutedEventArgs e)
         {
             var result = FluentMessageBox.Show(
               LocalizationManager.GetString("L_Settings_Advanced_FactoryReset_Confirm"),
@@ -151,10 +165,20 @@ namespace TabPaint.Pages
 
             if (result != MessageBoxResult.Yes) return;
 
+            _factoryResetCts?.Cancel();
+            _factoryResetCts = new CancellationTokenSource();
+
             try
             {
+                bool deleted = await DeletePythonRuntimeWithProgressAsync(_factoryResetCts.Token);
+                if (!deleted)
+                    return;
+
                 string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TabPaint");
-                string currentExe = Process.GetCurrentProcess().MainModule.FileName;
+                string currentExe = Process.GetCurrentProcess().MainModule?.FileName ?? Environment.ProcessPath ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(currentExe))
+                    throw new InvalidOperationException("Current executable path not found.");
+
                 string tempBatPath = Path.Combine(Path.GetTempPath(), "tabpaint_reset.bat");
                 string batContent = $@"
                         @echo off
@@ -177,8 +201,13 @@ namespace TabPaint.Pages
                 // 关闭当前应用
                 Application.Current.Shutdown();
             }
+            catch (OperationCanceledException)
+            {
+                FloatFactoryReset.Finish();
+            }
             catch (Exception ex)
             {
+                FloatFactoryReset.Finish();
                 FluentMessageBox.Show(
                    string.Format(LocalizationManager.GetString("L_Msg_ResetFailed"), ex.Message),
                    LocalizationManager.GetString("L_Common_Error"),
@@ -187,6 +216,101 @@ namespace TabPaint.Pages
                    Window.GetWindow(this));
             }
         }
+
+        private async Task<bool> DeletePythonRuntimeWithProgressAsync(CancellationToken cancellationToken)
+        {
+            if (!Directory.Exists(AppConsts.PyOcrRuntimeDir))
+                return true;
+
+            var stopwatch = Stopwatch.StartNew();
+            bool floatShown = false;
+
+            FloatFactoryReset.SetIcon("🧹");
+
+            var progress = new Progress<FactoryResetDeleteProgress>(state =>
+            {
+                if (!floatShown && stopwatch.ElapsedMilliseconds < FactoryResetFloatDelayMs)
+                    return;
+
+                floatShown = true;
+
+                int safeTotal = Math.Max(1, state.TotalFiles);
+                double percentage = Math.Min(100, state.DeletedFiles * 100.0 / safeTotal);
+
+                FloatFactoryReset.UpdateProgress(
+                    percentage,
+                    "恢复出厂设置",
+                    $"已删除 {state.DeletedFiles}/{safeTotal}",
+                    TrimFileName(state.CurrentFileName, 44));
+            });
+
+            await Task.Run(() => DeletePythonRuntimeFiles(cancellationToken, progress), cancellationToken);
+
+            if (floatShown)
+            {
+                FloatFactoryReset.UpdateProgress(100, "恢复出厂设置", "已删除完成", string.Empty);
+                FloatFactoryReset.Finish();
+                await Task.Delay(FactoryResetFloatFadeOutMs);
+            }
+
+            return true;
+        }
+
+        private static void DeletePythonRuntimeFiles(CancellationToken cancellationToken, IProgress<FactoryResetDeleteProgress> progress)
+        {
+            string root = AppConsts.PyOcrRuntimeDir;
+            if (!Directory.Exists(root))
+                return;
+
+            var files = Directory.GetFiles(root, "*", SearchOption.AllDirectories);
+            int totalFiles = Math.Max(1, files.Length);
+            int deletedFiles = 0;
+
+            foreach (var file in files)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                try
+                {
+                    File.SetAttributes(file, FileAttributes.Normal);
+                    File.Delete(file);
+                }
+                catch
+                {
+                    // Ignore locked files here; reset batch will retry after app exits.
+                }
+
+                deletedFiles++;
+                progress.Report(new FactoryResetDeleteProgress
+                {
+                    DeletedFiles = deletedFiles,
+                    TotalFiles = totalFiles,
+                    CurrentFileName = Path.GetFileName(file)
+                });
+            }
+
+            var dirs = Directory.GetDirectories(root, "*", SearchOption.AllDirectories);
+            Array.Sort(dirs, (a, b) => b.Length.CompareTo(a.Length));
+
+            foreach (var dir in dirs)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                try { Directory.Delete(dir, false); } catch { }
+            }
+
+            try { Directory.Delete(root, false); } catch { }
+        }
+
+        private static string TrimFileName(string? fileName, int maxLength)
+        {
+            if (string.IsNullOrEmpty(fileName)) return string.Empty;
+            if (maxLength < 8 || fileName.Length <= maxLength) return fileName;
+
+            int keep = (maxLength - 3) / 2;
+            int tail = maxLength - 3 - keep;
+            return fileName.Substring(0, keep) + "..." + fileName.Substring(fileName.Length - tail);
+        }
+
         private void TextBox_LostFocus(object sender, RoutedEventArgs e)// 输入框失去焦点时进行数值校验
         {
             if (sender is TextBox textBox)

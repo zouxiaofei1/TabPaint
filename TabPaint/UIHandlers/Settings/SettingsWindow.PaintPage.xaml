@@ -61,6 +61,29 @@
             </ComboBox>
         </Grid>
 
+        <!-- OCR 结果行为 -->
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220"/>
+                <ColumnDefinition Width="200"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{DynamicResource L_Settings_Paint_OcrResultAction_Title}"/>
+                <TextBlock Text="{DynamicResource L_Settings_Paint_OcrResultAction_Desc}"
+                           Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <ComboBox Grid.Column="1"
+                      Style="{StaticResource FluentComboBoxStyle}"
+                      SelectedValue="{Binding Path=Current.OcrResultAction, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                      SelectedValuePath="Tag"
+                      Height="30" VerticalContentAlignment="Center">
+                <ComboBoxItem Content="{DynamicResource L_Settings_Paint_OcrResultAction_EditText}" Tag="EditText"/>
+                <ComboBoxItem Content="{DynamicResource L_Settings_Paint_OcrResultAction_DirectCopy}" Tag="DirectCopy"/>
+            </ComboBox>
+        </Grid>
+
         <!-- 启用画图模式下的文件删除 -->
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>

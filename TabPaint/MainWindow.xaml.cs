@@ -92,6 +92,8 @@ namespace TabPaint
             base.OnClosed(e);
             if (_lastFocusedInstance == this)
                 _lastFocusedInstance = null;
+
+            TrayIconService.UpdateVisibility();
         }
 
 
@@ -136,6 +138,9 @@ namespace TabPaint
             InitDebounceTimer();//0.3ms
             InitWheelLockTimer(); //0.4ms
             Loaded += MainWindow_Loaded;
+            Loaded += (_, _) => TrayIconService.UpdateVisibility();
+            IsVisibleChanged += (_, _) => TrayIconService.UpdateVisibility();
+            Activated += MainWindow_Activated;
 
             this.Focusable = true;
         }
@@ -236,7 +241,8 @@ namespace TabPaint
                 }
                 else
                 {
-                    MicaEnabled = false;
+                    MicaAcrylicManager.ApplyEffect(this);
+                    MicaEnabled = true;
                 }
 
             var currentSettings = SettingsManager.Instance.Current;//共0.7ms
@@ -378,6 +384,12 @@ namespace TabPaint
                 {
                     if (_activeMonitorInstance == this) _activeMonitorInstance = null;
                 }
+            }
+
+            if (e.PropertyName == nameof(AppSettings.IsWindowTopmost))
+            {
+                this.Topmost = SettingsManager.Instance.Current.IsWindowTopmost;
+                SettingsManager.Instance.Save();
             }
         }
         private void UpdateCanvasVisuals()
@@ -564,9 +576,8 @@ namespace TabPaint
                         }
                     }
                 }
-                else if (dataObj.GetDataPresent(DataFormats.Bitmap))
+                else if (TryExtractBitmapFromDataObject(dataObj, out var bitmapSource))
                 {
-                    var bitmapSource = dataObj.GetData(DataFormats.Bitmap) as BitmapSource;
                     if (bitmapSource != null)
                     {
                         string cacheDir = AppConsts.CacheDir;
@@ -967,18 +978,6 @@ namespace TabPaint
         public void UpdateRulerPositions(bool force = false)
         {
             if (!SettingsManager.Instance.Current.ShowRulers || BackgroundImage == null) return;
-
-            if (!force)
-            {
-                long now = Stopwatch.GetTimestamp();
-                if (now - _lastRulerUpdateTick < GetOverlayRefreshIntervalTicks()) return;
-                _lastRulerUpdateTick = now;
-            }
-            else
-            {
-                _lastRulerUpdateTick = Stopwatch.GetTimestamp();
-            }
-
             Point relativePoint = CanvasWrapper.TranslatePoint(new Point(0, 0), ScrollContainer);
             double currentZoom = ZoomTransform.ScaleX;
             RulerTop.OriginOffset = relativePoint.X;
@@ -1207,7 +1206,15 @@ namespace TabPaint
                 int otherVisibleWindows = Application.Current.Windows.OfType<MainWindow>().Count(w => w != this && w.IsVisible);
                 if (otherVisibleWindows == 0)
                 {
-                    App.GlobalExit();
+                    bool hasVisibleSticky = Application.Current.Windows.OfType<TabPaint.Windows.StickyWindow>().Any(w => w.IsVisible);
+                    if (hasVisibleSticky)
+                    {
+                        OnClosing();
+                    }
+                    else
+                    {
+                        App.GlobalExit();
+                    }
                 }
                 else
                 {
@@ -1223,7 +1230,15 @@ namespace TabPaint
 
             if (mainWindowCount == 0)
             {
-                App.GlobalExit();
+                bool hasVisibleSticky = Application.Current.Windows.OfType<TabPaint.Windows.StickyWindow>().Any(w => w.IsVisible);
+                if (hasVisibleSticky)
+                {
+                    this.Close();
+                }
+                else
+                {
+                    App.GlobalExit();
+                }
             }
             else
                 this.Close();

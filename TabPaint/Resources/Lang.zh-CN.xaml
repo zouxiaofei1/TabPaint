@@ -29,13 +29,20 @@
     <sys:String x:Key="L_Settings_Plugins_Model_SR_Desc">用于图片放大的 AI 模型。</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_Inpaint_Title">AI 橡皮擦</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_Inpaint_Desc">用于物体移除和图片修复的 AI 模型。</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_OCR_Title">AI OCR 文字识别</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_OCR_Desc">用于提取图片文字的 OCR 运行时组件。</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_NotInstalled">未安装</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_Installed">已安装</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Status_InstalledWithSize">已安装（{0}）</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_Downloading">正在下载...</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Install">管理</sys:String>
     <sys:String x:Key="L_Settings_Plugins_InstallReal">安装</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_InstallAll">一键下载</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_InstallAllWithProgress">一键下载{0}/4</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_InstallingAll">下载中...</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall">卸载</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">确定要卸载此 AI 模型吗？</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_OCR_Uninstall_Confirm">确定要卸载 OCR 运行时吗？</sys:String>
     <sys:String x:Key="L_Settings_General_Title">通用</sys:String>
     <sys:String x:Key="L_Settings_General_Startup_Header">启动</sys:String>
     <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Title">自动加载同文件夹图片</sys:String>
@@ -79,6 +86,10 @@
     <sys:String x:Key="L_Settings_Paint_SelectionClear_Transparent">透明</sys:String>
     <sys:String x:Key="L_Settings_Paint_SelectionClear_White">白色</sys:String>
     <sys:String x:Key="L_Settings_Paint_SelectionClear_PreserveAlpha">仅填充颜色 (保留 Alpha)</sys:String>
+    <sys:String x:Key="L_Settings_Paint_OcrResultAction_Title">OCR 结果处理</sys:String>
+    <sys:String x:Key="L_Settings_Paint_OcrResultAction_Desc">选择文字提取后的默认行为</sys:String>
+    <sys:String x:Key="L_Settings_Paint_OcrResultAction_EditText">编辑识别文字</sys:String>
+    <sys:String x:Key="L_Settings_Paint_OcrResultAction_DirectCopy">直接复制到剪贴板</sys:String>
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Title">Delete 键删除当前图片</sys:String>
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Desc">单击 Delete 删除至回收站，2秒内可 Ctrl+Z 撤销</sys:String>
     <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Title">形状工具专业模式</sys:String>
@@ -202,6 +213,7 @@
     <sys:String x:Key="L_Main_Ctx_Cut">剪切</sys:String>
     <sys:String x:Key="L_Main_Ctx_Paste">粘贴</sys:String>
     <sys:String x:Key="L_Main_Ctx_FixedZoom">固定缩放倍数</sys:String>
+    <sys:String x:Key="L_Main_Ctx_WindowTopmost">窗口置顶</sys:String>
     <sys:String x:Key="L_Main_Ctx_ShowRulers">显示标尺</sys:String>
     <sys:String x:Key="L_Main_Ctx_MiniTools">小工具</sys:String>
     <sys:String x:Key="L_Main_Ctx_AI_RemoveBg">AI 一键抠图 (RMBG)</sys:String>
@@ -710,7 +722,14 @@ SOFTWARE.</sys:String>
     <!-- OCR & AI Tools -->
     <sys:String x:Key="L_OCR_Error_NoLangPack">错误：未安装 OCR 语言包，请在 Windows 设置 -> 时间和语言 -> 语言中添加语言包。</sys:String>
     <sys:String x:Key="L_OCR_Status_Processing">正在提取文字...</sys:String>
+    <sys:String x:Key="L_OCR_Overlay_CopyAll">复制全部文本</sys:String>
+    <sys:String x:Key="L_OCR_AiRuntime_FirstPrompt_Title">OCR 运行时未安装</sys:String>
+    <sys:String x:Key="L_OCR_AiRuntime_FirstPrompt_Content">首次使用 AI OCR 需要下载 OCR 运行时。是否继续下载并启用 AI OCR？\n\n选择“否”后将改用系统 OCR（可在 设置-插件 中手动下载后自动恢复 AI OCR）。</sys:String>
     <sys:String x:Key="L_OCR_Failed_Prefix">OCR 识别失败: {0}</sys:String>
+    <sys:String x:Key="L_PyOCR_Runtime_DownloadPython">OCR 运行时：下载 Python</sys:String>
+    <sys:String x:Key="L_PyOCR_Runtime_ExtractPython">OCR 运行时：解压 Python</sys:String>
+    <sys:String x:Key="L_PyOCR_Runtime_InstallPip">OCR 运行时：安装 pip</sys:String>
+    <sys:String x:Key="L_PyOCR_Runtime_Preparing">OCR 运行时准备中</sys:String>
 
     <sys:String x:Key="L_AI_RMBG_MissingRuntime_Title">缺少必要组件</sys:String>
     <sys:String x:Key="L_AI_RMBG_MissingRuntime_Content">AI 抠图功能需要安装 [Visual C++ 2015-2022 Runtime] 运行库才能运行。&#x0a;&#x0a;是否立即前往微软官网下载？</sys:String>

@@ -9,6 +9,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 //
 //复制管理mica和亚克力特效的js
@@ -19,6 +20,8 @@ namespace TabPaint
  
     public static class MicaAcrylicManager
     {
+        private static readonly Dictionary<Window, DispatcherTimer> _refreshTimers = new();
+
         // ===== DWM API（Win11 Mica） =====
         [DllImport("dwmapi.dll")]
         private static extern int DwmSetWindowAttribute(IntPtr hwnd, DWMWINDOWATTRIBUTE attribute, ref int pvAttribute, int cbAttribute);
@@ -118,38 +121,10 @@ namespace TabPaint
         private static void ApplyFallbackBackground(Window window)
         {
             bool isDark = ThemeManager.CurrentAppliedTheme == AppTheme.Dark;
+            Brush sampledBrush = DesktopBackdropSampler.CreateBackdropBrushForWindow(window, isDark);
 
-            // 基础渐变色
-            LinearGradientBrush gradient;
-            if (isDark)
-            {
-                gradient = new LinearGradientBrush
-                {
-                    StartPoint = new Point(0, 0),
-                    EndPoint = new Point(1, 1),
-                    GradientStops = new GradientStopCollection
-            {
-                new GradientStop(Color.FromRgb(0x20, 0x20, 0x20), 0.0),
-                new GradientStop(Color.FromRgb(0x1C, 0x1E, 0x24), 0.5),
-                new GradientStop(Color.FromRgb(0x1A, 0x1A, 0x22), 1.0),
-            }
-                };
-            }
-            else
-            {
-                gradient = new LinearGradientBrush
-                {
-                    StartPoint = new Point(0, 0),
-                    EndPoint = new Point(1, 1),
-                    GradientStops = new GradientStopCollection
-            {
-                new GradientStop(Color.FromRgb(0xF9, 0xF9, 0xF9), 0.0),
-                new GradientStop(Color.FromRgb(0xF3, 0xF3, 0xF8), 0.5),
-                new GradientStop(Color.FromRgb(0xEF, 0xEF, 0xF4), 1.0),
-            }
-                };
-            }
-            gradient.Freeze();
+            // 壁纸采样失败时回退为静态渐变，确保稳定可用。
+            Brush backgroundBrush = sampledBrush ?? CreateGradientFallback(isDark);
 
             // 如果是 MainWindow，我们应用背景到 WindowRootBorder 以支持透明阴影
             if (window is MainWindow mw)
@@ -157,12 +132,12 @@ namespace TabPaint
                 var border = mw.FindName("WindowRootBorder") as Border;
                 if (border != null)
                 {
-                    border.Background = gradient;
+                    border.Background = backgroundBrush;
                 }
             }
             else
             {
-                window.Background = gradient;
+                window.Background = backgroundBrush;
             }
 
             // 叠加噪点纹理（在 MainWindow 中，LayoutRoot 是更好的选择）
@@ -194,6 +169,82 @@ namespace TabPaint
                     rootGrid.Children.Insert(0, noiseRect);
                 }
             }
+
+            AttachRefreshHandlers(window);
+        }
+
+        private static Brush CreateGradientFallback(bool isDark)
+        {
+            LinearGradientBrush gradient;
+            if (isDark)
+            {
+                gradient = new LinearGradientBrush
+                {
+                    StartPoint = new Point(0, 0),
+                    EndPoint = new Point(1, 1),
+                    GradientStops = new GradientStopCollection
+                    {
+                        new GradientStop(Color.FromRgb(0x20, 0x20, 0x20), 0.0),
+                        new GradientStop(Color.FromRgb(0x1C, 0x1E, 0x24), 0.5),
+                        new GradientStop(Color.FromRgb(0x1A, 0x1A, 0x22), 1.0),
+                    }
+                };
+            }
+            else
+            {
+                gradient = new LinearGradientBrush
+                {
+                    StartPoint = new Point(0, 0),
+                    EndPoint = new Point(1, 1),
+                    GradientStops = new GradientStopCollection
+                    {
+                        new GradientStop(Color.FromRgb(0xF9, 0xF9, 0xF9), 0.0),
+                        new GradientStop(Color.FromRgb(0xF3, 0xF3, 0xF8), 0.5),
+                        new GradientStop(Color.FromRgb(0xEF, 0xEF, 0xF4), 1.0),
+                    }
+                };
+            }
+
+            gradient.Freeze();
+            return gradient;
+        }
+
+        private static void AttachRefreshHandlers(Window window)
+        {
+            if (_refreshTimers.ContainsKey(window)) return;
+
+            var timer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(180)
+            };
+            timer.Tick += (_, _) =>
+            {
+                timer.Stop();
+                if (!IsWin11() && window.IsVisible)
+                {
+                    ApplyFallbackBackground(window);
+                }
+            };
+
+            _refreshTimers[window] = timer;
+
+            void QueueRefresh(object s, EventArgs e)
+            {
+                timer.Stop();
+                timer.Start();
+            }
+
+            window.LocationChanged += QueueRefresh;
+            window.SizeChanged += QueueRefresh;
+            window.StateChanged += QueueRefresh;
+            window.Closed += (_, _) =>
+            {
+                timer.Stop();
+                _refreshTimers.Remove(window);
+                window.LocationChanged -= QueueRefresh;
+                window.SizeChanged -= QueueRefresh;
+                window.StateChanged -= QueueRefresh;
+            };
         }
 
         public static void DisableMica(IntPtr hwnd, Window window)

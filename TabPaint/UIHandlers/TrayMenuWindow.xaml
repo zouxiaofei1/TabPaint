@@ -1,0 +1,105 @@
+<Window x:Class="TabPaint.UIHandlers.TrayMenuWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Loaded="Window_Loaded"
+        ShowInTaskbar="False"
+        AllowsTransparency="True"
+        Background="Transparent"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        SizeToContent="WidthAndHeight"
+        Topmost="True">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RenderTransform>
+            <TransformGroup>
+                <ScaleTransform x:Name="MenuScale" ScaleX="0.94" ScaleY="0.94"/>
+                <TranslateTransform x:Name="MenuTranslate" Y="8"/>
+            </TransformGroup>
+        </Grid.RenderTransform>
+
+        <Border MinWidth="146"
+                CornerRadius="16"
+                BorderThickness="1"
+                Padding="10"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                Background="{DynamicResource ControlBackgroundBrush}"
+                Opacity="0"
+                x:Name="MenuCard">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="28"
+                                  ShadowDepth="6"
+                                  Opacity="0.22"
+                                  Direction="270"
+                                  Color="Black"/>
+            </Border.Effect>
+            <Grid>
+                <Border CornerRadius="14"
+                        Background="#14FFFFFF"
+                        IsHitTestVisible="False"/>
+                <StackPanel>
+                    <Grid HorizontalAlignment="Center"
+                          Margin="0,4,0,14">
+                        <Ellipse Width="84"
+                                 Height="84"
+                                 Opacity="0.86"
+                                 IsHitTestVisible="False">
+                            <Ellipse.Fill>
+                                <RadialGradientBrush RadiusX="0.9" RadiusY="0.9">
+                                    <GradientStop Color="#80A0D8FF" Offset="0"/>
+                                    <GradientStop Color="#30A0D8FF" Offset="0.65"/>
+                                    <GradientStop Color="#00A0D8FF" Offset="1"/>
+                                </RadialGradientBrush>
+                            </Ellipse.Fill>
+                        </Ellipse>
+
+                        <Image x:Name="TopIconImage"
+                               Width="72"
+                               Height="72"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Stretch="Uniform"
+                               RenderOptions.BitmapScalingMode="Fant"
+                               SnapsToDevicePixels="True"
+                               UseLayoutRounding="True"
+                               Opacity="0.98"
+                               MouseEnter="TopIconImage_MouseEnter"
+                               MouseLeave="TopIconImage_MouseLeave">
+                            <Image.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform x:Name="IconScale" ScaleX="1" ScaleY="1"/>
+                                    <RotateTransform x:Name="IconRotate" Angle="0"/>
+                                </TransformGroup>
+                            </Image.RenderTransform>
+                            <Image.Effect>
+                                <DropShadowEffect BlurRadius="18"
+                                                  ShadowDepth="0"
+                                                  Opacity="0.3"
+                                                  Color="#90FFFFFF"/>
+                            </Image.Effect>
+                        </Image>
+                    </Grid>
+
+                    <Button x:Name="OpenButton"
+                            Height="36"
+                            Margin="0,0,0,8"
+                            Click="OpenButton_Click"
+                            Style="{StaticResource Win11SecondaryButtonStyle}"
+                            Content="{DynamicResource L_Menu_File_Open}"/>
+                    <Button x:Name="ExitButton"
+                            Height="36"
+                            Click="ExitButton_Click"
+                            Style="{StaticResource Win11SecondaryButtonStyle}"
+                            Content="{DynamicResource L_Menu_File_Exit}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

@@ -10,13 +10,20 @@
     <sys:String x:Key="L_Settings_Plugins_Model_SR_Desc">AI model for 4x image upscaling and enhancement.</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_Inpaint_Title">LaMa (AI Eraser)</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_Inpaint_Desc">AI model for removal and inpainting.</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_OCR_Title">AI OCR</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_OCR_Desc">Runtime component for extracting text from images.</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_NotInstalled">Not Installed</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_Installed">Installed</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Status_InstalledWithSize">Installed ({0})</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_Downloading">Downloading...</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Install">Manage</sys:String>
     <sys:String x:Key="L_Settings_Plugins_InstallReal">Install</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_InstallAll">Install All</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_InstallAllWithProgress">One-click download {0}/4</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_InstallingAll">Installing...</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall">Uninstall</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">Are you sure you want to uninstall this AI model? </sys:String>
+    <sys:String x:Key="L_Settings_Plugins_OCR_Uninstall_Confirm">Are you sure you want to uninstall the OCR runtime?</sys:String>
     <sys:String x:Key="L_Settings_Nav_Plugins">Plugins</sys:String>
     <sys:String x:Key="L_ImgBar_NewImage">New Image</sys:String>
     <sys:String x:Key="L_CreateNewWorkSpate">Create New WorkSpace</sys:String>
@@ -88,6 +95,10 @@
     <sys:String x:Key="L_Settings_Paint_SelectionClear_Transparent">Transparent</sys:String>
     <sys:String x:Key="L_Settings_Paint_SelectionClear_White">White</sys:String>
     <sys:String x:Key="L_Settings_Paint_SelectionClear_PreserveAlpha">Fill color only (keep alpha)</sys:String>
+    <sys:String x:Key="L_Settings_Paint_OcrResultAction_Title">OCR result action</sys:String>
+    <sys:String x:Key="L_Settings_Paint_OcrResultAction_Desc">Choose what happens after text extraction</sys:String>
+    <sys:String x:Key="L_Settings_Paint_OcrResultAction_EditText">Edit extracted text</sys:String>
+    <sys:String x:Key="L_Settings_Paint_OcrResultAction_DirectCopy">Directly copy to clipboard</sys:String>
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Title">Allow Delete key to delete file</sys:String>
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Desc">Allow pressing Delete to delete the current file</sys:String>
     <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Title">Shape Tool Professional Mode</sys:String>
@@ -262,6 +273,7 @@
     <sys:String x:Key="L_Main_Ctx_Cut">Cut</sys:String>
     <sys:String x:Key="L_Main_Ctx_Paste">Paste</sys:String>
     <sys:String x:Key="L_Main_Ctx_FixedZoom">Fixed zoom ratio</sys:String>
+    <sys:String x:Key="L_Main_Ctx_WindowTopmost">Always on top</sys:String>
     <sys:String x:Key="L_Main_Ctx_ShowRulers">Show rulers</sys:String>
     <sys:String x:Key="L_Main_Ctx_MiniTools">Mini tools</sys:String>
     <sys:String x:Key="L_Main_Ctx_AI_RemoveBg">AI remove background (RMBG)</sys:String>
@@ -728,7 +740,14 @@ SOFTWARE.</sys:String>
     <!-- OCR & AI Tools -->
     <sys:String x:Key="L_OCR_Error_NoLangPack" xmlns:sys="clr-namespace:System;assembly=mscorlib">Error: OCR language pack not installed. Please add it in Windows Settings -> Time &amp; Language.</sys:String>
     <sys:String x:Key="L_OCR_Status_Processing" xmlns:sys="clr-namespace:System;assembly=mscorlib">Extracting text...</sys:String>
+    <sys:String x:Key="L_OCR_Overlay_CopyAll" xmlns:sys="clr-namespace:System;assembly=mscorlib">Copy all text</sys:String>
+    <sys:String x:Key="L_OCR_AiRuntime_FirstPrompt_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCR runtime is not installed</sys:String>
+    <sys:String x:Key="L_OCR_AiRuntime_FirstPrompt_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">First-time AI OCR use requires downloading the OCR runtime. Continue and enable AI OCR?&#x0a;&#x0a;If you choose "No", TabPaint will use system OCR by default (you can manually install it later in Settings - Plugins to re-enable AI OCR).</sys:String>
     <sys:String x:Key="L_OCR_Failed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCR Failed: {0}</sys:String>
+    <sys:String x:Key="L_PyOCR_Runtime_DownloadPython" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCR Runtime: Download Python</sys:String>
+    <sys:String x:Key="L_PyOCR_Runtime_ExtractPython" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCR Runtime: Extract Python</sys:String>
+    <sys:String x:Key="L_PyOCR_Runtime_InstallPip" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCR Runtime: Install pip</sys:String>
+    <sys:String x:Key="L_PyOCR_Runtime_Preparing" xmlns:sys="clr-namespace:System;assembly=mscorlib">Preparing OCR runtime</sys:String>
 
     <sys:String x:Key="L_AI_RMBG_MissingRuntime_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Missing Components</sys:String>
     <sys:String x:Key="L_AI_RMBG_MissingRuntime_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI features require [Visual C++ 2015-2022 Runtime].&#x0a;&#x0a;Download from Microsoft now?</sys:String>

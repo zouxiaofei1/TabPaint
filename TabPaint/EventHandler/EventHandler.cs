@@ -227,11 +227,174 @@ namespace TabPaint
         [DllImport("gdi32.dll")]
         public static extern bool DeleteObject(IntPtr hObject);
 
-        private BitmapSource GetBestImageFromClipboard()
+        private bool HasBitmapLikeData(IDataObject? dataObj)
         {
-            var dataObj = ClipboardHelper.GetDataObjectWithRetry();
-            if (dataObj == null) return null;
+            if (dataObj == null) return false;
+            return dataObj.GetDataPresent("PNG")
+                   || dataObj.GetDataPresent("System.Drawing.Bitmap")
+                   || dataObj.GetDataPresent("Bitmap")
+                   || dataObj.GetDataPresent(DataFormats.Bitmap)
+                   || dataObj.GetDataPresent(DataFormats.Dib)
+                   || dataObj.GetDataPresent("DeviceIndependentBitmap");
+        }
 
+        private BitmapSource? DecodeBitmapFromPngPayload(object payload)
+        {
+            try
+            {
+                if (payload is byte[] pngBytes && pngBytes.Length > 0)
+                {
+                    using var ms = new MemoryStream(pngBytes);
+                    var decoder = new PngBitmapDecoder(ms, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                    if (decoder.Frames.Count > 0) return decoder.Frames[0];
+                }
+
+                if (payload is Stream stream)
+                {
+                    if (stream.CanSeek)
+                    {
+                        stream.Position = 0;
+                        var decoder = new PngBitmapDecoder(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                        if (decoder.Frames.Count > 0) return decoder.Frames[0];
+                    }
+                    else
+                    {
+                        using var copy = new MemoryStream();
+                        stream.CopyTo(copy);
+                        copy.Position = 0;
+                        var decoder = new PngBitmapDecoder(copy, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                        if (decoder.Frames.Count > 0) return decoder.Frames[0];
+                    }
+                }
+            }
+            catch (Exception) { }
+
+            return null;
+        }
+
+        private BitmapSource? DecodeBitmapFromDibPayload(object payload)
+        {
+            try
+            {
+                byte[]? dibBytes = null;
+                if (payload is byte[] raw && raw.Length > 0)
+                {
+                    dibBytes = raw;
+                }
+                else if (payload is MemoryStream ms)
+                {
+                    dibBytes = ms.ToArray();
+                }
+                else if (payload is Stream stream)
+                {
+                    using var copy = new MemoryStream();
+                    if (stream.CanSeek) stream.Position = 0;
+                    stream.CopyTo(copy);
+                    dibBytes = copy.ToArray();
+                }
+
+                if (dibBytes == null || dibBytes.Length < 40) return null;
+
+                int headerSize = BitConverter.ToInt32(dibBytes, 0);
+                if (headerSize < 40 || headerSize > dibBytes.Length) return null;
+
+                short bpp = BitConverter.ToInt16(dibBytes, 14);
+                int colorsUsed = (headerSize >= 36) ? BitConverter.ToInt32(dibBytes, 32) : 0;
+                int colorTableSize = 0;
+                if (bpp > 0 && bpp <= 8)
+                {
+                    int paletteCount = colorsUsed > 0 ? colorsUsed : (1 << bpp);
+                    colorTableSize = paletteCount * 4;
+                }
+
+                const int fileHeaderSize = 14;
+                int pixelOffset = fileHeaderSize + headerSize + colorTableSize;
+                if (pixelOffset < fileHeaderSize || pixelOffset > fileHeaderSize + dibBytes.Length)
+                {
+                    pixelOffset = fileHeaderSize + headerSize;
+                }
+
+                byte[] bmpBytes = new byte[fileHeaderSize + dibBytes.Length];
+                bmpBytes[0] = (byte)'B';
+                bmpBytes[1] = (byte)'M';
+                Buffer.BlockCopy(BitConverter.GetBytes(bmpBytes.Length), 0, bmpBytes, 2, 4);
+                Buffer.BlockCopy(BitConverter.GetBytes(0), 0, bmpBytes, 6, 4);
+                Buffer.BlockCopy(BitConverter.GetBytes(pixelOffset), 0, bmpBytes, 10, 4);
+                Buffer.BlockCopy(dibBytes, 0, bmpBytes, fileHeaderSize, dibBytes.Length);
+
+                using var bmpStream = new MemoryStream(bmpBytes);
+                var decoder = BitmapDecoder.Create(bmpStream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                if (decoder.Frames.Count > 0) return decoder.Frames[0];
+            }
+            catch (Exception) { }
+
+            return null;
+        }
+
+        private BitmapSource NormalizeClipboardBitmap(BitmapSource source)
+        {
+            BitmapSource bmp = source;
+            if (bmp.Format != PixelFormats.Bgra32)
+            {
+                bmp = new FormatConvertedBitmap(bmp, PixelFormats.Bgra32, null, 0);
+            }
+
+            int w = bmp.PixelWidth;
+            int h = bmp.PixelHeight;
+            if (w <= 0 || h <= 0) return bmp;
+
+            int stride = w * 4;
+            byte[] pixels = new byte[h * stride];
+            bmp.CopyPixels(pixels, stride, 0);
+
+            bool allAlphaZero = true;
+            bool hasVisibleRgb = false;
+            for (int i = 0; i < pixels.Length; i += 4)
+            {
+                byte a = pixels[i + 3];
+                if (a != 0)
+                {
+                    allAlphaZero = false;
+                    break;
+                }
+
+                if (!hasVisibleRgb && (pixels[i] != 0 || pixels[i + 1] != 0 || pixels[i + 2] != 0))
+                {
+                    hasVisibleRgb = true;
+                }
+            }
+
+            if (allAlphaZero && hasVisibleRgb)
+            {
+                for (int i = 0; i < pixels.Length; i += 4) pixels[i + 3] = 255;
+
+                var fixedBmp = BitmapSource.Create(w, h, bmp.DpiX, bmp.DpiY, PixelFormats.Bgra32, null, pixels, stride);
+                fixedBmp.Freeze();
+                return fixedBmp;
+            }
+
+            if (!bmp.IsFrozen && bmp.CanFreeze) bmp.Freeze();
+            return bmp;
+        }
+
+        private bool TryExtractBitmapFromDataObject(IDataObject? dataObj, out BitmapSource? bitmap)
+        {
+            bitmap = null;
+            if (dataObj == null) return false;
+
+            // 1) PNG（常见于 Acrobat/Office/浏览器）
+            if (dataObj.GetDataPresent("PNG"))
+            {
+                var pngPayload = dataObj.GetData("PNG");
+                var pngBitmap = pngPayload != null ? DecodeBitmapFromPngPayload(pngPayload) : null;
+                if (pngBitmap != null)
+                {
+                    bitmap = NormalizeClipboardBitmap(pngBitmap);
+                    return true;
+                }
+            }
+
+            // 2) GDI Bitmap
             if (dataObj.GetDataPresent("System.Drawing.Bitmap"))
             {
                 try
@@ -239,13 +402,13 @@ namespace TabPaint
                     var drawingBitmap = dataObj.GetData("System.Drawing.Bitmap") as System.Drawing.Bitmap;
                     if (drawingBitmap != null)
                     {
-                        return ConvertDrawingBitmapToWPF(drawingBitmap);
+                        bitmap = NormalizeClipboardBitmap(ConvertDrawingBitmapToWPF(drawingBitmap));
+                        return true;
                     }
                 }
-                catch (Exception)
-                {
-                }
+                catch (Exception) { }
             }
+
             if (dataObj.GetDataPresent("Bitmap"))
             {
                 try
@@ -253,16 +416,64 @@ namespace TabPaint
                     var drawingBitmap = dataObj.GetData("Bitmap") as System.Drawing.Bitmap;
                     if (drawingBitmap != null)
                     {
-                        return ConvertDrawingBitmapToWPF(drawingBitmap);
+                        bitmap = NormalizeClipboardBitmap(ConvertDrawingBitmapToWPF(drawingBitmap));
+                        return true;
                     }
                 }
-                catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
+                catch (Exception) { }
             }
 
+            // 3) 标准位图
             if (dataObj.GetDataPresent(DataFormats.Bitmap))
             {
-                return dataObj.GetData(DataFormats.Bitmap) as BitmapSource;
+                try
+                {
+                    if (dataObj.GetData(DataFormats.Bitmap) is BitmapSource bitmapSource)
+                    {
+                        bitmap = NormalizeClipboardBitmap(bitmapSource);
+                        return true;
+                    }
+
+                    if (dataObj.GetData(DataFormats.Bitmap) is System.Drawing.Bitmap drawingBitmap)
+                    {
+                        bitmap = NormalizeClipboardBitmap(ConvertDrawingBitmapToWPF(drawingBitmap));
+                        return true;
+                    }
+                }
+                catch (Exception) { }
             }
+
+            // 4) DIB / DeviceIndependentBitmap
+            if (dataObj.GetDataPresent(DataFormats.Dib))
+            {
+                var dibPayload = dataObj.GetData(DataFormats.Dib);
+                var dibBitmap = dibPayload != null ? DecodeBitmapFromDibPayload(dibPayload) : null;
+                if (dibBitmap != null)
+                {
+                    bitmap = NormalizeClipboardBitmap(dibBitmap);
+                    return true;
+                }
+            }
+
+            if (dataObj.GetDataPresent("DeviceIndependentBitmap"))
+            {
+                var dibPayload = dataObj.GetData("DeviceIndependentBitmap");
+                var dibBitmap = dibPayload != null ? DecodeBitmapFromDibPayload(dibPayload) : null;
+                if (dibBitmap != null)
+                {
+                    bitmap = NormalizeClipboardBitmap(dibBitmap);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private BitmapSource GetBestImageFromClipboard()
+        {
+            var dataObj = ClipboardHelper.GetDataObjectWithRetry();
+            if (dataObj == null) return null;
+            if (TryExtractBitmapFromDataObject(dataObj, out var bitmap)) return bitmap;
             return null;
         }
 
@@ -313,9 +524,8 @@ namespace TabPaint
                     }
                 }
                 // 情况 B: 剪切板是位图数据 (截图)
-                else if (dataObj != null && dataObj.GetDataPresent(DataFormats.Bitmap))
+                else if (TryExtractBitmapFromDataObject(dataObj, out var bitmapSource))
                 {
-                    var bitmapSource = GetBestImageFromClipboard();
                     if (bitmapSource != null)
                     {
                         string cachePath = SaveClipboardImageToCache(bitmapSource);

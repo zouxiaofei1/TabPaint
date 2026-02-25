@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Media.Animation;
 
 namespace TabPaint.Controls
 {
@@ -19,6 +20,8 @@ namespace TabPaint.Controls
     }
     public partial class StatusBarControl : UserControl
     {
+        private Storyboard? _ocrBusyStoryboard;
+
         public static readonly RoutedEvent ClipboardMonitorClickEvent = EventManager.RegisterRoutedEvent(
             "ClipboardMonitorClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(StatusBarControl));
 
@@ -77,6 +80,27 @@ namespace TabPaint.Controls
         {
             InitializeComponent();
         }
+
+        public void SetOcrBusyEffect(bool isBusy)
+        {
+            _ocrBusyStoryboard ??= Resources["OcrBusyStoryboard"] as Storyboard;
+            if (_ocrBusyStoryboard == null) return;
+
+            var busyEffect = FindName("OcrBusyEffect") as FrameworkElement;
+            if (busyEffect == null) return;
+
+            if (isBusy)
+            {
+                busyEffect.Visibility = Visibility.Visible;
+                _ocrBusyStoryboard.Begin(this, true);
+            }
+            else
+            {
+                _ocrBusyStoryboard.Stop(this);
+                busyEffect.Visibility = Visibility.Collapsed;
+            }
+        }
+
         private void OnClipboardMonitorToggleClick(object sender, RoutedEventArgs e)
         {
             RaiseEvent(new RoutedEventArgs(ClipboardMonitorClickEvent));

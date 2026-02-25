@@ -91,6 +91,21 @@ namespace TabPaint
                 }
             }
         }
+
+        private string _newestInstalledVersion = string.Empty;
+        [JsonPropertyName("newest_installed_version")]
+        public string NewestInstalledVersion
+        {
+            get => _newestInstalledVersion;
+            set
+            {
+                if (_newestInstalledVersion != value)
+                {
+                    _newestInstalledVersion = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
         private bool _isImageBarCompact = true; // 默认为 false (展开状态)
 
         [JsonPropertyName("is_image_bar_compact")]
@@ -315,6 +330,21 @@ namespace TabPaint
                 if (_isFixedZoom != value)
                 {
                     _isFixedZoom = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        private bool _isWindowTopmost = false;
+
+        [JsonPropertyName("is_window_topmost")]
+        public bool IsWindowTopmost
+        {
+            get => _isWindowTopmost;
+            set
+            {
+                if (_isWindowTopmost != value)
+                {
+                    _isWindowTopmost = value;
                     OnPropertyChanged();
                 }
             }
@@ -565,6 +595,51 @@ namespace TabPaint
                 if (_enableFileDeleteInPaintMode != value)
                 {
                     _enableFileDeleteInPaintMode = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private bool _aiOcrPromptShown = false;
+        [JsonPropertyName("ai_ocr_prompt_shown")]
+        public bool AiOcrPromptShown
+        {
+            get => _aiOcrPromptShown;
+            set
+            {
+                if (_aiOcrPromptShown != value)
+                {
+                    _aiOcrPromptShown = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private bool _enableAiOcr = true;
+        [JsonPropertyName("enable_ai_ocr")]
+        public bool EnableAiOcr
+        {
+            get => _enableAiOcr;
+            set
+            {
+                if (_enableAiOcr != value)
+                {
+                    _enableAiOcr = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private OcrResultAction _ocrResultAction = OcrResultAction.DirectCopy;
+        [JsonPropertyName("ocr_result_action")]
+        public OcrResultAction OcrResultAction
+        {
+            get => _ocrResultAction;
+            set
+            {
+                if (_ocrResultAction != value)
+                {
+                    _ocrResultAction = value;
                     OnPropertyChanged();
                 }
             }

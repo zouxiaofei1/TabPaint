@@ -43,6 +43,11 @@ namespace TabPaint
         Dark,
         System // 跟随系统
     }
+    public enum OcrResultAction
+    {
+        EditText,
+        DirectCopy
+    }
     public class ToolSettingsModel
     {
         public double Thickness { get; set; } = AppConsts.DefaultPenThickness;
@@ -272,6 +277,7 @@ namespace TabPaint
             try
             {
                 var settings = TabPaint.SettingsManager.Instance.Current;
+                this.Topmost = settings.IsWindowTopmost;
 
                 // 初始化本地画笔参数
                 var existingWindows = Application.Current.Windows.OfType<MainWindow>()

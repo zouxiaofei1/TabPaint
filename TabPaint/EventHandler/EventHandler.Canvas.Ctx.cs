@@ -91,6 +91,186 @@ namespace TabPaint
         }
 
         private Point _lastRightClickPosition; // 记录右键点击时的相对坐标
+        private string _ocrOverlayFullText = string.Empty;
+
+        private string GetCurrentOcrOverlayText()
+        {
+            var ocrOverlayCanvas = GetOcrOverlayCanvas();
+            if (ocrOverlayCanvas == null || ocrOverlayCanvas.Children.Count == 0)
+            {
+                return _ocrOverlayFullText;
+            }
+
+            var lines = new List<string>();
+            foreach (var child in ocrOverlayCanvas.Children)
+            {
+                if (child is Border border && border.Child is TextBox textBox)
+                {
+                    if (!string.IsNullOrWhiteSpace(textBox.Text))
+                    {
+                        lines.Add(textBox.Text);
+                    }
+                }
+            }
+
+            return lines.Count > 0 ? string.Join(Environment.NewLine, lines) : _ocrOverlayFullText;
+        }
+
+        private Canvas GetOcrOverlayCanvas()
+        {
+            return FindName("OcrOverlayCanvas") as Canvas;
+        }
+
+        private ContentControl GetOcrFloatBarHolder()
+        {
+            return FindName("OcrFloatBarHolder") as ContentControl;
+        }
+
+        private void HideOcrOverlay()
+        {
+            _ocrOverlayFullText = string.Empty;
+            var ocrOverlayCanvas = GetOcrOverlayCanvas();
+            if (ocrOverlayCanvas != null)
+            {
+                ocrOverlayCanvas.Children.Clear();
+                ocrOverlayCanvas.Visibility = Visibility.Collapsed;
+                ocrOverlayCanvas.IsHitTestVisible = false;
+            }
+
+            var ocrFloatBarHolder = GetOcrFloatBarHolder();
+            if (ocrFloatBarHolder != null)
+            {
+                ocrFloatBarHolder.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void ShowOcrOverlay(OcrRecognizeResult result, Point pixelOffset, bool allowEdit)
+        {
+            if (result == null || string.IsNullOrWhiteSpace(result.FullText))
+            {
+                HideOcrOverlay();
+                return;
+            }
+
+            var ocrOverlayCanvas = GetOcrOverlayCanvas();
+            var ocrFloatBarHolder = GetOcrFloatBarHolder();
+            if (ocrOverlayCanvas == null || ocrFloatBarHolder == null)
+            {
+                return;
+            }
+
+            ocrOverlayCanvas.Children.Clear();
+
+            Brush accentBrush = TryFindResource("ToolAccentBrush") as Brush ?? Brushes.DeepSkyBlue;
+            Brush borderFill = TryFindResource("GlassBackgroundMediumBrush") as Brush ?? new SolidColorBrush(Color.FromArgb(90, 0, 0, 0));
+            Brush textBrush = TryFindResource("TextPrimaryBrush") as Brush ?? Brushes.White;
+
+            double minX = double.MaxValue;
+            double minY = double.MaxValue;
+            double maxX = 0;
+            double maxY = 0;
+            double fallbackTop = 10;
+
+            foreach (var line in result.Lines)
+            {
+                if (string.IsNullOrWhiteSpace(line.Text)) continue;
+
+                double x;
+                double y;
+                double width;
+                double height;
+
+                if (line.Rect.HasValue && line.Rect.Value.Width > 1 && line.Rect.Value.Height > 1)
+                {
+                    var r = line.Rect.Value;
+                    var p1 = _ctx.FromPixel(new Point(pixelOffset.X + r.X, pixelOffset.Y + r.Y));
+                    var p2 = _ctx.FromPixel(new Point(pixelOffset.X + r.X + r.Width, pixelOffset.Y + r.Y + r.Height));
+                    x = p1.X;
+                    y = p1.Y;
+                    width = Math.Max(32, p2.X - p1.X);
+                    height = Math.Max(20, p2.Y - p1.Y);
+                }
+                else
+                {
+                    x = 10;
+                    y = fallbackTop;
+                    width = Math.Min(420, Math.Max(160, line.Text.Length * 16));
+                    height = 30;
+                    fallbackTop += 34;
+                }
+
+                var border = new Border
+                {
+                    Width = width,
+                    Height = height,
+                    CornerRadius = new CornerRadius(4),
+                    BorderBrush = accentBrush,
+                    BorderThickness = new Thickness(1),
+                    Background = borderFill,
+                    Padding = new Thickness(2, 0, 2, 0)
+                };
+
+                var textBox = new TextBox
+                {
+                    Text = line.Text,
+                    BorderThickness = new Thickness(0),
+                    Background = Brushes.Transparent,
+                    Foreground = textBrush,
+                    IsReadOnly = !allowEdit,
+                    VerticalContentAlignment = VerticalAlignment.Center,
+                    FontSize = Math.Max(12, Math.Min(20, height * 0.55)),
+                    Padding = new Thickness(0),
+                    Margin = new Thickness(0)
+                };
+
+                border.Child = textBox;
+                Canvas.SetLeft(border, x);
+                Canvas.SetTop(border, y);
+                ocrOverlayCanvas.Children.Add(border);
+
+                minX = Math.Min(minX, x);
+                minY = Math.Min(minY, y);
+                maxX = Math.Max(maxX, x + width);
+                maxY = Math.Max(maxY, y + height);
+            }
+
+            if (ocrOverlayCanvas.Children.Count == 0)
+            {
+                HideOcrOverlay();
+                return;
+            }
+
+            ocrOverlayCanvas.Visibility = Visibility.Visible;
+            ocrOverlayCanvas.IsHitTestVisible = true;
+
+            var bar = OcrFloatBar;
+            ocrFloatBarHolder.HorizontalAlignment = HorizontalAlignment.Left;
+            ocrFloatBarHolder.VerticalAlignment = VerticalAlignment.Top;
+
+            const double barWidth = 220;
+            const double barHeight = 40;
+            double barLeft = minX;
+            double barTop = minY - barHeight - 8;
+            if (barTop < 20) barTop = maxY + 8;
+            barLeft = Math.Max(10, Math.Min(barLeft, this.ActualWidth - barWidth - 10));
+            barTop = Math.Max(10, Math.Min(barTop, this.ActualHeight - barHeight - 10));
+            ocrFloatBarHolder.Margin = new Thickness(barLeft, barTop, 0, 0);
+            ocrFloatBarHolder.Visibility = Visibility.Visible;
+        }
+
+        private void OcrFloatBar_CopyAllClick(object sender, RoutedEventArgs e)
+        {
+            var currentText = GetCurrentOcrOverlayText();
+            if (string.IsNullOrWhiteSpace(currentText)) return;
+            ClipboardHelper.SetTextWithRetry(currentText);
+            ShowToast("L_Toast_Copied");
+        }
+
+        private void OcrFloatBar_ConfirmClick(object sender, RoutedEventArgs e)
+        {
+            HideOcrOverlay();
+        }
+
         private void OnAutoCropClick(object sender, RoutedEventArgs e)
         {
             try
@@ -293,23 +473,59 @@ namespace TabPaint
         {
             if (_surface?.Bitmap == null) return;
             if (!IsOcrSupported()) { ShowToast("L_Toast_OCR_VersionError"); return; }
+            HideOcrOverlay();
+
+            var settings = SettingsManager.Instance.Current;
+            if (settings != null && settings.EnableAiOcr && !settings.AiOcrPromptShown && !PythonRuntimeManager.IsRuntimeInstalled())
+            {
+                var result = FluentMessageBox.Show(
+                    LocalizationManager.GetString("L_OCR_AiRuntime_FirstPrompt_Content"),
+                    LocalizationManager.GetString("L_OCR_AiRuntime_FirstPrompt_Title"),
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question,
+                    this);
+
+                settings.AiOcrPromptShown = true;
+                if (result != MessageBoxResult.Yes)
+                {
+                    settings.EnableAiOcr = false;
+                }
+                SettingsManager.Instance.Save();
+            }
+
             BitmapSource sourceToRecognize = _surface.Bitmap;
-            if (_router.CurrentTool is SelectTool selTool && selTool.HasActiveSelection) sourceToRecognize = selTool.GetSelectionCroppedBitmap(this);
+            Point sourcePixelOffset = new Point(0, 0);
+            if (_router.CurrentTool is SelectTool selTool && selTool.HasActiveSelection)
+            {
+                sourceToRecognize = selTool.GetSelectionCroppedBitmap(this);
+                sourcePixelOffset = new Point(selTool.SelectionRect.X, selTool.SelectionRect.Y);
+            }
+
+            var oldStatus = _imageSize;
             try
             {
-                var oldStatus = _imageSize;// UI 提示
+                MyStatusBar?.SetOcrBusyEffect(true);
                 _imageSize = LocalizationManager.GetString("L_OCR_Status_Processing");
                 this.Cursor = System.Windows.Input.Cursors.Wait;
                 var ocrService = new OcrService();  // 调用服务
-                string text = await ocrService.RecognizeTextAsync(sourceToRecognize);
+                var ocrResult = await ocrService.RecognizeDetailedAsync(sourceToRecognize);
+                string text = ocrResult?.FullText ?? string.Empty;
 
                 if (!string.IsNullOrWhiteSpace(text))
                 {
-                    ClipboardHelper.SetTextWithRetry(text);
-                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_OCR_Success_Format"), text.Length));
+                    _ocrOverlayFullText = text;
+                    if (settings?.OcrResultAction == OcrResultAction.DirectCopy)
+                    {
+                        ClipboardHelper.SetTextWithRetry(text);
+                        ShowToast("L_Toast_Copied");
+                    }
+                    else
+                    {
+                        ShowOcrOverlay(ocrResult, sourcePixelOffset, allowEdit: true);
+                        ShowToast(string.Format(LocalizationManager.GetString("L_Toast_OCR_Success_Format"), text.Length));
+                    }
                 }
                 else ShowToast("L_Toast_OCR_NoText");
-                _imageSize = oldStatus;
             }
             catch (Exception ex)
             {
@@ -325,6 +541,8 @@ namespace TabPaint
             }
             finally
             {
+                MyStatusBar?.SetOcrBusyEffect(false);
+                _imageSize = oldStatus;
                 this.Cursor = System.Windows.Input.Cursors.Arrow;
             }
         }

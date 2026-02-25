@@ -7,6 +7,8 @@ namespace TabPaint.Services
 {
     public static class Logger
     {
+        private const long MaxLogFileBytes = 1L * 1024 * 1024; // 1MB per log file
+
         private static readonly string LogDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "TabPaint", "Logs");
@@ -69,10 +71,10 @@ namespace TabPaint.Services
                     try
                     {
                         string dateStr = DateTime.Now.ToString("yyyy-MM-dd");
-                        string fileName = $"Log_{dateStr}.txt";
-                        string fullPath = Path.Combine(LogDirectory, fileName);
-
                         string logEntry = $"[{DateTime.Now:HH:mm:ss.fff}] [{level}] {message}{Environment.NewLine}{new string('-', 30)}{Environment.NewLine}";
+                        int logEntryByteCount = Encoding.UTF8.GetByteCount(logEntry);
+                        string fullPath = GetAvailableLogFilePath(dateStr, logEntryByteCount);
+
                         File.AppendAllText(fullPath, logEntry, Encoding.UTF8);
 
                         // 清理旧日志（超过 30 天）
@@ -84,6 +86,37 @@ namespace TabPaint.Services
                     }
                 }
             });
+        }
+
+        private static string GetAvailableLogFilePath(string dateStr, int appendBytes)
+        {
+            for (int index = 0; ; index++)
+            {
+                string suffix = index == 0 ? string.Empty : $"_{index}";
+                string fileName = $"Log_{dateStr}{suffix}.txt";
+                string fullPath = Path.Combine(LogDirectory, fileName);
+
+                if (!File.Exists(fullPath))
+                {
+                    return fullPath;
+                }
+
+                long currentSize = 0;
+                try
+                {
+                    currentSize = new FileInfo(fullPath).Length;
+                }
+                catch
+                {
+                    // If file size cannot be read, skip this file and try next one.
+                    continue;
+                }
+
+                if (currentSize + appendBytes <= MaxLogFileBytes)
+                {
+                    return fullPath;
+                }
+            }
         }
 
         private static void CleanupOldLogs()

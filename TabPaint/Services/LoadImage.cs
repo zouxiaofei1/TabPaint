@@ -237,7 +237,7 @@ namespace TabPaint
         }
    
 
-        private BitmapSource DecodePreviewBitmap(Stream stream, CancellationToken token)
+        private BitmapSource DecodePreviewBitmap(Stream stream, CancellationToken token, string? filePath = null)
         {
             if (token.IsCancellationRequested) return null;
             try
@@ -278,9 +278,17 @@ namespace TabPaint
                 img.Freeze();
                 return img;
             }
-            catch { return null;}
+            catch
+            {
+                if (IsWebpFileOrStream(filePath, stream))
+                {
+                    stream.Position = 0;
+                    return DecodeWebpWithSkia(stream, targetMaxWidth: AppConsts.PreviewDecodeWidth);
+                }
+                return null;
+            }
         }
-        private BitmapSource DecodeFullResBitmap(Stream stream, CancellationToken token)
+        private BitmapSource DecodeFullResBitmap(Stream stream, CancellationToken token, string? filePath = null)
         {
             if (token.IsCancellationRequested) return null;
             if (SettingsManager.Instance.Current.EnableIccColorCorrection)
@@ -339,6 +347,11 @@ namespace TabPaint
             }
             catch
             {
+                if (IsWebpFileOrStream(filePath, stream))
+                {
+                    stream.Position = 0;
+                    return DecodeWebpWithSkia(stream);
+                }
                 return null;
             }
         }
@@ -377,6 +390,8 @@ namespace TabPaint
                 }
             catch (Exception ex)
             {
+                var webpSize = GetWebpDimensionsWithSkia(stream);
+                if (webpSize != null) return webpSize;
                 Logger.Error($"GetDimensions Error for {filePath}", ex);
                 return null;
             }
@@ -550,7 +565,7 @@ namespace TabPaint
                     try
                     {
                         using var previewFs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
-                        return DecodePreviewBitmap(previewFs, token);
+                        return DecodePreviewBitmap(previewFs, token, filePath);
                     }
                     catch { return null; }
                 }, token);
@@ -560,7 +575,7 @@ namespace TabPaint
                     try
                     {
                         using var fullFs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
-                        return DecodeFullResBitmap(fullFs, token);
+                        return DecodeFullResBitmap(fullFs, token, filePath);
                     }
                     catch { return null; }
                 }, token);

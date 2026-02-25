@@ -183,30 +183,9 @@ namespace TabPaint
                 }
                 else
                 {
-                    try
+                    if (dataObj != null && ctx.ParentWindow.TryExtractBitmapFromDataObject(dataObj, out var extracted))
                     {
-                        if (dataObj != null && dataObj.GetDataPresent("PNG"))
-                        {
-                            var pngStream = dataObj.GetData("PNG") as System.IO.Stream;
-                            if (pngStream != null)
-                            {
-                                pngStream.Position = 0;
-                                var decoder = new PngBitmapDecoder(pngStream,
-                                    BitmapCreateOptions.PreservePixelFormat,
-                                    BitmapCacheOption.OnLoad);
-                                if (decoder.Frames.Count > 0)
-                                {
-                                    sourceBitmap = decoder.Frames[0];
-                                }
-                            }
-                        }
-                    }
-                    catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
-
-                    // ★ 优先级3：标准图像格式（会丢失透明度，但兼容外部程序）
-                    if (sourceBitmap == null && dataObj != null && dataObj.GetDataPresent(DataFormats.Bitmap))
-                    {
-                        sourceBitmap = dataObj.GetData(DataFormats.Bitmap) as BitmapSource;
+                        sourceBitmap = extracted;
                     }
 
                     // ★ 优先级4：文件拖放
@@ -240,7 +219,7 @@ namespace TabPaint
                 try
                 {
                     string ext = System.IO.Path.GetExtension(path).ToLower();
-                    string[] allowed = { ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff" };
+                    string[] allowed = { ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".webp" };
                     if (!allowed.Contains(ext)) return null;
 
                     // 获取原始尺寸
@@ -276,8 +255,24 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine("Load file from clipboard failed: " + ex.Message);
-                    return null;
+                    try
+                    {
+                        using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+                        bool isWebp = MainWindow.IsWebpFileOrStream(path, fs);
+                        if (!isWebp)
+                        {
+                            System.Diagnostics.Debug.WriteLine("Load file from clipboard failed: " + ex.Message);
+                            return null;
+                        }
+
+                        fs.Position = 0;
+                        return ctxForTimer?.ParentWindow?.DecodeWebpWithSkia(fs);
+                    }
+                    catch
+                    {
+                        System.Diagnostics.Debug.WriteLine("Load file from clipboard failed: " + ex.Message);
+                        return null;
+                    }
                 }
             }
             public void CopySelection(ToolContext ctx)

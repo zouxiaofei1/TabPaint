@@ -72,6 +72,21 @@ namespace TabPaint
         public static readonly string SessionPath = Path.Combine(AppDataFolder, "session.bin");
         public static readonly string LegacySessionPath = Path.Combine(AppDataFolder, "session.json");
         public static readonly string ClipboardCacheDir = Path.Combine(CacheDir, "Clipboard");
+        public static readonly string PyOcrRootDir = Path.Combine(CacheDir, "pyocr");
+        public static readonly string PyOcrRuntimeDir = Path.Combine(PyOcrRootDir, "python");
+        public static readonly string PyOcrDownloadsDir = Path.Combine(PyOcrRootDir, "downloads");
+        public static readonly string PyOcrModelsDir = Path.Combine(PyOcrRootDir, "models");
+        public static readonly string PyOcrLogsDir = Path.Combine(PyOcrRootDir, "logs");
+
+        // --- Python OCR 运行时配置 ---
+        public const string PyOcrPythonVersion = "3.11.9";
+        public const string PyOcrPythonEmbedZipName = "python-3.11.9-amd64.zip";
+        public const string PyOcrPythonDownloadUrlTuna = "https://mirrors.tuna.tsinghua.edu.cn/python/3.11.9/python-3.11.9-amd64.zip";
+        public const string PyOcrPythonDownloadUrlOfficial = "https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.zip";
+        public const string PyOcrGetPipUrl = "https://bootstrap.pypa.io/get-pip.py";
+        public const string PyOcrPipMirror = "https://pypi.tuna.tsinghua.edu.cn/simple";
+        public const int PyOcrProcessTimeoutSeconds = 180;
+        public const int PyOcrRecognizeTimeoutSeconds = 60;
 
         // --- AI 模型配置 (RMBG - 背景移除) ---
         public const string BgRem_ModelUrl_HF = "https://huggingface.co/briaai/RMBG-1.4/resolve/main/onnx/model.onnx";
@@ -308,7 +323,7 @@ namespace TabPaint
 
         // --- 服务与性能配置 ---
         public const int MaxDiskConcurrency = 4;
-        public const int AppSettingsBinaryVersion = 4;
+        public const int AppSettingsBinaryVersion = 10;
 
         public static bool IsSupportedImage(string path)
         {
