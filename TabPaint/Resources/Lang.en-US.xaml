@@ -326,7 +326,10 @@
     <sys:String x:Key="L_Settings_About_Github">GitHub</sys:String>
     <sys:String x:Key="L_Settings_About_CheckUpdate">Check updates</sys:String>
     <sys:String x:Key="L_Settings_About_Help">Help</sys:String>
-
+    <sys:String x:Key="L_Settings_About_HomePage">Home Page</sys:String>
+    <sys:String x:Key="L_Settings_About_Changelog">Changelog</sys:String>
+    <sys:String x:Key="L_Settings_About_Issue">FeedBack</sys:String>
+    
     <!-- Agreement -->
     <sys:String x:Key="L_Settings_Agreement_Title">Open Source License &amp; Policies</sys:String>
     <sys:String x:Key="L_Settings_Agreement_Desc">Click each section to expand full text. Collapsed mode shows only three key points.</sys:String>

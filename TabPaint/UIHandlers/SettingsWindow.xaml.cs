@@ -445,24 +445,81 @@ namespace TabPaint
 
             if (pluginsItem != null)
             {
-                pluginsItem.Visibility = string.Equals(tag, "Plugins", StringComparison.Ordinal)
-                    ? Visibility.Visible
-                    : Visibility.Collapsed;
+                AnimateSpecialNavItemVisibility(
+                    pluginsItem,
+                    string.Equals(tag, "Plugins", StringComparison.Ordinal));
             }
 
             if (systemReportItem != null)
             {
-                systemReportItem.Visibility = string.Equals(tag, "SystemReport", StringComparison.Ordinal)
-                    ? Visibility.Visible
-                    : Visibility.Collapsed;
+                AnimateSpecialNavItemVisibility(
+                    systemReportItem,
+                    string.Equals(tag, "SystemReport", StringComparison.Ordinal));
             }
 
             if (agreementItem != null)
             {
-                agreementItem.Visibility = string.Equals(tag, "Agreement", StringComparison.Ordinal)
-                    ? Visibility.Visible
-                    : Visibility.Collapsed;
+                AnimateSpecialNavItemVisibility(
+                    agreementItem,
+                    string.Equals(tag, "Agreement", StringComparison.Ordinal));
             }
+        }
+
+        private void AnimateSpecialNavItemVisibility(ListBoxItem item, bool show)
+        {
+            const double itemHeight = 40;
+            var duration = TimeSpan.FromMilliseconds(140);
+
+            item.BeginAnimation(OpacityProperty, null);
+            item.BeginAnimation(FrameworkElement.MaxHeightProperty, null);
+
+            if (show)
+            {
+                if (item.Visibility == Visibility.Visible && item.Opacity >= 0.99 && item.MaxHeight >= itemHeight)
+                {
+                    return;
+                }
+
+                item.Visibility = Visibility.Visible;
+                item.Opacity = 0;
+                item.MaxHeight = 0;
+
+                var fadeIn = new DoubleAnimation(1, duration)
+                {
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                };
+                var expand = new DoubleAnimation(itemHeight, duration)
+                {
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                };
+
+                item.BeginAnimation(OpacityProperty, fadeIn);
+                item.BeginAnimation(FrameworkElement.MaxHeightProperty, expand);
+                return;
+            }
+
+            if (item.Visibility == Visibility.Collapsed)
+            {
+                return;
+            }
+
+            var fadeOut = new DoubleAnimation(0, duration)
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+            };
+            var collapse = new DoubleAnimation(0, duration)
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+            };
+
+            fadeOut.Completed += (_, __) =>
+            {
+                item.Visibility = Visibility.Collapsed;
+                item.MaxHeight = itemHeight;
+            };
+
+            item.BeginAnimation(OpacityProperty, fadeOut);
+            item.BeginAnimation(FrameworkElement.MaxHeightProperty, collapse);
         }
 
         #endregion

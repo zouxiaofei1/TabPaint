@@ -54,8 +54,10 @@ public partial class PenTool : ToolBase
             byte* snapBase = (byte*)snapHandle.AddrOfPinnedObject();
             int snapStride = _blurSnapshotStride;
 
+            var parallelOptions = ctx.ParentWindow.CreatePerformanceParallelOptions();
+
             // 第一步：并行计算行前缀和（从快照读取）
-            Parallel.For(0, roiH, (iy) =>
+            Parallel.For(0, roiH, parallelOptions, (iy) =>
             {
                 byte* srcRow = snapBase + (long)(roiY + iy) * snapStride + roiX * 4;
                 fixed (int* sat = localSatBuffer)
@@ -77,7 +79,7 @@ public partial class PenTool : ToolBase
             });
 
             // 第二步：并行计算列前缀和
-            Parallel.For(1, roiW + 1, (ix) =>
+            Parallel.For(1, roiW + 1, parallelOptions, (ix) =>
             {
                 int idx4 = ix * 4;
                 fixed (int* sat = localSatBuffer)
@@ -128,10 +130,7 @@ public partial class PenTool : ToolBase
 
             if (rowCount >= AppConsts.BlurParallelThreshold)
             {
-                Parallel.For(paintYMin, paintYMax, new ParallelOptions
-                {
-                    MaxDegreeOfParallelism = Environment.ProcessorCount
-                },
+                Parallel.For(paintYMin, paintYMax, ctx.ParentWindow.CreatePerformanceParallelOptions(),
                 (int py) =>
                 {
                     BlurApplyRow(
@@ -264,7 +263,7 @@ public partial class PenTool : ToolBase
         int gridYStart = (aabbTop / blockSize) * blockSize;
 
         // 使用 Parallel 优化块循环
-        Parallel.For(0, (aabbBottom - gridYStart + blockSize - 1) / blockSize, (i) =>
+        Parallel.For(0, (aabbBottom - gridYStart + blockSize - 1) / blockSize, ctx.ParentWindow.CreatePerformanceParallelOptions(), (i) =>
         {
             int by = gridYStart + i * blockSize;
             for (int bx = gridXStart; bx < aabbRight; bx += blockSize)
@@ -359,7 +358,7 @@ public partial class PenTool : ToolBase
         float invIrregularRadiusSq = 1.0f / irregularRadiusSq;
 
         // 对水彩画笔应用并行化
-        Parallel.For(y_start, y_end, (y) =>
+        Parallel.For(y_start, y_end, ctx.ParentWindow.CreatePerformanceParallelOptions(), (y) =>
         {
             byte* rowPtr = basePtr + (long)y * stride;
             float dyVal = y - pY;
@@ -400,7 +399,7 @@ public partial class PenTool : ToolBase
         int numClumps = radius / 2 + 5;
 
         // 对油画笔应用并行化处理每一个 Clump (团块)
-        Parallel.For(0, numClumps, (i) =>
+        Parallel.For(0, numClumps, ctx.ParentWindow.CreatePerformanceParallelOptions(), (i) =>
         {
             var r = _rnd.Value;
             int brightnessOffset = r.Next(-AppConsts.OilPaintBrightnessVariation, AppConsts.OilPaintBrightnessVariation + 1);
@@ -538,7 +537,7 @@ public partial class PenTool : ToolBase
         int invSA = 255 - c.A, cA = c.A, cB = c.B, cG = c.G, cR = c.R;
         float rSq = r * r;
 
-        Parallel.For(ymin, ymax + 1, (y) =>
+        Parallel.For(ymin, ymax + 1, ctx.ParentWindow.CreatePerformanceParallelOptions(), (y) =>
         {
             int rowStartIndex = y * w;
             byte* rowPtr = basePtr + (long)y * stride;

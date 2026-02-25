@@ -13,6 +13,8 @@ namespace TabPaint.Pages
 {
     public partial class SystemReportPage : UserControl
     {
+        private const int ReportAppendChunkSize = 8192;
+        private const int MaxFilteredLogLines = 4000;
         private bool _isGenerating;
 
         public SystemReportPage()
@@ -25,22 +27,48 @@ namespace TabPaint.Pages
         {
             if (_isGenerating) return;
             _isGenerating = true;
-
-            ReportTextBox.Text = "Generating system report...";
+            SetGeneratingState(true);
 
             string reportText;
             try
             {
                 reportText = await Task.Run(BuildReport);
+                await AppendReportTextAsync(reportText);
+                ReportTextBox.CaretIndex = 0;
+                ReportTextBox.ScrollToHome();
+            }
+            catch (Exception ex)
+            {
+                ReportTextBox.Text = $"Generate report failed: {ex.Message}";
             }
             finally
             {
                 _isGenerating = false;
+                SetGeneratingState(false);
+            }
+        }
+
+        private void SetGeneratingState(bool isGenerating)
+        {
+            LoadingOverlay.Visibility = isGenerating ? Visibility.Visible : Visibility.Collapsed;
+            CopyButton.IsEnabled = !isGenerating;
+        }
+
+        private async Task AppendReportTextAsync(string reportText)
+        {
+            ReportTextBox.Clear();
+
+            if (string.IsNullOrEmpty(reportText))
+            {
+                return;
             }
 
-            ReportTextBox.Text = reportText;
-            ReportTextBox.CaretIndex = 0;
-            ReportTextBox.ScrollToHome();
+            for (int i = 0; i < reportText.Length; i += ReportAppendChunkSize)
+            {
+                int length = Math.Min(ReportAppendChunkSize, reportText.Length - i);
+                ReportTextBox.AppendText(reportText.Substring(i, length));
+                await Task.Yield();
+            }
         }
 
         private static string BuildReport()
@@ -316,7 +344,7 @@ namespace TabPaint.Pages
 
         private static void AppendFilteredLogs(StringBuilder sb, string logFilePath)
         {
-            int keptLines = 0;
+            var keptLines = new Queue<string>();
             foreach (string line in File.ReadLines(logFilePath))
             {
                 if (line.IndexOf("[INFO]", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -324,13 +352,27 @@ namespace TabPaint.Pages
                     continue;
                 }
 
-                sb.AppendLine(line);
-                keptLines++;
+                keptLines.Enqueue(line);
+                while (keptLines.Count > MaxFilteredLogLines)
+                {
+                    keptLines.Dequeue();
+                }
             }
 
-            if (keptLines == 0)
+            if (keptLines.Count == 0)
             {
                 sb.AppendLine("No non-INFO log entries found for today.");
+                return;
+            }
+
+            foreach (string line in keptLines)
+            {
+                sb.AppendLine(line);
+            }
+
+            if (keptLines.Count >= MaxFilteredLogLines)
+            {
+                sb.AppendLine($"... truncated to latest {MaxFilteredLogLines} non-INFO lines.");
             }
         }
 

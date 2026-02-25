@@ -64,11 +64,7 @@
                             BorderThickness="1"
                             Click="OnOpenAgreementClick">
                         <StackPanel Orientation="Horizontal">
-                            <Path Data="{DynamicResource Agreement_Image}"
-                                  Width="13"
-                                  Height="13"
-                                  Stretch="Uniform"
-                                  Fill="{DynamicResource IconFillBrush}"
+                            <Path Data="{DynamicResource Agreement_Image}"  Width="13"  Height="13" Stretch="Uniform"  Fill="{DynamicResource IconFillBrush}"
                                   Margin="8,0,4,0"/>
                             <TextBlock Text="MIT"
                                        FontSize="11" Margin="0,0,8,0"
@@ -114,7 +110,8 @@
                     Tag="https://github.com/zouxiaofei1/TabPaint" 
                     Click="OnOpenUrlClick">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="&#xE943;" FontFamily="Segoe MDL2 Assets" Margin="0,1,8,0"/>
+                    <Path Data="{DynamicResource GitHub_Image}"  Width="13"  Height="13" Stretch="Uniform"  Fill="{DynamicResource IconFillBrush}"
+Margin="0,0,8,0"/>
                     <TextBlock Text="{DynamicResource L_Settings_About_Github}"/>
                 </StackPanel>
             </Button>
@@ -136,7 +133,38 @@
                     <TextBlock Text="{DynamicResource L_Settings_About_Help}"/>
                 </StackPanel>
             </Button>
+            <Button Cursor="Hand" 
+                    Background="{DynamicResource GlassBackgroundMediumBrush}"
+                    Tag="https://tabpaint.cc/" 
+                    Click="OnOpenUrlClick">
+                <StackPanel Orientation="Horizontal">
+                    <Path Data="{DynamicResource HomePage_Image}"  Width="13"  Height="13" Stretch="Uniform"  Fill="{DynamicResource IconFillBrush}"
+Margin="0,0,8,0"/>
+                    <TextBlock Text="{DynamicResource L_Settings_About_HomePage}"/>
+                </StackPanel>
+            </Button>
 
+            <Button Cursor="Hand" 
+                    Background="{DynamicResource GlassBackgroundMediumBrush}"
+                    Tag="https://tabpaint.cc/guide/version_history.html" 
+                    Click="OnOpenUrlClick">
+                <StackPanel Orientation="Horizontal">
+                    <Path Data="{DynamicResource Docs_Image}"  Width="13"  Height="13" Stretch="Uniform"  Fill="{DynamicResource IconFillBrush}"
+Margin="0,0,8,0"/>
+                    <TextBlock Text="{DynamicResource L_Settings_About_Changelog}"/>
+                </StackPanel>
+            </Button>
+
+            <Button Cursor="Hand" 
+                    Background="{DynamicResource GlassBackgroundMediumBrush}"
+                    Tag="https://github.com/zouxiaofei1/TabPaint/issues" 
+                    Click="OnOpenUrlClick">
+                <StackPanel Orientation="Horizontal">
+                    <Path Data="{DynamicResource Report_Image}"  Width="13"  Height="13" Stretch="Uniform"  Fill="{DynamicResource IconFillBrush}"
+             Margin="0,0,8,0"/>
+                    <TextBlock Text="{DynamicResource L_Settings_About_Issue}"/>
+                </StackPanel>
+            </Button>
         </StackPanel>
 
     </StackPanel>

@@ -124,7 +124,8 @@ namespace TabPaint
                     int height = bmp.PixelHeight;
                     int width = bmp.PixelWidth;
 
-                    Parallel.For(0, height, y =>
+                    var parallelOptions = CreatePerformanceParallelOptions();
+                    Parallel.For(0, height, parallelOptions, y =>
                     {
                         byte* row = basePtr + y * stride;
                         for (int x = 0; x < width; x++)

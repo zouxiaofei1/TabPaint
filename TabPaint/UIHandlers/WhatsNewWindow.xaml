@@ -11,7 +11,8 @@
         ResizeMode="CanResize"
         WindowStartupLocation="CenterOwner"
         Background="Transparent"
-        Foreground="{DynamicResource TextPrimaryBrush}">
+        Foreground="{DynamicResource TextPrimaryBrush}"
+        PreviewKeyDown="WhatsNewWindow_PreviewKeyDown">
     <WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="0"
                             GlassFrameThickness="-1"
@@ -85,36 +86,10 @@
                                Margin="14,0,0,0" />
                 </Grid>
 
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-                        <Border Background="{DynamicResource ControlBackgroundBrush}"
-                                BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="1"
-                                CornerRadius="6">
-                            <StackPanel Margin="12,10">
-                                <TextBlock Text="{DynamicResource L_WhatsNew_Subtitle}"
-                                           FontSize="14"
-                                           FontWeight="SemiBold"
-                                           Margin="0,0,0,10" />
-
-                                <TextBlock TextWrapping="Wrap" Margin="0,0,0,8">
-                                    <Run Text="•  " /><Run Text="{DynamicResource L_WhatsNew_0955_Item1}" />
-                                </TextBlock>
-                                <TextBlock TextWrapping="Wrap" Margin="0,0,0,8">
-                                    <Run Text="•  " /><Run Text="{DynamicResource L_WhatsNew_0955_Item2}" />
-                                </TextBlock>
-                                <TextBlock TextWrapping="Wrap" Margin="0,0,0,8">
-                                    <Run Text="•  " /><Run Text="{DynamicResource L_WhatsNew_0955_Item3}" />
-                                </TextBlock>
-                                <TextBlock TextWrapping="Wrap" Margin="0,0,0,8">
-                                    <Run Text="•  " /><Run Text="{DynamicResource L_WhatsNew_0955_Item4}" />
-                                </TextBlock>
-                                <TextBlock TextWrapping="Wrap">
-                                    <Run Text="•  " /><Run Text="{DynamicResource L_WhatsNew_0955_Item5}" />
-                                </TextBlock>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              Style="{DynamicResource FluentScrollViewer}">
+                    <StackPanel x:Name="CardsHost" />
                 </ScrollViewer>
 
                 <DockPanel Grid.Row="2" Margin="0,14,0,0" LastChildFill="False">

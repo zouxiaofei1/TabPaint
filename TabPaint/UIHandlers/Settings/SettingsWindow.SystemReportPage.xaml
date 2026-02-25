@@ -12,6 +12,55 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+
+            <Style x:Key="ReportTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TextBox">
+                            <Border x:Name="border"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="4"
+                                    SnapsToDevicePixels="True">
+                                <Grid>
+                                    <ScrollViewer x:Name="PART_ContentHost"
+                                                  Focusable="false"
+                                                  HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
+                                                  VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}">
+                                        <ScrollViewer.Resources>
+                                            <Style TargetType="ScrollBar" BasedOn="{StaticResource FluentScrollBar}"/>
+                                        </ScrollViewer.Resources>
+                                    </ScrollViewer>
+
+                                    <Border x:Name="FocusBorder"
+                                            BorderBrush="{DynamicResource SystemAccentBrush}"
+                                            BorderThickness="0,0,0,2"
+                                            CornerRadius="4"
+                                            Visibility="Collapsed"
+                                            VerticalAlignment="Bottom"
+                                            Height="2"/>
+                                </Grid>
+                            </Border>
+
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="true">
+                                    <Setter TargetName="border" Property="Background" Value="{DynamicResource ControlMouseOverBackgroundBrush}"/>
+                                    <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource BorderFocusBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="true">
+                                    <Setter TargetName="FocusBorder" Property="Visibility" Value="Visible"/>
+                                    <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="false">
+                                    <Setter TargetName="border" Property="Opacity" Value="0.56"/>
+                                    <Setter TargetName="border" Property="Background" Value="{DynamicResource ControlDisabledBackgroundBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </UserControl.Resources>
     
@@ -25,24 +74,43 @@
                    Foreground="{DynamicResource TextTertiaryBrush}"
                    TextWrapping="Wrap"/>
 
-        <Border Background="{DynamicResource ControlBackgroundBrush}"
-                BorderBrush="{DynamicResource BorderBrush}"
-                BorderThickness="1"
-                CornerRadius="6"
-                Margin="0,0,0,10">
-            <TextBox x:Name="ReportTextBox"
-                     MinHeight="280"
-                     BorderThickness="0"
-                     Background="Transparent"
-                     FontFamily="Consolas"
-                     FontSize="12"
-                     Padding="12"
-                     AcceptsReturn="True"
-                     AcceptsTab="True"
-                     TextWrapping="NoWrap"
-                     VerticalScrollBarVisibility="Auto"
-                     HorizontalScrollBarVisibility="Auto"/>
-        </Border>
+        <Grid Margin="0,0,0,10">
+            <Border Background="{DynamicResource ControlBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6">
+                <TextBox x:Name="ReportTextBox"
+                         Style="{StaticResource ReportTextBoxStyle}"
+                         MinHeight="280"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         FontFamily="Consolas"
+                         FontSize="12"
+                         Padding="12"
+                         AcceptsReturn="True"
+                         AcceptsTab="True"
+                         TextWrapping="NoWrap"
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Auto"
+                         IsReadOnly="True"/>
+            </Border>
+
+            <Border x:Name="LoadingOverlay"
+                    Background="#77000000"
+                    CornerRadius="6"
+                    Visibility="Collapsed">
+                <StackPanel Width="240"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <ProgressBar IsIndeterminate="True" Height="4"/>
+                    <TextBlock Text="Generating system report..."
+                               Margin="0,10,0,0"
+                               HorizontalAlignment="Center"
+                               Foreground="White"
+                               FontWeight="SemiBold"/>
+                </StackPanel>
+            </Border>
+        </Grid>
 
         <DockPanel LastChildFill="False">
             <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center"
@@ -50,7 +118,7 @@
                        Text="{DynamicResource L_Settings_Advanced_CollectReport_Tip}"/>
 
 
-            <Button DockPanel.Dock="Right" Width="120" Height="32"
+            <Button x:Name="CopyButton" DockPanel.Dock="Right" Width="120" Height="32"
                     Content="{DynamicResource L_Settings_Advanced_CollectReport_Copy}"
                     Click="Copy_Click"
                     Style="{StaticResource Win11SecondaryButtonStyle}"/>

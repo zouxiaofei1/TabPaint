@@ -393,7 +393,7 @@ namespace TabPaint
                     _showRulers = value;
                     OnPropertyChanged(nameof(ShowRulers));
                     // 切换显示时强制刷新一次位置
-                    if (value) UpdateRulerPositions();
+                    if (value) UpdateRulerPositions(force: true);
                 }
             }
         }
@@ -420,6 +420,8 @@ namespace TabPaint
         private readonly SolidColorBrush _darkBackgroundBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(AppConsts.DarkBackgroundHex));
         public bool _currentFileExists = true; // 标记当前文件是否存在于磁盘
         private bool _hasUserManuallyZoomed = false;
+        private long _lastRulerUpdateTick = long.MinValue;
+        private long _lastSelectionToolbarUpdateTick = long.MinValue;
 
         // 缩放动画参考状态
         private double _zoomStartScale;

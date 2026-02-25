@@ -3,15 +3,20 @@
 
     <sys:String x:Key="L_WhatsNew_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">版本更新</sys:String>
     <sys:String x:Key="L_WhatsNew_Headline" xmlns:sys="clr-namespace:System;assembly=mscorlib">TabPaint 已更新</sys:String>
-    <sys:String x:Key="L_WhatsNew_Subtitle" xmlns:sys="clr-namespace:System;assembly=mscorlib">0.9.5.5 更改</sys:String>
+    <sys:String x:Key="L_WhatsNew_Subtitle" xmlns:sys="clr-namespace:System;assembly=mscorlib">更新内容</sys:String>
     <sys:String x:Key="L_WhatsNew_VersionRange_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">{0} → v{1}</sys:String>
     <sys:String x:Key="L_WhatsNew_Button_GotIt" xmlns:sys="clr-namespace:System;assembly=mscorlib">我知道了</sys:String>
     <sys:String x:Key="L_WhatsNew_FooterTip" xmlns:sys="clr-namespace:System;assembly=mscorlib">欢迎向我们提供建议和意见！</sys:String>
-
+    <sys:String x:Key="L_WhatsNew_0955_Subtitle" xmlns:sys="clr-namespace:System;assembly=mscorlib">0.9.5.5 更改</sys:String>
     <sys:String x:Key="L_WhatsNew_0955_Item1" xmlns:sys="clr-namespace:System;assembly=mscorlib">新增 看图模式 &lt; / &gt; 翻页按钮</sys:String>
     <sys:String x:Key="L_WhatsNew_0955_Item2" xmlns:sys="clr-namespace:System;assembly=mscorlib">修复 Selection 拖出画布后，Ruler 高亮消失的问题</sys:String>
     <sys:String x:Key="L_WhatsNew_0955_Item3" xmlns:sys="clr-namespace:System;assembly=mscorlib">设置 → 通用新增“添加到系统右键菜单”开关</sys:String>
     <sys:String x:Key="L_WhatsNew_0955_Item4" xmlns:sys="clr-namespace:System;assembly=mscorlib">新增“收集系统报告”窗口</sys:String>
     <sys:String x:Key="L_WhatsNew_0955_Item5" xmlns:sys="clr-namespace:System;assembly=mscorlib">设置新增“重启后放弃所有更改”</sys:String>
+
+    <sys:String x:Key="L_WhatsNew_0956_Subtitle" xmlns:sys="clr-namespace:System;assembly=mscorlib">0.9.5.6 更改</sys:String>
+    <sys:String x:Key="L_WhatsNew_0956_Item1" xmlns:sys="clr-namespace:System;assembly=mscorlib">新增 Shift+Tab 快捷键控制图片栏收起/展开</sys:String>
+    <sys:String x:Key="L_WhatsNew_0956_Item2" xmlns:sys="clr-namespace:System;assembly=mscorlib">重构设置中的“关于”和“反馈”页面，优化选区交互逻辑</sys:String>
+    <sys:String x:Key="L_WhatsNew_0956_Item3" xmlns:sys="clr-namespace:System;assembly=mscorlib">稳定性修复</sys:String>
 
 </ResourceDictionary>

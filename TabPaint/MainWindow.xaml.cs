@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -940,9 +941,43 @@ namespace TabPaint
             }
         }
 
-        public void UpdateRulerPositions()
+        private long GetOverlayRefreshIntervalTicks()
+        {
+            int score = Math.Max(1, PerformanceScore);
+            int targetFps = score <= 3 ? 20 : (score <= 6 ? 30 : 60);
+            return Math.Max(1, Stopwatch.Frequency / targetFps);
+        }
+
+        private int GetPerformanceParallelism(bool preferResponsive = true)
+        {
+            int score = Math.Max(1, PerformanceScore);
+            int cpu = Math.Max(1, Environment.ProcessorCount);
+
+            int degree = score <= 3
+                ? Math.Max(1, cpu / 2)
+                : (score <= 6 ? Math.Max(1, cpu - 1) : cpu);
+
+            if (preferResponsive && degree > 1) degree--;
+            return Math.Max(1, degree);
+        }
+
+        public ParallelOptions CreatePerformanceParallelOptions(bool preferResponsive = true)
+            => new ParallelOptions { MaxDegreeOfParallelism = GetPerformanceParallelism(preferResponsive) };
+
+        public void UpdateRulerPositions(bool force = false)
         {
             if (!SettingsManager.Instance.Current.ShowRulers || BackgroundImage == null) return;
+
+            if (!force)
+            {
+                long now = Stopwatch.GetTimestamp();
+                if (now - _lastRulerUpdateTick < GetOverlayRefreshIntervalTicks()) return;
+                _lastRulerUpdateTick = now;
+            }
+            else
+            {
+                _lastRulerUpdateTick = Stopwatch.GetTimestamp();
+            }
 
             Point relativePoint = CanvasWrapper.TranslatePoint(new Point(0, 0), ScrollContainer);
             double currentZoom = ZoomTransform.ScaleX;
@@ -1317,7 +1352,7 @@ namespace TabPaint
             }
         }
 
-        public void UpdateSelectionToolBarPosition()
+        public void UpdateSelectionToolBarPosition(bool force = false)
         {
             // 如果还没初始化且当前没有选区，直接返回，避免不必要的实例化
             var selectTool = _router?.CurrentTool as SelectTool; if (selectTool == null) return;
@@ -1329,6 +1364,7 @@ namespace TabPaint
 
             double viewportArea = ScrollContainer.ViewportWidth * ScrollContainer.ViewportHeight;
             double selectionScreenArea = (selectTool._selectionRect.Width * zoomscale) * (selectTool._selectionRect.Height * zoomscale);
+            bool shouldShow = !IsViewMode && selectTool.HasActiveSelection && (viewportArea > 0 && (selectionScreenArea / viewportArea) > 0.015);
 
             if (!IsViewMode && selectTool.HasActiveSelection && (viewportArea > 0 && (selectionScreenArea / viewportArea) > 0.015))
             {

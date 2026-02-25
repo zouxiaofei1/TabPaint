@@ -32,12 +32,27 @@ namespace TabPaint.Windows
 
         private void Window_MouseWheel(object sender, MouseWheelEventArgs e)
         {
+       
+            Point mousePos = e.GetPosition(this);
+            double oldWidth = this.Width;
+            double oldHeight = this.Height;
+
             double scale = e.Delta > 0 ? 1.1 : 0.9;
-            double newHeight = this.Height * scale;
+
+            if (this.Height >= SystemParameters.PrimaryScreenHeight || this.Width >= SystemParameters.PrimaryScreenWidth)
+                if(e.Delta > 0)
+                    return;
+            double newHeight = oldHeight * scale;
             double newWidth = newHeight * _aspectRatio;
 
             if (newWidth > 50 && newHeight > 50)
             {
+                double scaleX = newWidth / oldWidth;
+                double scaleY = newHeight / oldHeight;
+
+                // Keep the content under mouse cursor stable while zooming.
+                this.Left = this.Left + mousePos.X - (mousePos.X * scaleX);
+                this.Top = this.Top + mousePos.Y - (mousePos.Y * scaleY);
                 this.Width = newWidth;
                 this.Height = newHeight;
             }

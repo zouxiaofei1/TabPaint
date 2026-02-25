@@ -3,7 +3,7 @@
 
     <sys:String x:Key="L_WhatsNew_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">What's New</sys:String>
     <sys:String x:Key="L_WhatsNew_Headline" xmlns:sys="clr-namespace:System;assembly=mscorlib">TabPaint has been updated</sys:String>
-    <sys:String x:Key="L_WhatsNew_Subtitle" xmlns:sys="clr-namespace:System;assembly=mscorlib">Highlights in 0.9.5.5</sys:String>
+    <sys:String x:Key="L_WhatsNew_Subtitle" xmlns:sys="clr-namespace:System;assembly=mscorlib">Update highlights</sys:String>
     <sys:String x:Key="L_WhatsNew_VersionRange_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">{0}-&gt;v{1}</sys:String>
     <sys:String x:Key="L_WhatsNew_Button_GotIt" xmlns:sys="clr-namespace:System;assembly=mscorlib">Got it</sys:String>
     <sys:String x:Key="L_WhatsNew_FooterTip" xmlns:sys="clr-namespace:System;assembly=mscorlib">Tip: You can share feedback for upcoming features in Settings.</sys:String>
@@ -13,5 +13,10 @@
     <sys:String x:Key="L_WhatsNew_0955_Item3" xmlns:sys="clr-namespace:System;assembly=mscorlib">Added “Add to system context menu” option.</sys:String>
     <sys:String x:Key="L_WhatsNew_0955_Item4" xmlns:sys="clr-namespace:System;assembly=mscorlib">Introduced the System Report window with improved visual polish and custom title bar.</sys:String>
     <sys:String x:Key="L_WhatsNew_0955_Item5" xmlns:sys="clr-namespace:System;assembly=mscorlib">Added “Discard all changes after restart” .</sys:String>
+
+    <sys:String x:Key="L_WhatsNew_0956_Subtitle" xmlns:sys="clr-namespace:System;assembly=mscorlib">Highlights in 0.9.5.6</sys:String>
+    <sys:String x:Key="L_WhatsNew_0956_Item1" xmlns:sys="clr-namespace:System;assembly=mscorlib">Added Shift+Tab shortcut to collapse/expand the image bar.</sys:String>
+    <sys:String x:Key="L_WhatsNew_0956_Item2" xmlns:sys="clr-namespace:System;assembly=mscorlib">Refactored the About and Feedback settings pages, and improved selection interaction logic.</sys:String>
+    <sys:String x:Key="L_WhatsNew_0956_Item3" xmlns:sys="clr-namespace:System;assembly=mscorlib">Stability fixes.</sys:String>
 
 </ResourceDictionary>

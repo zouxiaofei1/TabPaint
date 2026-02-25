@@ -16,12 +16,13 @@ namespace TabPaint
     {
         private void ProcessMosaic(byte[] pixels, int width, int height, int stride, int blockSize)
         {
+            var parallelOptions = CreatePerformanceParallelOptions();
             unsafe
             {
                 fixed (byte* ptr = pixels)
                 {
                     IntPtr basePtrInt = (IntPtr)ptr;
-                    Parallel.For(0, (height + blockSize - 1) / blockSize, by =>
+                    Parallel.For(0, (height + blockSize - 1) / blockSize, parallelOptions, by =>
                     {
                         byte* basePtr = (byte*)basePtrInt;
                         int yStart = by * blockSize;
@@ -71,6 +72,7 @@ namespace TabPaint
 
         private void ProcessGaussianBlur(byte[] pixels, int width, int height, int stride, int radius)
         {
+            var parallelOptions = CreatePerformanceParallelOptions();
             int kernelSize = radius * 2 + 1;
             float[] kernel = new float[kernelSize];
             float sigma = Math.Max(radius / 2.0f, 1.0f);
@@ -96,7 +98,7 @@ namespace TabPaint
                     IntPtr kpInt = (IntPtr)kPtr;
 
                     // Horizontal Pass
-                    Parallel.For(0, height, y =>
+                    Parallel.For(0, height, parallelOptions, y =>
                     {
                         byte* src = (byte*)srcInt;
                         byte* dest = (byte*)destInt;
@@ -125,7 +127,7 @@ namespace TabPaint
                     });
 
                     // Vertical Pass
-                    Parallel.For(0, width, x =>
+                    Parallel.For(0, width, parallelOptions, x =>
                     {
                         byte* src = (byte*)srcInt;
                         byte* dest = (byte*)destInt;
@@ -156,6 +158,7 @@ namespace TabPaint
 
         private void ProcessBrown(byte[] pixels, int width, int height, int stride)
         {
+            var parallelOptions = CreatePerformanceParallelOptions();
             float wr = (float)AppConsts.GrayWeightR;
             float wg = (float)AppConsts.GrayWeightG;
             float wb = (float)AppConsts.GrayWeightB;
@@ -168,7 +171,7 @@ namespace TabPaint
                 fixed (byte* ptr = pixels)
                 {
                     IntPtr basePtrInt = (IntPtr)ptr;
-                    Parallel.For(0, height, y =>
+                    Parallel.For(0, height, parallelOptions, y =>
                     {
                         byte* basePtr = (byte*)basePtrInt;
                         byte* row = basePtr + y * stride;
@@ -190,6 +193,7 @@ namespace TabPaint
 
         private void ProcessSharpen(byte[] pixels, int width, int height, int stride)
         {
+            var parallelOptions = CreatePerformanceParallelOptions();
             byte[] srcPixels = (byte[])pixels.Clone();
 
             unsafe
@@ -200,7 +204,7 @@ namespace TabPaint
                     IntPtr dpInt = (IntPtr)destPtr;
                     IntPtr spInt = (IntPtr)srcPtr;
 
-                    Parallel.For(1, height - 1, y => // 跳过边缘行
+                    Parallel.For(1, height - 1, parallelOptions, y => // 跳过边缘行
                     {
                         byte* dp = (byte*)dpInt;
                         byte* sp = (byte*)spInt;
@@ -239,6 +243,7 @@ namespace TabPaint
 
         private void ProcessSepia(byte[] pixels, int width, int height, int stride)
         {
+            var parallelOptions = CreatePerformanceParallelOptions();
             float r1 = (float)AppConsts.SepiaR1, r2 = (float)AppConsts.SepiaR2, r3 = (float)AppConsts.SepiaR3;
             float g1 = (float)AppConsts.SepiaG1, g2 = (float)AppConsts.SepiaG2, g3 = (float)AppConsts.SepiaG3;
             float b1 = (float)AppConsts.SepiaB1, b2 = (float)AppConsts.SepiaB2, b3 = (float)AppConsts.SepiaB3;
@@ -248,7 +253,7 @@ namespace TabPaint
                 fixed (byte* ptr = pixels)
                 {
                     IntPtr basePtrInt = (IntPtr)ptr;
-                    Parallel.For(0, height, y =>
+                    Parallel.For(0, height, parallelOptions, y =>
                     {
                         byte* basePtr = (byte*)basePtrInt;
                         byte* row = basePtr + y * stride;
@@ -330,7 +335,8 @@ namespace TabPaint
                     byte[] lutG = BuildLevelLut(minG, maxG);
                     byte[] lutB = BuildLevelLut(minB, maxB);
 
-                    Parallel.For(0, height, y =>
+                    var parallelOptions = CreatePerformanceParallelOptions();
+                    Parallel.For(0, height, parallelOptions, y =>
                     {
                         byte* row = basePtr + y * stride;
                         for (int x = 0; x < width; x++)
@@ -389,6 +395,7 @@ namespace TabPaint
         }
         private void ProcessVignette(byte[] pixels, int width, int height, int stride)
         {
+            var parallelOptions = CreatePerformanceParallelOptions();
             float centerX = width / 2.0f;
             float centerY = height / 2.0f;
             float maxDistSq = centerX * centerX + centerY * centerY;
@@ -398,7 +405,7 @@ namespace TabPaint
                 fixed (byte* ptr = pixels)
                 {
                     IntPtr basePtrInt = (IntPtr)ptr;
-                    Parallel.For(0, height, y =>
+                    Parallel.For(0, height, parallelOptions, y =>
                     {
                         byte* basePtr = (byte*)basePtrInt;
                         byte* row = basePtr + y * stride;
@@ -423,6 +430,7 @@ namespace TabPaint
 
         private void ProcessGlow(byte[] pixels, int width, int height, int stride)
         {
+            var parallelOptions = CreatePerformanceParallelOptions();
             byte[] srcPixels = (byte[])pixels.Clone();
             unsafe
             {
@@ -432,7 +440,7 @@ namespace TabPaint
                     IntPtr dpInt = (IntPtr)destPtr;
                     IntPtr spInt = (IntPtr)srcPtr;
 
-                    Parallel.For(0, height, y =>
+                    Parallel.For(0, height, parallelOptions, y =>
                     {
                         byte* dp = (byte*)dpInt;
                         byte* sp = (byte*)spInt;
@@ -472,12 +480,13 @@ namespace TabPaint
 
         private void ProcessRedEyeRemoval(byte[] pixels, int width, int height, int stride)
         {
+            var parallelOptions = CreatePerformanceParallelOptions();
             unsafe
             {
                 fixed (byte* ptr = pixels)
                 {
                     IntPtr basePtrInt = (IntPtr)ptr;
-                    Parallel.For(0, height, y =>
+                    Parallel.For(0, height, parallelOptions, y =>
                     {
                         byte* basePtr = (byte*)basePtrInt;
                         byte* row = basePtr + y * stride;
@@ -501,6 +510,7 @@ namespace TabPaint
 
         private void ProcessEdgeDetection(byte[] pixels, int width, int height, int stride)
         {
+            var parallelOptions = CreatePerformanceParallelOptions();
             byte[] srcPixels = (byte[])pixels.Clone();
             unsafe
             {
@@ -510,7 +520,7 @@ namespace TabPaint
                     IntPtr dpInt = (IntPtr)destPtr;
                     IntPtr spInt = (IntPtr)srcPtr;
 
-                    Parallel.For(1, height - 1, y =>
+                    Parallel.For(1, height - 1, parallelOptions, y =>
                     {
                         byte* dp = (byte*)dpInt;
                         byte* sp = (byte*)spInt;
@@ -562,6 +572,7 @@ namespace TabPaint
 
         private void ProcessPencilSketch(byte[] pixels, int width, int height, int stride)
         {
+            var parallelOptions = CreatePerformanceParallelOptions();
             // 1. 转灰度
             byte[] grayPixels = new byte[pixels.Length];
             float wr = (float)AppConsts.GrayWeightR;
@@ -575,7 +586,7 @@ namespace TabPaint
                 {
                     IntPtr sPtr = (IntPtr)srcP;
                     IntPtr gPtr = (IntPtr)grayP;
-                    Parallel.For(0, height, y =>
+                    Parallel.For(0, height, parallelOptions, y =>
                     {
                         byte* sRow = (byte*)sPtr + y * stride;
                         byte* gRow = (byte*)gPtr + y * stride;
@@ -597,7 +608,7 @@ namespace TabPaint
                 fixed (byte* invP = invertedGray)
                 {
                     IntPtr iPtr = (IntPtr)invP;
-                    Parallel.For(0, height, y =>
+                    Parallel.For(0, height, parallelOptions, y =>
                     {
                         byte* iRow = (byte*)iPtr + y * stride;
                         for (int x = 0; x < width; x++)
@@ -624,7 +635,7 @@ namespace TabPaint
                     IntPtr gPtr = (IntPtr)grayP;
                     IntPtr bPtr = (IntPtr)blurP;
 
-                    Parallel.For(0, height, y =>
+                    Parallel.For(0, height, parallelOptions, y =>
                     {
                         byte* dRow = (byte*)dPtr + y * stride;
                         byte* gRow = (byte*)gPtr + y * stride;
@@ -648,6 +659,7 @@ namespace TabPaint
 
         private void ProcessOilPaint(byte[] pixels, int width, int height, int stride, int radius, int intensityLevels)
         {
+            var parallelOptions = CreatePerformanceParallelOptions();
             // 优化：预先分配克隆数组，减少内部循环的计算
             byte[] srcPixels = (byte[])pixels.Clone();
 
@@ -659,7 +671,7 @@ namespace TabPaint
                     IntPtr dpInt = (IntPtr)destPtr;
                     IntPtr spInt = (IntPtr)srcPtr;
 
-                    Parallel.For(0, height, y =>
+                    Parallel.For(0, height, parallelOptions, y =>
                     {
                         byte* dp = (byte*)dpInt;
                         byte* sp = (byte*)spInt;
