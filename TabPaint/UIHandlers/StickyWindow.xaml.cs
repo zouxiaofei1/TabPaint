@@ -4,12 +4,20 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
+using System.Collections.Specialized;
+using System.IO;
 using TabPaint.Services;
 
 namespace TabPaint.Windows
 {
     public partial class StickyWindow : Window
     {
+        private static readonly HashSet<string> SupportedImageExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tif", ".tiff", ".webp", ".ico"
+        };
+
         private const int WM_SIZING = 0x0214;
         private const int WMSZ_TOPLEFT = 4;
         private const int WMSZ_TOPRIGHT = 5;
@@ -19,6 +27,7 @@ namespace TabPaint.Windows
         private double _aspectRatio;
         private double _originalWidth; // 记录原始宽度用于重置
         private HwndSource? _hwndSource;
+        private readonly string? _sourceFilePath;
 
         [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
         private struct RECT
@@ -29,7 +38,7 @@ namespace TabPaint.Windows
             public int Bottom;
         }
 
-        public StickyWindow(ImageSource image)
+        public StickyWindow(ImageSource image, string? sourceFilePath = null)
         {
             InitializeComponent();
             this.SupportFocusHighlight();
@@ -38,6 +47,7 @@ namespace TabPaint.Windows
             this.IsVisibleChanged += (_, _) => TrayIconService.UpdateVisibility();
             this.Closed += StickyWindow_Closed;
             DisplayImage.Source = image;
+            _sourceFilePath = sourceFilePath;
 
             if (image != null)
             {
@@ -48,6 +58,27 @@ namespace TabPaint.Windows
                 this.Width = targetHeight * _aspectRatio;
                 _originalWidth = this.Width; // 保存初始大小
             }
+        }
+
+        public static StickyWindow? CreateAndShowStickyWindow(ImageSource image, Point? screenCenter = null, string? sourceFilePath = null)
+        {
+            if (image == null) return null;
+
+            if (image is Freezable freezable && !freezable.IsFrozen && freezable.CanFreeze)
+            {
+                freezable.Freeze();
+            }
+
+            var stickyWin = new StickyWindow(image, sourceFilePath);
+
+            if (screenCenter.HasValue)
+            {
+                stickyWin.Left = screenCenter.Value.X - (stickyWin.Width / 2);
+                stickyWin.Top = screenCenter.Value.Y - (stickyWin.Height / 2);
+            }
+
+            stickyWin.Show();
+            return stickyWin;
         }
 
         private void StickyWindow_Closed(object? sender, EventArgs e)
@@ -234,6 +265,135 @@ namespace TabPaint.Windows
                 this.Width = _originalWidth;
                 this.Height = _originalWidth / _aspectRatio;
             }
+        }
+
+        private void OnCopyClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string? filePath = ResolveClipboardFilePath();
+                if (string.IsNullOrWhiteSpace(filePath) || !System.IO.File.Exists(filePath)) return;
+
+                var dataObject = new DataObject();
+                var fileList = new StringCollection
+                {
+                    filePath
+                };
+                dataObject.SetFileDropList(fileList);
+                Clipboard.SetDataObject(dataObject, true);
+            }
+            catch
+            {
+                // Ignore clipboard exceptions to keep sticky actions non-blocking.
+            }
+        }
+
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control && e.Key == Key.C)
+            {
+                OnCopyClick(sender, new RoutedEventArgs());
+                e.Handled = true;
+            }
+        }
+
+        private void OnCloseAllClick(object sender, RoutedEventArgs e)
+        {
+            var allStickyWindows = Application.Current.Windows.OfType<StickyWindow>().ToList();
+            foreach (var win in allStickyWindows)
+            {
+                win.Close();
+            }
+        }
+
+        private void Window_DragOver(object sender, DragEventArgs e)
+        {
+            bool hasImageFile = TryGetFirstImageFilePath(e.Data, out _);
+            e.Effects = hasImageFile ? DragDropEffects.Copy : DragDropEffects.None;
+            e.Handled = true;
+        }
+
+        private void Window_Drop(object sender, DragEventArgs e)
+        {
+            try
+            {
+                if (!TryGetFirstImageFilePath(e.Data, out var filePath))
+                {
+                    e.Handled = true;
+                    return;
+                }
+
+                var bitmap = LoadBitmapFromFile(filePath);
+                if (bitmap == null)
+                {
+                    e.Handled = true;
+                    return;
+                }
+
+                Point localPos = e.GetPosition(this);
+                Point screenPos = PointToScreen(localPos);
+                CreateAndShowStickyWindow(bitmap, screenPos, filePath);
+            }
+            catch
+            {
+                // Ignore drop errors and keep current sticky window usable.
+            }
+
+            e.Handled = true;
+        }
+
+        private static bool TryGetFirstImageFilePath(IDataObject dataObject, out string filePath)
+        {
+            filePath = string.Empty;
+            if (dataObject == null || !dataObject.GetDataPresent(DataFormats.FileDrop)) return false;
+
+            if (dataObject.GetData(DataFormats.FileDrop) is not string[] files || files.Length == 0) return false;
+
+            string? firstImage = files.FirstOrDefault(IsSupportedImageFile);
+            if (string.IsNullOrWhiteSpace(firstImage)) return false;
+
+            filePath = firstImage;
+            return true;
+        }
+
+        private static bool IsSupportedImageFile(string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath)) return false;
+            string ext = System.IO.Path.GetExtension(filePath);
+            return SupportedImageExtensions.Contains(ext);
+        }
+
+        private static BitmapSource? LoadBitmapFromFile(string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath) || !System.IO.File.Exists(filePath)) return null;
+
+            using var fs = new System.IO.FileStream(filePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read);
+            var decoder = BitmapDecoder.Create(fs, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.OnLoad);
+            if (decoder.Frames.Count == 0) return null;
+
+            BitmapSource frame = decoder.Frames[0];
+            if (frame.CanFreeze) frame.Freeze();
+            return frame;
+        }
+
+        private string? ResolveClipboardFilePath()
+        {
+            if (!string.IsNullOrWhiteSpace(_sourceFilePath) && System.IO.File.Exists(_sourceFilePath))
+            {
+                return _sourceFilePath;
+            }
+
+            if (DisplayImage.Source is not BitmapSource bitmap) return null;
+
+            string clipDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Cache", "ClipboardTemp");
+            if (!Directory.Exists(clipDir)) Directory.CreateDirectory(clipDir);
+
+            string filePath = System.IO.Path.Combine(clipDir, $"Sticky_{DateTime.Now:yyyyMMdd_HHmmss_fff}.png");
+            using var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.Read);
+            var encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(bitmap));
+            encoder.Save(fs);
+            return filePath;
         }
 
         private void Window_MouseEnter(object sender, MouseEventArgs e)

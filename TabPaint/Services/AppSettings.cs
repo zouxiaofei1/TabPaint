@@ -30,7 +30,8 @@ namespace TabPaint
     public enum MouseWheelMode
     {
         Zoom,          // 缩放 (默认)
-        SwitchImage    // 切图
+        SwitchImage,   // 切图
+        VerticalScroll // 上下滚动
     }
     public enum AppLanguage
     {

@@ -10,6 +10,15 @@ namespace TabPaint.Controls
     {
         private DispatcherTimer _closeTimer;
 
+        public bool InvokeClickOnHeaderClick
+        {
+            get { return (bool)GetValue(InvokeClickOnHeaderClickProperty); }
+            set { SetValue(InvokeClickOnHeaderClickProperty, value); }
+        }
+
+        public static readonly DependencyProperty InvokeClickOnHeaderClickProperty =
+            DependencyProperty.Register("InvokeClickOnHeaderClick", typeof(bool), typeof(DelayedMenuItem), new PropertyMetadata(false));
+
         public int CloseDelay
         {
             get { return (int)GetValue(CloseDelayProperty); }
@@ -45,6 +54,25 @@ namespace TabPaint.Controls
             if (_closeTimer.IsEnabled)  _closeTimer.Stop();
             base.OnMouseEnter(e);
         }
+
+        protected override void OnPreviewMouseLeftButtonUp(MouseButtonEventArgs e)
+        {
+            if (InvokeClickOnHeaderClick && HasItems && IsMouseOver)
+            {
+                RaiseEvent(new RoutedEventArgs(ClickEvent, this));
+                e.Handled = true;
+
+                var parent = Parent as ContextMenu;
+                if (parent != null)
+                {
+                    parent.IsOpen = false;
+                }
+                return;
+            }
+
+            base.OnPreviewMouseLeftButtonUp(e);
+        }
+
         private void CloseTimer_Tick(object sender, EventArgs e)
         {
             _closeTimer.Stop();

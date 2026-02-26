@@ -3,6 +3,7 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <!-- SettingsWindow -->
     <sys:String x:Key="L_Settings_Title">设置</sys:String>
+    <sys:String x:Key="L_Ctx_CloseOtherTabs">关闭其他标签页</sys:String>
     <sys:String x:Key="L_Settings_Nav_General">通用</sys:String>
     <sys:String x:Key="L_Settings_Nav_Paint">画图设置</sys:String>
     <sys:String x:Key="L_Settings_Nav_View">看图设置</sys:String>
@@ -94,6 +95,8 @@
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Desc">单击 Delete 删除至回收站，2秒内可 Ctrl+Z 撤销</sys:String>
     <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Title">形状工具专业模式</sys:String>
     <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Desc">绘制后可手动调整形状大小与位置 (按 Alt 键切换)</sys:String>
+    <sys:String x:Key="L_Settings_Paint_BirdEye_Title">看图模式显示鸟瞰图</sys:String>
+    <sys:String x:Key="L_Settings_Paint_BirdEye_Desc">右键关闭后，可在此重新开启鸟瞰图</sys:String>
 
     <!-- View panel -->
     <sys:String x:Key="L_Settings_View_Title">看图设置</sys:String>
@@ -102,6 +105,7 @@
     <sys:String x:Key="L_Settings_View_MouseWheel_Desc">看图模式下，直接滚动滚轮时的操作</sys:String>
     <sys:String x:Key="L_Settings_View_MouseWheel_Zoom">缩放图片</sys:String>
     <sys:String x:Key="L_Settings_View_MouseWheel_Switch">切换图片</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Scroll">上下滚动图片</sys:String>
     <sys:String x:Key="L_Settings_View_Display_Header">显示</sys:String>
     <sys:String x:Key="L_Settings_View_DarkBg_Title">使用深色背景</sys:String>
     <sys:String x:Key="L_Settings_View_DarkBg_Desc">在图片周围显示深灰色背景</sys:String>
@@ -225,6 +229,7 @@
     <sys:String x:Key="L_Main_Ctx_Rotate">自由旋转</sys:String>
     <sys:String x:Key="L_Main_Ctx_AddBorder">一键加边框</sys:String>
     <sys:String x:Key="L_Main_Ctx_AI_SuperRes">4x超分辨率</sys:String>
+    <sys:String x:Key="L_BirdEye_Ctx_Hide">关闭鸟瞰图</sys:String>
 
     <sys:String x:Key="L_Main_Unit_Pixel">像素</sys:String>
     <sys:String x:Key="L_Main_Filter_AllImages">所有图像文件</sys:String>
@@ -248,6 +253,7 @@
     <sys:String x:Key="L_Menu_File_Open">打开</sys:String>
     <sys:String x:Key="L_Menu_File_Add">添加</sys:String>
     <sys:String x:Key="L_Menu_File_OpenFolder">打开新文件夹</sys:String>
+    <sys:String x:Key="L_Menu_File_OpenTabFolder">打开图片所在文件夹</sys:String>
     <sys:String x:Key="L_Menu_File_NewWindow">打开新窗口</sys:String>
     <sys:String x:Key="L_Menu_File_Recent">最近打开</sys:String>
     <sys:String x:Key="L_Menu_File_Recent_Placeholder">占位符</sys:String>
@@ -806,6 +812,8 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Stick_TopMost">置顶显示</sys:String>
     <sys:String x:Key="L_Stick_Opacity">透明度</sys:String>
     <sys:String x:Key="L_Stick_ResetScale">重置缩放</sys:String>
+    <sys:String x:Key="L_Stick_Copy">复制</sys:String>
+    <sys:String x:Key="L_Stick_CloseAll">全部关闭</sys:String>
 
     <sys:String x:Key="L_ToolBar_Tool_Select_Detail" xml:space="preserve">创建矩形选区以进行移动、裁剪或复制。&#x0a;支持拖拽至Word，浏览器，桌面等外部程序&#x0a;拖拽图片到画布可创建矩形选区</sys:String>
     <sys:String x:Key="L_ClipboardMonitorToggle_Detail" xml:space="preserve">截图后自动创建包含这张图片的新标签页</sys:String>

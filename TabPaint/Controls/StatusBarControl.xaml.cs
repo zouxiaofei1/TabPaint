@@ -38,6 +38,8 @@ namespace TabPaint.Controls
             "ZoomSelectionChanged", RoutingStrategy.Bubble, typeof(SelectionChangedEventHandler), typeof(StatusBarControl));
         public static readonly RoutedEvent FavoriteClickEvent = EventManager.RegisterRoutedEvent(
             "FavoriteClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(StatusBarControl));
+        public static readonly RoutedEvent CommandBarToggleRequestedEvent = EventManager.RegisterRoutedEvent(
+            "CommandBarToggleRequested", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(StatusBarControl));
 
         public event RoutedEventHandler ClipboardMonitorClick
         {
@@ -68,6 +70,11 @@ namespace TabPaint.Controls
         {
             add { AddHandler(FavoriteClickEvent, value); }
             remove { RemoveHandler(FavoriteClickEvent, value); }
+        }
+        public event RoutedEventHandler CommandBarToggleRequested
+        {
+            add { AddHandler(CommandBarToggleRequestedEvent, value); }
+            remove { RemoveHandler(CommandBarToggleRequestedEvent, value); }
         }
 
         public ComboBox ZoomComboBox => ZoomMenu;
@@ -166,6 +173,11 @@ namespace TabPaint.Controls
             {
                 element.Focus();
             }
+        }
+        private void OnStatusBarMouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            RaiseEvent(new RoutedEventArgs(CommandBarToggleRequestedEvent));
+            e.Handled = true;
         }
         private void TryApplyZoomText()
         {

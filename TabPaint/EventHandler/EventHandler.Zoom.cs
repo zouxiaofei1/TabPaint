@@ -186,6 +186,14 @@ namespace TabPaint
                 return;
             }
 
+            if (isViewMode && !isCtrl && wheelMode == MouseWheelMode.VerticalScroll)
+            {
+                e.Handled = true;
+                double scrollAmount = -e.Delta * AppConsts.WheelScrollFactor;
+                ScrollContainer.ScrollToVerticalOffset(ScrollContainer.VerticalOffset + scrollAmount);
+                return;
+            }
+
             if (isCtrl || (isViewMode && wheelMode == MouseWheelMode.Zoom))
             {
                 e.Handled = true;

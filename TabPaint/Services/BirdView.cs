@@ -76,6 +76,12 @@ namespace TabPaint
         }
         private void CheckBirdEyeVisibility()
         {
+            if (!SettingsManager.Instance.Current.ShowBirdEyeInViewMode)
+            {
+                BirdEyePanel.Visibility = Visibility.Collapsed;
+                return;
+            }
+
             if(RootWindow.Width<300||RootWindow.Height<200)
             {
                 BirdEyePanel.Visibility = Visibility.Collapsed;
@@ -94,6 +100,16 @@ namespace TabPaint
                 Dispatcher.BeginInvoke(new Action(UpdateBirdEyeView), DispatcherPriority.Render);
             }
             else  BirdEyePanel.Visibility = Visibility.Collapsed;
+        }
+
+        private void BirdEyeHideMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var settings = SettingsManager.Instance.Current;
+            if (!settings.ShowBirdEyeInViewMode) return;
+
+            settings.ShowBirdEyeInViewMode = false;
+            SettingsManager.Instance.Save();
+            CheckBirdEyeVisibility();
         }
 
     }

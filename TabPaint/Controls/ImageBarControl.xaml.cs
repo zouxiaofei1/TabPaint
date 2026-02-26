@@ -40,6 +40,7 @@ namespace TabPaint.Controls
         private static readonly ThumbnailCache _highResPreviewCache = new ThumbnailCache(5);
         private Brush _checkerboardBrush;
         private DispatcherTimer _closeTimer;
+        private Window _hostWindow;
         private const int WM_MOUSEHWHEEL = AppConsts.WM_MOUSEHWHEEL;
         private Brush GetCheckerboardBrush()
         {
@@ -462,12 +463,25 @@ namespace TabPaint.Controls
             var window = Window.GetWindow(this);
             if (window != null)
             {
+                if (!ReferenceEquals(_hostWindow, window))
+                {
+                    if (_hostWindow != null) _hostWindow.Deactivated -= HostWindow_Deactivated;
+                    _hostWindow = window;
+                    _hostWindow.Deactivated += HostWindow_Deactivated;
+                }
+
                 var source = HwndSource.FromHwnd(new WindowInteropHelper(window).Handle);
                 source?.AddHook(WndProc);
             }
         }
         private void ImageBarControl_Unloaded(object sender, RoutedEventArgs e)
         {
+            if (_hostWindow != null)
+            {
+                _hostWindow.Deactivated -= HostWindow_Deactivated;
+                _hostWindow = null;
+            }
+
             var window = Window.GetWindow(this);
             if (window != null)
             {
@@ -479,6 +493,12 @@ namespace TabPaint.Controls
                 }
             }
         }
+
+        private void HostWindow_Deactivated(object sender, EventArgs e)
+        {
+            ClosePopupAndReset();
+        }
+
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
             if (msg == WM_MOUSEHWHEEL && IsMouseOverControl(FileTabsScroller))
@@ -542,6 +562,7 @@ namespace TabPaint.Controls
         public event RoutedEventHandler TabPasteClick;
         public event RoutedEventHandler TabOpenFolderClick;
         public event RoutedEventHandler TabDeleteClick;
+        public event RoutedEventHandler TabCloseOthersClick;
         public event RoutedEventHandler TabFileDeleteClick;
 
         private void Internal_OnTabCopyClick(object sender, RoutedEventArgs e) => TabCopyClick?.Invoke(sender, e);
@@ -549,10 +570,16 @@ namespace TabPaint.Controls
         private void Internal_OnTabPasteClick(object sender, RoutedEventArgs e) => TabPasteClick?.Invoke(sender, e);
         private void Internal_OnTabOpenFolderClick(object sender, RoutedEventArgs e) => TabOpenFolderClick?.Invoke(sender, e);
         private void Internal_OnTabDeleteClick(object sender, RoutedEventArgs e) => TabDeleteClick?.Invoke(sender, e);
+        private void Internal_OnTabCloseOthersClick(object sender, RoutedEventArgs e) => TabCloseOthersClick?.Invoke(sender, e);
         private void Internal_OnTabFileDeleteClick(object sender, RoutedEventArgs e) => TabFileDeleteClick?.Invoke(sender, e);
 
         public event MouseButtonEventHandler FileTabPreviewMouseDown;
         private void Internal_OnFileTabPreviewMouseDown(object sender, MouseButtonEventArgs e) => FileTabPreviewMouseDown?.Invoke(sender, e);
+
+        private void Internal_OnFileTabPreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            ClosePopupAndReset();
+        }
 
         public event MouseEventHandler FileTabPreviewMouseMove;
         private void Internal_OnFileTabPreviewMouseMove(object sender, MouseEventArgs e) => FileTabPreviewMouseMove?.Invoke(sender, e);

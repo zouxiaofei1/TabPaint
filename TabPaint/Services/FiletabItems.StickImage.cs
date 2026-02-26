@@ -51,21 +51,18 @@ namespace TabPaint
 
                 if (bitmap != null)
                 {
-                    if (bitmap.IsFrozen == false && bitmap.CanFreeze)
-                    {
-                        bitmap.Freeze();
-                    }
-
-                    var stickyWin = new StickyWindow(bitmap);
-
                     Win32Point p;
                     GetCursorPos(out p);
                     var mouseX = p.X;
                     var mouseY = p.Y;
-                    stickyWin.Left = mouseX - (stickyWin.Width / 2);
-                    stickyWin.Top = mouseY - (stickyWin.Height / 2);
 
-                    stickyWin.Show();
+                    string? sourceFilePath = null;
+                    if (!string.IsNullOrWhiteSpace(tabItem.FilePath) && File.Exists(tabItem.FilePath))
+                    {
+                        sourceFilePath = tabItem.FilePath;
+                    }
+
+                    StickyWindow.CreateAndShowStickyWindow(bitmap, new System.Windows.Point(mouseX, mouseY), sourceFilePath);
                 }
             }
             catch (Exception ex)

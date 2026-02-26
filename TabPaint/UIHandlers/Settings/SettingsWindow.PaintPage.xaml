@@ -122,6 +122,25 @@
                       VerticalAlignment="Center"/>
         </Grid>
 
+        <!-- 看图模式鸟瞰图开关 -->
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <TextBlock Text="{DynamicResource L_Settings_Paint_BirdEye_Title}"/>
+                <TextBlock Text="{DynamicResource L_Settings_Paint_BirdEye_Desc}"
+                           Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <CheckBox Grid.Column="2" Style="{StaticResource FluentCheckBoxStyle}"
+                      IsChecked="{Binding Path=Current.ShowBirdEyeInViewMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                      VerticalAlignment="Center"/>
+        </Grid>
+
         <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
     </StackPanel>
 </UserControl>

@@ -61,6 +61,7 @@ namespace TabPaint
         private void MainWindow_Deactivated(object sender, EventArgs e)
         {
             _router.CurrentTool?.StopAction(_ctx);
+            MainImageBar?.ClosePopupAndReset();
         }
 
 
@@ -77,6 +78,89 @@ namespace TabPaint
                 }
                 else   DragMove(); // 普通拖动
             }
+        }
+
+        private void BeginViewModeWindowDrag()
+        {
+            StopViewModeWindowDrag();
+
+            _isWindowViewDragging = true;
+            _viewDragMouseStartScreen = GetMouseScreenDip();
+            _viewDragWindowStart = new Point(Left, Top);
+
+            CaptureMouse();
+            MouseMove += Window_ViewDragMouseMove;
+            MouseLeftButtonUp += Window_ViewDragMouseUp;
+        }
+
+        private Point GetMouseScreenDip()
+        {
+            GetCursorPos(out POINT p);
+            var source = PresentationSource.FromVisual(this);
+            if (source?.CompositionTarget == null) return new Point(p.X, p.Y);
+            return source.CompositionTarget.TransformFromDevice.Transform(new Point(p.X, p.Y));
+        }
+
+        private Rect GetCurrentMonitorWorkAreaDip()
+        {
+            GetCursorPos(out POINT p);
+            var monitor = MonitorFromPoint(p, MONITOR_DEFAULTTONEAREST);
+
+            MONITORINFO mi = new MONITORINFO { cbSize = Marshal.SizeOf<MONITORINFO>() };
+            if (!GetMonitorInfo(monitor, ref mi))
+            {
+                return SystemParameters.WorkArea;
+            }
+
+            var source = PresentationSource.FromVisual(this);
+            if (source?.CompositionTarget == null)
+            {
+                return new Rect(mi.rcWork.Left, mi.rcWork.Top, mi.rcWork.Right - mi.rcWork.Left, mi.rcWork.Bottom - mi.rcWork.Top);
+            }
+
+            var transform = source.CompositionTarget.TransformFromDevice;
+            var topLeft = transform.Transform(new Point(mi.rcWork.Left, mi.rcWork.Top));
+            var bottomRight = transform.Transform(new Point(mi.rcWork.Right, mi.rcWork.Bottom));
+            return new Rect(topLeft, bottomRight);
+        }
+
+        private void Window_ViewDragMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (!_isWindowViewDragging || e.LeftButton != MouseButtonState.Pressed) return;
+
+            Point currentScreen = GetMouseScreenDip();
+            double targetLeft = _viewDragWindowStart.X + (currentScreen.X - _viewDragMouseStartScreen.X);
+            double targetTop = _viewDragWindowStart.Y + (currentScreen.Y - _viewDragMouseStartScreen.Y);
+
+            var workArea = GetCurrentMonitorWorkAreaDip();
+            double visibleWidth = Math.Min(ViewModeDragMinVisibleWidth, ActualWidth);
+            double visibleHeight = Math.Min(ViewModeDragMinVisibleHeight, ActualHeight);
+
+            // 允许窗口部分出屏，但保留最小可见区域，防止完全丢失。
+            double minLeft = workArea.Left - Math.Max(0, ActualWidth - visibleWidth);
+            double maxLeft = workArea.Right - visibleWidth;
+            double minTop = workArea.Top - Math.Max(0, ActualHeight - visibleHeight);
+            double maxTop = workArea.Bottom - visibleHeight;
+
+            Left = Math.Clamp(targetLeft, minLeft, maxLeft);
+            Top = Math.Clamp(targetTop, minTop, maxTop);
+
+            e.Handled = true;
+        }
+
+        private void Window_ViewDragMouseUp(object sender, MouseButtonEventArgs e)
+        {
+            StopViewModeWindowDrag();
+            e.Handled = true;
+        }
+
+        private void StopViewModeWindowDrag()
+        {
+            if (!_isWindowViewDragging) return;
+            _isWindowViewDragging = false;
+            MouseMove -= Window_ViewDragMouseMove;
+            MouseLeftButtonUp -= Window_ViewDragMouseUp;
+            if (IsMouseCaptured) ReleaseMouseCapture();
         }
 
         private void Border_MouseMoveFromMaximized(object sender, System.Windows.Input.MouseEventArgs e)
@@ -110,6 +194,32 @@ namespace TabPaint
 
         [System.Runtime.InteropServices.DllImport("user32.dll")]
         private static extern uint GetClipboardSequenceNumber();
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct RECT
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+        private struct MONITORINFO
+        {
+            public int cbSize;
+            public RECT rcMonitor;
+            public RECT rcWork;
+            public uint dwFlags;
+        }
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromPoint(POINT pt, uint dwFlags);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+        private const uint MONITOR_DEFAULTTONEAREST = 0x00000002;
 
         // 状态变量
         private uint _lastClipboardSequenceNumber = 0;

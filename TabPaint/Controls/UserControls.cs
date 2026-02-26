@@ -78,6 +78,7 @@ SetZoom(targetScale, slient: true);
             MainImageBar.TabPasteClick += OnTabPasteClick;
             MainImageBar.TabOpenFolderClick += OnTabOpenFolderClick;
             MainImageBar.TabDeleteClick += OnTabDeleteClick;
+            MainImageBar.TabCloseOthersClick += OnTabCloseOthersClick;
             MainImageBar.TabFileDeleteClick += OnTabFileDeleteClick;
             ImageBarHolder.Content = MainImageBar;
             if (MainImageBar != null)
@@ -165,6 +166,7 @@ SetZoom(targetScale, slient: true);
             MyStatusBar = new StatusBarControl();
             MyStatusBar.ClipboardMonitorClick += ClipboardMonitorToggle_Click;
             MyStatusBar.FavoriteClick += (s, e) => ToggleFavoriteWindow();
+            MyStatusBar.CommandBarToggleRequested += OnStatusCommandBarToggleRequested;
             MyStatusBar.FitToWindowClick += FitToWindow_Click;
             MyStatusBar.ZoomOutClick += ZoomOut_Click;
             MyStatusBar.ZoomInClick += ZoomIn_Click;
@@ -174,6 +176,7 @@ SetZoom(targetScale, slient: true);
             AppTitleBar.OpenWorkspaceClick += OnOpenWorkspaceClick;
             AppTitleBar.SaveClick += OnSaveClick;
             AppTitleBar.SaveAsClick += OnSaveAsClick;
+            AppTitleBar.SettingsClick += OnSettingsClick;
             AppTitleBar.ExitClick += OnExitClick;
             AppTitleBar.IconDragRequest += OnAppTitleBarIconDragRequest;
             AppTitleBar.LogoMiddleClick += OnAppTitleBarLogoMiddleClick;
@@ -183,6 +186,7 @@ SetZoom(targetScale, slient: true);
             AppTitleBar.MaximizeRestoreClick += OnTitleBarMaximizeRestoreClick;
 
             StatusBarHolder.Content = MyStatusBar;
+            ApplyStatusCommandBarExpandedState(SettingsManager.Instance.Current.IsStatusCommandBarExpanded, adjustWindowHeight: false);
 
             UpdateUIStatus(zoomscale);
         }

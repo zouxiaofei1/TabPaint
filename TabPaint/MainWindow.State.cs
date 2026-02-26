@@ -267,6 +267,11 @@ namespace TabPaint
         private string _currentFilePath = string.Empty;
         private Point _dragStartPoint;
         private bool _draggingFromMaximized = false;
+        private bool _isWindowViewDragging = false;
+        private Point _viewDragMouseStartScreen;
+        private Point _viewDragWindowStart;
+        private const double ViewModeDragMinVisibleWidth = 120;
+        private const double ViewModeDragMinVisibleHeight = 80;
         public class PaintSession
         {
             private const int CurrentVersion = 1;
@@ -406,8 +411,14 @@ namespace TabPaint
         public Controls.ToolBarControl MainToolBar;
         public Controls.ImageBarControl MainImageBar;
         public Controls.StatusBarControl MyStatusBar;
+        private const double StatusCommandBarHeightDelta = 46;
+        private bool _isStatusCommandBarExpanded = false;
 
         private DispatcherTimer _toastTimer;
+        private DispatcherTimer? _viewModeNavHoldTimer;
+        private int _viewModeNavHoldDirection = 0; // -1: prev, 1: next
+        private bool _viewModeNavHoldStartedRepeating = false;
+        private bool _suppressViewModeNavClickOnce = false;
 
         public bool BlanketMode = false;
         private bool _isCurrentFileGif = false; // 标记当前文件是否为GIF

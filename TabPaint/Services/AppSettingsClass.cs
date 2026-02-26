@@ -121,6 +121,22 @@ namespace TabPaint
                 }
             }
         }
+
+        private bool _isStatusCommandBarExpanded = false;
+
+        [JsonPropertyName("is_status_command_bar_expanded")]
+        public bool IsStatusCommandBarExpanded
+        {
+            get => _isStatusCommandBarExpanded;
+            set
+            {
+                if (_isStatusCommandBarExpanded != value)
+                {
+                    _isStatusCommandBarExpanded = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
         private bool _alwaysShowTabCloseButton = false;
 
         [JsonPropertyName("always_show_tab_close_button")]
@@ -672,6 +688,22 @@ namespace TabPaint
                 if (_viewUseDarkCanvasBackground != value)
                 {
                     _viewUseDarkCanvasBackground = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private bool _showBirdEyeInViewMode = true;
+
+        [JsonPropertyName("show_bird_eye_in_view_mode")]
+        public bool ShowBirdEyeInViewMode
+        {
+            get => _showBirdEyeInViewMode;
+            set
+            {
+                if (_showBirdEyeInViewMode != value)
+                {
+                    _showBirdEyeInViewMode = value;
                     OnPropertyChanged();
                 }
             }

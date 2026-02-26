@@ -34,14 +34,12 @@
             <local:ZoomToInverseValueConverter x:Key="ZoomToInverseValueConverter"/>
 
             <Style x:Key="ViewModeNavButtonStyle" TargetType="Button">
-                <Setter Property="Width" Value="42"/>
-                <Setter Property="Height" Value="80"/>
+                <Setter Property="Width" Value="48"/>
+                <Setter Property="Height" Value="48"/>
                 <Setter Property="Background" Value="{DynamicResource GlassBackgroundMediumBrush}"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource BorderMediumBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
-                <Setter Property="FontSize" Value="28"/>
-                <Setter Property="FontWeight" Value="Light"/>
                 <Setter Property="Cursor" Value="Hand"/>
                 <Setter Property="Opacity" Value="0"/>
                 <Setter Property="IsHitTestVisible" Value="False"/>
@@ -52,7 +50,7 @@
                                     Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="{TemplateBinding BorderThickness}"
-                                    CornerRadius="22"
+                                    CornerRadius="24"
                                     Padding="0">
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
@@ -175,7 +173,30 @@
                     <!-- 4. 图片列表栏 -->
                     <ContentControl x:Name="ImageBarHolder" DockPanel.Dock="Top" IsTabStop="False" Focusable="False"/>
 
-                    <!-- 5. 底部状态栏 -->
+                    <!-- 5. 状态栏命令行（双击状态栏展开） -->
+                    <Border x:Name="StatusCommandBar"
+                            DockPanel.Dock="Bottom"
+                            Height="38"
+                            Margin="8,0,8,8"
+                            Padding="10,5"
+                            CornerRadius="8"
+                            BorderThickness="1"
+                            BorderBrush="{DynamicResource BorderMediumBrush}"
+                            Background="{DynamicResource GlassBackgroundMediumBrush}"
+                            Visibility="Collapsed">
+                        <TextBox x:Name="StatusCommandTextBox"
+                                 Height="26"
+                                 VerticalContentAlignment="Center"
+                                 BorderThickness="0"
+                                 Background="Transparent"
+                                 Foreground="{DynamicResource TextControlBrush}"
+                                 CaretBrush="{DynamicResource TextControlBrush}"
+                                 FontSize="12"
+                                 Text=""
+                                 KeyDown="OnStatusCommandTextBoxKeyDown"/>
+                    </Border>
+
+                    <!-- 6. 底部状态栏 -->
                     <ContentControl x:Name="StatusBarHolder" DockPanel.Dock="Bottom"
                                Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
 
@@ -334,6 +355,10 @@
                                     HorizontalAlignment="Left"
                                     VerticalAlignment="Center"
                                     Margin="12,0,0,0"
+                                    PreviewMouseLeftButtonDown="OnViewModeNavButtonPreviewMouseLeftButtonDown"
+                                    PreviewMouseLeftButtonUp="OnViewModeNavButtonPreviewMouseLeftButtonUp"
+                                    MouseLeave="OnViewModeNavButtonMouseLeave"
+                                    LostMouseCapture="OnViewModeNavButtonLostMouseCapture"
                                     Click="OnViewModePrevImageClick"
                                     ToolTip="上一张">
                                 <Button.Style>
@@ -350,13 +375,21 @@
                                         </Style.Triggers>
                                     </Style>
                                 </Button.Style>
-                                <TextBlock Text="&lt;" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,-2,0,0"/>
+                                <Path Width="20"
+                                      Height="20"
+                                      Stretch="Uniform"
+                                      Fill="{DynamicResource TextPrimaryBrush}"
+                                      Data="{DynamicResource LeftArrow_Image}"/>
                             </Button>
 
                             <Button x:Name="NextImageButton"
                                     HorizontalAlignment="Right"
                                     VerticalAlignment="Center"
                                     Margin="0,0,12,0"
+                                    PreviewMouseLeftButtonDown="OnViewModeNavButtonPreviewMouseLeftButtonDown"
+                                    PreviewMouseLeftButtonUp="OnViewModeNavButtonPreviewMouseLeftButtonUp"
+                                    MouseLeave="OnViewModeNavButtonMouseLeave"
+                                    LostMouseCapture="OnViewModeNavButtonLostMouseCapture"
                                     Click="OnViewModeNextImageClick"
                                     ToolTip="下一张">
                                 <Button.Style>
@@ -373,7 +406,11 @@
                                         </Style.Triggers>
                                     </Style>
                                 </Button.Style>
-                                <TextBlock Text=">" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,-2,0,0"/>
+                                <Path Width="20"
+                                      Height="20"
+                                      Stretch="Uniform"
+                                      Fill="{DynamicResource TextPrimaryBrush}"
+                                      Data="{DynamicResource RightArrow_Image}"/>
                             </Button>
                         </Grid>
 
@@ -428,6 +465,11 @@
                         </Grid>
 
                         <Border x:Name="BirdEyePanel" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,25,25" Width="140" Height="120" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource BorderMediumBrush}" BorderThickness="1" CornerRadius="4" Visibility="Collapsed">
+                            <Border.ContextMenu>
+                                <ContextMenu Style="{DynamicResource Win11ContextMenuStyle}">
+                                    <MenuItem Header="{DynamicResource L_BirdEye_Ctx_Hide}" Click="BirdEyeHideMenuItem_Click"/>
+                                </ContextMenu>
+                            </Border.ContextMenu>
                             <Border.Effect><DropShadowEffect BlurRadius="10" Opacity="0.2" ShadowDepth="2"/></Border.Effect>
                             <Grid Margin="5">
                                 <Image x:Name="BirdEyeImage" Stretch="Uniform" Source="{Binding ElementName=BackgroundImage, Path=Source}" HorizontalAlignment="Center" VerticalAlignment="Center"/>

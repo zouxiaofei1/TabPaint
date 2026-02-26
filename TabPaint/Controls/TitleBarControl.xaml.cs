@@ -146,25 +146,47 @@ namespace TabPaint.Controls
         public event RoutedEventHandler OpenWorkspaceClick;
         public event RoutedEventHandler SaveClick;
         public event RoutedEventHandler SaveAsClick;
+        public event RoutedEventHandler SettingsClick;
         public event RoutedEventHandler ExitClick;
         public event RoutedEventHandler LogoMiddleClick;
         public bool IsLogoMenuEnabled { get; set; } = false;
+        private bool _pendingLogoMenuOpen;
+
+        private void ToggleLogoMenu()
+        {
+            if (AppIcon.ContextMenu == null) LoadLogoContextMenu();
+            if (AppIcon.ContextMenu == null) return;
+
+            var menu = AppIcon.ContextMenu;
+            if (menu.IsOpen)
+            {
+                _pendingLogoMenuOpen = false;
+                menu.IsOpen = false;
+                return;
+            }
+
+            // Force anchor-based placement every time to avoid fallback to screen (0,0).
+            menu.PlacementTarget = AppIcon;
+            menu.Placement = PlacementMode.Bottom;
+            menu.HorizontalOffset = 0;
+            menu.VerticalOffset = 2;
+
+            // Defer open to a later queue to avoid same-click close/open race.
+            _pendingLogoMenuOpen = true;
+            Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+            {
+                if (!_pendingLogoMenuOpen) return;
+                if (!IsLogoMenuEnabled) return;
+                menu.IsOpen = true;
+                _pendingLogoMenuOpen = false;
+            }));
+        }
+
         private void OnAppIconMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Middle)
             {
                 LogoMiddleClick?.Invoke(this, e);
-                e.Handled = true;
-                return;
-            }
-            if (e.ChangedButton == MouseButton.Left && IsLogoMenuEnabled)
-            {
-                if (AppIcon.ContextMenu == null)   LoadLogoContextMenu();
-                if (AppIcon.ContextMenu != null)
-                {
-                    AppIcon.ContextMenu.PlacementTarget = AppIcon;
-                    AppIcon.ContextMenu.IsOpen = true;
-                }
                 e.Handled = true;
             }
         }
@@ -178,6 +200,11 @@ namespace TabPaint.Controls
 
                 if (menu != null)
                 {
+                    // Lock context menu to the app icon instead of mouse-point placement.
+                    menu.Placement = PlacementMode.Bottom;
+                    menu.HorizontalOffset = 0;
+                    menu.VerticalOffset = 2;
+
                     foreach (var item in menu.Items)
                     {
                         if (item is MenuItem menuItem) BindMenuEvents(menuItem);
@@ -193,6 +220,7 @@ namespace TabPaint.Controls
             else if (item.Tag?.ToString() == "Open") item.Click += OnOpenClick;
             else if (item.Tag?.ToString() == "Save") item.Click += OnSaveClick;
             else if (item.Tag?.ToString() == "SaveAs") item.Click += OnSaveAsClick;
+            else if (item.Tag?.ToString() == "Settings") item.Click += OnSettingsClick;
             else if (item.Tag?.ToString() == "Exit") item.Click += OnExitClick;
             else if (item.Tag?.ToString() == "OpenFolder") item.Click += OnOpenWorkspaceClick;
 
@@ -221,6 +249,7 @@ namespace TabPaint.Controls
         private void OnOpenWorkspaceClick(object sender, RoutedEventArgs e) => OpenWorkspaceClick?.Invoke(this, e);
         private void OnSaveClick(object sender, RoutedEventArgs e) => SaveClick?.Invoke(this, e);
         private void OnSaveAsClick(object sender, RoutedEventArgs e) => SaveAsClick?.Invoke(this, e);
+        private void OnSettingsClick(object sender, RoutedEventArgs e) => SettingsClick?.Invoke(this, e);
         private void OnExitClick(object sender, RoutedEventArgs e) => ExitClick?.Invoke(this, e);
 
         public event EventHandler<MouseButtonEventArgs> IconDragRequest;
@@ -230,8 +259,19 @@ namespace TabPaint.Controls
         {
             _dragStartPoint = e.GetPosition(this);
         }
+
+        private void OnAppIconPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (!IsLogoMenuEnabled) return;
+            ToggleLogoMenu();
+            e.Handled = true;
+        }
+
         private void OnAppIconPreviewMouseMove(object sender, MouseEventArgs e)
         {
+            // 看图模式下禁用从标题栏 Logo 发起拖拽
+            if ((Window.GetWindow(this) as MainWindow)?.IsViewMode == true) return;
+
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 Point currentPosition = e.GetPosition(this);

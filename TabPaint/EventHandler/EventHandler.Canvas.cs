@@ -137,7 +137,17 @@ namespace TabPaint
                 {
                     if (e.ButtonState == MouseButtonState.Pressed) // 图片小于窗口，拖动窗口本身
                     {
-                        try{ this.DragMove(); }
+                        try
+                        {
+                            if (IsViewMode)
+                            {
+                                BeginViewModeWindowDrag();
+                            }
+                            else
+                            {
+                                this.DragMove();
+                            }
+                        }
                         catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
                         e.Handled = true;
                         return;

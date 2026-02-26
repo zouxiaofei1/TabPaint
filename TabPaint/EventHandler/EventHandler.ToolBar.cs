@@ -189,7 +189,7 @@ namespace TabPaint
             }
             else
             {
-                if (_activeColorPicker.ShowOwnerModal(this) == true)
+                if (_activeColorPicker.ShowOwnerModal(this, disableOwner: false) == true)
                 {
                     var color = _activeColorPicker.SelectedColor;
                     var brush = new SolidColorBrush(color);

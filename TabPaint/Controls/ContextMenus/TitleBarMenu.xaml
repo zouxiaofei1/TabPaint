@@ -62,6 +62,12 @@
                 <Path Data="{DynamicResource Save_Button_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
             </MenuItem.Icon>
         </MenuItem>
+        <MenuItem Style="{StaticResource Win11MenuItemStyle}" Tag="Settings" Header="{DynamicResource L_Menu_QA_Settings}">
+            <MenuItem.Icon>
+                <Path Data="{DynamicResource Settings_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+            </MenuItem.Icon>
+        </MenuItem>
+        <Separator Style="{StaticResource MenuSeparator}"/>
         <MenuItem Style="{StaticResource Win11MenuItemStyle}" Tag="Exit" Header="{DynamicResource L_Menu_File_Exit}">
             <MenuItem.Icon>
                 <Path Data="{DynamicResource Exit_Image}" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" Width="16" Height="16"/>

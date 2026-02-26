@@ -57,6 +57,18 @@
                       ToolTip="{DynamicResource L_Menu_QA_DiscardImage}"
                         Click="OnDiscardImageClick" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Path Data="{DynamicResource Reset_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                    <Button.ContextMenu>
+                        <ContextMenu Style="{StaticResource Win11ContextMenuStyle}">
+                            <MenuItem Header="{DynamicResource L_Menu_QA_DiscardAll}"
+                                      Foreground="{DynamicResource DangerBrush}"
+                                      Style="{StaticResource Win11MenuItemStyle}"
+                                      Click="OnDiscardAllClick">
+                                <MenuItem.Icon>
+                                    <Path Data="{DynamicResource Reset_Image}" Stretch="Uniform" Fill="{DynamicResource WarningBrush}" Width="14" Height="14"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                        </ContextMenu>
+                    </Button.ContextMenu>
                 </Button>
             </StackPanel>
 

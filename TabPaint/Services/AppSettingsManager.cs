@@ -159,6 +159,7 @@ namespace TabPaint
                     writer.Write(Current.LastLaunchedVersion ?? "");
                     writer.Write(Current.NewestInstalledVersion ?? "");
                     writer.Write(Current.IsImageBarCompact);
+                    writer.Write(Current.IsStatusCommandBarExpanded);
                     writer.Write(Current.AlwaysShowTabCloseButton);
                     writer.Write(Current.StartInViewMode);
                     writer.Write((int)Current.ViewMouseWheelMode);
@@ -191,6 +192,7 @@ namespace TabPaint
                     writer.Write((int)Current.OcrResultAction);
                     writer.Write(Current.IsShapeToolProMode);
                     writer.Write(Current.ViewUseDarkCanvasBackground);
+                    writer.Write(Current.ShowBirdEyeInViewMode);
                     writer.Write(Current.ThemeAccentColor ?? "");
                     writer.Write(Current.PerformanceScore);
                     writer.Write(Current.LastBenchmarkDate.Ticks);
@@ -254,6 +256,7 @@ namespace TabPaint
                     settings.LastLaunchedVersion = reader.ReadString();
                     settings.NewestInstalledVersion = dataVersion >= 8 ? reader.ReadString() : settings.LastLaunchedVersion;
                     settings.IsImageBarCompact = reader.ReadBoolean();
+                    settings.IsStatusCommandBarExpanded = dataVersion >= 12 && reader.ReadBoolean();
                     settings.AlwaysShowTabCloseButton = reader.ReadBoolean();
                     settings.StartInViewMode = reader.ReadBoolean();
                     settings.ViewMouseWheelMode = (MouseWheelMode)reader.ReadInt32();
@@ -288,6 +291,9 @@ namespace TabPaint
                         : OcrResultAction.EditText;
                     settings.IsShapeToolProMode = reader.ReadBoolean();
                     settings.ViewUseDarkCanvasBackground = reader.ReadBoolean();
+                    settings.ShowBirdEyeInViewMode = dataVersion >= 11
+                        ? reader.ReadBoolean()
+                        : true;
                     settings.ThemeAccentColor = reader.ReadString();
                     settings.PerformanceScore = reader.ReadInt32();
                     settings.LastBenchmarkDate = new DateTime(reader.ReadInt64());

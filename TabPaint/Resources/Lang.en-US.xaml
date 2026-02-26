@@ -103,6 +103,8 @@
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Desc">Allow pressing Delete to delete the current file</sys:String>
     <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Title">Shape Tool Professional Mode</sys:String>
     <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Desc">Allow resizing and repositioning shapes after drawing (Toggle with Alt)</sys:String>
+    <sys:String x:Key="L_Settings_Paint_BirdEye_Title">Show bird's-eye view in viewer mode</sys:String>
+    <sys:String x:Key="L_Settings_Paint_BirdEye_Desc">If hidden from the right-click menu, re-enable it here.</sys:String>
 
     <!-- View panel -->
     <sys:String x:Key="L_Settings_View_Title">View</sys:String>
@@ -111,6 +113,7 @@
     <sys:String x:Key="L_Settings_View_MouseWheel_Desc">Scrolling wheel in view mode</sys:String>
     <sys:String x:Key="L_Settings_View_MouseWheel_Zoom">Zoom</sys:String>
     <sys:String x:Key="L_Settings_View_MouseWheel_Switch">Switch image (Prev/Next)</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Scroll">Scroll vertically</sys:String>
     <sys:String x:Key="L_Settings_View_Display_Header">Display</sys:String>
     <sys:String x:Key="L_Settings_View_DarkBg_Title">Use dark background</sys:String>
     <sys:String x:Key="L_Settings_View_DarkBg_Desc">Show dark gray background around the image</sys:String>
@@ -274,6 +277,7 @@
     <sys:String x:Key="L_Main_Ctx_Paste">Paste</sys:String>
     <sys:String x:Key="L_Main_Ctx_FixedZoom">Fixed zoom ratio</sys:String>
     <sys:String x:Key="L_Main_Ctx_WindowTopmost">Always on top</sys:String>
+    <sys:String x:Key="L_BirdEye_Ctx_Hide">Hide bird's-eye view</sys:String>
     <sys:String x:Key="L_Main_Ctx_ShowRulers">Show rulers</sys:String>
     <sys:String x:Key="L_Main_Ctx_MiniTools">Mini tools</sys:String>
     <sys:String x:Key="L_Main_Ctx_AI_RemoveBg">AI remove background (RMBG)</sys:String>
@@ -458,6 +462,7 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_TitleBar_Minimize">Minimize</sys:String>
     <sys:String x:Key="L_TitleBar_Maximize">Maximize</sys:String>
     <sys:String x:Key="L_TitleBar_Close">Close</sys:String>
+    <sys:String x:Key="L_Menu_File_OpenTabFolder">Open Tab Folder</sys:String>
     <!-- Adjust Windows -->
     <sys:String x:Key="L_AdjustBCE_Title">Adjust Image</sys:String>
     <sys:String x:Key="L_AdjustBCE_Brightness">Brightness</sys:String>
@@ -823,11 +828,14 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Stick_TopMost" xmlns:sys="clr-namespace:System;assembly=mscorlib">Always on Top</sys:String>
     <sys:String x:Key="L_Stick_Opacity" xmlns:sys="clr-namespace:System;assembly=mscorlib">Opacity</sys:String>
     <sys:String x:Key="L_Stick_ResetScale" xmlns:sys="clr-namespace:System;assembly=mscorlib">Reset Scale</sys:String>
+   <sys:String x:Key="L_Stick_Copy" xmlns:sys="clr-namespace:System;assembly=mscorlib">Copy</sys:String>
+   <sys:String x:Key="L_Stick_CloseAll" xmlns:sys="clr-namespace:System;assembly=mscorlib">Close All</sys:String>
    <sys:String x:Key="L_ClipboardMonitorToggle_Detail" xml:space="preserve"  xmlns:sys="clr-namespace:System;assembly=mscorlib">Automatically create a tab include content of screen after screenshot.</sys:String>
 
     <sys:String x:Key="L_ImgBar_ClearUnedited">Close all unedited images</sys:String>
     <sys:String x:Key="L_ImgBar_NewTabLeft">New tab on the left</sys:String>
     <sys:String x:Key="L_Ctx_StickImage">Stick Image</sys:String>
+    <sys:String x:Key="L_Ctx_CloseOtherTabs">Close Other Tabs</sys:String>
     <sys:String x:Key="L_Ctx_DeleteFile">Delete File</sys:String>
 
     <sys:String x:Key="L_Text_Bold">Bold</sys:String>

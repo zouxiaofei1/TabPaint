@@ -41,6 +41,7 @@
                       Height="30" VerticalContentAlignment="Center">
                 <ComboBoxItem Content="{DynamicResource L_Settings_View_MouseWheel_Zoom}" Tag="Zoom"/>
                 <ComboBoxItem Content="{DynamicResource L_Settings_View_MouseWheel_Switch}" Tag="SwitchImage"/>
+                <ComboBoxItem Content="{DynamicResource L_Settings_View_MouseWheel_Scroll}" Tag="VerticalScroll"/>
             </ComboBox>
         </Grid>
 

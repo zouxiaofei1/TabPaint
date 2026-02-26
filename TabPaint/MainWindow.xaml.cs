@@ -391,6 +391,12 @@ namespace TabPaint
                 this.Topmost = SettingsManager.Instance.Current.IsWindowTopmost;
                 SettingsManager.Instance.Save();
             }
+
+            if (e.PropertyName == nameof(AppSettings.ShowBirdEyeInViewMode))
+            {
+                CheckBirdEyeVisibility();
+                UpdateBirdEyeView();
+            }
         }
         private void UpdateCanvasVisuals()
         {
@@ -647,6 +653,8 @@ namespace TabPaint
                 ImageFilesCount = _imageFiles.Count;
                 SetPreviewSlider();
 
+                if (_tools.Select is SelectTool st && st.HasActiveSelection)  st.CommitSelection(_ctx);
+
                 if (firstNewTab != null)
                 {
                     if (_currentTabItem != null) _currentTabItem.IsSelected = false;
@@ -770,6 +778,91 @@ namespace TabPaint
 
         private DateTime _navKeyPressStartTime = DateTime.MinValue;
         private bool _isNavigating = false;
+        private const int ViewModeNavHoldInitialDelayMs = 400;
+        private const int ViewModeNavHoldRepeatIntervalMs = 85;
+
+        private void EnsureViewModeNavHoldTimer()
+        {
+            if (_viewModeNavHoldTimer != null) return;
+
+            _viewModeNavHoldTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(ViewModeNavHoldInitialDelayMs)
+            };
+            _viewModeNavHoldTimer.Tick += OnViewModeNavHoldTimerTick;
+        }
+
+        private static int GetViewModeNavDirectionFromSender(object sender)
+        {
+            if (sender is Button button)
+            {
+                if (button.Name == "PrevImageButton") return -1;
+                if (button.Name == "NextImageButton") return 1;
+            }
+            return 0;
+        }
+
+        private void StartViewModeNavHold(int direction)
+        {
+            if (direction == 0) return;
+
+            EnsureViewModeNavHoldTimer();
+            _viewModeNavHoldDirection = direction;
+            _viewModeNavHoldStartedRepeating = false;
+            _viewModeNavHoldTimer!.Interval = TimeSpan.FromMilliseconds(ViewModeNavHoldInitialDelayMs);
+            _viewModeNavHoldTimer.Start();
+        }
+
+        private void StopViewModeNavHold()
+        {
+            if (_viewModeNavHoldTimer != null) _viewModeNavHoldTimer.Stop();
+            _viewModeNavHoldDirection = 0;
+            _viewModeNavHoldStartedRepeating = false;
+        }
+
+        private void OnViewModeNavHoldTimerTick(object? sender, EventArgs e)
+        {
+            if (_viewModeNavHoldDirection == 0)
+            {
+                StopViewModeNavHold();
+                return;
+            }
+
+            MoveImageIndex(_viewModeNavHoldDirection);
+
+            if (!_viewModeNavHoldStartedRepeating && _viewModeNavHoldTimer != null)
+            {
+                _viewModeNavHoldStartedRepeating = true;
+                _viewModeNavHoldTimer.Interval = TimeSpan.FromMilliseconds(ViewModeNavHoldRepeatIntervalMs);
+            }
+        }
+
+        private void OnViewModeNavButtonPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            int direction = GetViewModeNavDirectionFromSender(sender);
+            if (direction == 0) return;
+
+            // 按下先切一张，随后进入长按连发。
+            MoveImageIndex(direction);
+            _suppressViewModeNavClickOnce = true;
+            StartViewModeNavHold(direction);
+        }
+
+        private void OnViewModeNavButtonPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            StopViewModeNavHold();
+        }
+
+        private void OnViewModeNavButtonMouseLeave(object sender, MouseEventArgs e)
+        {
+            StopViewModeNavHold();
+        }
+
+        private void OnViewModeNavButtonLostMouseCapture(object sender, MouseEventArgs e)
+        {
+            StopViewModeNavHold();
+        }
+
         private int CalculateNavigationGap()
         {
             if (_navKeyPressStartTime == DateTime.MinValue) return 1;
@@ -793,12 +886,24 @@ namespace TabPaint
 
         private void OnViewModePrevImageClick(object sender, RoutedEventArgs e)
         {
+            if (_suppressViewModeNavClickOnce)
+            {
+                _suppressViewModeNavClickOnce = false;
+                e.Handled = true;
+                return;
+            }
             ShowPrevImage();
             e.Handled = true;
         }
 
         private void OnViewModeNextImageClick(object sender, RoutedEventArgs e)
         {
+            if (_suppressViewModeNavClickOnce)
+            {
+                _suppressViewModeNavClickOnce = false;
+                e.Handled = true;
+                return;
+            }
             ShowNextImage();
             e.Handled = true;
         }
@@ -1055,6 +1160,8 @@ namespace TabPaint
             // 1. 处理右键菜单加载
             if (e.ChangedButton == MouseButton.Right)
             {
+                if (IsViewMode) return;
+
                 // 如果菜单还没加载过，进行加载
                 if (ScrollContainer.ContextMenu == null) LoadCanvasContextMenu();// 再次检查（因为加载可能失败），如果成功则打开
                 if (ScrollContainer.ContextMenu != null)
@@ -1201,6 +1308,7 @@ namespace TabPaint
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
+            StopViewModeNavHold();
             if (!_programClosed)
             {
                 int otherVisibleWindows = Application.Current.Windows.OfType<MainWindow>().Count(w => w != this && w.IsVisible);

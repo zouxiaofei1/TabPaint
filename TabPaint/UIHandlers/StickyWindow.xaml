@@ -4,11 +4,15 @@
         Title="StickyNote" Height="300" Width="400"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Topmost="True" ShowInTaskbar="False"
+        AllowDrop="True"
         MouseLeftButtonDown="Window_MouseLeftButtonDown"
         MouseEnter="Window_MouseEnter"
         MouseLeave="Window_MouseLeave"
         MouseDoubleClick="Window_MouseDoubleClick"
-        MouseWheel="Window_MouseWheel">
+        MouseWheel="Window_MouseWheel"
+        PreviewKeyDown="Window_PreviewKeyDown"
+        DragOver="Window_DragOver"
+        Drop="Window_Drop">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -69,7 +73,20 @@
                     <!-- 重置缩放 (实用小功能) -->
                     <MenuItem Header="{DynamicResource L_Stick_ResetScale}" 
                               Click="OnResetScaleClick"
-                              Style="{DynamicResource Win11MenuItemStyle}"/>
+                              Style="{DynamicResource Win11MenuItemStyle}">
+                    <MenuItem.Icon>
+                            <Path Data="{DynamicResource Undo_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="{DynamicResource L_Stick_Copy}"
+                              Click="OnCopyClick"
+                              Style="{DynamicResource Win11MenuItemStyle}">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+
+
 
                     <Separator Style="{DynamicResource Win11MenuSeparatorStyle}"/>
 
@@ -82,12 +99,18 @@
                             <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
                         </MenuItem.Icon>
                     </MenuItem>
-
+                    <MenuItem Header="{DynamicResource L_Stick_CloseAll}"
+                              Click="OnCloseAllClick"
+                              Style="{DynamicResource Win11MenuItemStyle}">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
                 </ContextMenu>
             </Border.ContextMenu>
 
             <Border.Effect>
-                <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.4"/>
+                <DropShadowEffect Color="#CC000000" BlurRadius="22" ShadowDepth="0" Opacity="0.5"/>
             </Border.Effect>
 
             <Image x:Name="DisplayImage" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
@@ -104,7 +127,25 @@
                 Style="{StaticResource StickyCloseButtonStyle}"
                 Click="OnCloseClick"
                 ToolTip="Close">
-            <TextBlock Text="✕" FontSize="15" FontWeight="SemiBold"/>
+            <Grid>
+                <TextBlock Text="✕"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Foreground="#CC000000"
+                           Margin="0,1,0,0"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center">
+                    <TextBlock.Effect>
+                        <DropShadowEffect Color="#D9000000" BlurRadius="3" ShadowDepth="0" Opacity="0.9"/>
+                    </TextBlock.Effect>
+                </TextBlock>
+                <TextBlock Text="✕"
+                           FontSize="15"
+                           FontWeight="SemiBold"
+                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+            </Grid>
         </Button>
     </Grid>
 </Window>

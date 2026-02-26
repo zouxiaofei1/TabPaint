@@ -456,6 +456,17 @@ namespace TabPaint
                 CloseTab(tab);
             }
         }
+
+        private void OnTabCloseOthersClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is not MenuItem item || item.Tag is not FileTabItem currentTab) return;
+
+            foreach (var tab in FileTabs.ToList())
+            {
+                if (ReferenceEquals(tab, currentTab)) continue;
+                CloseTab(tab,slient:true);
+            }
+        }
        
         // #endregion
     }

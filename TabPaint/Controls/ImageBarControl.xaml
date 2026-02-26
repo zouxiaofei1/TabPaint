@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:gif="https://github.com/XamlAnimatedGif/XamlAnimatedGif"
              xmlns:local="clr-namespace:TabPaint.Controls"
+             xmlns:controls="clr-namespace:TabPaint.Controls"
              xmlns:root="clr-namespace:TabPaint"
              xmlns:services="clr-namespace:TabPaint.Services"
              mc:Ignorable="d" 
@@ -210,6 +211,7 @@
                                     <Button x:Name="TabButton" Margin="2" Padding="4" 
                                             Click="Internal_OnFileTabClick" 
                                             PreviewMouseDown="Internal_OnFileTabPreviewMouseDown" 
+                                            PreviewMouseRightButtonDown="Internal_OnFileTabPreviewMouseRightButtonDown"
                                             PreviewMouseMove="Internal_OnFileTabPreviewMouseMove" 
                                                  MouseEnter="Internal_OnTabMouseEnter"
                                          MouseLeave="Internal_OnTabMouseLeave"
@@ -224,13 +226,7 @@
                                                         <Path Data="{DynamicResource Copy_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
-                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Menu_Edit_Cut}" 
-                                                          services:ShortcutService.ShortcutKey="Edit.Cut"
-                                                          Click="Internal_OnTabCutClick" Tag="{Binding}">
-                                                    <MenuItem.Icon>
-                                                        <Path Data="{DynamicResource Cut_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
-                                                    </MenuItem.Icon>
-                                                </MenuItem>
+                              
 
                                                 <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Menu_Edit_Paste}" 
                                                           services:ShortcutService.ShortcutKey="Edit.Paste"
@@ -239,7 +235,7 @@
                                                         <Path Data="{DynamicResource Paste_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
-                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Menu_File_OpenFolder}" 
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Menu_File_OpenTabFolder}" 
                                                           services:ShortcutService.ShortcutKey="File.OpenWorkspace"
                                                           Visibility="{Binding IsNew, Converter={StaticResource InverseBoolToVis}}"
                                                           Click="Internal_OnTabOpenFolderClick" Tag="{Binding}">
@@ -253,15 +249,28 @@
                                                         <Path Data="{DynamicResource Open_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
-                                                <Separator/>
-                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_TitleBar_Close}" Click="Internal_OnTabDeleteClick" Tag="{Binding}">
+
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}"
+                                                          Header="{DynamicResource L_Common_Close}"
+                                                          Click="Internal_OnTabDeleteClick"
+                                                          Tag="{Binding}">
                                                     <MenuItem.Icon>
                                                         <Path Data="{DynamicResource NewFile_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                                     </MenuItem.Icon>
+                                      
                                                 </MenuItem>
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}"
+                        Header="{DynamicResource L_Ctx_CloseOtherTabs}"
+                        Click="Internal_OnTabCloseOthersClick"
+                        Tag="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <Path Data="{DynamicResource New_Window_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+
                                                 <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Ctx_DeleteFile}" 
-                                                          Visibility="{Binding IsNew, Converter={StaticResource InverseBoolToVis}}"
-                                                          Click="Internal_OnTabFileDeleteClick" Foreground="Red" Tag="{Binding}">
+                             Visibility="{Binding IsNew, Converter={StaticResource InverseBoolToVis}}"
+                             Click="Internal_OnTabFileDeleteClick" Foreground="Red" Tag="{Binding}">
                                                     <MenuItem.Icon>
                                                         <Path Data="{DynamicResource Delete_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                                     </MenuItem.Icon>

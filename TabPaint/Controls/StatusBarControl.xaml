@@ -47,6 +47,7 @@
                Cursor=""   
                Focusable="True"   
                MouseDown="OnStatusBarMouseDown" 
+               MouseDoubleClick="OnStatusBarMouseDoubleClick"
                SizeChanged="OnStatusBarSizeChanged">
         <StatusBarItem x:Name="StatusMousePos" Width="128" Margin="8,0">
             <StackPanel Orientation="Horizontal">
