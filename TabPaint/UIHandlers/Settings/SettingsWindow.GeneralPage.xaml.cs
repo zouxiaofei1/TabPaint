@@ -24,11 +24,23 @@ namespace TabPaint.Pages
 
         private void OnColorRadioClick(object sender, RoutedEventArgs e)
         {
-            if (sender is RadioButton rb && rb.Background is SolidColorBrush brush)
+            if (sender is RadioButton rb)
             {
-                if (SettingsManager.Instance?.Current != null)
+                if (rb.Tag?.ToString() == "Auto")
                 {
-                    SettingsManager.Instance.Current.ThemeAccentColor = brush.Color.ToString();
+                    if (SettingsManager.Instance?.Current != null)
+                    {
+                        SettingsManager.Instance.Current.ThemeAccentColor = "Auto";
+                    }
+                    return;
+                }
+
+                if (rb.Background is SolidColorBrush brush)
+                {
+                    if (SettingsManager.Instance?.Current != null)
+                    {
+                        SettingsManager.Instance.Current.ThemeAccentColor = brush.Color.ToString();
+                    }
                 }
             }
         }

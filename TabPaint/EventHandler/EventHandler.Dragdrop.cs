@@ -257,6 +257,7 @@ namespace TabPaint
                         if (!string.IsNullOrEmpty(sourceTab.FilePath))
                         {
                             _imageFiles.Add(sourceTab.FilePath);
+                            ImageFilesCount = _imageFiles.Count;
                         }
                         await OpenImageAndTabs(sourceTab.FilePath, nobackup: true);
                     }

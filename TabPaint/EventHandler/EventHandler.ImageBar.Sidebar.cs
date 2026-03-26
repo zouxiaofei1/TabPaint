@@ -125,6 +125,7 @@ namespace TabPaint
             }
 
             _imageFiles = _imageFiles.Where(f => dirtyPaths.Contains(f)).ToList();
+            ImageFilesCount = _imageFiles.Count;
 
             var originalCurrent = _currentTabItem;
             bool currentWasRemoved = originalCurrent != null && !originalCurrent.IsDirty;
@@ -248,6 +249,7 @@ namespace TabPaint
                     if (_imageFiles.Contains(tab.FilePath))
                     {
                         _imageFiles.Remove(tab.FilePath);
+                        ImageFilesCount = _imageFiles.Count;
                     }
 
                     FileTabs.RemoveAt(i);
@@ -265,6 +267,7 @@ namespace TabPaint
             if (FileTabs.Count == 0)
             {
                 _imageFiles.Clear();
+                ImageFilesCount = _imageFiles.Count;
                 ResetToNewCanvas();
             }
             else if (currentTabAffected)

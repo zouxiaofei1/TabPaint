@@ -39,10 +39,17 @@ namespace TabPaint
         }
         private static void SystemEvents_UserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
         {
-            if (e.Category == UserPreferenceCategory.General &&
-                SettingsManager.Instance.Current.ThemeMode == AppTheme.System)
+            if (e.Category == UserPreferenceCategory.General)
             {
-                ApplyTheme(AppTheme.System);
+                if (SettingsManager.Instance.Current.ThemeMode == AppTheme.System)
+                {
+                    ApplyTheme(AppTheme.System);
+                }
+                
+                if (SettingsManager.Instance.Current.ThemeAccentColor == "Auto")
+                {
+                    RefreshAccentColor("Auto");
+                }
             }
         }
 
@@ -143,11 +150,30 @@ namespace TabPaint
             {
                 hexColor = SettingsManager.Instance.Current.ThemeAccentColor;
             }
+
+            if (hexColor == "Auto")
+            {
+                hexColor = GetSystemAccentColorHex();
+            }
+
             UpdateAccentResources(hexColor);
             if (!IsLazyIconsLoaded)  ReloadIconDictionary("Resources/Icons/Icons_Essential.xaml");
             else  ReloadIconDictionary("Resources/Icons/Icons.xaml");
             MainWindow mw = (MainWindow.GetCurrentInstance());
             mw?.UpdateToolSelectionHighlight(); ThemeChanged?.Invoke();
+        }
+
+        private static string GetSystemAccentColorHex()
+        {
+            try
+            {
+                var color = SystemParameters.WindowGlassColor;
+                return $"#{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
+            }
+            catch
+            {
+                return "#0078D4"; // 默认蓝色
+            }
         }
 
         private static void UpdateAccentResources(string hexColor)

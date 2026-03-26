@@ -18,6 +18,16 @@ namespace TabPaint.Windows
             ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tif", ".tiff", ".webp", ".ico"
         };
 
+        private const int GWL_STYLE = -16;
+        private const int WS_MAXIMIZEBOX = 0x00010000;
+        private const int WS_MINIMIZEBOX = 0x00020000;
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+
         private const int WM_SIZING = 0x0214;
         private const int WMSZ_TOPLEFT = 4;
         private const int WMSZ_TOPRIGHT = 5;
@@ -104,6 +114,10 @@ namespace TabPaint.Windows
         {
             var helper = new WindowInteropHelper(this);
             if (helper.Handle == IntPtr.Zero) return;
+
+            // Disable Aero Snap by removing Maximize and Minimize box styles
+            int style = GetWindowLong(helper.Handle, GWL_STYLE);
+            SetWindowLong(helper.Handle, GWL_STYLE, style & ~WS_MAXIMIZEBOX & ~WS_MINIMIZEBOX);
 
             _hwndSource = HwndSource.FromHwnd(helper.Handle);
             _hwndSource?.AddHook(WndProc);

@@ -112,6 +112,35 @@
                     </MultiDataTrigger>
                 </Style.Triggers>
             </Style>
+
+            <Storyboard x:Key="CyclePulseAnimation">
+                <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)">
+                    <EasingDoubleKeyFrame KeyTime="0:0:0" Value="1.0"/>
+                    <EasingDoubleKeyFrame KeyTime="0:0:0.1" Value="1.05">
+                        <EasingDoubleKeyFrame.EasingFunction>
+                            <QuadraticEase EasingMode="EaseOut"/>
+                        </EasingDoubleKeyFrame.EasingFunction>
+                    </EasingDoubleKeyFrame>
+                    <EasingDoubleKeyFrame KeyTime="0:0:0.4" Value="1.0">
+                        <EasingDoubleKeyFrame.EasingFunction>
+                            <QuadraticEase EasingMode="EaseIn"/>
+                        </EasingDoubleKeyFrame.EasingFunction>
+                    </EasingDoubleKeyFrame>
+                </DoubleAnimationUsingKeyFrames>
+                <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)">
+                    <EasingDoubleKeyFrame KeyTime="0:0:0" Value="1.0"/>
+                    <EasingDoubleKeyFrame KeyTime="0:0:0.1" Value="1.05">
+                        <EasingDoubleKeyFrame.EasingFunction>
+                            <QuadraticEase EasingMode="EaseOut"/>
+                        </EasingDoubleKeyFrame.EasingFunction>
+                    </EasingDoubleKeyFrame>
+                    <EasingDoubleKeyFrame KeyTime="0:0:0.4" Value="1.0">
+                        <EasingDoubleKeyFrame.EasingFunction>
+                            <QuadraticEase EasingMode="EaseIn"/>
+                        </EasingDoubleKeyFrame.EasingFunction>
+                    </EasingDoubleKeyFrame>
+                </DoubleAnimationUsingKeyFrames>
+            </Storyboard>
         </ResourceDictionary>
     </Window.Resources>
 
@@ -244,7 +273,7 @@
 
                                 <Grid HorizontalAlignment="Center" VerticalAlignment="Center" ClipToBounds="False">
                                     <Grid.Resources>
-                                        <Thickness x:Key="BigMargin">200,200,200,200</Thickness>
+                                        <Thickness x:Key="BigMargin">50,50,50,50</Thickness>
                                         <Thickness x:Key="SmallMargin">5,5,5,5</Thickness>
                                     </Grid.Resources>
                                     <Grid.Style>
@@ -282,7 +311,10 @@
                                         </Grid.Background>
 
                                         <Grid.LayoutTransform>
-                                            <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1" />
+                                            <TransformGroup>
+                                                <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1" />
+                                                <RotateTransform x:Name="VisualRotateTransform" Angle="0" />
+                                            </TransformGroup>
                                         </Grid.LayoutTransform>
                                         
                                         <Grid Name="ImageContentLayer" ClipToBounds="True">
@@ -359,19 +391,37 @@
                                     PreviewMouseLeftButtonUp="OnViewModeNavButtonPreviewMouseLeftButtonUp"
                                     MouseLeave="OnViewModeNavButtonMouseLeave"
                                     LostMouseCapture="OnViewModeNavButtonLostMouseCapture"
+                                    RenderTransformOrigin="0.5,0.5"
                                     Click="OnViewModePrevImageClick"
                                     ToolTip="上一张">
+                                <Button.RenderTransform>
+                                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                </Button.RenderTransform>
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource ViewModeNavButtonStyle}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsMouseOver, ElementName=PrevImageHoverZone}" Value="True">
+                                            <DataTrigger Binding="{Binding CanNavigateImages, ElementName=RootWindow}" Value="False">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding CanNavigateImages, ElementName=RootWindow}" Value="True"/>
+                                                    <Condition Binding="{Binding IsMouseOver, ElementName=PrevImageHoverZone}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Visible"/>
                                                 <Setter Property="Opacity" Value="0.88"/>
                                                 <Setter Property="IsHitTestVisible" Value="True"/>
-                                            </DataTrigger>
-                                            <Trigger Property="IsMouseOver" Value="True">
+                                            </MultiDataTrigger>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding CanNavigateImages, ElementName=RootWindow}" Value="True"/>
+                                                    <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Visible"/>
                                                 <Setter Property="Opacity" Value="0.96"/>
                                                 <Setter Property="IsHitTestVisible" Value="True"/>
-                                            </Trigger>
+                                            </MultiDataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </Button.Style>
@@ -390,19 +440,37 @@
                                     PreviewMouseLeftButtonUp="OnViewModeNavButtonPreviewMouseLeftButtonUp"
                                     MouseLeave="OnViewModeNavButtonMouseLeave"
                                     LostMouseCapture="OnViewModeNavButtonLostMouseCapture"
+                                    RenderTransformOrigin="0.5,0.5"
                                     Click="OnViewModeNextImageClick"
                                     ToolTip="下一张">
+                                <Button.RenderTransform>
+                                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                </Button.RenderTransform>
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource ViewModeNavButtonStyle}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsMouseOver, ElementName=NextImageHoverZone}" Value="True">
+                                            <DataTrigger Binding="{Binding CanNavigateImages, ElementName=RootWindow}" Value="False">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding CanNavigateImages, ElementName=RootWindow}" Value="True"/>
+                                                    <Condition Binding="{Binding IsMouseOver, ElementName=NextImageHoverZone}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Visible"/>
                                                 <Setter Property="Opacity" Value="0.88"/>
                                                 <Setter Property="IsHitTestVisible" Value="True"/>
-                                            </DataTrigger>
-                                            <Trigger Property="IsMouseOver" Value="True">
+                                            </MultiDataTrigger>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding CanNavigateImages, ElementName=RootWindow}" Value="True"/>
+                                                    <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Visible"/>
                                                 <Setter Property="Opacity" Value="0.96"/>
                                                 <Setter Property="IsHitTestVisible" Value="True"/>
-                                            </Trigger>
+                                            </MultiDataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </Button.Style>

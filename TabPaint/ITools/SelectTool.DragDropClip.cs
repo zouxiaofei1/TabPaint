@@ -290,6 +290,33 @@ namespace TabPaint
                 }
             }
 
+            public BitmapSource? GetSelectionBitmap(ToolContext ctx, int minWidth = 0, int minHeight = 0)
+            {
+                if (_selectionData == null) return null;
+                EnsureRotationBaked(ctx);
+
+                int width = _originalRect.Width > 0 ? _originalRect.Width : _selectionRect.Width;
+                int height = _originalRect.Height > 0 ? _originalRect.Height : _selectionRect.Height;
+                byte[] data = _selectionData;
+                if (width < minWidth || height < minHeight) return null;
+
+                try
+                {
+                    int stride = width * 4;
+                    var bitmapSource = BitmapSource.Create(
+                        width, height,
+                        ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
+                        PixelFormats.Bgra32, null,
+                        data, stride);
+                    bitmapSource.Freeze();
+                    return bitmapSource;
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+
             public void InsertImageAsSelection(ToolContext ctx, BitmapSource sourceBitmap, bool expandCanvas = true, Point? dropPos = null)
             {
 

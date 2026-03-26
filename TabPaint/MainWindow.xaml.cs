@@ -23,6 +23,10 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using Windows.Graphics.Printing;
+using Windows.UI.Xaml.Printing;
+using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.WindowsRuntime;
 using TabPaint.Controls;
 using TabPaint.Services;
 using TabPaint.UIHandlers;
@@ -30,6 +34,15 @@ using static TabPaint.MainWindow;
 
 namespace TabPaint
 {
+    [ComImport]
+    [Guid("35A74C51-3130-45D3-88E5-9DE0DC8D740A")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IPrintManagerInterop
+    {
+        IntPtr GetForWindow([In] IntPtr hwnd, [In] ref Guid iid);
+        void ShowPrintUIForWindowAsync([In] IntPtr hwnd);
+    }
+
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
         public static readonly RoutedEvent FavoriteClickEvent = EventManager.RegisterRoutedEvent(
@@ -93,6 +106,7 @@ namespace TabPaint
             if (_lastFocusedInstance == this)
                 _lastFocusedInstance = null;
 
+            UnregisterForPrinting();
             TrayIconService.UpdateVisibility();
         }
 
@@ -117,6 +131,7 @@ namespace TabPaint
                 FileTabs.Add(initialTab);
                 _currentTabItem = initialTab;
                 _imageFiles.Add(initialTab.FilePath);
+                ImageFilesCount = _imageFiles.Count;
                 _currentFilePath = initialTab.FilePath;
                 _currentFileName = initialTab.FileName;
                 _currentImageIndex = 0;
@@ -143,6 +158,20 @@ namespace TabPaint
             Activated += MainWindow_Activated;
 
             this.Focusable = true;
+
+            RegisterForPrinting();
+
+            FileTabs.CollectionChanged += (s, e) =>
+            {
+                ImageFilesCount = _imageFiles.Count;
+                OnPropertyChanged(nameof(CanNavigateImages));
+            };
+
+            this.Loaded += (s, e) =>
+            {
+                ImageFilesCount = _imageFiles.Count;
+                OnPropertyChanged(nameof(CanNavigateImages));
+            };
         }
 
 
@@ -929,12 +958,20 @@ namespace TabPaint
             if (newIndex >= _imageFiles.Count)
             {
                 newIndex = newIndex % _imageFiles.Count; // 循环回到开头附近
-                if (gap == 1) ShowToast("L_Toast_FirstImage");
+                if (gap == 1)
+                {
+                    ShowToast("L_Toast_FirstImage");
+                    TriggerNavButtonAnimation(NextImageButton);
+                }
             }
             else if (newIndex < 0)
             {
                 newIndex = (_imageFiles.Count + (newIndex % _imageFiles.Count)) % _imageFiles.Count;
-                if (gap == 1) ShowToast("L_Toast_LastImage");
+                if (gap == 1)
+                {
+                    ShowToast("L_Toast_LastImage");
+                    TriggerNavButtonAnimation(PrevImageButton);
+                }
             }
 
             _currentImageIndex = newIndex;
@@ -1082,14 +1119,33 @@ namespace TabPaint
 
         public void UpdateRulerPositions(bool force = false)
         {
-            if (!SettingsManager.Instance.Current.ShowRulers || BackgroundImage == null) return;
-            Point relativePoint = CanvasWrapper.TranslatePoint(new Point(0, 0), ScrollContainer);
-            double currentZoom = ZoomTransform.ScaleX;
-            RulerTop.OriginOffset = relativePoint.X;
-            RulerTop.ZoomFactor = currentZoom;
-            RulerTop.InvalidateVisual(); // 触发重绘
+            if (!SettingsManager.Instance.Current.ShowRulers || BackgroundImage == null || BackgroundImage.Source == null) return;
 
-            RulerLeft.OriginOffset = relativePoint.Y;
+            // 获取图像原始大小
+            double w = BackgroundImage.Source.Width;
+            double h = BackgroundImage.Source.Height;
+
+            // 获取 CanvasWrapper 在 ScrollContainer 坐标系中的变换。
+            // 包含缩放和旋转。
+            var transform = CanvasWrapper.TransformToAncestor(ScrollContainer);
+
+            // 计算图像四个角在 ScrollContainer 中的位置
+            Point p0 = transform.Transform(new Point(0, 0));
+            Point p1 = transform.Transform(new Point(w, 0));
+            Point p2 = transform.Transform(new Point(w, h));
+            Point p3 = transform.Transform(new Point(0, h));
+
+            // 取最小坐标作为标尺原点，确保图像始终在正数区域（视觉上）
+            double originX = Math.Min(Math.Min(p0.X, p1.X), Math.Min(p2.X, p3.X));
+            double originY = Math.Min(Math.Min(p0.Y, p1.Y), Math.Min(p2.Y, p3.Y));
+
+            double currentZoom = ZoomTransform.ScaleX;
+
+            RulerTop.OriginOffset = originX;
+            RulerTop.ZoomFactor = currentZoom;
+            RulerTop.InvalidateVisual();
+
+            RulerLeft.OriginOffset = originY;
             RulerLeft.ZoomFactor = currentZoom;
             RulerLeft.InvalidateVisual();
         }
@@ -1225,11 +1281,29 @@ namespace TabPaint
 
                 if (rect.Width > 0 && rect.Height > 0)
                 {
-                    RulerTop.SelectionStart = rect.X;
-                    RulerTop.SelectionEnd = rect.X + rect.Width;
+                    // 将原始坐标系的选区矩形转换为视觉坐标系（考虑旋转）
+                    // 我们需要得到在视觉上相对于“视觉左上角”的坐标
+                    
+                    // 获取视觉包围盒
+                    var visualBounds = CanvasWrapper.LayoutTransform.TransformBounds(new Rect(rect.X, rect.Y, rect.Width, rect.Height));
+                    
+                    // 注意：标尺的 0 刻度现在已经通过 UpdateRulerPositions 修正到了视觉左上角
+                    // 所以这里的逻辑坐标也需要映射到视觉包围盒相对于图像视觉起始点的位置。
+                    
+                    // 计算整个图像的视觉包围盒
+                    double w = BackgroundImage.Source.Width;
+                    double h = BackgroundImage.Source.Height;
+                    var imageVisualBounds = CanvasWrapper.LayoutTransform.TransformBounds(new Rect(0, 0, w, h));
 
-                    RulerLeft.SelectionStart = rect.Y;
-                    RulerLeft.SelectionEnd = rect.Y + rect.Height;
+                    // 转换后的坐标是相对于 imageVisualBounds.TopLeft 的
+                    double visualX = visualBounds.X - imageVisualBounds.X;
+                    double visualY = visualBounds.Y - imageVisualBounds.Y;
+
+                    RulerTop.SelectionStart = visualX;
+                    RulerTop.SelectionEnd = visualX + visualBounds.Width;
+
+                    RulerLeft.SelectionStart = visualY;
+                    RulerLeft.SelectionEnd = visualY + visualBounds.Height;
                     return;
                 }
             }
@@ -1654,5 +1728,111 @@ namespace TabPaint
             }
             FavoriteWindowManager.Toggle(this);
         }
+
+        private void TriggerNavButtonAnimation(Button button)
+        {
+            if (button == null) return;
+            var sb = FindResource("CyclePulseAnimation") as Storyboard;
+            if (sb != null)
+            {
+                sb.Begin(button);
+            }
+        }
+
+        #region WinRT Printing Support
+
+        private PrintManager? _printManager;
+        private PrintDocument? _printDoc;
+        private IPrintDocumentSource? _printDocSource;
+
+        private void RegisterForPrinting()
+        {
+            try
+            {
+                IntPtr hwnd = new WindowInteropHelper(this).EnsureHandle();
+                Guid guid = typeof(PrintManager).GUID;
+                var interop = (IPrintManagerInterop)WindowsRuntimeMarshal.GetActivationFactory(typeof(PrintManager));
+                IntPtr printManagerPtr = interop.GetForWindow(hwnd, ref guid);
+                _printManager = (PrintManager)Marshal.GetObjectForIUnknown(printManagerPtr);
+                _printManager.PrintTaskRequested += OnPrintTaskRequested;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to register for printing: {ex.Message}");
+            }
+        }
+
+        private void UnregisterForPrinting()
+        {
+            if (_printManager != null)
+            {
+                _printManager.PrintTaskRequested -= OnPrintTaskRequested;
+                _printManager = null;
+            }
+        }
+
+        private void OnPrintTaskRequested(PrintManager sender, PrintTaskRequestedEventArgs args)
+        {
+            var deferral = args.Request.GetDeferral();
+            args.Request.CreatePrintTask(LocalizationManager.GetString("L_Menu_File_Print") ?? "Print", sourceRequestedArgs =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    _printDoc = new PrintDocument();
+                    _printDocSource = _printDoc.DocumentSource;
+                    _printDoc.Paginate += (s, e) =>
+                    {
+                        _printDoc.SetPreviewPageCount(1, PreviewPageCountType.Final);
+                    };
+                    _printDoc.GetPreviewPage += (s, e) =>
+                    {
+                        var viewbox = new Viewbox
+                        {
+                            Stretch = Stretch.Uniform,
+                            Child = new Image
+                            {
+                                Source = BackgroundImage.Source,
+                                Stretch = Stretch.Uniform
+                            }
+                        };
+                        // 必须在 UI 线程设置预览页面
+                        _printDoc.SetPreviewPage(e.PageNumber, viewbox);
+                    };
+                    _printDoc.AddPages += (s, e) =>
+                    {
+                        var viewbox = new Viewbox
+                        {
+                            Stretch = Stretch.Uniform,
+                            Child = new Image
+                            {
+                                Source = BackgroundImage.Source,
+                                Stretch = Stretch.Uniform
+                            }
+                        };
+                        _printDoc.AddPage(viewbox);
+                        _printDoc.AddPagesComplete();
+                    };
+
+                    sourceRequestedArgs.SetSource((Windows.Graphics.Printing.IPrintDocumentSource)_printDocSource);
+                });
+            });
+            deferral.Complete();
+        }
+
+        public async Task ShowPrintUIAsync()
+        {
+            try
+            {
+                IntPtr hwnd = new WindowInteropHelper(this).Handle;
+                var interop = (IPrintManagerInterop)WindowsRuntimeMarshal.GetActivationFactory(typeof(PrintManager));
+                interop.ShowPrintUIForWindowAsync(hwnd);
+            }
+            catch (Exception ex)
+            {
+                ShowToast(string.Format(LocalizationManager.GetString("L_Common_Error"), ex.Message), ex);
+            }
+        }
+
+        #endregion
     }
 }

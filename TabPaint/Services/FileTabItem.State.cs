@@ -286,7 +286,6 @@ namespace TabPaint
             = new ObservableCollection<FileTabItem>();
         private bool _isProgrammaticScroll = false;
         // 文件总数绑定属性
-        public int ImageFilesCount;
         private bool _isInitialLayoutComplete = false;
         private HashSet<string> _explicitlyClosedFiles = new HashSet<string>();
         private long _currentCanvasVersion = 0;

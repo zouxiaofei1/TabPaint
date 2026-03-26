@@ -402,6 +402,7 @@ namespace TabPaint
                                 }
                                 if (fileInsertIdx < 0) fileInsertIdx = _imageFiles.Count;
                                 _imageFiles.Insert(fileInsertIdx, sourceTab.FilePath);
+                                ImageFilesCount = _imageFiles.Count;
                             }
 
                             // 4. 切换并激活

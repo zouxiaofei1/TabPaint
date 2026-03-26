@@ -327,6 +327,12 @@ namespace TabPaint
             catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
         }
 
+        public void UpdateColorFromPicker(Color color)
+        {
+            UpdateColorInternal(color, true);
+            UpdatePreview();
+        }
+
         private void UpdateColorInternal(Color color, bool isCustom)
         {
             _isUpdatingColor = true;
@@ -344,9 +350,8 @@ namespace TabPaint
             if (!_isInitialized || _originalBitmap == null) return;
             var settings = GetCurrentSettings();
 
-            // 获取当前 DPI 以确保 FormattedText 渲染准确
+            // 统一使用 1.0 作为渲染 DPI，确保预览效果与最终应用效果一致（位图导出固定为 96DPI）
             double pixelsPerDip = 1.0;
-            try { pixelsPerDip = VisualTreeHelper.GetDpi(this).PixelsPerDip; } catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
 
             // 实时预览优化：生成统一的全尺寸矢量 Drawing 指令
             var fullDrawing = CreateWatermarkDrawing(_originalBitmap, settings, true, pixelsPerDip);
@@ -375,10 +380,21 @@ namespace TabPaint
             if (settings.Cols < 1) settings.Cols = 1;
 
             var drawingGroup = new DrawingGroup();
+            // 强制设置裁剪区域，防止旋转或溢出的水印改变 DrawingImage 的原始比例，确保预览与实际对齐
+            drawingGroup.ClipGeometry = new RectangleGeometry(new Rect(0, 0, w, h));
+
             using (var dc = drawingGroup.Open())
             {
-                // 如果不是“仅水印”模式（例如用于最终导出），则绘制底图
-                if (!onlyWatermark) dc.DrawImage(source, new Rect(0, 0, w, h));
+                // 即使是“仅水印”模式，也绘制一个透明矩形，以确保 DrawingImage 的边界与原图一致
+                // 这样在 Image Stretch="Uniform" 时，预览层和底图层能完美对齐
+                if (onlyWatermark)
+                {
+                    dc.DrawRectangle(Brushes.Transparent, null, new Rect(0, 0, w, h));
+                }
+                else
+                {
+                    dc.DrawImage(source, new Rect(0, 0, w, h));
+                }
 
                 if (settings.Opacity > 0)
                 {

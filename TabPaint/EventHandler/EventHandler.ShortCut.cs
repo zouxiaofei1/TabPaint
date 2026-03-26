@@ -1,6 +1,6 @@
 ﻿
 //
-//EventHandler.cs
+//EventHandler.ShortCut.cs
 //主窗口的事件处理部分，主要负责全局快捷键监听、模式切换以及各级菜单功能的逻辑分发。
 //
 using Microsoft.VisualBasic.FileIO;
@@ -14,7 +14,6 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using Windows.Media.Streaming.Adaptive;
 
 
 namespace TabPaint
@@ -31,8 +30,23 @@ namespace TabPaint
                 e.Handled = true;
                 return true;
             }
-            if (IsShortcut("View.RotateLeft", e)) { RotateBitmap(-90); e.Handled = true; return true; }
-            if (IsShortcut("View.RotateRight", e)) { RotateBitmap(90); e.Handled = true; return true; }
+            if (IsShortcut("View.RotateLeft", e))
+            {
+                // 使用视觉旋转以避免大图卡顿
+                _isVisualRotating = true;
+                _visualRotationAngle -= 90;
+                VisualRotateTransform.Angle = _visualRotationAngle;
+                e.Handled = true;
+                return true;
+            }
+            if (IsShortcut("View.RotateRight", e))
+            {
+                _isVisualRotating = true;
+                _visualRotationAngle += 90;
+                VisualRotateTransform.Angle = _visualRotationAngle;
+                e.Handled = true;
+                return true;
+            }
             if (IsShortcut("View.VerticalFlip", e)) { OnFlipVerticalClick(sender, e); e.Handled = true; return true; }
             if (IsShortcut("View.HorizontalFlip", e)) { OnFlipHorizontalClick(sender, e); e.Handled = true; return true; }
 
@@ -61,6 +75,8 @@ namespace TabPaint
 
         private void HandleViewModeShortcuts(object sender, System.Windows.Input.KeyEventArgs e)
         {
+            if (IsShortcut("File.Print", e)) { OnPrintClick(sender, e); e.Handled = true; return; }
+
             if (Keyboard.Modifiers == ModifierKeys.Control)
             {
                 switch (e.Key)
@@ -104,6 +120,7 @@ namespace TabPaint
 
             // 文件高级
             if (IsShortcut("File.OpenWorkspace", e)) { OnOpenWorkspaceClick(sender, e); e.Handled = true; return; }
+            if (IsShortcut("File.Print", e)) { OnPrintClick(sender, e); e.Handled = true; return; }
             if (IsShortcut("File.PasteNewTab", e)) { PasteClipboardAsNewTab(); e.Handled = true; return; }
 
             if (IsShortcut("Effect.Brightness", e)) { OnBrightnessContrastExposureClick(sender, e); e.Handled = true; return; } // Ctrl+Alt+Q
@@ -238,6 +255,57 @@ namespace TabPaint
                 }
             }
         }
+        private void Window_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (_isVisualRotating)
+            {
+                // 如果释放了 L/R，或者释放了 Ctrl，都视为长按结束
+                bool isKeyLOrR = (e.Key == Key.L || e.Key == Key.R);
+                bool isCtrlReleased = (e.Key == Key.LeftCtrl || e.Key == Key.RightCtrl || e.Key == Key.System);
+
+                if (isKeyLOrR || isCtrlReleased)
+                {
+                    // 提交旋转
+                    if (_visualRotationAngle != 0)
+                    {
+                        int finalAngle = (int)_visualRotationAngle % 360;
+                        if (finalAngle != 0)
+                        {
+                            RotateBitmap(finalAngle);
+                        }
+                    }
+
+                    // 重置状态
+                    _isVisualRotating = false;
+                    _visualRotationAngle = 0;
+                    VisualRotateTransform.Angle = 0;
+                }
+            }
+
+            // 获取按键对应的功能名
+            var settings = SettingsManager.Instance.Current;
+            string? action = null;
+            if (settings.Shortcuts != null)
+            {
+                foreach (var kvp in settings.Shortcuts)
+                {
+                    Key k = (e.Key == Key.System ? e.SystemKey : e.Key);
+                    if (kvp.Value.Key == k)
+                    {
+                        action = kvp.Key;
+                        break;
+                    }
+                }
+            }
+
+            if (action == "View.NextImage" || action == "View.PrevImage")
+            {
+                // 重置状态
+                _isNavigating = false;
+                _navKeyPressStartTime = DateTime.MinValue;
+            }
+        }
+
         private void MainWindow_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (e.Key == Key.Escape)

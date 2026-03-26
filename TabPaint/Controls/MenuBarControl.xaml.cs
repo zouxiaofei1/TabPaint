@@ -22,6 +22,8 @@ namespace TabPaint.Controls
         public static readonly RoutedEvent OpenClickEvent = EventManager.RegisterRoutedEvent("OpenClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent SaveClickEvent = EventManager.RegisterRoutedEvent("SaveClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent SaveAsClickEvent = EventManager.RegisterRoutedEvent("SaveAsClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
+        public static readonly RoutedEvent SaveAsPdfClickEvent = EventManager.RegisterRoutedEvent("SaveAsPdfClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
+        public static readonly RoutedEvent PrintClickEvent = EventManager.RegisterRoutedEvent("PrintClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent ExitClickEvent = EventManager.RegisterRoutedEvent("ExitClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent RecycleBinClickEvent = EventManager.RegisterRoutedEvent("RecycleBinClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent CopyClickEvent = EventManager.RegisterRoutedEvent("CopyClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
@@ -38,6 +40,8 @@ namespace TabPaint.Controls
         public event RoutedEventHandler OpenClick { add { AddHandler(OpenClickEvent, value); } remove { RemoveHandler(OpenClickEvent, value); } }
         public event RoutedEventHandler SaveClick { add { AddHandler(SaveClickEvent, value); } remove { RemoveHandler(SaveClickEvent, value); } }
         public event RoutedEventHandler SaveAsClick { add { AddHandler(SaveAsClickEvent, value); } remove { RemoveHandler(SaveAsClickEvent, value); } }
+        public event RoutedEventHandler SaveAsPdfClick { add { AddHandler(SaveAsPdfClickEvent, value); } remove { RemoveHandler(SaveAsPdfClickEvent, value); } }
+        public event RoutedEventHandler PrintClick { add { AddHandler(PrintClickEvent, value); } remove { RemoveHandler(PrintClickEvent, value); } }
         public event RoutedEventHandler ExitClick { add { AddHandler(ExitClickEvent, value); } remove { RemoveHandler(ExitClickEvent, value); } }
         public event RoutedEventHandler CopyClick { add { AddHandler(CopyClickEvent, value); } remove { RemoveHandler(CopyClickEvent, value); } }
         public event RoutedEventHandler CutClick { add { AddHandler(CutClickEvent, value); } remove { RemoveHandler(CutClickEvent, value); } }
@@ -86,6 +90,8 @@ namespace TabPaint.Controls
         private void OnOpenClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(OpenClickEvent));
         private void OnSaveClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(SaveClickEvent));
         private void OnSaveAsClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(SaveAsClickEvent));
+        private void OnSaveAsPdfClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(SaveAsPdfClickEvent));
+        private void OnPrintClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(PrintClickEvent));
         private void OnExitClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(ExitClickEvent));
         private void OnCopyClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(CopyClickEvent));
         private void OnCutClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(CutClickEvent));
@@ -180,6 +186,8 @@ namespace TabPaint.Controls
 
                 menuItem.Items.Add(CreateMenuItem("L_Menu_File_Save", "Save_Normal_Image", OnSaveClick, "File.Save"));
                 menuItem.Items.Add(CreateMenuItem("L_Menu_File_SaveAs", "Save_Button_Image", OnSaveAsClick, "File.SaveAs"));
+                menuItem.Items.Add(CreateMenuItem("L_Menu_File_SaveAsPDF", "Save_Button_Image", OnSaveAsPdfClick));
+                menuItem.Items.Add(CreateMenuItem("L_Menu_File_Print", "Print_Image", OnPrintClick, "File.Print"));
                 menuItem.Items.Add(CreateMenuItem("L_Menu_File_Exit", "Exit_Image", OnExitClick));
 
 

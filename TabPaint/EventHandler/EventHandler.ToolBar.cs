@@ -51,6 +51,7 @@ namespace TabPaint
                 lock (_queueLock) { _pendingFilePath = null; }
                 FileTabs.Clear();
                 _imageFiles.Clear(); // 清空之前的文件夹扫描缓存
+                ImageFilesCount = _imageFiles.Count;
                 _currentImageIndex = -1;
                 _undo?.ClearUndo();
                 _undo?.ClearRedo();

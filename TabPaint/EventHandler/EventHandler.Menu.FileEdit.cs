@@ -15,6 +15,8 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Xps;
+using System.Printing;
 using SkiaSharp;
 using TabPaint.Controls;
 using TabPaint.UIHandlers;
@@ -93,11 +95,16 @@ namespace TabPaint
                     if (_currentTabItem.IsNew)
                     {
                         _currentTabItem.IsNew = false;
-                        if (!_imageFiles.Contains(newPath)) _imageFiles.Add(newPath);
+                        if (!_imageFiles.Contains(newPath))
+                        {
+                            _imageFiles.Add(newPath);
+                            ImageFilesCount = _imageFiles.Count;
+                        }
                     }
                     else if (!_imageFiles.Contains(newPath))
                     {
                         _imageFiles.Add(newPath);
+                        ImageFilesCount = _imageFiles.Count;
                     }
                     _currentImageIndex = _imageFiles.IndexOf(newPath);
                 }
@@ -105,6 +112,105 @@ namespace TabPaint
                 _isFileSaved = true;
                 UpdateWindowTitle();
             }
+        }
+
+        private async void OnSaveAsPdfClick(object sender, RoutedEventArgs e)
+        {
+            if (FileTabs.Count == 0) return;
+
+            var saveDialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "PDF Files (*.pdf)|*.pdf",
+                FileName = "Combined_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".pdf",
+                DefaultExt = ".pdf",
+                Title = LocalizationManager.GetString("L_Menu_File_SaveAsPDF")
+            };
+
+            if (saveDialog.ShowDialog() == true)
+            {
+                string targetPath = saveDialog.FileName;
+                TaskProgressPopup.SetIcon("📄");
+                TaskProgressPopup.UpdateProgress(0, LocalizationManager.GetString("L_Toast_SavingPDF_Title") ?? "Saving PDF...", "0%", "");
+
+                try
+                {
+                    await Task.Run(() =>
+                    {
+                        using (var stream = new FileStream(targetPath, FileMode.Create))
+                        using (var document = SkiaSharp.SKDocument.CreatePdf(stream))
+                        {
+                            int count = FileTabs.Count;
+                            for (int i = 0; i < count; i++)
+                            {
+                                var tab = FileTabs[i];
+                                this.Dispatcher.Invoke(() =>
+                                {
+                                    TaskProgressPopup.UpdateProgress((double)i / count * 100, null, $"{i + 1} / {count}", tab.FileName);
+                                });
+
+                                using (var imgStream = GetImageStreamForTab(tab))
+                                {
+                                    if (imgStream == null) continue;
+
+                                    using (var skData = SkiaSharp.SKData.Create(imgStream))
+                                    using (var skBitmap = SkiaSharp.SKBitmap.Decode(skData))
+                                    {
+                                        if (skBitmap == null) continue;
+
+                                        using (var canvas = document.BeginPage(skBitmap.Width, skBitmap.Height))
+                                        {
+                                            canvas.DrawBitmap(skBitmap, 0, 0);
+                                            document.EndPage();
+                                        }
+                                    }
+                                }
+                            }
+                            document.Close();
+                        }
+                    });
+
+                    ShowToast("L_Toast_SaveSuccess");
+                }
+                catch (Exception ex)
+                {
+                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_SaveFailed_Prefix"), ex.Message), ex);
+                }
+                finally
+                {
+                    TaskProgressPopup.Finish();
+                }
+            }
+        }
+
+        private Stream GetImageStreamForTab(FileTabItem tab)
+        {
+            // 核心逻辑：如果是当前正在编辑的标签，且有未提交的改动，从内存位图获取
+            if (tab == _currentTabItem && _bitmap != null)
+            {
+                var ms = new MemoryStream();
+                this.Dispatcher.Invoke(() =>
+                {
+                    var encoder = new PngBitmapEncoder();
+                    encoder.Frames.Add(BitmapFrame.Create(_bitmap));
+                    encoder.Save(ms);
+                });
+                ms.Position = 0;
+                return ms;
+            }
+
+            // 如果有自动保存/备份路径，从备份读取最新状态
+            if (!string.IsNullOrEmpty(tab.BackupPath) && File.Exists(tab.BackupPath))
+            {
+                return new FileStream(tab.BackupPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            }
+
+            // 最后尝试从原始文件读取
+            if (!string.IsNullOrEmpty(tab.FilePath) && File.Exists(tab.FilePath))
+            {
+                return new FileStream(tab.FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            }
+
+            return null;
         }
 
         private void OnCopyClick(object sender, RoutedEventArgs e)
@@ -168,5 +274,49 @@ namespace TabPaint
             }
         }
 
+        private async void OnPrintClick(object sender, RoutedEventArgs e)
+        {
+            if (BackgroundImage.Source == null) return;
+
+            // 优先使用 WinRT PrintManager 以支持现代打印预览
+            if (_printManager != null)
+            {
+                await ShowPrintUIAsync();
+                return;
+            }
+
+            try
+            {
+                PrintDialog printDialog = new PrintDialog();
+                if (printDialog.ShowDialog() == true)
+                {
+                    var viewbox = new Viewbox
+                    {
+                        Stretch = Stretch.Uniform,
+                        Child = new Image
+                        {
+                            Source = BackgroundImage.Source,
+                            Stretch = Stretch.Uniform,
+                            UseLayoutRounding = true
+                        }
+                    };
+
+                    double width = printDialog.PrintableAreaWidth;
+                    double height = printDialog.PrintableAreaHeight;
+
+                    Size pageSize = new Size(width, height);
+                    viewbox.Measure(pageSize);
+                    viewbox.Arrange(new Rect(new Point(0, 0), pageSize));
+                    viewbox.UpdateLayout();
+
+                    XpsDocumentWriter writer = PrintQueue.CreateXpsDocumentWriter(printDialog.PrintQueue);
+                    writer.Write(viewbox, printDialog.PrintTicket);
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowToast(string.Format(LocalizationManager.GetString("L_Common_Error"), ex.Message), ex);
+            }
+        }
     }
 }

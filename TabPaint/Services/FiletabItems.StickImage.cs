@@ -47,7 +47,19 @@ namespace TabPaint
 
             try
             {
-                var bitmap = GetHighResImageForTab(tabItem);
+                BitmapSource? bitmap = null;
+
+                // 如果是当前标签页，优先尝试获取选区 (仅当选区大于 50x50 时)
+                if (tabItem == _currentTabItem && _router.CurrentTool is SelectTool selectTool && selectTool.HasActiveSelection)
+                {
+                    bitmap = selectTool.GetSelectionBitmap(_ctx, 50, 50);
+                }
+
+                // 如果没有选区或获取失败，回退到全图
+                if (bitmap == null)
+                {
+                    bitmap = GetHighResImageForTab(tabItem);
+                }
 
                 if (bitmap != null)
                 {

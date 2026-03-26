@@ -15,6 +15,209 @@
             </ResourceDictionary.MergedDictionaries>
             <local:ColorMatchConverter x:Key="ColorMatchConverter"/>
 
+            <Style TargetType="RadioButton" x:Key="AutoColorRadioStyle">
+                <Setter Property="Width" Value="40"/>
+                <Setter Property="Height" Value="40"/>
+                <Setter Property="Margin" Value="0,0,6,5"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Background">
+                    <Setter.Value>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#FF0078D4" Offset="0.0"/>
+                            <GradientStop Color="#FF9333EA" Offset="0.33"/>
+                            <GradientStop Color="#FFD13438" Offset="0.66"/>
+                            <GradientStop Color="#FF107C10" Offset="1.0"/>
+                        </LinearGradientBrush>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RadioButton">
+                            <Grid Width="40" Height="40"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Border x:Name="SelectionBorder" 
+                                        CornerRadius="16" 
+                                        BorderThickness="2" 
+                                        BorderBrush="{DynamicResource SystemAccentBrush}"
+                                        Opacity="0"
+                                        Width="32" Height="32"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        RenderTransformOrigin="0.5,0.5">
+                                    <Border.RenderTransform>
+                                        <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                    </Border.RenderTransform>
+                                </Border>
+                                
+                                <Grid x:Name="AnimationGrid" Width="22" Height="22" 
+                                      RenderTransformOrigin="0.5,0.5">
+                                    <Grid.RenderTransform>
+                                        <TransformGroup>
+                                            <ScaleTransform x:Name="CircleScale" ScaleX="1" ScaleY="1"/>
+                                            <RotateTransform x:Name="CircleRotate" Angle="0"/>
+                                        </TransformGroup>
+                                    </Grid.RenderTransform>
+                                    
+                                    <Border x:Name="ColorCircle" CornerRadius="11" 
+                                            Background="{TemplateBinding Background}"/>
+                                    
+                                    <!-- 内部发光效果 -->
+                                    <Ellipse Opacity="0.3">
+                                        <Ellipse.Fill>
+                                            <RadialGradientBrush Center="0.3,0.3" GradientOrigin="0.3,0.3" RadiusX="0.5" RadiusY="0.5">
+                                                <GradientStop Color="White" Offset="0"/>
+                                                <GradientStop Color="Transparent" Offset="1"/>
+                                            </RadialGradientBrush>
+                                        </Ellipse.Fill>
+                                    </Ellipse>
+                                </Grid>
+
+                                <Canvas Width="12" Height="10" 
+                                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Path x:Name="CheckMark"
+                                          Data="M1,5.5 L4.5,9 L11,1.5"
+                                          Stroke="White" StrokeThickness="1.8"
+                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                          Fill="Transparent"
+                                          Opacity="0"
+                                          RenderTransformOrigin="0.5,0.5">
+                                        <Path.RenderTransform>
+                                            <ScaleTransform x:Name="CheckScale" ScaleX="0.5" ScaleY="0.5"
+                                                            CenterX="6" CenterY="5"/>
+                                        </Path.RenderTransform>
+                                    </Path>
+                                </Canvas>
+                                
+                                <Canvas Width="12" Height="10" 
+                                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Path x:Name="CheckMarkShadow"
+                                          Data="M1,5.5 L4.5,9 L11,1.5"
+                                          Stroke="#40000000" StrokeThickness="3"
+                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                          Fill="Transparent"
+                                          Opacity="0"
+                                          RenderTransformOrigin="0.5,0.5">
+                                        <Path.RenderTransform>
+                                            <ScaleTransform x:Name="CheckShadowScale" ScaleX="0.5" ScaleY="0.5"
+                                                            CenterX="6" CenterY="5"/>
+                                        </Path.RenderTransform>
+                                    </Path>
+                                </Canvas>
+                            </Grid>
+
+                            <ControlTemplate.Triggers>
+                                <EventTrigger RoutedEvent="Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard RepeatBehavior="Forever">
+                                            <DoubleAnimation Storyboard.TargetName="CircleRotate"
+                                                             Storyboard.TargetProperty="Angle"
+                                                             From="0" To="360" Duration="0:0:6"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                                
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard x:Name="HoverEnter_BSB">
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="CircleScale" 
+                                                                 Storyboard.TargetProperty="ScaleX"
+                                                                 To="1.15" Duration="0:0:0.15">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <CubicEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="CircleScale" 
+                                                                 Storyboard.TargetProperty="ScaleY"
+                                                                 To="1.15" Duration="0:0:0.15">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <CubicEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+                                    <Trigger.ExitActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="CircleScale" 
+                                                                 Storyboard.TargetProperty="ScaleX"
+                                                                 Duration="0:0:0.2">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <CubicEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="CircleScale" 
+                                                                 Storyboard.TargetProperty="ScaleY"
+                                                                 Duration="0:0:0.2">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <CubicEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.ExitActions>
+                                </Trigger>
+                                
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="SelectionBorder" 
+                                                                 Storyboard.TargetProperty="Opacity"
+                                                                 To="1" Duration="0:0:0.2">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <CubicEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="CheckMark" 
+                                                                 Storyboard.TargetProperty="Opacity"
+                                                                 To="1" Duration="0:0:0.2"
+                                                                 BeginTime="0:0:0.08"/>
+                                                <DoubleAnimation Storyboard.TargetName="CheckMarkShadow" 
+                                                                 Storyboard.TargetProperty="Opacity"
+                                                                 To="1" Duration="0:0:0.2"
+                                                                 BeginTime="0:0:0.08"/>
+                                                <DoubleAnimation Storyboard.TargetName="CheckScale" 
+                                                                 Storyboard.TargetProperty="ScaleX"
+                                                                 From="0.3" To="1" Duration="0:0:0.3"
+                                                                 BeginTime="0:0:0.05">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <ElasticEase Oscillations="1" Springiness="6" EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="CheckScale" 
+                                                                 Storyboard.TargetProperty="ScaleY"
+                                                                 From="0.3" To="1" Duration="0:0:0.3"
+                                                                 BeginTime="0:0:0.05">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <ElasticEase Oscillations="1" Springiness="6" EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+                                    <Trigger.ExitActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="SelectionBorder" 
+                                                                 Storyboard.TargetProperty="Opacity"
+                                                                 To="0" Duration="0:0:0.15"/>
+                                                <DoubleAnimation Storyboard.TargetName="CheckMark" 
+                                                                 Storyboard.TargetProperty="Opacity"
+                                                                 To="0" Duration="0:0:0.1"/>
+                                                <DoubleAnimation Storyboard.TargetName="CheckMarkShadow" 
+                                                                 Storyboard.TargetProperty="Opacity"
+                                                                 To="0" Duration="0:0:0.1"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.ExitActions>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <Style TargetType="RadioButton" x:Key="ColorRadioStyle">
                 <Setter Property="Width" Value="40"/>
                 <Setter Property="Height" Value="40"/>
@@ -436,6 +639,11 @@
                              Click="OnColorRadioClick"/>
                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#FFB900"
                              IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#FFB900}"
+                             Click="OnColorRadioClick"/>
+                <RadioButton Style="{StaticResource AutoColorRadioStyle}"
+                             Tag="Auto"
+                             ToolTip="{DynamicResource L_Settings_General_Accent_Option_System}"
+                             IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=Auto}"
                              Click="OnColorRadioClick"/>
             </ItemsControl>
         </Grid>

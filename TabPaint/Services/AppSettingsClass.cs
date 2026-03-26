@@ -807,6 +807,7 @@ namespace TabPaint
         { "File.Open",           new ShortcutItem { Key = Key.O, Modifiers = ModifierKeys.Control } },
         { "File.Save",           new ShortcutItem { Key = Key.S, Modifiers = ModifierKeys.Control } },
         { "File.SaveAs",         new ShortcutItem { Key = Key.S, Modifiers = ModifierKeys.Control | ModifierKeys.Shift } },
+        { "File.Print",          new ShortcutItem { Key = Key.P, Modifiers = ModifierKeys.Control } },
 
         // 1. 全局/视图功能
         { "View.PrevImage",      new ShortcutItem { Key = Key.Left, Modifiers = ModifierKeys.None } },
@@ -816,7 +817,6 @@ namespace TabPaint
         { "View.FullScreen",     new ShortcutItem { Key = Key.F11, Modifiers = ModifierKeys.None } },
         { "View.VerticalFlip",   new ShortcutItem { Key = Key.V, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 自动色阶
         { "View.HorizontalFlip",       new ShortcutItem { Key = Key.H, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 调整大小
-        { "View.ToggleMinimize", new ShortcutItem { Key = Key.P, Modifiers = ModifierKeys.Control } },
         { "View.ZoomIn",         new ShortcutItem { Key = Key.OemPlus, Modifiers = ModifierKeys.Control } },
         { "View.ZoomOut",        new ShortcutItem { Key = Key.OemMinus, Modifiers = ModifierKeys.Control } },
         { "View.ToggleMode",           new ShortcutItem { Key = Key.Tab, Modifiers = ModifierKeys.None } },

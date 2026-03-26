@@ -80,25 +80,30 @@ namespace TabPaint
 
         private void CreatePreviewBitmaps(WriteableBitmap source)
         {
-            double maxDim = 1280;
+            // 限制预览图的最大尺寸，避免长图导致内存占用过高或布局溢出
+            double maxDim = 800; 
             double scale = 1.0;
 
-            if (source.PixelWidth > maxDim || source.PixelHeight > maxDim) scale = Math.Min(maxDim / source.PixelWidth, maxDim / source.PixelHeight);
+            if (source.PixelWidth > maxDim || source.PixelHeight > maxDim)
+                scale = Math.Min(maxDim / source.PixelWidth, maxDim / source.PixelHeight);
 
             int w = (int)(source.PixelWidth * scale);
             int h = (int)(source.PixelHeight * scale);
             if (w < 1) w = 1; if (h < 1) h = 1;
 
-            // 使用 RenderTargetBitmap 或 TransformedBitmap 缩放
+            // 使用 RenderTargetBitmap 进行高质量缩放
             var rtb = new RenderTargetBitmap(w, h, 96, 96, PixelFormats.Pbgra32);
             var visual = new DrawingVisual();
             using (var dc = visual.RenderOpen())
             {
+                // 设置缩放模式
+                RenderOptions.SetBitmapScalingMode(visual, BitmapScalingMode.HighQuality);
+                // 绘制缩放后的图像
                 dc.DrawImage(source, new Rect(0, 0, w, h));
             }
             rtb.Render(visual);
 
-            // 创建源备本和目标
+            // 创建源副本和目标预览图
             _previewSource = new WriteableBitmap(rtb);
             _previewTarget = _previewSource.Clone();
         }

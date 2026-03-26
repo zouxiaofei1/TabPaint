@@ -44,6 +44,7 @@ namespace TabPaint
                 else if (!autoLoad && _currentImageIndex == -1 && !IsVirtualPath(filePath))
                 {
                     _imageFiles = new List<string> { filePath };
+                    ImageFilesCount = _imageFiles.Count;
                 }
 
                 if (!nobackup) TriggerBackgroundBackup();
@@ -51,6 +52,7 @@ namespace TabPaint
                 if (IsVirtualPath(filePath) && !_imageFiles.Contains(filePath))
                 {
                     _imageFiles.Add(filePath);
+                    ImageFilesCount = _imageFiles.Count;
                 }
                 if (File.Exists(filePath))
                 {
@@ -227,6 +229,7 @@ namespace TabPaint
                 combinedFiles.AddRange(sortedFiles);
 
                 _imageFiles = combinedFiles;
+                ImageFilesCount = _imageFiles.Count;
                 _currentImageIndex = _imageFiles.IndexOf(filePath);
 
             }

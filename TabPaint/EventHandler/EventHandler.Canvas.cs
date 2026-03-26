@@ -101,7 +101,7 @@ namespace TabPaint
         }
         private void OnScrollContainerDoubleClick(object sender, MouseButtonEventArgs e)
         {
-
+            if (IsVisualAncestorOf<ScrollBar>(e.OriginalSource as DependencyObject)) return;
             if (!IsViewMode) { e.Handled = false; return; }
             if (e.ChangedButton != MouseButton.Left) return;
             if (_isPanning)
@@ -117,6 +117,7 @@ namespace TabPaint
 
         private void OnScrollContainerMouseDown(object sender, MouseButtonEventArgs e)
         {
+            if (IsVisualAncestorOf<ScrollBar>(e.OriginalSource as DependencyObject)) return;
             if (e.ClickCount == 2) return;
             if (e.ChangedButton != MouseButton.Left) return;
             if (Keyboard.IsKeyDown(Key.Space) && e.ChangedButton == MouseButton.Left || IsViewMode)

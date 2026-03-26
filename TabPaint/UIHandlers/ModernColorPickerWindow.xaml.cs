@@ -429,6 +429,10 @@ namespace TabPaint
                 {
                     mw.UpdateCurrentColor(SelectedColor, IsSecondaryColor);
                 }
+                else if (this.Owner is WatermarkWindow ww)
+                {
+                    ww.UpdateColorFromPicker(SelectedColor);
+                }
             }
             finally { _isUpdatingInputs = false; }
         }
@@ -874,7 +878,15 @@ namespace TabPaint
             }
         }
 
-        private void OkButton_Click(object sender, RoutedEventArgs e) { this.SetDialogResultSafe(true); Close(); }
+        private void OkButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.Owner is WatermarkWindow ww)
+            {
+                ww.UpdateColorFromPicker(SelectedColor);
+            }
+            this.SetDialogResultSafe(true);
+            Close();
+        }
         private void CancelButton_Click(object sender, RoutedEventArgs e) { this.SetDialogResultSafe(false); Close(); }
     }
 }

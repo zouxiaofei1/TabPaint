@@ -813,6 +813,7 @@ namespace TabPaint
                     if (!_imageFiles.Contains(info.OriginalPath))
                     {
                         _imageFiles.Add(info.OriginalPath);
+                        ImageFilesCount = _imageFiles.Count;
                     }
 
                     tabsToLoadThumbnails.Add(tab);
@@ -903,6 +904,7 @@ namespace TabPaint
             }
 
             _imageFiles.Insert(listInsertIndex, virtualPath);
+            ImageFilesCount = _imageFiles.Count;
 
             int uiInsertIndex = _currentTabItem != null ? FileTabs.IndexOf(_currentTabItem) + 1 : FileTabs.Count;
             if (tabposition == TabInsertPosition.AfterCurrent)
@@ -1193,7 +1195,10 @@ namespace TabPaint
                                         };
                                         FileTabs.Add(tab);
                                         if (!_imageFiles.Contains(info.OriginalPath))
+                                        {
                                             _imageFiles.Add(info.OriginalPath);
+                                            ImageFilesCount = _imageFiles.Count;
+                                        }
                                         _ = tab.LoadThumbnailAsync(AppConsts.DefaultThumbnailWidth, AppConsts.DefaultThumbnailHeight);
                                     }
                                 }
@@ -1225,7 +1230,10 @@ namespace TabPaint
                                     };
                                     FileTabs.Add(tab);
                                     if (!_imageFiles.Contains(info.OriginalPath))
+                                    {
                                         _imageFiles.Add(info.OriginalPath);
+                                        ImageFilesCount = _imageFiles.Count;
+                                    }
                                     _ = tab.LoadThumbnailAsync(AppConsts.DefaultThumbnailWidth, AppConsts.DefaultThumbnailHeight);
                                 }
                             }

@@ -710,18 +710,6 @@ namespace TabPaint
                 }
             }
         }
-        private void Window_KeyUp(object sender, KeyEventArgs e)
-        {
-            bool isNext = IsShortcut("View.NextImage", e);
-            bool isPrev = IsShortcut("View.PrevImage", e);
-
-            if (isNext || isPrev)
-            {
-                // 重置状态
-                _isNavigating = false;
-                _navKeyPressStartTime = DateTime.MinValue;
-            }
-        }
 
 
         private void Control_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)

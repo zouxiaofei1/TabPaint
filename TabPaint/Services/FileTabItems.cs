@@ -205,6 +205,7 @@ namespace TabPaint
             if (!string.IsNullOrEmpty(pathToRemove) && _imageFiles.Contains(pathToRemove))
             {
                 _imageFiles.Remove(pathToRemove);
+                ImageFilesCount = _imageFiles.Count;
             }
             if (!string.IsNullOrEmpty(item.BackupPath) && !isMoving)
             {

@@ -20,6 +20,7 @@ namespace TabPaint
             _pendingDeletionTabs.Add(tab);
             FileTabs.Remove(tab);
             _imageFiles.Remove(tab.FilePath);
+            ImageFilesCount = _imageFiles.Count;
 
             if (FileTabs.Count == 0)
             {
@@ -91,6 +92,7 @@ namespace TabPaint
                     _imageFiles.Insert(_lastDeletedTabIndex, tabToRestore.FilePath);
                 else
                     _imageFiles.Add(tabToRestore.FilePath);
+                ImageFilesCount = _imageFiles.Count;
             }
 
             // 马上切回这个 Tab

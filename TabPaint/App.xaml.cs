@@ -348,6 +348,7 @@ namespace TabPaint
                 targetTheme = AppTheme.Dark;
             }
             ThemeManager.ApplyTheme(targetTheme);  //2ms
+            ThemeManager.StartSystemThemeMonitoring();
 
             // 3. 创建并启动主窗口
             base.OnStartup(e);//<0.1ms

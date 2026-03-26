@@ -271,15 +271,28 @@ namespace TabPaint
         {
             if (value == null || parameter == null) return false;
 
-            string stored = NormalizeColor(value.ToString());
-            string param = NormalizeColor(parameter.ToString());
+            string stored = value.ToString();
+            string param = parameter.ToString();
+
+            if (stored == "Auto" || param == "Auto")
+            {
+                return stored.Equals(param, StringComparison.OrdinalIgnoreCase);
+            }
+
+            stored = NormalizeColor(stored);
+            param = NormalizeColor(param);
 
             return stored.Equals(param, StringComparison.OrdinalIgnoreCase);
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is bool b && b) return NormalizeColor(parameter.ToString());// 统一存储为6位格式
+            if (value is bool b && b)
+            {
+                string param = parameter.ToString();
+                if (param == "Auto") return "Auto";
+                return NormalizeColor(param); // 统一存储为6位格式
+            }
             return Binding.DoNothing;
         }
         private static string NormalizeColor(string color)
@@ -287,6 +300,7 @@ namespace TabPaint
             if (string.IsNullOrEmpty(color)) return string.Empty;
 
             color = color.Trim();
+            if (color == "Auto") return "Auto";
             if (color.Length == 9 && color.StartsWith("#"))
             {
                 return "#" + color.Substring(3);

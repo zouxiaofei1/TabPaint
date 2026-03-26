@@ -407,6 +407,24 @@ namespace TabPaint
             get { return (bool)GetValue(IsViewModeProperty); }
             set { SetValue(IsViewModeProperty, value); }
         }
+
+        public bool CanNavigateImages => ImageFilesCount > 1;
+
+        private int _imageFilesCount;
+        public int ImageFilesCount
+        {
+            get => _imageFilesCount;
+            set
+            {
+                if (_imageFilesCount != value)
+                {
+                    _imageFilesCount = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(CanNavigateImages));
+                }
+            }
+        }
+
         public Controls.MenuBarControl MainMenu;
         public Controls.ToolBarControl MainToolBar;
         public Controls.ImageBarControl MainImageBar;
@@ -442,5 +460,7 @@ namespace TabPaint
         public static ThumbnailCache GlobalThumbnailCache = new ThumbnailCache(AppConsts.MaxThumbnailCacheCount);
         private bool _isUpdatingToolSettings = false;
         public static SemaphoreSlim _thumbnailSemaphore = new SemaphoreSlim(Environment.ProcessorCount);
+        private double _visualRotationAngle = 0;
+        private bool _isVisualRotating = false;
     }
 }

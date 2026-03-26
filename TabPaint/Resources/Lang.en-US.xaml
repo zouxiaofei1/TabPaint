@@ -75,6 +75,7 @@
 
     <sys:String x:Key="L_Settings_General_Accent_Title">Accent color</sys:String>
     <sys:String x:Key="L_Settings_General_Accent_Desc">UI accent and tool icon color</sys:String>
+    <sys:String x:Key="L_Settings_General_Accent_Option_System">Follow System</sys:String>
 
     <sys:String x:Key="L_Settings_General_Language_Title">Language</sys:String>
     <sys:String x:Key="L_Settings_General_Language_Desc">Change the display language </sys:String>
@@ -306,6 +307,10 @@
     <sys:String x:Key="L_Menu_File_Recent_Placeholder">Placeholder</sys:String>
     <sys:String x:Key="L_Menu_File_Save">Save</sys:String>
     <sys:String x:Key="L_Menu_File_SaveAs">Save as</sys:String>
+    <sys:String x:Key="L_Menu_File_SaveAsPDF">Save as PDF...</sys:String>
+    <sys:String x:Key="L_Menu_File_Print">Print...</sys:String>
+    <sys:String x:Key="L_Menu_Print">Print</sys:String>
+    <sys:String x:Key="File.Print">Print</sys:String>
     <sys:String x:Key="L_Menu_File_Exit">Exit</sys:String>
 
     <sys:String x:Key="L_Menu_Edit">Edit</sys:String>
@@ -860,6 +865,8 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Info_ResampleMode_Format">Zoom: {0:P0}  |  Original: {1} x {2}</sys:String>
     <sys:String x:Key="L_Info_DefaultScale">Zoom: 100% (Original Size)</sys:String>
     <sys:String x:Key="L_Progress_Loading_Format">Loading {0}%</sys:String>
+    <sys:String x:Key="L_Progress_ExportingPDF_Format">Exporting PDF... {0}/{1}</sys:String>
+    <sys:String x:Key="L_Toast_ExportPDF_Success">PDF exported successfully</sys:String>
 
     <!-- StatusBar Tooltips -->
     <sys:String x:Key="L_StatusBar_FitToWindow">Fit to Window</sys:String>

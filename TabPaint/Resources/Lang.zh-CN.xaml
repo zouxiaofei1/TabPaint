@@ -67,6 +67,7 @@
 
     <sys:String x:Key="L_Settings_General_Accent_Title">主题色</sys:String>
     <sys:String x:Key="L_Settings_General_Accent_Desc">界面强调颜色与工具图标颜色</sys:String>
+    <sys:String x:Key="L_Settings_General_Accent_Option_System">跟随系统</sys:String>
 
     <sys:String x:Key="L_Settings_General_Language_Title">界面语言</sys:String>
     <sys:String x:Key="L_Settings_General_Language_Desc">切换软件显示语言</sys:String>
@@ -259,6 +260,9 @@
     <sys:String x:Key="L_Menu_File_Recent_Placeholder">占位符</sys:String>
     <sys:String x:Key="L_Menu_File_Save">保存</sys:String>
     <sys:String x:Key="L_Menu_File_SaveAs">另存为</sys:String>
+    <sys:String x:Key="L_Menu_File_SaveAsPDF">另存为 PDF...</sys:String>
+    <sys:String x:Key="L_Menu_File_Print">打印...</sys:String>
+    <sys:String x:Key="L_Menu_Print">打印</sys:String>
     <sys:String x:Key="L_Menu_File_Exit">退出</sys:String>
 
     <sys:String x:Key="L_Menu_Edit">编辑</sys:String>
@@ -845,6 +849,8 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Info_ResampleMode_Format">缩放: {0:P0}  |  原始: {1} x {2}</sys:String>
     <sys:String x:Key="L_Info_DefaultScale">缩放：100% (原始大小)</sys:String>
     <sys:String x:Key="L_Progress_Loading_Format">正在加载 {0}%</sys:String>
+    <sys:String x:Key="L_Progress_ExportingPDF_Format">正在导出 PDF... {0}/{1}</sys:String>
+    <sys:String x:Key="L_Toast_ExportPDF_Success">PDF 导出成功</sys:String>
 
     <!-- StatusBar Tooltips -->
     <sys:String x:Key="L_StatusBar_ClipboardMonitor_ToolTip">监听剪切板</sys:String>
