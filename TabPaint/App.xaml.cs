@@ -234,11 +234,16 @@ namespace TabPaint
         }
         protected override void OnStartup(StartupEventArgs e)
         {//680ms
+            StartupPerformanceTracer.StartSession($"Startup_PID{Environment.ProcessId}");
+            using var __perfOnStartup = StartupPerformanceTracer.Measure("App.OnStartup");
+            StartupPerformanceTracer.Point("App.OnStartup.Enter");
+
             var settingsTask = Task.Run(() => SettingsManager.Instance);
 
            
             try
             { // 启用分级 JIT 编译优化
+                using var __perfProfileOpt = StartupPerformanceTracer.Measure("App.OnStartup.ProfileOptimization");
                 string profileRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TabPaint", "Profiles");
                 Directory.CreateDirectory(profileRoot);
                 System.Runtime.ProfileOptimization.SetProfileRoot(profileRoot);
@@ -246,10 +251,15 @@ namespace TabPaint
             }//4ms
             catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
  
-            SetupExceptionHandling();//检查单实例0.9ms
-            TrayIconService.Initialize();
+            using (StartupPerformanceTracer.Measure("App.SetupExceptionHandling")) SetupExceptionHandling();//检查单实例0.9ms
 
-            if (!SingleInstance.IsFirstInstance())//0.3ms
+            bool isFirstInstance;
+            using (StartupPerformanceTracer.Measure("App.SingleInstance.IsFirstInstance"))
+            {
+                isFirstInstance = SingleInstance.IsFirstInstance();
+            }
+
+            if (!isFirstInstance)//0.3ms
             {
                 SingleInstance.SendArgsToFirstInstance(e.Args);
                 Environment.Exit(0);
@@ -335,10 +345,16 @@ namespace TabPaint
             }
           
             // 等待配置加载完成
-            var settingsManager = settingsTask.Result;
-            var currentSettings = settingsManager.Current; //15ms
+            AppSettings currentSettings;
+            using (StartupPerformanceTracer.Measure("App.WaitSettingsTask"))
+            {
+                var settingsManager = settingsTask.Result;
+                currentSettings = settingsManager.Current; //15ms
+            }
+            StartupPerformanceTracer.Point("App.SettingsLoaded");
          
-            LocalizationManager.ApplyLanguage(currentSettings.Language);//2ms
+            using (StartupPerformanceTracer.Measure("App.LocalizationManager.ApplyLanguage"))
+                LocalizationManager.ApplyLanguage(currentSettings.Language);//2ms
 
             currentSettings.PropertyChanged += Settings_PropertyChanged;
            
@@ -347,14 +363,22 @@ namespace TabPaint
             {
                 targetTheme = AppTheme.Dark;
             }
-            ThemeManager.ApplyTheme(targetTheme);  //2ms
-            ThemeManager.StartSystemThemeMonitoring();
+            using (StartupPerformanceTracer.Measure("App.ThemeManager.ApplyTheme"))
+                ThemeManager.ApplyTheme(targetTheme);  //2ms
+            using (StartupPerformanceTracer.Measure("App.ThemeManager.StartSystemThemeMonitoring"))
+                ThemeManager.StartSystemThemeMonitoring();
 
             // 3. 创建并启动主窗口
-            base.OnStartup(e);//<0.1ms
-            _mainWindow = new MainWindow(filePath, fileExists);//240ms
-            _mainWindow.Show();//340ms
-            TrayIconService.UpdateVisibility();
+            using (StartupPerformanceTracer.Measure("App.base.OnStartup")) base.OnStartup(e);//<0.1ms
+            using (StartupPerformanceTracer.Measure("App.MainWindow.Ctor"))
+            {
+                _mainWindow = new MainWindow(filePath, fileExists);//240ms
+            }
+            StartupPerformanceTracer.Point("App.MainWindow.Created");
+            using (StartupPerformanceTracer.Measure("App.MainWindow.Show")) _mainWindow.Show();//340ms
+            StartupPerformanceTracer.Point("App.MainWindow.Shown");
+            using (StartupPerformanceTracer.Measure("App.TrayIconService.UpdateVisibility"))
+                TrayIconService.UpdateVisibility();
 
             _mainWindow.Dispatcher.BeginInvoke(new Action(() =>
             {

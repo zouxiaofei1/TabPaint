@@ -17,26 +17,32 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private string BuildBasicMetadataInfo(string filePath, long byteLength, BitmapSource bitmap)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            sb.AppendLine(LocalizationManager.GetString("L_Exif_Section_File"));
+            if (IsVirtualPath(filePath)) sb.AppendLine(LocalizationManager.GetString("L_Exif_Path_Memory"));
+            else sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Path_Format"), filePath));
+            sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Size_MB_Format"), byteLength / 1024.0 / 1024.0));
+            sb.AppendLine();
+
+            sb.AppendLine(LocalizationManager.GetString("L_Exif_Section_Canvas"));
+            sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Dim_Format"), bitmap.PixelWidth, bitmap.PixelHeight));
+            sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_BitDepth_Format"), bitmap.Format.BitsPerPixel));
+            sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Dpi_Format"), bitmap.DpiX, bitmap.DpiY));
+            sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_PixelFormat_Format"), bitmap.Format));
+
+            return sb.ToString().TrimEnd();
+        }
+
         private Task<string> GetImageMetadataInfoAsync(string filePath, long byteLength, BitmapSource bitmap)
         {
             return Task.Run(() =>
             {
                 try
                 {
-                    StringBuilder sb = new StringBuilder();
-
-                    // --- 1. 文件与画布信息 ---
-                    sb.AppendLine(LocalizationManager.GetString("L_Exif_Section_File"));
-                    if (IsVirtualPath(filePath)) sb.AppendLine(LocalizationManager.GetString("L_Exif_Path_Memory"));
-                    else sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Path_Format"), filePath));
-                    sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Size_MB_Format"), byteLength / 1024.0 / 1024.0));
-                    sb.AppendLine();
-
-                    sb.AppendLine(LocalizationManager.GetString("L_Exif_Section_Canvas"));
-                    sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Dim_Format"), bitmap.PixelWidth, bitmap.PixelHeight));
-                    sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_BitDepth_Format"), bitmap.Format.BitsPerPixel));
-                    sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Dpi_Format"), bitmap.DpiX, bitmap.DpiY));
-                    sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_PixelFormat_Format"), bitmap.Format));
+                    StringBuilder sb = new StringBuilder(BuildBasicMetadataInfo(filePath, byteLength, bitmap));
 
                     // --- 2. 尝试读取 EXIF 元数据 ---
                     if (IsVirtualPath(filePath) || !File.Exists(filePath)) return sb.ToString().TrimEnd();

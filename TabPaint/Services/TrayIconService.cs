@@ -36,6 +36,12 @@ namespace TabPaint.Services
 
         private static NOTIFYICONDATA _notifyData;
 
+        private static void EnsureInitialized()
+        {
+            if (_initialized) return;
+            Initialize();
+        }
+
         public static void Initialize()
         {
             if (_initialized) return;
@@ -69,6 +75,7 @@ namespace TabPaint.Services
 
         public static void UpdateVisibility()
         {
+            EnsureInitialized();
             if (!_initialized || _messageWindow == null) return;
 
             bool hasVisibleSticky = System.Windows.Application.Current.Windows.OfType<StickyWindow>().Any(w => w.IsVisible);

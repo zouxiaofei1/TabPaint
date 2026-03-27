@@ -31,6 +31,7 @@ namespace TabPaint
 
         public async Task OpenImageAndTabs(string filePath, bool refresh = false, bool lazyload = false, bool forceFolderScan = false, bool nobackup = false)
         {
+            using var __perfOpenImageAndTabs = StartupPerformanceTracer.Measure("MainWindow.OpenImageAndTabs");
            
             _isLoadingImage = true;
             OnPropertyChanged("IsLoadingImage");
@@ -39,6 +40,7 @@ namespace TabPaint
                 bool autoLoad = SettingsManager.Instance.Current.AutoLoadFolderImages || forceFolderScan;
                 if (autoLoad && _currentImageIndex == -1 && _currentFileExists)
                 {
+                    using var __perfScanFolder = StartupPerformanceTracer.Measure("MainWindow.OpenImageAndTabs.ScanFolderImagesAsync");
                     await ScanFolderImagesAsync(filePath);
                 }
                 else if (!autoLoad && _currentImageIndex == -1 && !IsVirtualPath(filePath))
@@ -71,6 +73,21 @@ namespace TabPaint
                     _currentTabItem = current;
                 }
                 UpdateImageBarVisibilityState();
+
+                // 启动快速路径：仅空白新建标签且没有备份/快照时，直接加载空白画布，跳过完整文件加载管线
+                if (current != null &&
+                    IsVirtualPath(filePath) &&
+                    current.IsNew &&
+                    !current.IsDirty &&
+                    current.MemorySnapshot == null &&
+                    (string.IsNullOrEmpty(current.BackupPath) || !File.Exists(current.BackupPath)))
+                {
+                    using var __perfBlankFastPath = StartupPerformanceTracer.Measure("MainWindow.OpenImageAndTabs.BlankFastPath");
+                    await LoadBlankCanvasAsync(filePath);
+                    ResetDirtyTracker();
+                    return;
+                }
+
                 // --- 智能加载逻辑 ---
                 string fileToLoad = filePath;
                 bool isFileLoadedFromCache = false;
@@ -111,7 +128,8 @@ namespace TabPaint
                         isFileLoadedFromCache = true; // 标记从备份加载，需维持 Dirty
                     }
                 }
-                await LoadImage(fileToLoad, actualSourcePath, lazyload);
+                using (StartupPerformanceTracer.Measure("MainWindow.OpenImageAndTabs.LoadImage"))
+                    await LoadImage(fileToLoad, actualSourcePath, lazyload);
 
                 if (!isFileLoadedFromCache)
                 {
@@ -201,6 +219,7 @@ namespace TabPaint
 
         private async Task ScanFolderImagesAsync(string filePath)
         {
+            using var __perfScanFolderImages = StartupPerformanceTracer.Measure("MainWindow.ScanFolderImagesAsync");
             try
             {
                 if (IsVirtualPath(filePath) || string.IsNullOrEmpty(filePath)) return;
@@ -361,6 +380,7 @@ namespace TabPaint
 
         private Task<(int Width, int Height)?> GetImageDimensionsAsync(Stream stream, string filePath)
         {
+            var __dimMeasure = StartupPerformanceTracer.Measure("MainWindow.GetImageDimensionsAsync");
             return Task.Run(() =>
             {
                 try
@@ -398,12 +418,17 @@ namespace TabPaint
                 Logger.Error($"GetDimensions Error for {filePath}", ex);
                 return null;
             }
+            finally
+            {
+                __dimMeasure.Dispose();
+            }
             });
         }
 
 
         private async Task LoadImage(string filePath, string? sourcePath = null, bool lazyload = false)
         {
+            using var __perfLoadImage = StartupPerformanceTracer.Measure("MainWindow.LoadImage");
             // 1. 初始化与取消旧任务
             _isCurrentFileGif = false;
             GifPlayerImage.Visibility = Visibility.Collapsed;
@@ -415,6 +440,7 @@ namespace TabPaint
             StopProgressSimulation(); // 封装了取消 _progressCts 的逻辑
 
             // 2. 路径校验与文件准备
+            using var __perfValidatePath = StartupPerformanceTracer.Measure("MainWindow.LoadImage.ValidateAndGetPath");
             var validationResult = await ValidateAndGetPath(filePath, sourcePath);
             if (!validationResult.IsValid) return; // 校验失败，内部已调用 LoadBlankCanvasAsync 或 Toast
             string fileToRead = validationResult.PathToRead;
@@ -428,6 +454,7 @@ namespace TabPaint
                 await UpdateFileSizeInfo(byteLength); // 更新底部文件大小显示
 
                 // 4. 获取尺寸并处理进度条逻辑
+                using var __perfGetDimensions = StartupPerformanceTracer.Measure("MainWindow.LoadImage.GetImageDimensionsAsync");
                 var dimensions = await GetImageDimensionsAsync(fs, filePath);
                 if (token.IsCancellationRequested) return;
 
@@ -448,11 +475,14 @@ namespace TabPaint
              
                 bool hasThumbnail = await TryShowCachedThumbnail(filePath, token);   // 立即显示缓存的缩略图
 
+                using var __perfStartDecoding = StartupPerformanceTracer.Measure("MainWindow.LoadImage.StartDecodingTasks");
                 var decodingTasks = StartDecodingTasks(fs, filePath, token);
 
              
+                using var __perfPreviewDecode = StartupPerformanceTracer.Measure("MainWindow.LoadImage.DecodePreviewTask");
                 var previewBitmap = await decodingTasks.PreviewTask;   //  [UI阶段 1] 显示预览图 
                 if (!token.IsCancellationRequested && previewBitmap != null) await ApplyPreviewImageToUI(filePath, previewBitmap, token);
+                using var __perfFullDecode = StartupPerformanceTracer.Measure("MainWindow.LoadImage.DecodeFullResTask");
                 var fullResBitmap = await decodingTasks.FullResTask;  //  [阶段 2] 等待完整大图并应用
                 StopProgressSimulation(); // 停止进度条
 
@@ -460,11 +490,14 @@ namespace TabPaint
 
                 if (!token.IsCancellationRequested && fullResBitmap != null)
                 {
-                    // 获取元数据
-                    string metadata = await GetImageMetadataInfoAsync(filePath, byteLength, fullResBitmap);
+                    // 先展示基础信息，首帧后再后台补齐 EXIF，减少首帧阻塞
+                    string basicMetadata = BuildBasicMetadataInfo(filePath, byteLength, fullResBitmap);
 
                     // 应用最终图像 (这是最重的 UI 操作)
-                    await ApplyFullImageToUI(fullResBitmap, filePath, fileToRead, metadata, token);
+                    using var __perfApplyFullUi = StartupPerformanceTracer.Measure("MainWindow.LoadImage.ApplyFullImageToUI");
+                    await ApplyFullImageToUI(fullResBitmap, filePath, fileToRead, basicMetadata, token);
+
+                    _ = UpdateMetadataInfoAfterRenderAsync(filePath, byteLength, fullResBitmap, token);
                 }
             }
             catch (OperationCanceledException)
@@ -476,6 +509,32 @@ namespace TabPaint
                 Logger.Error($"Error loading image {filePath}", ex);
                 StopProgressSimulation();
                 await LoadBlankCanvasAsync(filePath, LocalizationManager.GetString("L_Load_Reason_Corrupt"));
+            }
+        }
+
+        private async Task UpdateMetadataInfoAfterRenderAsync(string filePath, long byteLength, BitmapSource bitmap, CancellationToken token)
+        {
+            try
+            {
+                using var __perfMetadataAsync = StartupPerformanceTracer.Measure("MainWindow.LoadImage.GetImageMetadataInfoAsync");
+                string metadata = await GetImageMetadataInfoAsync(filePath, byteLength, bitmap);
+                if (token.IsCancellationRequested) return;
+
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    if (token.IsCancellationRequested) return;
+                    if (string.Equals(_currentFilePath, filePath, StringComparison.Ordinal))
+                    {
+                        CurrentImageFullInfo = metadata;
+                    }
+                }, DispatcherPriority.Background);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Update metadata after render failed: {filePath}", ex);
             }
         }
 
@@ -721,6 +780,7 @@ namespace TabPaint
         }
         private async Task LoadBlankCanvasAsync(string filePath, string reason = null)
         {
+            using var __perfLoadBlankCanvas = StartupPerformanceTracer.Measure("MainWindow.LoadBlankCanvasAsync");
             await Dispatcher.InvokeAsync(() =>
             {
                 int width = AppConsts.DefaultBlankCanvasWidth;

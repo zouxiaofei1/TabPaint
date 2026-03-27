@@ -80,6 +80,7 @@ namespace TabPaint
         private UIHandlers.DropZoneWindow? _dropZone;
 
         private bool _shouldLoadSession = true;
+        private bool _startupTraceFlushed = false;
 
         protected override void OnActivated(EventArgs e)
         {
@@ -101,11 +102,12 @@ namespace TabPaint
 
         public MainWindow(string path, bool? fileExists = null, FileTabItem? initialTab = null, bool loadSession = true)
         {
+            using var __perfCtor = StartupPerformanceTracer.Measure("MainWindow.Ctor");
             if (!MicaAcrylicManager.IsWin11())
             {
                 this.AllowsTransparency = true;
             }
-
+            
             _shouldLoadSession = loadSession;
             _workingPath = path;
             _currentFilePath = path;  
@@ -123,7 +125,9 @@ namespace TabPaint
                 _currentImageIndex = 0;
             }
             InitializeLazyControls();
+            StartupPerformanceTracer.Point("MainWindow.BeforeInitializeComponent");
             InitializeComponent();  //220ms
+            StartupPerformanceTracer.Point("MainWindow.AfterInitializeComponent");
           
             RestoreWindowBounds();//0.3ms
 
@@ -161,6 +165,7 @@ namespace TabPaint
 
         private async void MainWindow_ContentRendered(object sender, EventArgs e)
         {
+            using var __perfContentRendered = StartupPerformanceTracer.Measure("MainWindow.ContentRendered");
             InitializeAutoSave();
         
             this.SupportFocusHighlight();
@@ -175,7 +180,14 @@ namespace TabPaint
             OnModeChanged(IsViewMode, isSilent: true);
 
 
-            if (_shouldLoadSession) await LoadSessionAsync(); //8ms
+            if (_shouldLoadSession)
+            {
+                _ = Dispatcher.InvokeAsync(async () =>
+                {
+                    using var __perfLoadSession = StartupPerformanceTracer.Measure("MainWindow.ContentRendered.LoadSessionAsync");
+                    await LoadSessionAsync();
+                }, DispatcherPriority.Background);
+            }
 
            if (!string.IsNullOrEmpty(_currentFilePath) && Directory.Exists(_currentFilePath))//0.2ms
             {
@@ -229,7 +241,6 @@ namespace TabPaint
             }), DispatcherPriority.Loaded);
             this.Dispatcher.InvokeAsync(() =>
             {
-                ThemeManager.StartSystemThemeMonitoring();
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
                     _startupFinished = true;
@@ -240,30 +251,43 @@ namespace TabPaint
             }, DispatcherPriority.ApplicationIdle);
 
             InitializeScrollPosition();
+
+            this.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (_startupTraceFlushed) return;
+                _startupTraceFlushed = true;
+                string tracePath = StartupPerformanceTracer.Flush("MainWindow.ContentRendered.ApplicationIdle");
+                if (!string.IsNullOrWhiteSpace(tracePath))
+                {
+                    Logger.Info($"[StartupTrace] {tracePath}");
+                }
+            }), DispatcherPriority.ApplicationIdle);
         }
         protected override void OnSourceInitialized(EventArgs e)
         {
+            using var __perfOnSourceInitialized = StartupPerformanceTracer.Measure("MainWindow.OnSourceInitialized");
             //Dispatcher.BeginInvoke(new Action(() =>
             //{
                 base.OnSourceInitialized(e); //17ms
 
-                if (IsWin11)
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (!MicaEnabled)
                 {
                     MicaAcrylicManager.ApplyEffect(this);
                     MicaEnabled = true;
                 }
-                else
-                {
-                    MicaAcrylicManager.ApplyEffect(this);
-                    MicaEnabled = true;
-                }
+            }), DispatcherPriority.Background);
 
             var currentSettings = SettingsManager.Instance.Current;//共0.7ms
             bool isDark = (ThemeManager.CurrentAppliedTheme == AppTheme.Dark) || (currentSettings.StartInViewMode && currentSettings.ViewUseDarkCanvasBackground && _currentFileExists);
             ThemeManager.SetWindowImmersiveDarkMode(this, isDark); 
 
 
-            InitializeClipboardMonitor(); //共0.4ms
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                InitializeClipboardMonitor();
+            }), DispatcherPriority.ApplicationIdle);
 
             var src = (HwndSource)PresentationSource.FromVisual(this);
             if (src != null)
@@ -282,6 +306,7 @@ namespace TabPaint
         }
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {//共5ms
+            using var __perfLoaded = StartupPerformanceTracer.Measure("MainWindow.Loaded");
             try
             {
                 var bar = this.FindName("FavoriteBar") as FavoriteBarControl;
