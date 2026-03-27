@@ -22,6 +22,54 @@
         
             </Image>
 
+            <Popup x:Name="LogoMenuHintPopup"
+                   PlacementTarget="{Binding ElementName=AppIcon}"
+                   Placement="Bottom"
+                   AllowsTransparency="True"
+                   PopupAnimation="Fade"
+                   VerticalOffset="6"
+                   StaysOpen="False"
+                   HorizontalOffset="0">
+                <Grid Margin="10">
+                    <Path Data="M 0,8 L 8,0 L 16,8 Z" Fill="{DynamicResource SystemAccentColorLightBrush}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8,0,0,0"/>
+
+                    <Border Background="{DynamicResource GlassBackgroundBrush}"
+                            BorderBrush="{DynamicResource SystemAccentColorLightBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="12,8"
+                            Margin="0,7,0,0">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="15" ShadowDepth="0" Opacity="0.2" Color="Black"/>
+                        </Border.Effect>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="💡" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="14"/>
+                            <TextBlock Text="{DynamicResource L_Hint_ClickLogoMenu}"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       VerticalAlignment="Center"/>
+
+                            <Button Click="CloseLogoMenuHint_Click"
+                                    Style="{StaticResource TitleBarButtonStyle}"
+                                    Width="24" Height="24"
+                                    Margin="12,0,-4,0"
+                                    Padding="0"
+                                    Background="Transparent"
+                                    VerticalAlignment="Center">
+                                <Path Data="M0,0 L8,8 M8,0 L0,8"
+                                      Stroke="{DynamicResource TextSecondaryBrush}"
+                                      StrokeThickness="1.2"
+                                      Width="8" Height="8"
+                                      Stretch="Uniform"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Popup>
+
             <TextBlock Grid.Column="1" 
                        x:Name="TitleTextBlock" 
                        Text="TabPaint" 

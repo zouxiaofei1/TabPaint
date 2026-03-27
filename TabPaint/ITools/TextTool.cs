@@ -717,7 +717,7 @@ namespace TabPaint
                 mw.SetUndoRedoButtonState();
                 _richTextBox = null;
                 lag = 2;
-                if (mw._canvasResizer != null) mw._canvasResizer.SetHandleVisibility(false);
+                if (mw._canvasResizer != null) mw._canvasResizer.SetHandleVisibility(true);
             }
        
             private void SetupTextBoxEvents(ToolContext ctx, System.Windows.Controls.RichTextBox rtb)

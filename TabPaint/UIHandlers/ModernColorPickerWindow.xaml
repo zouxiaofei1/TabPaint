@@ -154,7 +154,7 @@
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-4,-14,0">
                         <Button x:Name="ToggleCompactBtn" Width="46" Height="32" Style="{StaticResource WindowMinimizeButtonStyle}" Click="ToggleCompact_Click" ToolTip="Compact Mode">
-                            <TextBlock Text="&#xE76B;" FontFamily="Segoe MDL2 Assets" FontSize="12" x:Name="ToggleBtnIcon"/>
+                            <TextBlock Text="-" FontSize="16" x:Name="ToggleBtnIcon"/>
                         </Button>
                         <Button x:Name="CloseBtn" Width="46" Height="32" Style="{StaticResource WindowCloseButtonStyle}" Click="CancelButton_Click"/>
                     </StackPanel>

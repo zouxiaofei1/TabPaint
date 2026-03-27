@@ -111,6 +111,73 @@ namespace TabPaint
             SetUndoRedoButtonState();
         }
 
+        private bool TryCaptureViewportCenterImagePoint(out Point imagePoint, out double margin)
+        {
+            imagePoint = default;
+            margin = IsViewMode ? 5.0 : AppConsts.CanvasMargin;
+
+            if (_bitmap == null || ScrollContainer == null || zoomscale <= 0)
+                return false;
+
+            ScrollContainer.UpdateLayout();
+            double viewportCenterX = ScrollContainer.ViewportWidth / 2.0;
+            double viewportCenterY = ScrollContainer.ViewportHeight / 2.0;
+            if (viewportCenterX <= 0 || viewportCenterY <= 0)
+                return false;
+
+            imagePoint = new Point(
+                (ScrollContainer.HorizontalOffset + viewportCenterX - margin) / zoomscale,
+                (ScrollContainer.VerticalOffset + viewportCenterY - margin) / zoomscale
+            );
+            return true;
+        }
+
+        private static Point TransformPointToTransformedBitmapSpace(Point point, System.Windows.Media.Transform transform, int sourceWidth, int sourceHeight)
+        {
+            Matrix matrix = transform.Value;
+
+            Point[] corners =
+            {
+                matrix.Transform(new Point(0, 0)),
+                matrix.Transform(new Point(sourceWidth, 0)),
+                matrix.Transform(new Point(0, sourceHeight)),
+                matrix.Transform(new Point(sourceWidth, sourceHeight))
+            };
+
+            double minX = corners[0].X;
+            double minY = corners[0].Y;
+            for (int i = 1; i < corners.Length; i++)
+            {
+                if (corners[i].X < minX) minX = corners[i].X;
+                if (corners[i].Y < minY) minY = corners[i].Y;
+            }
+
+            Point transformed = matrix.Transform(point);
+            return new Point(transformed.X - minX, transformed.Y - minY);
+        }
+
+        private void RestoreViewportCenterByImagePoint(Point oldImageCenterPoint, double margin, System.Windows.Media.Transform transform, int sourceWidth, int sourceHeight)
+        {
+            if (ScrollContainer == null || zoomscale <= 0) return;
+
+            ScrollContainer.UpdateLayout();
+            double viewportCenterX = ScrollContainer.ViewportWidth / 2.0;
+            double viewportCenterY = ScrollContainer.ViewportHeight / 2.0;
+            if (viewportCenterX <= 0 || viewportCenterY <= 0) return;
+
+            Point transformedPoint = TransformPointToTransformedBitmapSpace(oldImageCenterPoint, transform, sourceWidth, sourceHeight);
+            double newOffsetX = transformedPoint.X * zoomscale + margin - viewportCenterX;
+            double newOffsetY = transformedPoint.Y * zoomscale + margin - viewportCenterY;
+
+            ScrollContainer.ScrollToHorizontalOffset(newOffsetX);
+            ScrollContainer.ScrollToVerticalOffset(newOffsetY);
+
+            UpdateRulerPositions();
+            UpdateSelectionToolBarPosition();
+            if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
+            if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx);
+        }
+
         private void RotateBitmap(int angle)
         {
             if (_tools.Select is SelectTool st && st.HasActiveSelection)  
@@ -123,7 +190,24 @@ namespace TabPaint
                 _router.GetSelectTool()?.RotateSelection(_ctx, angle);
                 return; 
             }
-            ApplyTransform(new RotateTransform(angle));
+
+            if (_bitmap == null)
+            {
+                ApplyTransform(new RotateTransform(angle));
+                NotifyCanvasChanged();
+                _canvasResizer.UpdateUI();
+                return;
+            }
+
+            int sourceWidth = _bitmap.PixelWidth;
+            int sourceHeight = _bitmap.PixelHeight;
+            var rotateTransform = new RotateTransform(angle);
+
+            bool hasCenter = TryCaptureViewportCenterImagePoint(out var oldImageCenter, out var margin);
+            ApplyTransform(rotateTransform);
+            if (hasCenter)
+                RestoreViewportCenterByImagePoint(oldImageCenter, margin, rotateTransform, sourceWidth, sourceHeight);
+
             NotifyCanvasChanged();
             _canvasResizer.UpdateUI(); 
         }
@@ -166,9 +250,20 @@ namespace TabPaint
 
         private void FlipBitmap(bool flipVertical)
         {
+            if (_bitmap == null) return;
+
+            int sourceWidth = _bitmap.PixelWidth;
+            int sourceHeight = _bitmap.PixelHeight;
             double cx = _bitmap.PixelWidth / 2.0;
             double cy = _bitmap.PixelHeight / 2.0;
-            ApplyTransform(flipVertical ? new ScaleTransform(1, -1, cx, cy) : new ScaleTransform(-1, 1, cx, cy));
+            var flipTransform = flipVertical
+                ? new ScaleTransform(1, -1, cx, cy)
+                : new ScaleTransform(-1, 1, cx, cy);
+
+            bool hasCenter = TryCaptureViewportCenterImagePoint(out var oldImageCenter, out var margin);
+            ApplyTransform(flipTransform);
+            if (hasCenter)
+                RestoreViewportCenterByImagePoint(oldImageCenter, margin, flipTransform, sourceWidth, sourceHeight);
         }
         private BitmapSource CreateWhiteThumbnail()  
         {

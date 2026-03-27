@@ -15,7 +15,8 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Xps;
+using System.Windows.Documents;
+using System.Windows.Markup;
 using System.Printing;
 using SkiaSharp;
 using TabPaint.Controls;
@@ -274,23 +275,44 @@ namespace TabPaint
             }
         }
 
-        private async void OnPrintClick(object sender, RoutedEventArgs e)
+        private void OnPrintClick(object sender, RoutedEventArgs e)
         {
             if (BackgroundImage.Source == null) return;
-
-            // 优先使用 WinRT PrintManager 以支持现代打印预览
-            if (_printManager != null)
-            {
-                await ShowPrintUIAsync();
-                return;
-            }
 
             try
             {
                 PrintDialog printDialog = new PrintDialog();
                 if (printDialog.ShowDialog() == true)
                 {
-                    var viewbox = new Viewbox
+                    double width = printDialog.PrintableAreaWidth;
+                    double height = printDialog.PrintableAreaHeight;
+
+                    if (width <= 1 || height <= 1)
+                    {
+                        var capabilities = printDialog.PrintQueue?.GetPrintCapabilities(printDialog.PrintTicket);
+                        var area = capabilities?.PageImageableArea;
+                        if (area != null)
+                        {
+                            width = area.ExtentWidth;
+                            height = area.ExtentHeight;
+                        }
+                    }
+
+                    if (width <= 1 || height <= 1)
+                    {
+                        width = BackgroundImage.ActualWidth > 1 ? BackgroundImage.ActualWidth : 1024;
+                        height = BackgroundImage.ActualHeight > 1 ? BackgroundImage.ActualHeight : 768;
+                    }
+
+                    var fixedDocument = CreateSinglePagePrintDocument(BackgroundImage.Source, width, height);
+                    if (fixedDocument != null)
+                    {
+                        printDialog.PrintDocument(fixedDocument.DocumentPaginator, "TabPaint Print");
+                        return;
+                    }
+
+                    // 兜底：如果文档方式构建失败，仍可直接打印视觉对象
+                    var fallbackViewbox = new Viewbox
                     {
                         Stretch = Stretch.Uniform,
                         Child = new Image
@@ -301,22 +323,51 @@ namespace TabPaint
                         }
                     };
 
-                    double width = printDialog.PrintableAreaWidth;
-                    double height = printDialog.PrintableAreaHeight;
-
                     Size pageSize = new Size(width, height);
-                    viewbox.Measure(pageSize);
-                    viewbox.Arrange(new Rect(new Point(0, 0), pageSize));
-                    viewbox.UpdateLayout();
+                    fallbackViewbox.Measure(pageSize);
+                    fallbackViewbox.Arrange(new Rect(new Point(0, 0), pageSize));
+                    fallbackViewbox.UpdateLayout();
 
-                    XpsDocumentWriter writer = PrintQueue.CreateXpsDocumentWriter(printDialog.PrintQueue);
-                    writer.Write(viewbox, printDialog.PrintTicket);
+                    printDialog.PrintVisual(fallbackViewbox, "TabPaint Print");
                 }
             }
             catch (Exception ex)
             {
                 ShowToast(string.Format(LocalizationManager.GetString("L_Common_Error"), ex.Message), ex);
             }
+        }
+
+        private FixedDocument? CreateSinglePagePrintDocument(ImageSource source, double pageWidth, double pageHeight)
+        {
+            if (source == null || pageWidth <= 0 || pageHeight <= 0)
+                return null;
+
+            var fixedPage = new FixedPage
+            {
+                Width = pageWidth,
+                Height = pageHeight
+            };
+
+            var image = new Image
+            {
+                Source = source,
+                Width = pageWidth,
+                Height = pageHeight,
+                Stretch = Stretch.Uniform,
+                UseLayoutRounding = true,
+                SnapsToDevicePixels = true
+            };
+
+            FixedPage.SetLeft(image, 0);
+            FixedPage.SetTop(image, 0);
+            fixedPage.Children.Add(image);
+
+            var pageContent = new PageContent();
+            ((IAddChild)pageContent).AddChild(fixedPage);
+
+            var fixedDocument = new FixedDocument();
+            fixedDocument.Pages.Add(pageContent);
+            return fixedDocument;
         }
     }
 }

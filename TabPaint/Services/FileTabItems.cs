@@ -24,7 +24,7 @@ namespace TabPaint
             int end = Math.Min(_imageFiles.Count - 1, centerIndex + PageSize);
             var viewportPaths = new HashSet<string>();
 
-            string centerPath = (centerIndex >= 0 && centerIndex < _imageFiles.Count) ? _imageFiles[centerIndex] : null;
+            string? centerPath = (centerIndex >= 0 && centerIndex < _imageFiles.Count) ? _imageFiles[centerIndex] : null;
 
             for (int i = start; i <= end; i++) viewportPaths.Add(_imageFiles[i]);
             for (int i = FileTabs.Count - 1; i >= 0; i--)
@@ -54,7 +54,6 @@ namespace TabPaint
                     var newTab = CreateTabFromPath(path);
 
                     // 插入排序逻辑
-                    int insertIndex = 0;
                     bool inserted = false;
                     for (int j = 0; j < FileTabs.Count; j++)
                     {
@@ -143,7 +142,7 @@ namespace TabPaint
                         MainImageBar.Scroller.ScrollToHorizontalOffset(centerOffset);
                     }
                 }
-                catch (Exception ex)  { }
+                catch (Exception)  { }
             }, System.Windows.Threading.DispatcherPriority.ContextIdle);
         }
         private void ScrollViewer_ManipulationBoundaryFeedback(object sender, ManipulationBoundaryFeedbackEventArgs e)// 阻止边界反馈

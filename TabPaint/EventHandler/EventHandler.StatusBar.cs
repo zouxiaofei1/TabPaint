@@ -108,12 +108,54 @@ namespace TabPaint
             }
         }
 
-        private void OnStatusCommandTextBoxKeyDown(object sender, KeyEventArgs e)
+        private async void OnStatusCommandTextBoxKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key != Key.Enter) return;
 
             e.Handled = true;
-            ShowToast("L_Main_Toast_Info");
+
+            string prompt = StatusCommandTextBox?.Text?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(prompt))
+            {
+                ShowToast("L_Main_AiImage_EmptyPrompt");
+                return;
+            }
+
+            var settings = SettingsManager.Instance.Current;
+            if (settings == null ||
+                string.IsNullOrWhiteSpace(settings.AiImageApiBaseUrl) ||
+                string.IsNullOrWhiteSpace(settings.AiImageApiKey))
+            {
+                ShowToast("L_Main_AiImage_ConfigMissing");
+                return;
+            }
+
+            if (!AiImageGenerationService.IsValidApiBaseUrl(settings.AiImageApiBaseUrl))
+            {
+                ShowToast("L_Main_AiImage_InvalidApiUrl");
+                return;
+            }
+
+            ShowToast("L_Main_AiImage_Generating");
+
+            try
+            {
+                string filePath = await AiImageGenerationService.Instance.GenerateImageAsync(
+                    prompt,
+                    settings.AiImageApiBaseUrl,
+                    settings.AiImageApiKey,
+                    settings.AiImageModel);
+
+                if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+                    throw new InvalidOperationException("Generated image file not found.");
+
+                await OpenFilesAsNewTabs(new[] { filePath });
+                ShowToast("L_Main_AiImage_Generated");
+            }
+            catch (Exception ex)
+            {
+                ShowToast(string.Format(LocalizationManager.GetString("L_Main_AiImage_GenerateFailed"), ex.Message), ex);
+            }
         }
 
     }

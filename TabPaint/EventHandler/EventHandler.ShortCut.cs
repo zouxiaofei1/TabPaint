@@ -257,6 +257,11 @@ namespace TabPaint
         }
         private void Window_KeyUp(object sender, KeyEventArgs e)
         {
+            if ((Keyboard.Modifiers & ModifierKeys.Alt) == 0)
+            {
+                _altToggleHandled = false;
+            }
+
             if (_isVisualRotating)
             {
                 // 如果释放了 L/R，或者释放了 Ctrl，都视为长按结束
@@ -308,6 +313,31 @@ namespace TabPaint
 
         private void MainWindow_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
+            Key actualKey = (e.Key == Key.System ? e.SystemKey : e.Key);
+
+            bool isAltOnlyToggle =
+                (actualKey == Key.LeftAlt || actualKey == Key.RightAlt) &&
+                (Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt &&
+                (Keyboard.Modifiers & ~ModifierKeys.Alt) == 0;
+
+            if (isAltOnlyToggle && !_altToggleHandled)
+            {
+                _isSelectToolFloatBarVisible = !_isSelectToolFloatBarVisible;
+                _altToggleHandled = true;
+                UpdateSelectionToolBarPosition(force: true);
+                e.Handled = true;
+                return;
+            }
+
+            if (Keyboard.Modifiers == ModifierKeys.None &&
+                !IsEditingTextField() &&
+                (actualKey == Key.Oem2 || actualKey == Key.Divide))
+            {
+                ApplyStatusCommandBarExpandedState(true, adjustWindowHeight: !_isStatusCommandBarExpanded);
+                e.Handled = true;
+                return;
+            }
+
             if (e.Key == Key.Escape)
             {
                 var ocrHolder = GetOcrFloatBarHolder();

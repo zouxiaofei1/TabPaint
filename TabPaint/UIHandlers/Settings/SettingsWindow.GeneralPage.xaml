@@ -668,7 +668,9 @@
                       SelectedValuePath="Tag"
                       Height="30" VerticalContentAlignment="Center">
                 <ComboBoxItem Content="{DynamicResource L_Settings_General_Language_Option_Zh}" Tag="ChineseSimplified"/>
+                <ComboBoxItem Content="{DynamicResource L_Settings_General_Language_Option_Tw}" Tag="ChineseTraditional"/>
                 <ComboBoxItem Content="{DynamicResource L_Settings_General_Language_Option_En}" Tag="English"/>
+                <ComboBoxItem Content="{DynamicResource L_Settings_General_Language_Option_Ja}" Tag="Japanese"/>
             </ComboBox>
         </Grid>
 

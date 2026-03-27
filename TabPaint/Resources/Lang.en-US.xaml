@@ -52,6 +52,13 @@
     <sys:String x:Key="L_Settings_General_StartInViewMode_Desc">Hide toolbars on startup (useful as a default image viewer)</sys:String>
     <sys:String x:Key="L_Settings_General_ShellIntegration_Title">Add to system context menu</sys:String>
     <sys:String x:Key="L_Settings_General_ShellIntegration_Desc">Add Open with TabPaint in Context Menu for Images</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_Header">AI Text-to-Image</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_ApiBaseUrl_Title">API Base URL</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_ApiBaseUrl_Desc">OpenAI-compatible endpoint</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_ApiKey_Title">API Key</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_ApiKey_Desc">Used for text-to-image authentication</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_Model_Title">Model</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_Model_Desc">For example gpt-image-1 or another compatible model</sys:String>
     <sys:String x:Key="L_ImgBar_ToggleView" xmlns:sys="clr-namespace:System;assembly=mscorlib">Expand / Fold</sys:String>
     <sys:String x:Key="L_Settings_General_MouseWheel_Title">Mouse wheel</sys:String>
     <sys:String x:Key="L_Settings_General_MouseWheel_Desc">Responds to mouse wheel scrolling</sys:String>
@@ -80,7 +87,9 @@
     <sys:String x:Key="L_Settings_General_Language_Title">Language</sys:String>
     <sys:String x:Key="L_Settings_General_Language_Desc">Change the display language </sys:String>
     <sys:String x:Key="L_Settings_General_Language_Option_Zh">简体中文</sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Option_Tw">繁體中文</sys:String>
     <sys:String x:Key="L_Settings_General_Language_Option_En">English</sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Option_Ja">日本語</sys:String>
     <sys:String x:Key="L_Ico_Title">Export Icon</sys:String>
     <sys:String x:Key="L_Ico_AddSize">Add Size</sys:String>
     <sys:String x:Key="L_Ico_Error_NoSize">Please add at least one icon size.</sys:String>
@@ -163,6 +172,7 @@
     <sys:String x:Key="L_Settings_Shortcuts_Effect_AutoLevels">Auto levels</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Effect_Resize">Resize</sys:String>
     <sys:String x:Key="L_TitleBar_Help">Help</sys:String>
+    <sys:String x:Key="L_Hint_ClickLogoMenu">Click the icon to show menu</sys:String>
     <sys:String x:Key="L_Hint_ClickHelp">Click here to see the user guide</sys:String>
     <sys:String x:Key="L_Help_Next">Next</sys:String>
     <sys:String x:Key="L_Help_Prev">Previous</sys:String>
@@ -290,6 +300,12 @@
 
     <sys:String x:Key="L_Main_Unit_Pixel">px</sys:String>
     <sys:String x:Key="L_Main_Toast_Info">Info</sys:String>
+    <sys:String x:Key="L_Main_AiImage_EmptyPrompt">Please enter a prompt and press Enter</sys:String>
+    <sys:String x:Key="L_Main_AiImage_ConfigMissing">Please configure AI image API in Settings - Plugins &amp; AI Models first</sys:String>
+    <sys:String x:Key="L_Main_AiImage_InvalidApiUrl">Invalid API URL format. Please enter a full http/https URL.</sys:String>
+    <sys:String x:Key="L_Main_AiImage_Generating">Generating image...</sys:String>
+    <sys:String x:Key="L_Main_AiImage_Generated">AI image generated and opened in a new tab</sys:String>
+    <sys:String x:Key="L_Main_AiImage_GenerateFailed">Generation failed: {0}</sys:String>
     <sys:String x:Key="L_Main_Drag_DropToOpen">Drop to open</sys:String>
     <sys:String x:Key="L_Main_Drag_ReleaseToConfirm">Release to confirm</sys:String>
 

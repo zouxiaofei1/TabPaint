@@ -36,7 +36,9 @@ namespace TabPaint
     public enum AppLanguage
     {
         ChineseSimplified,
-        English
+        English,
+        Japanese,
+        ChineseTraditional
     }
     public enum AppTheme
     {
@@ -97,8 +99,8 @@ namespace TabPaint
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             // 当快捷键的 Key 或 Modifiers 改变时，通知全局 Provider

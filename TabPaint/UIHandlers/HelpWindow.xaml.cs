@@ -24,23 +24,23 @@ namespace TabPaint
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsActive)));
             }
         }
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
     }
     public class HelpPage
     {
-        public Uri ImageUri { get; set; }
-        public string DescriptionKey { get; set; }
+        public Uri ImageUri { get; set; } = null!;
+        public string DescriptionKey { get; set; } = string.Empty;
     }
     public partial class HelpWindow : Window, INotifyPropertyChanged
     {
-        private List<HelpPage> _pages;
+        private readonly List<HelpPage> _pages;
         private int _currentIndex = 0;
-        private DispatcherTimer _gifDelayTimer;
+        private readonly DispatcherTimer _gifDelayTimer;
         private static readonly HttpClient _httpClient = new HttpClient();
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        private Uri _displayUri; // 图片显示源
-        public Uri DisplayUri
+        public event PropertyChangedEventHandler? PropertyChanged;
+        private Uri? _displayUri; // 图片显示源
+        public Uri? DisplayUri
         {
             get => _displayUri;
             set { _displayUri = value; OnPropertyChanged(nameof(DisplayUri)); }
@@ -92,7 +92,7 @@ namespace TabPaint
             MicaAcrylicManager.ApplyEffect(this);
             if (!MicaAcrylicManager.IsWin11())
             {
-                var chromeLow = FindResource("ChromeLowBrush") as Brush;
+                _ = FindResource("ChromeLowBrush") as Brush;
             }
         }
         private async Task LoadCurrentPageAsync()

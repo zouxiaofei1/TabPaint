@@ -132,7 +132,7 @@
 
                 <!-- 表格 -->
                 <Button x:Name="InsertTableBtn" Style="{StaticResource RoundedMenuButtonStyle}" ToolTip="{DynamicResource L_Text_InsertTable}" Padding="6,4">
-                    <Path Data="M2,2 H14 V14 H2 Z M2,6 H14 M2,10 H14 M6,2 V14 M10,2 V14" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1" Width="14" Height="14"/>
+                    <Image Source="{StaticResource Table_Image}" Width="14" Height="14" Stretch="Uniform"/>
                 </Button>
 
                 <Rectangle Width="1" Height="20" Fill="{DynamicResource BorderBrush}" Margin="8,0,4,0"/>

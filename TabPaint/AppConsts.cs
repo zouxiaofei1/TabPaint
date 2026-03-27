@@ -11,7 +11,7 @@ namespace TabPaint
     public static class AppConsts
     {
         // --- 版本信息 ---
-        public const string ProgramVersion = "v0.9.5.6";
+        public const string ProgramVersion = "v0.9.6.0";
 
         // --- Win32 消息常量 ---
         public const int WM_NCHITTEST = 0x0084;
@@ -188,6 +188,8 @@ namespace TabPaint
         public const int AiSrTileOverlap = 16;
         public const int AiDownloadTimeoutMinutes = 20;
         public const int AiDownloadBufferSize = 8192;
+        public const string AiImageDefaultApiBaseUrl = "https://api.openai.com/v1";
+        public const string AiImageDefaultModel = "gpt-image-1";
 
         // --- 布局参数 ---
         public const double FitToWindowMarginFactor = 0.9;
@@ -323,7 +325,7 @@ namespace TabPaint
 
         // --- 服务与性能配置 ---
         public const int MaxDiskConcurrency = 4;
-        public const int AppSettingsBinaryVersion = 13;
+        public const int AppSettingsBinaryVersion = 17;
 
         public static bool IsSupportedImage(string path)
         {

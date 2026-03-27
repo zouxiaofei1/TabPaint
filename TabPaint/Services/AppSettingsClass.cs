@@ -23,8 +23,21 @@ namespace TabPaint
             try
             {
                 string cultureName = CultureInfo.CurrentUICulture.Name;
+                if (cultureName.StartsWith("ja", StringComparison.OrdinalIgnoreCase))
+                {
+                    return AppLanguage.Japanese;
+                }
+
                 if (cultureName.StartsWith("zh", StringComparison.OrdinalIgnoreCase))
                 {
+                    if (cultureName.Contains("Hant", StringComparison.OrdinalIgnoreCase)
+                        || cultureName.Contains("TW", StringComparison.OrdinalIgnoreCase)
+                        || cultureName.Contains("HK", StringComparison.OrdinalIgnoreCase)
+                        || cultureName.Contains("MO", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return AppLanguage.ChineseTraditional;
+                    }
+
                     return AppLanguage.ChineseSimplified;
                 }
             }
@@ -400,8 +413,8 @@ namespace TabPaint
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
@@ -646,6 +659,51 @@ namespace TabPaint
             }
         }
 
+        private string _aiImageApiBaseUrl = AppConsts.AiImageDefaultApiBaseUrl;
+        [JsonPropertyName("ai_image_api_base_url")]
+        public string AiImageApiBaseUrl
+        {
+            get => _aiImageApiBaseUrl;
+            set
+            {
+                if (_aiImageApiBaseUrl != value)
+                {
+                    _aiImageApiBaseUrl = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private string _aiImageApiKey = string.Empty;
+        [JsonPropertyName("ai_image_api_key")]
+        public string AiImageApiKey
+        {
+            get => _aiImageApiKey;
+            set
+            {
+                if (_aiImageApiKey != value)
+                {
+                    _aiImageApiKey = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private string _aiImageModel = AppConsts.AiImageDefaultModel;
+        [JsonPropertyName("ai_image_model")]
+        public string AiImageModel
+        {
+            get => _aiImageModel;
+            set
+            {
+                if (_aiImageModel != value)
+                {
+                    _aiImageModel = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private OcrResultAction _ocrResultAction = OcrResultAction.DirectCopy;
         [JsonPropertyName("ocr_result_action")]
         public OcrResultAction OcrResultAction
@@ -708,6 +766,22 @@ namespace TabPaint
                 }
             }
         }
+
+        private bool _viewLogoMenuHintShown = false;
+        [JsonPropertyName("view_logo_menu_hint_shown")]
+        public bool ViewLogoMenuHintShown
+        {
+            get => _viewLogoMenuHintShown;
+            set
+            {
+                if (_viewLogoMenuHintShown != value)
+                {
+                    _viewLogoMenuHintShown = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private string _themeAccentColor = AppConsts.DefaultThemeAccentColor; // 默认蓝色
 
         [JsonPropertyName("theme_accent_color")]

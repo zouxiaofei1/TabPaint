@@ -175,6 +175,71 @@
                     </Grid>
                 </Border>
 
+
+
+                <TextBlock Text="{DynamicResource L_Settings_General_AiImage_Header}"
+                           FontWeight="SemiBold"
+                           FontSize="16"
+                           Margin="0,10,0,10"
+                           Foreground="{DynamicResource TextPrimaryBrush}"/>
+
+                <Grid Margin="0,5,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="220"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{DynamicResource L_Settings_General_AiImage_ApiBaseUrl_Title}"/>
+                        <TextBlock Text="{DynamicResource L_Settings_General_AiImage_ApiBaseUrl_Desc}"
+                                   Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+                    </StackPanel>
+
+                    <TextBox Grid.Column="1"
+                             Style="{StaticResource FluentTextBoxStyle}"
+                             Height="30" Margin="0,2,30,0"
+                             VerticalContentAlignment="Center"
+                             Text="{Binding Path=Current.AiImageApiBaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Source={x:Static local:SettingsManager.Instance}}"/>
+                </Grid>
+
+                <Grid Margin="0,5,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="220"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{DynamicResource L_Settings_General_AiImage_ApiKey_Title}"/>
+                        <TextBlock Text="{DynamicResource L_Settings_General_AiImage_ApiKey_Desc}"
+                                   Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+                    </StackPanel>
+
+                    <TextBox Grid.Column="1"
+                             Style="{StaticResource FluentTextBoxStyle}"
+                             Height="30" Margin="0,2,30,0"
+                             VerticalContentAlignment="Center"
+                             Text="{Binding Path=Current.AiImageApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Source={x:Static local:SettingsManager.Instance}}"/>
+                </Grid>
+
+                <Grid Margin="0,5,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="220"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{DynamicResource L_Settings_General_AiImage_Model_Title}"/>
+                        <TextBlock Text="{DynamicResource L_Settings_General_AiImage_Model_Desc}"
+                                   Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+                    </StackPanel>
+
+                    <TextBox Grid.Column="1"
+                             Style="{StaticResource FluentTextBoxStyle}"
+                             Height="30" Margin="0,2,30,0"
+                             VerticalContentAlignment="Center"
+                             Text="{Binding Path=Current.AiImageModel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Source={x:Static local:SettingsManager.Instance}}"/>
+                </Grid>
+
             </StackPanel>
         </ScrollViewer>
     </Grid>

@@ -23,6 +23,9 @@ public partial class ShapeTool : ToolBase
     private Rect _editingRect;
     private double _rotationAngle = 0;
     private System.Windows.Shapes.Shape _previewShape;
+    private Point _arrowStartPoint;
+    private Point _arrowEndPoint;
+    private bool _hasArrowEndpoints;
     
     // 专业模式相关
     private enum ManipulationAnchor { None, N, S, W, E, NW, NE, SW, SE, Move, Rotate }
@@ -87,6 +90,12 @@ public partial class ShapeTool : ToolBase
         }
 
         _startPoint = px;
+        if (_currentShapeType == ShapeType.Arrow)
+        {
+            _arrowStartPoint = px;
+            _arrowEndPoint = px;
+            _hasArrowEndpoints = true;
+        }
         CreatePreviewShape(ctx);
         UpdatePreviewShape(ctx, _startPoint, _startPoint, ctx.PenThickness);
         
@@ -143,6 +152,10 @@ public partial class ShapeTool : ToolBase
 
         if (_isDrawing)
         {
+            if (_currentShapeType == ShapeType.Arrow)
+            {
+                _arrowEndPoint = px;
+            }
             UpdatePreviewShape(ctx, _startPoint, px, ctx.PenThickness);
             int w = (int)Math.Abs(px.X - _startPoint.X);
             int h = (int)Math.Abs(px.Y - _startPoint.Y);
@@ -187,6 +200,10 @@ public partial class ShapeTool : ToolBase
             ctx.ReleasePointerCapture();
             
             var endPoint = ctx.ToPixel(viewPos);
+            if (_currentShapeType == ShapeType.Arrow)
+            {
+                _arrowEndPoint = endPoint;
+            }
             _editingRect = new Rect(_startPoint, endPoint);
 
             if (_editingRect.Width <= 1 && _editingRect.Height <= 1)
@@ -429,17 +446,16 @@ public partial class ShapeTool : ToolBase
     {
         if (_previewShape == null) return;
 
-        // 计算包含描边的完整边界
-        double arrowScale = 0;
-        if (_currentShapeType == ShapeType.Arrow) arrowScale = Gethandlength(_editingRect.TopLeft, _editingRect.BottomRight);
-        double padding = ctx.PenThickness / 2.0 + 2 + arrowScale;
-
-        Rect shapeGlobalBounds = new Rect(_editingRect.X - padding, _editingRect.Y - padding, _editingRect.Width + padding * 2, _editingRect.Height + padding * 2);
-        if (Math.Abs(_rotationAngle) > 0.01)
+        Point renderStart = _editingRect.TopLeft;
+        Point renderEnd = _editingRect.BottomRight;
+        if (_currentShapeType == ShapeType.Arrow && _hasArrowEndpoints)
         {
-            var rt = new RotateTransform(_rotationAngle, _editingRect.X + _editingRect.Width / 2, _editingRect.Y + _editingRect.Height / 2);
-            shapeGlobalBounds = rt.TransformBounds(shapeGlobalBounds);
+            renderStart = _arrowStartPoint;
+            renderEnd = _arrowEndPoint;
         }
+
+        // 基于真实几何渲染边界计算提交区域，避免小尺寸尖角图形被裁剪
+        Rect shapeGlobalBounds = CalculateShapeRenderBounds(renderStart, renderEnd, ctx.PenThickness);
 
         Rect canvasBounds = new Rect(0, 0, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
         Rect intersectBounds = Rect.Intersect(shapeGlobalBounds, canvasBounds);
@@ -453,7 +469,7 @@ public partial class ShapeTool : ToolBase
             int ih = (int)Math.Ceiling(intersectBounds.Bottom) - iy;
             Rect validBounds = new Rect(ix, iy, iw, ih);
 
-            var shapeBitmap = RenderShapeToBitmapClipped(_editingRect.TopLeft, _editingRect.BottomRight, validBounds, ctx.PenColor, ctx.PenThickness, ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY);
+            var shapeBitmap = RenderShapeToBitmapClipped(renderStart, renderEnd, validBounds, ctx.PenColor, ctx.PenThickness, ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY);
             if (shapeBitmap != null)
             {
                 ctx.Undo.BeginStroke();
@@ -474,6 +490,78 @@ public partial class ShapeTool : ToolBase
         ClearPreview(ctx);
     }
 
+    private Rect CalculateShapeRenderBounds(Point globalStart, Point globalEnd, double thickness)
+    {
+        Rect logicalRect = new Rect(
+            Math.Min(globalStart.X, globalEnd.X),
+            Math.Min(globalStart.Y, globalEnd.Y),
+            Math.Abs(globalStart.X - globalEnd.X),
+            Math.Abs(globalStart.Y - globalEnd.Y));
+
+        Geometry geometry = BuildGeometryForCurrentShape(globalStart, globalEnd, logicalRect);
+        if (geometry == null) return Rect.Empty;
+
+        Pen pen = CreateShapePen(Brushes.Black, thickness);
+        Rect bounds = geometry.GetRenderBounds(pen);
+
+        if (Math.Abs(_rotationAngle) > 0.01)
+        {
+            var rt = new RotateTransform(_rotationAngle, _editingRect.X + _editingRect.Width / 2, _editingRect.Y + _editingRect.Height / 2);
+            bounds = rt.TransformBounds(bounds);
+        }
+
+        // 额外给抗锯齿预留像素余量，避免边缘被截断
+        bounds.Inflate(1.5, 1.5);
+        return bounds;
+    }
+
+    private Geometry BuildGeometryForCurrentShape(Point globalStart, Point globalEnd, Rect logicalRect)
+    {
+        switch (_currentShapeType)
+        {
+            case ShapeType.Rectangle:
+                return new RectangleGeometry(logicalRect);
+            case ShapeType.RoundedRectangle:
+                return new RectangleGeometry(logicalRect, AppConsts.ShapeToolRoundedRectRadius, AppConsts.ShapeToolRoundedRectRadius);
+            case ShapeType.Ellipse:
+                return new EllipseGeometry(logicalRect);
+            case ShapeType.Line:
+                return new LineGeometry(globalStart, globalEnd);
+            case ShapeType.Arrow:
+                return BuildArrowGeometry(globalStart, globalEnd, Gethandlength(globalStart, globalEnd));
+            case ShapeType.Triangle:
+                return BuildRegularPolygon(logicalRect, 3, -Math.PI / 2);
+            case ShapeType.Diamond:
+                return BuildRegularPolygon(logicalRect, 4, 0);
+            case ShapeType.Pentagon:
+                return BuildRegularPolygon(logicalRect, 5, -Math.PI / 2);
+            case ShapeType.Star:
+                return BuildStarGeometry(logicalRect);
+            case ShapeType.Bubble:
+                return BuildBubbleGeometry(logicalRect);
+            default:
+                return null;
+        }
+    }
+
+    private Pen CreateShapePen(Brush strokeBrush, double thickness)
+    {
+        Pen pen = new Pen(strokeBrush, thickness);
+        if (_currentShapeType == ShapeType.Rectangle || _currentShapeType == ShapeType.Diamond || _currentShapeType == ShapeType.Triangle)
+        {
+            pen.LineJoin = PenLineJoin.Miter;
+            pen.StartLineCap = PenLineCap.Square;
+            pen.EndLineCap = PenLineCap.Square;
+        }
+        else
+        {
+            pen.LineJoin = PenLineJoin.Round;
+            pen.StartLineCap = PenLineCap.Round;
+            pen.EndLineCap = PenLineCap.Round;
+        }
+        return pen;
+    }
+
     private void ClearPreview(ToolContext ctx)
     {
         if (_previewShape != null) ctx.EditorOverlay.Children.Remove(_previewShape);
@@ -482,6 +570,7 @@ public partial class ShapeTool : ToolBase
         _previewShape = null;
         _isEditing = false;
         _rotationAngle = 0;
+        _hasArrowEndpoints = false;
         if (ctx.ViewElement != null) ctx.ViewElement.Cursor = this.Cursor;
     }
 
@@ -570,18 +659,7 @@ public partial class ShapeTool : ToolBase
                 dc.PushTransform(new RotateTransform(_rotationAngle, _editingRect.X + _editingRect.Width / 2, _editingRect.Y + _editingRect.Height / 2));
             }
 
-            Pen pen = new Pen(new SolidColorBrush(color), thickness);
-
-            if (_currentShapeType == ShapeType.Rectangle || _currentShapeType == ShapeType.Diamond || _currentShapeType == ShapeType.Triangle)
-            {
-                pen.LineJoin = PenLineJoin.Miter;
-                pen.StartLineCap = PenLineCap.Square;
-                pen.EndLineCap = PenLineCap.Square;
-            }
-            else
-            {
-                pen.LineJoin = PenLineJoin.Round; pen.StartLineCap = PenLineCap.Round; pen.EndLineCap = PenLineCap.Round;
-            }
+            Pen pen = CreateShapePen(new SolidColorBrush(color), thickness);
             pen.Freeze();
 
             Rect logicalRect = new Rect(Math.Min(globalStart.X, globalEnd.X), Math.Min(globalStart.Y, globalEnd.Y), Math.Abs(globalStart.X - globalEnd.X), Math.Abs(globalStart.Y - globalEnd.Y));
@@ -669,7 +747,8 @@ public partial class ShapeTool : ToolBase
                 switch (_currentShapeType)
                 {
                     case ShapeType.Arrow:
-                        path.Data = BuildArrowGeometry(vStart, vEnd, Gethandlength(vStart, vEnd));
+                        // 使用原始像素坐标计算头部长度，确保预览和渲染一致
+                        path.Data = BuildArrowGeometry(vStart, vEnd, Gethandlength(start, end));
                         break;
                     case ShapeType.Triangle:
                         path.Data = BuildRegularPolygon(r, 3, -Math.PI / 2);

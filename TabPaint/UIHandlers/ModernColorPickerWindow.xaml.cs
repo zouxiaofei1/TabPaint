@@ -189,7 +189,7 @@ namespace TabPaint
                 
                 if (ToggleBtnIcon != null)
                 {
-                    ToggleBtnIcon.Text = _isCompact ? "\uE76C" : "\uE76B";
+                    ToggleBtnIcon.Text = _isCompact ? "+" : "-";
                 }
             };
         }
@@ -215,8 +215,9 @@ namespace TabPaint
 
                 this.ResizeMode = ResizeMode.NoResize;
                 TitleText.Visibility = Visibility.Collapsed;
+                AppIcon.Visibility = Visibility.Collapsed;
 
-                if (ToggleBtnIcon != null) ToggleBtnIcon.Text = "\uE76C"; // ChevronRight
+                if (ToggleBtnIcon != null) ToggleBtnIcon.Text = "+";
                 ToggleCompactBtn.ToolTip = "Normal Mode";
 
                 if (_snapManager == null && this.Owner != null)
@@ -239,7 +240,8 @@ namespace TabPaint
 
                 this.ResizeMode = ResizeMode.CanResize;
                 TitleText.Visibility = Visibility.Visible;
-                if (ToggleBtnIcon != null) ToggleBtnIcon.Text = "\uE76B"; // ChevronLeft
+                AppIcon.Visibility = Visibility.Visible;
+                if (ToggleBtnIcon != null) ToggleBtnIcon.Text = "-";
                 ToggleCompactBtn.ToolTip = "Compact Mode";
 
                 if (_snapManager != null)
@@ -884,9 +886,27 @@ namespace TabPaint
             {
                 ww.UpdateColorFromPicker(SelectedColor);
             }
-            this.SetDialogResultSafe(true);
+            try
+            {
+                this.SetDialogResultSafe(true);
+            }
+            catch (InvalidOperationException)
+            {
+                // 非模态（Show）窗口不允许设置 DialogResult，忽略并继续关闭。
+            }
             Close();
         }
-        private void CancelButton_Click(object sender, RoutedEventArgs e) { this.SetDialogResultSafe(false); Close(); }
+        private void CancelButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                this.SetDialogResultSafe(false);
+            }
+            catch (InvalidOperationException)
+            {
+                // 非模态（Show）窗口不允许设置 DialogResult，忽略并继续关闭。
+            }
+            Close();
+        }
     }
 }

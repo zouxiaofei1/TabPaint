@@ -18,6 +18,22 @@ namespace TabPaint.UIHandlers
         private List<string> _pages = new List<string>();
         private string _activePage = "Default";
 
+        private static readonly Color[] PageColorPalette = new[]
+        {
+            Color.FromRgb(0x3B, 0x82, 0xF6), // 蓝
+            Color.FromRgb(0x10, 0xB9, 0x81), // 绿
+            Color.FromRgb(0xF5, 0x9E, 0x0B), // 橙
+            Color.FromRgb(0xEF, 0x44, 0x44), // 红
+            Color.FromRgb(0x8B, 0x5C, 0xF6), // 紫
+            Color.FromRgb(0x06, 0xB6, 0xD4), // 青
+            Color.FromRgb(0xEC, 0x48, 0x99), // 粉
+            Color.FromRgb(0x84, 0xCC, 0x16), // 青绿
+            Color.FromRgb(0xF9, 0x73, 0x16), // 深橙
+            Color.FromRgb(0x14, 0xB8, 0xA6), // 湖绿
+            Color.FromRgb(0xA8, 0x55, 0xF7), // 亮紫
+            Color.FromRgb(0x0E, 0xAE, 0xE9), // 天蓝
+        };
+
         private StackPanel GetPagesStack() => this.FindName("PagesStackPanel") as StackPanel;
         private FavoriteBarControl GetFavoriteContent() => this.FindName("FavoriteContent") as FavoriteBarControl;
 
@@ -221,6 +237,27 @@ namespace TabPaint.UIHandlers
             return false;
         }
 
+        private Brush GetPageIndicatorBrush(string pageName)
+        {
+            if (string.IsNullOrEmpty(pageName))
+                return new SolidColorBrush(PageColorPalette[0]);
+
+            unchecked
+            {
+                uint hash = 2166136261;
+                foreach (char c in pageName)
+                {
+                    hash ^= c;
+                    hash *= 16777619;
+                }
+
+                int index = (int)(hash % (uint)PageColorPalette.Length);
+                var brush = new SolidColorBrush(PageColorPalette[index]);
+                brush.Freeze();
+                return brush;
+            }
+        }
+
         #endregion
 
         #region 页面管理（保持不变）
@@ -288,6 +325,21 @@ namespace TabPaint.UIHandlers
                 };
 
                 grid.Children.Add(btn);
+
+                var indicator = new Border
+                {
+                    Width = 8,
+                    Height = 8,
+                    CornerRadius = new CornerRadius(4),
+                    Background = GetPageIndicatorBrush(page),
+                    BorderBrush = (Brush)FindResource("BorderBrush"),
+                    BorderThickness = new Thickness(1),
+                    HorizontalAlignment = HorizontalAlignment.Right,
+                    VerticalAlignment = VerticalAlignment.Bottom,
+                    Margin = new Thickness(0, 0, 3, 3),
+                    IsHitTestVisible = false
+                };
+                grid.Children.Add(indicator);
 
                 if (page != "Default")
                 {

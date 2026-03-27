@@ -36,6 +36,7 @@ namespace TabPaint.Controls
         }
 
         private DispatcherTimer _helpHintTimer;
+        private DispatcherTimer _logoMenuHintTimer;
 
         private void CheckFirstRunHelp()
         {
@@ -82,6 +83,69 @@ namespace TabPaint.Controls
         private void CloseHelpHint_Click(object sender, RoutedEventArgs e)
         {
             CloseHelpHint();
+        }
+
+        public void TryShowLogoMenuHintOnce()
+        {
+            var settings = SettingsManager.Instance.Current;
+            if (settings.ViewLogoMenuHintShown) return;
+            if (!IsLogoMenuEnabled) return;
+
+            void showAndPersist()
+            {
+                ShowLogoMenuHint();
+                settings.ViewLogoMenuHintShown = true;
+                SettingsManager.Instance.Save();
+            }
+
+            // 避免在布局未完成时打开 Popup 导致位置回退到错误坐标
+            if (!IsLoaded || !AppIcon.IsLoaded)
+            {
+                Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+                {
+                    if (!IsLogoMenuEnabled) return;
+                    showAndPersist();
+                }));
+                return;
+            }
+
+            showAndPersist();
+        }
+
+        private void ShowLogoMenuHint()
+        {
+            var popup = this.FindName("LogoMenuHintPopup") as Popup;
+            if (popup == null) return;
+
+            // 每次显式锚定到 Logo，防止偶发漂移
+            popup.PlacementTarget = AppIcon;
+            popup.Placement = PlacementMode.Bottom;
+            popup.HorizontalOffset = 0;
+            popup.VerticalOffset = 6;
+
+            popup.IsOpen = true;
+            _logoMenuHintTimer?.Stop();
+            _logoMenuHintTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+            _logoMenuHintTimer.Tick += (s, e) =>
+            {
+                CloseLogoMenuHint();
+            };
+            _logoMenuHintTimer.Start();
+        }
+
+        private void CloseLogoMenuHint()
+        {
+            var popup = this.FindName("LogoMenuHintPopup") as Popup;
+            if (popup != null && popup.IsOpen)
+            {
+                popup.IsOpen = false;
+            }
+            _logoMenuHintTimer?.Stop();
+        }
+
+        private void CloseLogoMenuHint_Click(object sender, RoutedEventArgs e)
+        {
+            CloseLogoMenuHint();
         }
         public event MouseButtonEventHandler TitleBarMouseDown;
         private async void TitleBarControl_Loaded(object sender, RoutedEventArgs e)
@@ -154,6 +218,8 @@ namespace TabPaint.Controls
 
         private void ToggleLogoMenu()
         {
+            CloseLogoMenuHint();
+
             if (AppIcon.ContextMenu == null) LoadLogoContextMenu();
             if (AppIcon.ContextMenu == null) return;
 
@@ -263,6 +329,7 @@ namespace TabPaint.Controls
         private void OnAppIconPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             if (!IsLogoMenuEnabled) return;
+            CloseLogoMenuHint();
             ToggleLogoMenu();
             e.Handled = true;
         }

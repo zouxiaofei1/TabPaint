@@ -1,0 +1,951 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <sys:String x:Key="L_Settings_Plugins_Title">プラグイン / AI モデル</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Desc">AI モデルとオプションコンポーネントを管理します。</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_RMBG_Title">背景削除</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_RMBG_Desc">高品質な背景削除のための AI モデル。</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_SR_Title">Real-ESRGAN (超解像)</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_SR_Desc">4倍の画像アップスケーリングと補正のための AI モデル。</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_Inpaint_Title">LaMa (AI 消しゴム)</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_Inpaint_Desc">オブジェクトの削除とインペイントのための AI モデル。</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_OCR_Title">AI OCR</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_OCR_Desc">画像からテキストを抽出するためのランタイムコンポーネント。</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Status_NotInstalled">未インストール</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Status_Installed">インストール済み</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Status_InstalledWithSize">インストール済み ({0})</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Status_Downloading">ダウンロード中...</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Install">管理</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_InstallReal">インストール</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_InstallAll">すべてインストール</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_InstallAllWithProgress">一括ダウンロード {0}/4</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_InstallingAll">インストール中...</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Uninstall">アンインストール</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">この AI モデルをアンインストールしてもよろしいですか？</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_OCR_Uninstall_Confirm">OCR ランタイムをアンインストールしてもよろしいですか？</sys:String>
+    <sys:String x:Key="L_Settings_Nav_Plugins">プラグイン</sys:String>
+    <sys:String x:Key="L_ImgBar_NewImage">新規画像</sys:String>
+    <sys:String x:Key="L_CreateNewWorkSpate">新規ワークスペースを作成</sys:String>
+    <sys:String x:Key="L_Toast_NewWindowFromSelectionFailed">選択範囲から新しいウィンドウの作成に失敗しました:</sys:String>
+    <sys:String x:Key="L_Toast_NewWindowFailed">新しいウィンドウの作成に失敗しました:</sys:String>
+
+    <!-- SettingsWindow Navigation -->
+    <sys:String x:Key="L_Settings_Title">設定</sys:String>
+    <sys:String x:Key="L_Settings_Nav_General">全般</sys:String>
+    <sys:String x:Key="L_Settings_Nav_Paint">ペイント</sys:String>
+    <sys:String x:Key="L_Settings_Nav_View">表示</sys:String>
+    <sys:String x:Key="L_Settings_Nav_Shortcuts">ショートカット</sys:String>
+    <sys:String x:Key="L_Settings_Nav_Advanced">詳細設定</sys:String>
+    <sys:String x:Key="L_Settings_Nav_About">情報</sys:String>
+    <sys:String x:Key="L_Settings_Nav_Agreement">規約</sys:String>
+    <sys:String x:Key="L_Settings_Toast_Saved">設定を保存しました</sys:String>
+    <sys:String x:Key="L_Settings_Toast_ShellIntegration_EnableFailed">システムコンテキストメニューの有効化に失敗しました: {0}</sys:String>
+    <sys:String x:Key="L_Settings_Toast_ShellIntegration_DisableFailed">システムコンテキストメニューの削除に失敗しました: {0}</sys:String>
+    <sys:String x:Key="L_Untitled">無題</sys:String>
+
+    <!-- General Settings -->
+    <sys:String x:Key="L_Settings_General_Title">全般</sys:String>
+    <sys:String x:Key="L_Settings_General_Startup_Header">起動</sys:String>
+    <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Title">同じフォルダー内の画像を自動読み込み</sys:String>
+    <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Desc">同じディレクトリ内の他の画像を自動的にスキャンして読み込みます</sys:String>
+    <sys:String x:Key="L_Settings_General_StartInViewMode_Title">閲覧モードで起動</sys:String>
+    <sys:String x:Key="L_Settings_General_StartInViewMode_Desc">起動時にツールバーを非表示にする（画像ビューアーとして使用する場合に便利）</sys:String>
+    <sys:String x:Key="L_Settings_General_ShellIntegration_Title">システムのコンテキストメニューに追加</sys:String>
+    <sys:String x:Key="L_Settings_General_ShellIntegration_Desc">画像のコンテキストメニューに「TabPaint で開く」を追加します</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_Header">AI 画像生成 (Text-to-Image)</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_ApiBaseUrl_Title">API ベース URL</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_ApiBaseUrl_Desc">OpenAI 互換のエンドポイント</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_ApiKey_Title">API キー</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_ApiKey_Desc">画像生成の認証に使用されます</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_Model_Title">モデル</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_Model_Desc">例: gpt-image-1 またはその他の互換モデル</sys:String>
+    <sys:String x:Key="L_ImgBar_ToggleView">展開 / 折りたたみ</sys:String>
+    <sys:String x:Key="L_Settings_General_MouseWheel_Title">マウスホイール</sys:String>
+    <sys:String x:Key="L_Settings_General_MouseWheel_Desc">マウスホイールのスクロール動作</sys:String>
+    <sys:String x:Key="L_Settings_General_MouseWheel_Option_Auto">自動</sys:String>
+    <sys:String x:Key="L_Settings_General_MouseWheel_Option_Up">画像をスクロール</sys:String>
+    <sys:String x:Key="L_Settings_General_MouseWheel_Option_Switch">画像を切り替え</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Title">常にタブの閉じるボタンを表示</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Desc">画像タブの閉じるボタンを常に表示します。</sys:String>
+    <sys:String x:Key="L_Menu_File_RecycleBin">ファイルごみ箱</sys:String>
+
+    <sys:String x:Key="L_Settings_Advanced_Undo_Header">元に戻す / やり直し</sys:String>
+    <sys:String x:Key="L_Settings_MaxGlobalUndoSteps">全体の元に戻す制限</sys:String>
+    <sys:String x:Key="L_Settings_MaxGlobalUndoSteps_Desc">全タブを合わせた「元に戻す」の最大ステップ数。</sys:String>
+    <sys:String x:Key="L_Settings_MaxUndoMemory">最大元に戻すメモリ</sys:String>
+    <sys:String x:Key="L_Settings_MaxUndoMemory_Desc">全タブを合わせた「元に戻す」のメモリ使用制限。</sys:String>
+    <sys:String x:Key="L_Settings_General_Theme_Title">テーマ</sys:String>
+    <sys:String x:Key="L_Settings_General_Theme_Desc">ライトモードとダークモードを切り替えます</sys:String>
+    <sys:String x:Key="L_Settings_General_Theme_Option_System">システム設定に従う</sys:String>
+    <sys:String x:Key="L_Settings_General_Theme_Option_Light">ライト</sys:String>
+    <sys:String x:Key="L_Settings_General_Theme_Option_Dark">ダーク</sys:String>
+
+    <sys:String x:Key="L_Settings_General_Accent_Title">アクセントカラー</sys:String>
+    <sys:String x:Key="L_Settings_General_Accent_Desc">UI のアクセントとツールアイコンの色</sys:String>
+    <sys:String x:Key="L_Settings_General_Accent_Option_System">システムに従う</sys:String>
+
+    <sys:String x:Key="L_Settings_General_Language_Title">言語 (Language)</sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Desc">表示言語を変更します</sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Option_Zh">简体中文</sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Option_Tw">繁體中文</sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Option_En">English</sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Option_Ja">日本語</sys:String>
+    <sys:String x:Key="L_Ico_Title">アイコン書き出し</sys:String>
+    <sys:String x:Key="L_Ico_AddSize">サイズを追加</sys:String>
+    <sys:String x:Key="L_Ico_Error_NoSize">少なくとも1つのアイコンサイズを追加してください。</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_OpenCache_Title">キャッシュディレクトリ</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_OpenCache_Desc">AppData 内の一時ファイルとキャッシュを表示します</sys:String>
+
+    <!-- Paint panel -->
+    <sys:String x:Key="L_Settings_Paint_Title">ペイント</sys:String>
+    <sys:String x:Key="L_Settings_Paint_Habits_Header">編集</sys:String>
+    <sys:String x:Key="L_Settings_Paint_AutoPopupClipboard_Title">クリップボードに画像があれば自動でポップアップ</sys:String>
+    <sys:String x:Key="L_Settings_Paint_AutoPopupClipboard_Desc">クリップボード監視で新しい画像を検知したときにウィンドウをアクティブにします</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_Title">選択範囲削除時の背景</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_Desc">選択範囲を削除する際の塗りつぶしモード</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_Transparent">透明</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_White">白</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_PreserveAlpha">色のみ塗りつぶし (アルファを維持)</sys:String>
+    <sys:String x:Key="L_Settings_Paint_OcrResultAction_Title">OCR 結果のアクション</sys:String>
+    <sys:String x:Key="L_Settings_Paint_OcrResultAction_Desc">テキスト抽出後の動作を選択します</sys:String>
+    <sys:String x:Key="L_Settings_Paint_OcrResultAction_EditText">抽出したテキストを編集</sys:String>
+    <sys:String x:Key="L_Settings_Paint_OcrResultAction_DirectCopy">クリップボードに直接コピー</sys:String>
+    <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Title">Deleteキーでのファイル削除を許可</sys:String>
+    <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Desc">Deleteキーを押して現在のファイルを削除できるようにします</sys:String>
+    <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Title">図形ツールのプロモード</sys:String>
+    <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Desc">描画後に図形のサイズ変更や位置調整を可能にします (Altキーで切り替え)</sys:String>
+    <sys:String x:Key="L_Settings_Paint_BirdEye_Title">閲覧モードで全体図 (ナビゲーター) を表示</sys:String>
+    <sys:String x:Key="L_Settings_Paint_BirdEye_Desc">右クリックメニューから非表示にした場合、ここで再表示できます。</sys:String>
+
+    <!-- View panel -->
+    <sys:String x:Key="L_Settings_View_Title">表示</sys:String>
+    <sys:String x:Key="L_Settings_View_Habits_Header">操作</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Title">マウスホイール</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Desc">閲覧モードでのホイール操作</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Zoom">ズーム</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Switch">画像を切り替え (前/次)</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Scroll">垂直スクロール</sys:String>
+    <sys:String x:Key="L_Settings_View_Display_Header">表示設定</sys:String>
+    <sys:String x:Key="L_Settings_View_DarkBg_Title">暗い背景を使用</sys:String>
+    <sys:String x:Key="L_Settings_View_DarkBg_Desc">画像の周囲に濃いグレーの背景を表示します</sys:String>
+    <sys:String x:Key="L_Settings_View_TransparentGrid_Title">透明部分の格子を表示</sys:String>
+    <sys:String x:Key="L_Settings_View_TransparentGrid_Desc">有効な場合、透明な領域にチェッカーボードを表示します。</sys:String>
+
+    <!-- Shortcuts -->
+    <sys:String x:Key="L_Settings_Shortcuts_Title">ショートカット</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Group_ViewNav">表示 &amp; ナビゲーション</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_ToggleMode">表示/ペイントモードの切り替え</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_ToggleImageBar">画像バーの展開/折りたたみ</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_PrevImage">前の画像</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_NextImage">次の画像</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_FullScreen">全画面表示</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Minimize">ウィンドウを最小化</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_RotateLeft">左に回転</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_RotateRight">右に回転</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_VFlip">垂直方向に反転</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_HFlip">水平方向に反転</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Group_BasicTools">基本ツール</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Select">選択</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Pen">鉛筆</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Eyedropper">スポイト</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Eraser">消しゴム</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Fill">塗りつぶし</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Text">テキスト</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Brush">ブラシ</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Shape">図形</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Group_AdvancedTools">高度なツール</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_ClipMonitor">クリップボード監視</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_RemoveBg">AI 背景削除</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_ChromaKey">クロマキー</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_OCR">OCR</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_ScreenPicker">スクリーンカラーピッカー</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_CopyHex">現在の HEX をコピー</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_AutoCrop">余白の自動クロップ</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_AddBorder">枠線を追加</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Group_FileOps">ファイル操作</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_OpenWorkspace">ワークスペースを開く</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_PasteNewTab">新しいタブとして貼り付け</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Group_Effects">エフェクト</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_BCE">明るさ/コントラスト/露出</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_TTS">色温度/色合い/彩度</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_BW">白黒</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_Invert">反転</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_AutoLevels">自動レベル調整</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_Resize">サイズ変更</sys:String>
+    <sys:String x:Key="L_TitleBar_Help">ヘルプ</sys:String>
+    <sys:String x:Key="L_Hint_ClickLogoMenu">アイコンをクリックしてメニューを表示</sys:String>
+    <sys:String x:Key="L_Hint_ClickHelp">クリックしてユーザーガイドを表示</sys:String>
+    <sys:String x:Key="L_Help_Next">次へ</sys:String>
+    <sys:String x:Key="L_Help_Prev">前へ</sys:String>
+    <sys:String x:Key="L_Help_Close">閉じる</sys:String>
+    <sys:String x:Key="L_Loading">読み込み中...</sys:String>
+    <sys:String x:Key="L_LoadFailed">画像の読み込みに失敗しました</sys:String>
+
+    <sys:String x:Key="L_Help_Desc_2">Tabキーを押すと、表示モードとペイントモードを素早く切り替えられます。</sys:String>
+    <sys:String x:Key="L_Help_Desc_3">境界を越えよう！画像を Word やデスクトップなど、どこにでも直接ドラッグ＆ドロップできます。</sys:String>
+    <sys:String x:Key="L_Help_Desc_1">今すぐお試しください！非常にシンプルな描画ツールで、習得も簡単です。</sys:String>
+
+    <!-- Advanced panel -->
+    <sys:String x:Key="L_Settings_Advanced_Title">詳細設定</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Render_Header">レンダリング &amp; パフォーマンス</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Title">再サンプリング</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Desc">画像の保存やサイズ変更時に使用されます</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Title">ピクセル化のしきい値</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Desc">線形補間 / ニアレストネイバーを切り替えるズームレベル</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_ViewMode">表示モード</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_PaintMode">ペイントモード</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Habits_Header">操作</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_SkipResetConfirm_Title">リセット確認をスキップ</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_SkipResetConfirm_Desc">タブをクリアする際の2段階確認をスキップします</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_DiscardAllOnExit_Title">終了時にすべての変更を破棄</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_DiscardAllOnExit_Desc">アプリを閉じる際に自動的に「すべて破棄」を実行します</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Maintenance_Header">メンテナンス</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_Title">レポートを収集</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_Desc">システム情報、プロセス情報、および本日のログを収集します。</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_WindowTitle">システムレポート</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_Copy">クリップボードにコピー</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_Regenerate">再生成</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_Tip">内容は編集可能です。共有する前に、必要に応じて機密情報を削除してください。</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_FactoryReset_Button">すべてのキャッシュと設定をクリア</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_FactoryReset">工場出荷時設定にリセット</sys:String>
+    <sys:String x:Key="L_Settings_ResetShortcuts">ショートカットをデフォルトに戻す</sys:String>
+
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Auto">自動</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Bilinear">バイリニア</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Fant">Fant (高品質)</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_HighQuality">高品質 (HighQuality)</sys:String>
+
+    <!-- Common Strings -->
+    <sys:String x:Key="L_Common_OpenLogFolder">フォルダーを開く</sys:String>
+    <sys:String x:Key="L_Common_OK">OK</sys:String>
+    <sys:String x:Key="L_Common_Untitled">無題</sys:String>
+    <sys:String x:Key="L_Common_Reset">リセット</sys:String>
+    <sys:String x:Key="L_Common_No">いいえ</sys:String>
+    <sys:String x:Key="L_Common_Cancel">キャンセル</sys:String>
+    <sys:String x:Key="L_Common_Close">閉じる</sys:String>
+    <sys:String x:Key="L_Common_Error">エラー</sys:String>
+    <sys:String x:Key="L_Common_Tip">ヒント</sys:String>
+
+    <sys:String x:Key="L_Main_Ctx_AddBorder">枠線を追加 (2px)</sys:String>
+    <sys:String x:Key="L_Main_Ctx_AI_SuperRes">4倍 超解像</sys:String>
+
+    <sys:String x:Key="L_Main_Filter_AllImages">すべての画像ファイル</sys:String>
+    <sys:String x:Key="L_Main_Filter_PNG">PNG 画像</sys:String>
+    <sys:String x:Key="L_Main_Filter_JPEG">JPEG 画像</sys:String>
+    <sys:String x:Key="L_Main_Filter_WebP">WebP 画像</sys:String>
+    <sys:String x:Key="L_Main_Filter_BMP">BMP ビットマップ</sys:String>
+    <sys:String x:Key="L_Main_Filter_GIF">GIF アニメーション</sys:String>
+    <sys:String x:Key="L_Main_Filter_TIFF">TIFF 画像</sys:String>
+    <sys:String x:Key="L_Main_Filter_ICO">ICO アイコン</sys:String>
+    <!-- Color Names -->
+    <sys:String x:Key="L_Color_White">White</sys:String>
+    <sys:String x:Key="L_Color_LightRed">Light Red</sys:String>
+    <sys:String x:Key="L_Color_LightOrange">Light Orange / Skin</sys:String>
+    <sys:String x:Key="L_Color_LightYellow">Light Yellow</sys:String>
+    <sys:String x:Key="L_Color_MintGreen">Mint Green</sys:String>
+    <sys:String x:Key="L_Color_LightCyan">Light Cyan</sys:String>
+    <sys:String x:Key="L_Color_LightBlue">Light Blue</sys:String>
+    <sys:String x:Key="L_Color_Lavender">Lavender</sys:String>
+    <sys:String x:Key="L_Color_LightPink">Light Pink</sys:String>
+    <sys:String x:Key="L_Color_Wheat">Wheat</sys:String>
+
+    <sys:String x:Key="L_Color_Silver">Silver</sys:String>
+    <sys:String x:Key="L_Color_Red">Red</sys:String>
+    <sys:String x:Key="L_Color_Orange">Orange</sys:String>
+    <sys:String x:Key="L_Color_Yellow">Yellow</sys:String>
+    <sys:String x:Key="L_Color_Lime">Lime</sys:String>
+    <sys:String x:Key="L_Color_Cyan">Cyan</sys:String>
+    <sys:String x:Key="L_Color_Azure">Azure</sys:String>
+    <sys:String x:Key="L_Color_Violet">Violet</sys:String>
+    <sys:String x:Key="L_Color_Magenta">Magenta</sys:String>
+    <sys:String x:Key="L_Color_Chocolate">Chocolate</sys:String>
+
+    <sys:String x:Key="L_Color_Gray">Gray</sys:String>
+    <sys:String x:Key="L_Color_DeepRed">Deep Red</sys:String>
+    <sys:String x:Key="L_Color_DeepOrange">Deep Orange</sys:String>
+    <sys:String x:Key="L_Color_Gold">Gold</sys:String>
+    <sys:String x:Key="L_Color_Green">Green</sys:String>
+    <sys:String x:Key="L_Color_Teal">Teal</sys:String>
+    <sys:String x:Key="L_Color_Blue">Blue</sys:String>
+    <sys:String x:Key="L_Color_Purple">Purple</sys:String>
+    <sys:String x:Key="L_Color_DeepPink">Deep Pink</sys:String>
+    <sys:String x:Key="L_Color_Ochre">Ochre</sys:String>
+
+    <sys:String x:Key="L_Color_Black">Black</sys:String>
+    <sys:String x:Key="L_Color_Maroon">Maroon</sys:String>
+    <sys:String x:Key="L_Color_DeepBrown">Deep Brown</sys:String>
+    <sys:String x:Key="L_Color_Olive">Olive</sys:String>
+    <sys:String x:Key="L_Color_ForestGreen">Forest Green</sys:String>
+    <sys:String x:Key="L_Color_RockCyan">Rock Cyan</sys:String>
+    <sys:String x:Key="L_Color_Navy">Navy</sys:String>
+    <sys:String x:Key="L_Color_Indigo">Indigo</sys:String>
+    <sys:String x:Key="L_Color_DeepViolet">Deep Violet</sys:String>
+    <sys:String x:Key="L_Color_Coffee">Coffee</sys:String>
+
+    <!-- Main Context Menu & UI -->
+    <sys:String x:Key="L_Main_Ctx_Copy">コピー</sys:String>
+    <sys:String x:Key="L_Main_Ctx_Cut">切り取り</sys:String>
+    <sys:String x:Key="L_Main_Ctx_Paste">貼り付け</sys:String>
+    <sys:String x:Key="L_Main_Ctx_FixedZoom">固定ズーム倍率</sys:String>
+    <sys:String x:Key="L_Main_Ctx_WindowTopmost">常に手前に表示</sys:String>
+    <sys:String x:Key="L_BirdEye_Ctx_Hide">鳥瞰図を非表示</sys:String>
+    <sys:String x:Key="L_Main_Ctx_ShowRulers">ルーラーを表示</sys:String>
+    <sys:String x:Key="L_Main_Ctx_MiniTools">ミニツール</sys:String>
+    <sys:String x:Key="L_Main_Ctx_AI_RemoveBg">AI背景削除 (RMBG)</sys:String>
+    <sys:String x:Key="L_Main_Ctx_AI_ChromaKey">クロマキー (背景削除)</sys:String>
+    <sys:String x:Key="L_Main_Ctx_OCR">テキスト抽出 (OCR)</sys:String>
+    <sys:String x:Key="L_Main_Ctx_ScreenPicker">スクリーンカラーピッカー</sys:String>
+    <sys:String x:Key="L_Main_Ctx_CopyHex">カラーコードをコピー (#HEX)</sys:String>
+    <sys:String x:Key="L_Main_Ctx_AutoCrop">余白を自動切り抜き</sys:String>
+
+    <sys:String x:Key="L_Main_Unit_Pixel">px</sys:String>
+    <sys:String x:Key="L_Main_Toast_Info">情報</sys:String>
+    <sys:String x:Key="L_Main_AiImage_EmptyPrompt">プロンプトを入力してEnterキーを押してください</sys:String>
+    <sys:String x:Key="L_Main_AiImage_ConfigMissing">まず「設定 - プラグインとAIモデル」でAI画像APIを設定してください</sys:String>
+    <sys:String x:Key="L_Main_AiImage_InvalidApiUrl">無効なAPI URL形式です。完全な http/https URLを入力してください。</sys:String>
+    <sys:String x:Key="L_Main_AiImage_Generating">画像を生成中...</sys:String>
+    <sys:String x:Key="L_Main_AiImage_Generated">AI画像が生成され、新しいタブで開かれました</sys:String>
+    <sys:String x:Key="L_Main_AiImage_GenerateFailed">生成失敗: {0}</sys:String>
+    <sys:String x:Key="L_Main_Drag_DropToOpen">ドロップして開く</sys:String>
+    <sys:String x:Key="L_Main_Drag_ReleaseToConfirm">離して確定</sys:String>
+
+    <sys:String x:Key="L_Drag_DropZone_Title">新しいウィンドウを作成</sys:String>
+    <sys:String x:Key="L_Drag_DropZone_Desc">ここに離すと、このタブを新しいウィンドウで開きます</sys:String>
+
+    <!-- Top menu bar -->
+    <sys:String x:Key="L_Menu_File">ファイル</sys:String>
+    <sys:String x:Key="L_Menu_File_New">新規作成</sys:String>
+    <sys:String x:Key="L_Menu_File_Open">開く</sys:String>
+    <sys:String x:Key="L_Menu_File_Add">追加</sys:String>
+    <sys:String x:Key="L_Menu_File_OpenFolder">フォルダを開く</sys:String>
+    <sys:String x:Key="L_Menu_File_NewWindow" xmlns:sys="clr-namespace:System;assembly=mscorlib">新しいウィンドウ</sys:String>
+    <sys:String x:Key="L_Menu_File_Recent">最近使ったファイル</sys:String>
+    <sys:String x:Key="L_Menu_File_Recent_Placeholder">履歴なし</sys:String>
+    <sys:String x:Key="L_Menu_File_Save">保存</sys:String>
+    <sys:String x:Key="L_Menu_File_SaveAs">名前を付けて保存</sys:String>
+    <sys:String x:Key="L_Menu_File_SaveAsPDF">PDFとして保存...</sys:String>
+    <sys:String x:Key="L_Menu_File_Print">印刷...</sys:String>
+    <sys:String x:Key="L_Menu_Print">印刷</sys:String>
+    <sys:String x:Key="File.Print">印刷</sys:String>
+    <sys:String x:Key="L_Menu_File_Exit">終了</sys:String>
+
+    <sys:String x:Key="L_Menu_Edit">編集</sys:String>
+    <sys:String x:Key="L_Menu_Edit_Copy">コピー</sys:String>
+    <sys:String x:Key="L_Menu_Edit_Cut">切り取り</sys:String>
+    <sys:String x:Key="L_Menu_Edit_Paste">貼り付け</sys:String>
+
+    <sys:String x:Key="L_Menu_Effect">エフェクト</sys:String>
+    <sys:String x:Key="L_Menu_Effect_BCE">明るさ/コントラスト/露出</sys:String>
+    <sys:String x:Key="L_Menu_Effect_TTS">色温度/色合い/彩度</sys:String>
+    <sys:String x:Key="L_Menu_Effect_BW">白黒</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Invert">階調反転</sys:String>
+    <sys:String x:Key="L_Menu_Effect_AutoLevels">レベル自動補正</sys:String>
+    <sys:String x:Key="L_Menu_Effect_RedEye">赤目補正</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Sketch">鉛筆スケッチ</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Edge">輪郭抽出</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Resize">サイズ変更</sys:String>
+
+    <!-- Quick Actions Tooltips -->
+    <sys:String x:Key="L_Menu_QA_Save">保存</sys:String>
+    <sys:String x:Key="L_Menu_QA_Undo">元に戻す</sys:String>
+    <sys:String x:Key="L_Menu_QA_Redo">やり直し</sys:String>
+    <sys:String x:Key="L_Menu_QA_NewTab">新しいタブ</sys:String>
+    <sys:String x:Key="L_Menu_QA_DiscardAll">すべての変更を破棄</sys:String>
+    <sys:String x:Key="L_Menu_QA_DiscardImage">この画像の変更を破棄</sys:String>
+
+    <sys:String x:Key="L_Menu_QA_Settings">設定</sys:String>
+
+    <!-- About Section -->
+    <sys:String x:Key="L_Settings_About_Title">TabPaint について</sys:String>
+    <sys:String x:Key="L_Settings_About_Subtitle">軽量なペイント・画像閲覧ツール🖌️</sys:String>
+    <sys:String x:Key="L_Settings_About_Developer">開発者:</sys:String>
+    <sys:String x:Key="L_Settings_About_Stack">技術スタック:</sys:String>
+    <sys:String x:Key="L_Settings_About_Github">GitHub</sys:String>
+    <sys:String x:Key="L_Settings_About_CheckUpdate">アップデートを確認</sys:String>
+    <sys:String x:Key="L_Settings_About_Help">ヘルプ</sys:String>
+    <sys:String x:Key="L_Settings_About_HomePage">ホームページ</sys:String>
+    <sys:String x:Key="L_Settings_About_Changelog">更新履歴</sys:String>
+    <sys:String x:Key="L_Settings_About_Issue">フィードバック</sys:String>
+
+    <!-- Agreement -->
+    <sys:String x:Key="L_Settings_Agreement_Title">オープンソースライセンスとポリシー</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Desc">各セクションをクリックすると全文が表示されます。折りたたみモードでは3つの重要なポイントのみが表示されます。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_MIT_Title">MIT ライセンス</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_MIT_Key1">商用利用、改変、配布、および私的使用が許可されています。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_MIT_Key2">再配布の際は、オリジナルの著作権表示とライセンス通知を含める必要があります。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_MIT_Key3">本ソフトウェアは「現状のまま」提供され、保証や責任は負いません。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_MIT_Full" xml:space="preserve">MIT License
+
+Copyright (c) 2025 TabPaint Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Privacy_Title">プライバシーポリシー</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Privacy_Key1">収集されるデータの内容とその理由について説明します。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Privacy_Key2">データの保存、転送、および保護方法について説明します。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Privacy_Key3">アクセスおよび削除に関するユーザーの権利について説明します。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Terms_Title">利用規約</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Terms_Key1">製品の使用範囲と制限事項について説明します。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Terms_Key2">ダウンタイム、アップデート、および責任の境界について説明します。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Terms_Key3">紛争解決と規約の更新ルールについて説明します。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Placeholder">(プレースホルダー) このセクションはまだ公開されておらず、将来のバージョンで追加される予定です。</sys:String>
+
+    <!-- ToolBar -->
+    <sys:String x:Key="L_ToolBar_Tool_Select">範囲選択</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Select_Lasso">投げ縄選択</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Select_MagicWand">マジックワンド</sys:String>
+    <sys:String x:Key="L_Tool_MagicWand_Tolerance">許容範囲</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Pen">鉛筆</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_PickColor">色を選択</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Eraser">消しゴム</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Fill">塗りつぶし</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Text">テキスト</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_DrawTools">描画ツール</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Eyedropper">スポイト</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush">ブラシ</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Round">丸ブラシ</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Square">四角ブラシ</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Brush">絵筆</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Calligraphy" xmlns:sys="clr-namespace:System;assembly=mscorlib">カリグラフィ</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Spray">スプレー</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Crayon">クレヨン</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Watercolor">水彩</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Highlighter">蛍光ペン</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Mosaic">モザイク</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Blur">ぼかし</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Gradient">グラデーション</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape">図形</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Rectangle">矩形</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_RoundedRectangle">角丸矩形</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Ellipse">楕円</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Line">直線</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Arrow">矢印</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Triangle">三角形</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Diamond">ひし形</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Pentagon">五角形</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Star">星形</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Bubble">吹き出し</sys:String>
+
+
+    <sys:String x:Key="L_ToolBar_AIEraser" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI消しゴム</sys:String>
+    <sys:String x:Key="L_ToolBar_Crop">選択範囲で切り抜き</sys:String>
+    <sys:String x:Key="L_ToolBar_RotateFlip">回転/反転</sys:String>
+    <sys:String x:Key="L_ToolBar_Rotate_180">180°回転</sys:String>
+    <sys:String x:Key="L_Rotation_Angle">角度</sys:String>
+    <sys:String x:Key="L_Selection_Rotate">選択範囲を回転</sys:String>
+    <sys:String x:Key="L_ToolBar_Flip_Vertical">垂直方向に反転</sys:String>
+    <sys:String x:Key="L_ToolBar_Flip_Horizontal">水平方向に反転</sys:String>
+    <sys:String x:Key="L_ToolBar_CustomColor">色の編集</sys:String>
+    <sys:String x:Key="L_ToolBar_Color1">色 1</sys:String>
+    <sys:String x:Key="L_ToolBar_Color2">色 2</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_White">白</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Silver">シルバー</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Red">赤</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Orange">オレンジ</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Yellow">黄</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Lime">ライム</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Cyan">シアン</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_SkyBlue">スカイブルー</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Violet">バイオレット</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Magenta">マゼンタ</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Chocolate">チョコレート</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Black">黒</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Gray">灰色</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_DarkRed">濃い赤</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_DarkOrange">濃いオレンジ</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Gold">金</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Green">緑</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Teal">ティール</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Blue">青</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Purple">紫</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Maroon">マルーン</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Sienna">シエナ</sys:String>
+
+    <!-- TitleBar -->
+    <sys:String x:Key="L_TitleBar_ExifInfo">画像EXIF情報</sys:String>
+    <sys:String x:Key="L_TitleBar_ExifInfo_Details">詳細</sys:String>
+    <sys:String x:Key="L_TitleBar_ToggleMode">ペイント/閲覧モードの切り替え</sys:String>
+    <sys:String x:Key="L_TitleBar_Minimize">最小化</sys:String>
+    <sys:String x:Key="L_TitleBar_Maximize">最大化</sys:String>
+    <sys:String x:Key="L_TitleBar_Close">閉じる</sys:String>
+    <sys:String x:Key="L_Menu_File_OpenTabFolder">タブのフォルダを開く</sys:String>
+    <!-- Adjust Windows -->
+    <sys:String x:Key="L_AdjustBCE_Title">画像を調整</sys:String>
+    <sys:String x:Key="L_AdjustBCE_Brightness">明るさ</sys:String>
+    <sys:String x:Key="L_AdjustBCE_Contrast">コントラスト</sys:String>
+    <sys:String x:Key="L_AdjustBCE_Exposure">露出</sys:String>
+
+    <sys:String x:Key="L_AdjustTTS_Title">色の調整</sys:String>
+    <sys:String x:Key="L_AdjustTTS_Temperature">色温度</sys:String>
+    <sys:String x:Key="L_AdjustTTS_Tint">色合い</sys:String>
+    <sys:String x:Key="L_AdjustTTS_Saturation">彩度</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_File_New">新規ファイル</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_File_Open">ファイルを開く</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_File_Save">ファイルを保存</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_File_SaveAs">名前を付けて保存</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_File_NewTab">新しいタブ</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Undo">元に戻す</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Redo">やり直し</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Copy">コピー</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Cut">切り取り</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Paste">貼り付け</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Bold">太字</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Italic">斜体</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Underline">下線</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Strikethrough">取り消し線</sys:String>
+    <sys:String x:Key="L_ToolBar_Rotate_Left">左へ 90° 回転</sys:String>
+    <sys:String x:Key="L_ToolBar_Rotate_Right">右へ 90° 回転</sys:String>
+    <sys:String x:Key="L_Mode_Switch_ToPaint" xmlns:sys="clr-namespace:System;assembly=mscorlib">ペイントモードに切り替え</sys:String>
+    <sys:String x:Key="L_Mode_Switch_ToView" xmlns:sys="clr-namespace:System;assembly=mscorlib">閲覧モードに切り替え</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Select_Detail" xml:space="preserve" xmlns:sys="clr-namespace:System;assembly=mscorlib">移動、切り抜き、コピー用の矩形選択範囲を作成します。&#x0a;Word、ブラウザ、デスクトップなどへドラッグ＆ドロップできます。&#x0a;キャンバス上に画像をドラッグすると選択範囲を作成します。</sys:String>
+
+    <sys:String x:Key="L_StatusBar_ClipboardMonitor_ToolTip">クリップボードを監視</sys:String>
+    <!-- ResizeCanvasDialog -->
+    <sys:String x:Key="L_ResizeCanvas_Title">キャンバスサイズの変更</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Mode">モード:</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Mode_Resample">画像を再サンプリング</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Mode_Canvas">キャンバスサイズのみ変更</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Width">幅</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Height">高さ</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_KeepAspectRatio">縦横比を維持</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Info_Format">スケール: {0}%  |  オリジナル: {1} x {2}</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Info_CanvasMode">キャンバスモード: {0} x {1}</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Desc_Canvas">キャンバスモード: キャンバスのサイズのみを変更し、画像は引き伸ばしません</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Desc_Resample">再サンプリングモード: 画像の内容を引き伸ばし/圧縮します</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_LimitReached">⚠️ 最大サイズ制限に達しました ({0}px)</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Error_TooLarge">画像サイズは {0} ピクセルを超えることはできません。</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Error_InvalidSize">サイズは 0 より大きくする必要があります</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_OriginSize">ズーム：100% (未リサイズ)</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_ApplyToAll">すべてのタブに適用</sys:String>
+    <sys:String x:Key="L_Toast_BatchResizeStart">画像を一括リサイズ中...</sys:String>
+    <sys:String x:Key="L_Toast_BatchResizeComplete">一括リサイズタスクが完了しました</sys:String>
+
+    <!-- ModernColorPickerWindow -->
+    <sys:String x:Key="L_ColorPicker_Title">色の編集</sys:String>
+    <sys:String x:Key="L_ColorPicker_Preview">プレビュー</sys:String>
+    <sys:String x:Key="L_ColorPicker_BasicColors">基本色</sys:String>
+    <sys:String x:Key="L_ColorPicker_CustomColors">作成した色</sys:String>
+    <sys:String x:Key="L_ColorPicker_AddCurrentColor">現在の色を追加</sys:String>
+    <sys:String x:Key="L_ColorPicker_Red">赤 (R)</sys:String>
+    <sys:String x:Key="L_ColorPicker_Green">緑 (G)</sys:String>
+    <sys:String x:Key="L_ColorPicker_Blue">青 (B)</sys:String>
+    <sys:String x:Key="L_ColorPicker_Hue">色相</sys:String>
+    <sys:String x:Key="L_ColorPicker_Saturation">彩度</sys:String>
+    <sys:String x:Key="L_ColorPicker_Brightness">明るさ</sys:String>
+    <sys:String x:Key="L_ColorPicker_Hex">HEX (8桁)</sys:String>
+    <sys:String x:Key="L_ColorPicker_Transparent">完全透明</sys:String>
+    <sys:String x:Key="L_ColorPicker_TransparentPrefix">透明度</sys:String>
+
+    <sys:String x:Key="L_Toast_Apply_Success">適用に成功しました</sys:String>
+    <sys:String x:Key="L_AI_Downloading">ダウンロード中...</sys:String>
+    <sys:String x:Key="L_Toast_DownloadCancelled">ダウンロードがキャンセルされました</sys:String>
+    <!-- 100+ Color Names -->
+    <sys:String x:Key="L_Color_Snow">Snow</sys:String>
+    <sys:String x:Key="L_Color_Honeydew">Honeydew</sys:String>
+    <sys:String x:Key="L_Color_MintCream">Mint Cream</sys:String>
+    <sys:String x:Key="L_Color_AliceBlue">Alice Blue</sys:String>
+    <sys:String x:Key="L_Color_GhostWhite">Ghost White</sys:String>
+    <sys:String x:Key="L_Color_WhiteSmoke">White Smoke</sys:String>
+    <sys:String x:Key="L_Color_Seashell">Seashell</sys:String>
+    <sys:String x:Key="L_Color_Beige">Beige</sys:String>
+    <sys:String x:Key="L_Color_OldLace">Old Lace</sys:String>
+    <sys:String x:Key="L_Color_FloralWhite">Floral White</sys:String>
+    <sys:String x:Key="L_Color_Ivory">Ivory</sys:String>
+    <sys:String x:Key="L_Color_AntiqueWhite">Antique White</sys:String>
+    <sys:String x:Key="L_Color_Linen">Linen</sys:String>
+    <sys:String x:Key="L_Color_LavenderBlush">Lavender Blush</sys:String>
+    <sys:String x:Key="L_Color_MistyRose">Misty Rose</sys:String>
+    <sys:String x:Key="L_Color_Gainsboro">Gainsboro</sys:String>
+    <sys:String x:Key="L_Color_LightGray">Light Gray</sys:String>
+    <sys:String x:Key="L_Color_DarkGray">Dark Gray</sys:String>
+    <sys:String x:Key="L_Color_DimGray">Dim Gray</sys:String>
+    <sys:String x:Key="L_Color_LightSlateGray">Light Slate Gray</sys:String>
+    <sys:String x:Key="L_Color_SlateGray">Slate Gray</sys:String>
+    <sys:String x:Key="L_Color_DarkSlateGray">Dark Slate Gray</sys:String>
+    <sys:String x:Key="L_Color_IndianRed">Indian Red</sys:String>
+    <sys:String x:Key="L_Color_LightCoral">Light Coral</sys:String>
+    <sys:String x:Key="L_Color_Salmon">Salmon</sys:String>
+    <sys:String x:Key="L_Color_DarkSalmon">Dark Salmon</sys:String>
+    <sys:String x:Key="L_Color_LightSalmon">Light Salmon</sys:String>
+    <sys:String x:Key="L_Color_Crimson">Crimson</sys:String>
+    <sys:String x:Key="L_Color_FireBrick">Fire Brick</sys:String>
+    <sys:String x:Key="L_Color_DarkRed">Dark Red</sys:String>
+    <sys:String x:Key="L_Color_Pink">Pink</sys:String>
+    <sys:String x:Key="L_Color_HotPink">Hot Pink</sys:String>
+    <sys:String x:Key="L_Color_MediumVioletRed">Medium Violet Red</sys:String>
+    <sys:String x:Key="L_Color_PaleVioletRed">Pale Violet Red</sys:String>
+    <sys:String x:Key="L_Color_Coral">Coral</sys:String>
+    <sys:String x:Key="L_Color_Tomato">Tomato</sys:String>
+    <sys:String x:Key="L_Color_OrangeRed">Orange Red</sys:String>
+    <sys:String x:Key="L_Color_DarkOrange">Dark Orange</sys:String>
+    <sys:String x:Key="L_Color_LemonChiffon">Lemon Chiffon</sys:String>
+    <sys:String x:Key="L_Color_PapayaWhip">Papaya Whip</sys:String>
+    <sys:String x:Key="L_Color_Moccasin">Moccasin</sys:String>
+    <sys:String x:Key="L_Color_PeachPuff">Peach Puff</sys:String>
+    <sys:String x:Key="L_Color_PaleGoldenrod">Pale Goldenrod</sys:String>
+    <sys:String x:Key="L_Color_Khaki">Khaki</sys:String>
+    <sys:String x:Key="L_Color_DarkKhaki">Dark Khaki</sys:String>
+    <sys:String x:Key="L_Color_Thistle">Thistle</sys:String>
+    <sys:String x:Key="L_Color_Plum">Plum</sys:String>
+    <sys:String x:Key="L_Color_Orchid">Orchid</sys:String>
+    <sys:String x:Key="L_Color_MediumOrchid">Medium Orchid</sys:String>
+    <sys:String x:Key="L_Color_MediumPurple">Medium Purple</sys:String>
+    <sys:String x:Key="L_Color_BlueViolet">Blue Violet</sys:String>
+    <sys:String x:Key="L_Color_DarkViolet">Dark Violet</sys:String>
+    <sys:String x:Key="L_Color_DarkOrchid">Dark Orchid</sys:String>
+    <sys:String x:Key="L_Color_DarkMagenta">Dark Magenta</sys:String>
+    <sys:String x:Key="L_Color_SlateBlue">Slate Blue</sys:String>
+    <sys:String x:Key="L_Color_DarkSlateBlue">Dark Slate Blue</sys:String>
+    <sys:String x:Key="L_Color_GreenYellow">Green Yellow</sys:String>
+    <sys:String x:Key="L_Color_Chartreuse">Chartreuse</sys:String>
+    <sys:String x:Key="L_Color_LawnGreen">Lawn Green</sys:String>
+    <sys:String x:Key="L_Color_LimeGreen">Lime Green</sys:String>
+    <sys:String x:Key="L_Color_PaleGreen">Pale Green</sys:String>
+    <sys:String x:Key="L_Color_LightGreen">Light Green</sys:String>
+    <sys:String x:Key="L_Color_MediumSpringGreen">Medium Spring Green</sys:String>
+    <sys:String x:Key="L_Color_SpringGreen">Spring Green</sys:String>
+    <sys:String x:Key="L_Color_MediumSeaGreen">Medium Sea Green</sys:String>
+    <sys:String x:Key="L_Color_SeaGreen">Sea Green</sys:String>
+    <sys:String x:Key="L_Color_DarkGreen">Dark Green</sys:String>
+    <sys:String x:Key="L_Color_YellowGreen">Yellow Green</sys:String>
+    <sys:String x:Key="L_Color_OliveDrab">Olive Drab</sys:String>
+    <sys:String x:Key="L_Color_DarkOliveGreen">Dark Olive Green</sys:String>
+    <sys:String x:Key="L_Color_MediumAquamarine">Medium Aquamarine</sys:String>
+    <sys:String x:Key="L_Color_DarkSeaGreen">Dark Sea Green</sys:String>
+    <sys:String x:Key="L_Color_LightSeaGreen">Light Sea Green</sys:String>
+    <sys:String x:Key="L_Color_DarkCyan">Dark Cyan</sys:String>
+    <sys:String x:Key="L_Color_PaleTurquoise">Pale Turquoise</sys:String>
+    <sys:String x:Key="L_Color_Aquamarine">Aquamarine</sys:String>
+    <sys:String x:Key="L_Color_Turquoise">Turquoise</sys:String>
+    <sys:String x:Key="L_Color_MediumTurquoise">Medium Turquoise</sys:String>
+    <sys:String x:Key="L_Color_DarkTurquoise">Dark Turquoise</sys:String>
+    <sys:String x:Key="L_Color_CadetBlue">Cadet Blue</sys:String>
+    <sys:String x:Key="L_Color_SteelBlue">Steel Blue</sys:String>
+    <sys:String x:Key="L_Color_LightSteelBlue">Light Steel Blue</sys:String>
+    <sys:String x:Key="L_Color_PowderBlue">Powder Blue</sys:String>
+    <sys:String x:Key="L_Color_SkyBlue">Sky Blue</sys:String>
+    <sys:String x:Key="L_Color_LightSkyBlue">Light Sky Blue</sys:String>
+    <sys:String x:Key="L_Color_DeepSkyBlue">Deep Sky Blue</sys:String>
+    <sys:String x:Key="L_Color_DodgerBlue">Dodger Blue</sys:String>
+    <sys:String x:Key="L_Color_CornflowerBlue">Cornflower Blue</sys:String>
+    <sys:String x:Key="L_Color_MediumSlateBlue">Medium Slate Blue</sys:String>
+    <sys:String x:Key="L_Color_RoyalBlue">Royal Blue</sys:String>
+    <sys:String x:Key="L_Color_MediumBlue">Medium Blue</sys:String>
+    <sys:String x:Key="L_Color_DarkBlue">Dark Blue</sys:String>
+    <sys:String x:Key="L_Color_MidnightBlue">Midnight Blue</sys:String>
+    <sys:String x:Key="L_Color_Cornsilk">Cornsilk</sys:String>
+    <sys:String x:Key="L_Color_BlanchedAlmond">Blanched Almond</sys:String>
+    <sys:String x:Key="L_Color_Bisque">Bisque</sys:String>
+    <sys:String x:Key="L_Color_NavajoWhite">Navajo White</sys:String>
+    <sys:String x:Key="L_Color_BurlyWood">Burly Wood</sys:String>
+    <sys:String x:Key="L_Color_Tan">Tan</sys:String>
+    <sys:String x:Key="L_Color_RosyBrown">Rosy Brown</sys:String>
+    <sys:String x:Key="L_Color_SandyBrown">Sandy Brown</sys:String>
+    <sys:String x:Key="L_Color_Goldenrod">Goldenrod</sys:String>
+    <sys:String x:Key="L_Color_DarkGoldenrod">Dark Goldenrod</sys:String>
+    <sys:String x:Key="L_Color_Peru">Peru</sys:String>
+    <sys:String x:Key="L_Color_SaddleBrown">Saddle Brown</sys:String>
+    <sys:String x:Key="L_Color_Sienna">Sienna</sys:String>
+    <sys:String x:Key="L_Color_Brown">Brown</sys:String>
+    <sys:String x:Key="Key_L_Color_DeepBrown">Deep Brown</sys:String>
+    <sys:String x:Key="Key_L_Color_RockCyan">Rock Cyan</sys:String>
+    <sys:String x:Key="Key_L_Color_Coffee">Coffee</sys:String>
+    <sys:String x:Key="Key_L_Color_MintGreen">Mint Green</sys:String>
+    <sys:String x:Key="Key_L_Color_LightRed">Light Red</sys:String>
+    <sys:String x:Key="Key_L_Color_LightOrange">Light Orange / Skin</sys:String>
+    <sys:String x:Key="Key_L_Color_DeepRed">Deep Red</sys:String>
+    <sys:String x:Key="Key_L_Color_DeepOrange">Deep Orange</sys:String>
+    <sys:String x:Key="Key_L_Color_Ochre">Ochre</sys:String>
+    <sys:String x:Key="Key_L_Color_DeepViolet">Deep Violet</sys:String>
+
+
+    <sys:String x:Key="L_Settings_Advanced_FactoryReset_Confirm">この操作により、すべてのキャッシュ、一時ファイル、ユーザー設定が削除され、ソフトウェアが初期状態に復元されます。続行してもよろしいですか？</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Reset_Confirm">すべてのショートカットをデフォルト設定にリセットしてもよろしいですか？この操作は取り消すことができません。</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Reset_Title">リセットの確認</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_ICC_Title">ICCプロファイル補正を有効にする</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_ICC_Desc">カラー補正にモニターのICCプロファイルを使用します。</sys:String>
+
+    <!-- Toasts -->
+    <sys:String x:Key="L_Toast_Deleted">削除しました (Ctrl+Z で元に戻す)</sys:String>
+    <sys:String x:Key="L_Toast_UndoDelete">削除を取り消しました</sys:String>
+    <sys:String x:Key="L_Toast_FirstImage">最初の画像に戻りました</sys:String>
+    <sys:String x:Key="L_Toast_LastImage">これが最後の画像です</sys:String>
+    <sys:String x:Key="L_Toast_NoContentToCrop">有効なコンテンツが検出されなかったため、クロップの必要はありません</sys:String>
+    <sys:String x:Key="L_Toast_MinSize">すでに最小サイズです</sys:String>
+    <sys:String x:Key="L_Toast_Copied">コピーしました</sys:String>
+    <sys:String x:Key="L_Toast_PressDeleteAgain">もう一度Deleteキーを押すとファイルを削除します</sys:String>
+    <sys:String x:Key="L_Toast_DragFailed">ドラッグに失敗しました:</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Inverted">階調反転を適用しました</sys:String>
+    <sys:String x:Key="L_Toast_Effect_AutoLevels">レベル補正（自動）を適用しました</sys:String>
+    <sys:String x:Key="L_Toast_Effect_RedEye">赤目補正を適用しました</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Sketch">鉛筆スケッチ風を適用しました</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Edge">エッジ検出を適用しました</sys:String>
+    <sys:String x:Key="L_Toast_Effect_BW">白黒化を適用しました</sys:String>
+    <sys:String x:Key="L_Toast_FileNotFound">ファイルが存在しないため、フォルダを特定できません。</sys:String>
+    <sys:String x:Key="L_Toast_PasteFailed">画像の貼り付けに失敗しました:</sys:String>
+    <sys:String x:Key="L_Toast_DeleteFailed">削除に失敗しました:</sys:String>
+    <sys:String x:Key="L_Toast_CopyFailed">コピーに失敗しました</sys:String>
+    <sys:String x:Key="L_Toast_NoImageData">このタブの画像データを取得できませんでした</sys:String>
+    <sys:String x:Key="L_Toast_InsertFailed">挿入に失敗しました:</sys:String>
+    <sys:String x:Key="L_Toast_CannotInsertImage">画像を挿入できません:</sys:String>
+    <sys:String x:Key="L_Toast_SizeTooSmallForBorder">画像サイズが小さすぎるため枠線を追加できません</sys:String>
+    <sys:String x:Key="L_Toast_NoSelection">領域が選択されていません</sys:String>
+    <sys:String x:Key="L_Toast_OCR_NoText">テキストが認識されませんでした</sys:String>
+    <sys:String x:Key="L_Toast_ImageTooLarge">⚠️ 画像が大きすぎるため、表示用に自動縮小されました</sys:String>
+    <sys:String x:Key="L_Toast_ReadFolderFailed_Prefix">フォルダの読み込みに失敗しました:</sys:String>
+    <sys:String x:Key="L_Toast_LoadFailed_Prefix">起動時の読み込みに失敗しました:</sys:String>
+    <sys:String x:Key="L_Toast_ShapeProMode_On">シェイプ・プロモード: ON (Alt)</sys:String>
+    <sys:String x:Key="L_Toast_ShapeProMode_Off">シェイプ・プロモード: OFF (Alt)</sys:String>
+
+    <!-- New Toast Messages -->
+    <sys:String x:Key="L_Toast_BorderAdded" xmlns:sys="clr-namespace:System;assembly=mscorlib">2pxの枠線を追加しました</sys:String>
+    <sys:String x:Key="L_Toast_CropFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">クロップ失敗: {0}</sys:String>
+    <sys:String x:Key="L_Toast_ColorCopied_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">色をコピーしました: {0}</sys:String>
+    <sys:String x:Key="L_Toast_ColorPicked_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">色を抽出しました: #{0:X2}{1:X2}{2:X2}</sys:String>
+    <sys:String x:Key="L_Toast_RemoveBgFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">背景削除失敗: {0}</sys:String>
+    <sys:String x:Key="L_Toast_OCR_VersionError" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCRにはWindows 10 (1803) 以降が必要です。</sys:String>
+    <sys:String x:Key="L_Toast_OCR_Success_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">{0} 文字をクリップボードに抽出しました！</sys:String>
+    <sys:String x:Key="L_Toast_OCR_InitFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCRの初期化に失敗しました。システム設定でOCR言語パックがインストールされているか確認してください。</sys:String>
+    <sys:String x:Key="L_Toast_OCR_NotSupported" xmlns:sys="clr-namespace:System;assembly=mscorlib">システムがOCR APIをサポートしていません。</sys:String>
+    <sys:String x:Key="L_Toast_OCR_Error_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCRエラー: {0}</sys:String>
+    <sys:String x:Key="L_Toast_GDIReadFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">GDI+ 読み込み失敗: {0}</sys:String>
+    <sys:String x:Key="L_Toast_ClipboardError_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">クリップボードアクセスエラー: {0}</sys:String>
+    <sys:String x:Key="L_Toast_RestoreSelectionFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">選択範囲の復元失敗: {0}</sys:String>
+    <sys:String x:Key="L_Toast_MD5CheckFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">MD5チェックに失敗しました。再ダウンロードしています...</sys:String>
+    <sys:String x:Key="L_Toast_FullScreen_On" xmlns:sys="clr-namespace:System;assembly=mscorlib">フルスクリーン開始</sys:String>
+    <sys:String x:Key="L_Toast_FullScreen_Off" xmlns:sys="clr-namespace:System;assembly=mscorlib">フルスクリーン終了</sys:String>
+    <sys:String x:Key="L_Toast_SaveFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">保存失敗: {0}</sys:String>
+    <sys:String x:Key="L_Toast_FileNotFound_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">画像ファイルが見つかりません: {0}</sys:String>
+    <sys:String x:Key="L_Toast_Mode_View" xmlns:sys="clr-namespace:System;assembly=mscorlib">表示モード</sys:String>
+    <sys:String x:Key="L_Toast_Mode_Paint" xmlns:sys="clr-namespace:System;assembly=mscorlib">ペイントモード</sys:String>
+    <sys:String x:Key="L_Toast_SavedCount_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">{0} 個の画像を保存しました。</sys:String>
+    <sys:String x:Key="L_Toast_CleanedCount_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">{0} 個の未編集画像を閉じました</sys:String>
+    <sys:String x:Key="L_Toast_CleanupFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">クリーンアップ失敗: {0}</sys:String>
+    <sys:String x:Key="L_Toast_OpenFolderFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">フォルダを開けません: {0}</sys:String>
+    <sys:String x:Key="L_Toast_PrepareDragFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">ドラッグファイルの準備エラー: {0}</sys:String>
+    <sys:String x:Key="L_Toast_DragStartFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">ドラッグ開始失敗: {0}</sys:String>
+    <sys:String x:Key="L_Toast_SwitchWorkspaceFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">ワークスペースの切り替え失敗: {0}</sys:String>
+    <sys:String x:Key="L_Toast_ImageReset">リセット完了</sys:String>
+
+    <!-- New Replacements for Hardcoded Strings -->
+    <sys:String x:Key="L_Load_Reason_Empty" xmlns:sys="clr-namespace:System;assembly=mscorlib">ファイルが空です。空白のキャンバスを作成しました。</sys:String>
+    <sys:String x:Key="L_Load_Reason_Header" xmlns:sys="clr-namespace:System;assembly=mscorlib">ファイルヘッダーが破損しているかサポートされていない形式です。空白のキャンバスを作成しました。</sys:String>
+    <sys:String x:Key="L_Load_Reason_Corrupt" xmlns:sys="clr-namespace:System;assembly=mscorlib">ファイルが破損しているかサポートされていない形式です。空白のキャンバスを作成しました。</sys:String>
+    <sys:String x:Key="L_Load_Info_Memory" xmlns:sys="clr-namespace:System;assembly=mscorlib">[新規画像] メモリ上のファイル</sys:String>
+    <sys:String x:Key="L_Status_Unsaved" xmlns:sys="clr-namespace:System;assembly=mscorlib">未保存</sys:String>
+    <sys:String x:Key="L_Msg_ResetWorkspace_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">変更を破棄</sys:String>
+    <sys:String x:Key="L_Msg_ResetImage_Content">この画像をリセットしてもよろしいですか？この操作は元に戻せません。</sys:String>
+    <sys:String x:Key="L_Msg_ResetWorkspace_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">現在のワークスペースをリセットしてもよろしいですか？すべての新しいキャンバスが削除され、開いているすべての画像がディスク保存時の状態に戻ります。</sys:String>
+    <sys:String x:Key="L_Msg_DeleteFile_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">ファイルの削除</sys:String>
+    <sys:String x:Key="L_Msg_DeleteFile_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">ファイル '{0}' をごみ箱に移動してもよろしいですか？&#x0a;この操作は取り消せません。</sys:String>
+    <sys:String x:Key="L_Msg_SaveError_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">保存失敗</sys:String>
+    <sys:String x:Key="L_Msg_SaveError_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">{0}&#x0a;&#x0a;別の場所に [名前を付けて保存] を試しますか？</sys:String>
+    <sys:String x:Key="L_Msg_UnsavedClose_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">変更の保存</sys:String>
+    <sys:String x:Key="L_Msg_UnsavedClose_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">画像 {0} は保存されていません。保存しますか？</sys:String>
+    <sys:String x:Key="L_Msg_SizeTooLarge_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">サイズ超過</sys:String>
+    <sys:String x:Key="L_Msg_SizeTooLarge_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">画像の寸法は {0} ピクセルを超えることはできません。</sys:String>
+    <sys:String x:Key="L_Msg_ResetFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">工場出荷時リセットに失敗しました: {0}</sys:String>
+    <!-- File Size Formatting -->
+    <sys:String x:Key="L_Format_Size_B" xmlns:sys="clr-namespace:System;assembly=mscorlib">サイズ: {0} B</sys:String>
+    <sys:String x:Key="L_Format_Size_KB" xmlns:sys="clr-namespace:System;assembly=mscorlib">サイズ: {0:F1} KB</sys:String>
+    <sys:String x:Key="L_Format_Size_MB" xmlns:sys="clr-namespace:System;assembly=mscorlib">サイズ: {0:F2} MB</sys:String>
+
+    <!-- OCR & AI Tools -->
+    <sys:String x:Key="L_OCR_Error_NoLangPack" xmlns:sys="clr-namespace:System;assembly=mscorlib">エラー: OCR言語パックがインストールされていません。Windowsの「設定 -> 時刻と言語」から追加してください。</sys:String>
+    <sys:String x:Key="L_OCR_Status_Processing" xmlns:sys="clr-namespace:System;assembly=mscorlib">テキストを抽出中...</sys:String>
+    <sys:String x:Key="L_OCR_Overlay_CopyAll" xmlns:sys="clr-namespace:System;assembly=mscorlib">すべてのテキストをコピー</sys:String>
+    <sys:String x:Key="L_OCR_AiRuntime_FirstPrompt_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCRランタイムがインストールされていません</sys:String>
+    <sys:String x:Key="L_OCR_AiRuntime_FirstPrompt_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">初めてAI OCRを使用するには、OCRランタイムをダウンロードする必要があります。続行してAI OCRを有効にしますか？&#x0a;&#x0a;「いいえ」を選択した場合、TabPaintはデフォルトのシステムOCRを使用します（後で 設定 -> プラグイン から手動でインストールしてAI OCRを有効にできます）。</sys:String>
+    <sys:String x:Key="L_OCR_Failed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCR失敗: {0}</sys:String>
+    <sys:String x:Key="L_PyOCR_Runtime_DownloadPython" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCRランタイム: Pythonをダウンロード中</sys:String>
+    <sys:String x:Key="L_PyOCR_Runtime_ExtractPython" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCRランタイム: Pythonを展開中</sys:String>
+    <sys:String x:Key="L_PyOCR_Runtime_InstallPip" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCRランタイム: pipをインストール中</sys:String>
+    <sys:String x:Key="L_PyOCR_Runtime_Preparing" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCRランタイムを準備中</sys:String>
+
+    <sys:String x:Key="L_AI_RMBG_MissingRuntime_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">コンポーネントが不足しています</sys:String>
+    <sys:String x:Key="L_AI_RMBG_MissingRuntime_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI機能には [Visual C++ 2015-2022 再頒布可能パッケージ] が必要です。&#x0a;&#x0a;今すぐMicrosoftからダウンロードしますか？</sys:String>
+    <sys:String x:Key="L_AI_Status_Preparing" xmlns:sys="clr-namespace:System;assembly=mscorlib">AIモデルを準備中...</sys:String>
+    <sys:String x:Key="L_AI_Status_Downloading_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">モデルをダウンロード中: {0:F1}%</sys:String>
+    <sys:String x:Key="L_AI_Status_Thinking" xmlns:sys="clr-namespace:System;assembly=mscorlib">AIが処理しています...</sys:String>
+    <sys:String x:Key="L_AI_Error_DllNotFound" xmlns:sys="clr-namespace:System;assembly=mscorlib">AIコンポーネントの読み込みに失敗しました。&#x0a;システムにC++ランタイムまたはAVXサポートが不足している可能性があります。&#x0a;VC++ランタイムをインストールしてください。</sys:String>
+
+    <!-- Exif Info -->
+    <sys:String x:Key="L_Exif_Section_File" xmlns:sys="clr-namespace:System;assembly=mscorlib">[ファイル情報]</sys:String>
+    <sys:String x:Key="L_Exif_Path_Memory" xmlns:sys="clr-namespace:System;assembly=mscorlib">パス: [メモリ] 未保存</sys:String>
+    <sys:String x:Key="L_Exif_Path_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">パス: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Size_MB_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">サイズ: {0:F2} MB</sys:String>
+
+    <sys:String x:Key="L_Exif_Section_Canvas" xmlns:sys="clr-namespace:System;assembly=mscorlib">[キャンバス情報]</sys:String>
+    <sys:String x:Key="L_Exif_Dim_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">寸法: {0} × {1} px</sys:String>
+    <sys:String x:Key="L_Exif_BitDepth_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">深度: {0} ビット</sys:String>
+    <sys:String x:Key="L_Exif_Dpi_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">DPI: {0:F0} × {1:F0}</sys:String>
+    <sys:String x:Key="L_Exif_PixelFormat_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">形式: {0}</sys:String>
+
+    <sys:String x:Key="L_Exif_Section_Photo" xmlns:sys="clr-namespace:System;assembly=mscorlib">[写真メタデータ]</sys:String>
+    <sys:String x:Key="L_Exif_Device_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">機器: {0}</sys:String>
+    <sys:String x:Key="L_Exif_ExpTime_Fraction_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">露出時間: 1/{0} 秒</sys:String>
+    <sys:String x:Key="L_Exif_ExpTime_Sec_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">露出時間: {0} 秒</sys:String>
+    <sys:String x:Key="L_Exif_FNumber_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">F値: f/{0:0.0}</sys:String>
+    <sys:String x:Key="L_Exif_ISO_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">ISO感度: ISO-{0}</sys:String>
+    <sys:String x:Key="L_Exif_Bias_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">露出補正: {0} EV</sys:String>
+    <sys:String x:Key="L_Exif_Focal_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">焦点距離: {0} mm</sys:String>
+    <sys:String x:Key="L_Exif_Focal35_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">35mm換算: {0} mm</sys:String>
+    <sys:String x:Key="L_Exif_Metering_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">測光方式: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Flash_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">フラッシュ: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Flash_On" xmlns:sys="clr-namespace:System;assembly=mscorlib">オン</sys:String>
+    <sys:String x:Key="L_Exif_Flash_Off" xmlns:sys="clr-namespace:System;assembly=mscorlib">オフ</sys:String>
+    <sys:String x:Key="L_Exif_Software_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">ソフトウェア: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Date_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">撮影日時: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Lens_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">レンズ: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Error_Parse" xmlns:sys="clr-namespace:System;assembly=mscorlib">解析失敗:</sys:String>
+
+    <sys:String x:Key="L_Exif_Meter_Unknown" xmlns:sys="clr-namespace:System;assembly=mscorlib">不明</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Average" xmlns:sys="clr-namespace:System;assembly=mscorlib">平均</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Center" xmlns:sys="clr-namespace:System;assembly=mscorlib">中央重点</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Spot" xmlns:sys="clr-namespace:System;assembly=mscorlib">スポット</sys:String>
+    <sys:String x:Key="L_Exif_Meter_MultiSpot" xmlns:sys="clr-namespace:System;assembly=mscorlib">マルチスポット</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Pattern" xmlns:sys="clr-namespace:System;assembly=mscorlib">パターン</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Partial" xmlns:sys="clr-namespace:System;assembly=mscorlib">部分測光</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Other" xmlns:sys="clr-namespace:System;assembly=mscorlib">その他</sys:String>
+    <!-- New Additions for C# Logic -->
+    <sys:String x:Key="L_Save_Error_ReadOnly" xmlns:sys="clr-namespace:System;assembly=mscorlib">保存失敗: ファイルが読み取り専用であるか、書き込み権限がありません。</sys:String>
+    <sys:String x:Key="L_Save_Error_InUse" xmlns:sys="clr-namespace:System;assembly=mscorlib">保存失敗: ファイルが使用中の可能性があります。&#x0a;{0}</sys:String>
+    <sys:String x:Key="L_Save_Error_General" xmlns:sys="clr-namespace:System;assembly=mscorlib">保存中にエラーが発生しました: {0}</sys:String>
+
+    <sys:String x:Key="L_Selection_Size_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">{0}×{1}px</sys:String>
+    <sys:String x:Key="L_Selection_Drag_Jump" xmlns:sys="clr-namespace:System;assembly=mscorlib">移動先: {0} {1} ({2:F1}s)</sys:String>
+    <sys:String x:Key="L_Selection_Drag_Quick" xmlns:sys="clr-namespace:System;assembly=mscorlib">(クイック)</sys:String>
+
+    <sys:String x:Key="L_Clipboard_InternalFormat" xmlns:sys="clr-namespace:System;assembly=mscorlib">TabPaintInternal</sys:String>
+
+    <sys:String x:Key="L_Drag_SwitchWorkspace_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">ワークスペースの切り替え</sys:String>
+    <sys:String x:Key="L_Drag_SwitchWorkspace_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">キャンバスをクリアして新しいフォルダを開く</sys:String>
+    <sys:String x:Key="L_Drag_BatchOpen_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">一括で開く</sys:String>
+    <sys:String x:Key="L_Drag_BatchOpen_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">{0} 個の画像を新しいタブとして開く</sys:String>
+    <sys:String x:Key="L_Drag_AddToList_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">リストに追加</sys:String>
+    <sys:String x:Key="L_Drag_AddToList_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">画像を新しいタブとして追加</sys:String>
+    <sys:String x:Key="L_Drag_Insert_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">画像を挿入</sys:String>
+    <sys:String x:Key="L_Drag_Insert_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">現在の位置に画像を挿入</sys:String>
+    <sys:String x:Key="L_Drag_InsertText_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">テキストを挿入</sys:String>
+    <sys:String x:Key="L_Drag_InsertText_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">離してテキストボックスを作成</sys:String>
+
+
+    <sys:String x:Key="L_Menu_Recent_None" xmlns:sys="clr-namespace:System;assembly=mscorlib">(最近使ったファイルはありません)</sys:String>
+    <sys:String x:Key="L_Menu_Recent_Clear" xmlns:sys="clr-namespace:System;assembly=mscorlib">履歴をクリア</sys:String>
+    <sys:String x:Key="L_Stick_Close" xmlns:sys="clr-namespace:System;assembly=mscorlib">閉じる</sys:String>
+    <sys:String x:Key="L_Stick_TopMost" xmlns:sys="clr-namespace:System;assembly=mscorlib">常に手前に表示</sys:String>
+    <sys:String x:Key="L_Stick_Opacity" xmlns:sys="clr-namespace:System;assembly=mscorlib">不透明度</sys:String>
+    <sys:String x:Key="L_Stick_ResetScale" xmlns:sys="clr-namespace:System;assembly=mscorlib">倍率をリセット</sys:String>
+    <sys:String x:Key="L_Stick_Copy" xmlns:sys="clr-namespace:System;assembly=mscorlib">コピー</sys:String>
+    <sys:String x:Key="L_Stick_CloseAll" xmlns:sys="clr-namespace:System;assembly=mscorlib">すべて閉じる</sys:String>
+    <sys:String x:Key="L_ClipboardMonitorToggle_Detail" xml:space="preserve"  xmlns:sys="clr-namespace:System;assembly=mscorlib">スクリーンショット後、画面の内容を含むタブを自動的に作成します。</sys:String>
+
+    <sys:String x:Key="L_ImgBar_ClearUnedited">すべての未編集画像を閉じる</sys:String>
+    <sys:String x:Key="L_ImgBar_NewTabLeft">左側に新しいタブ</sys:String>
+    <sys:String x:Key="L_Ctx_StickImage">画像を固定表示</sys:String>
+    <sys:String x:Key="L_Ctx_CloseOtherTabs">他のタブを閉じる</sys:String>
+    <sys:String x:Key="L_Ctx_DeleteFile">ファイルを削除</sys:String>
+
+    <sys:String x:Key="L_Text_Bold">太字</sys:String>
+    <sys:String x:Key="L_Text_Italic">斜体</sys:String>
+    <sys:String x:Key="L_Text_Underline">下線</sys:String>
+    <sys:String x:Key="L_Text_Strike">打ち消し線</sys:String>
+    <sys:String x:Key="L_Text_AlignLeft">左揃え</sys:String>
+    <sys:String x:Key="L_Text_AlignCenter">中央揃え</sys:String>
+    <sys:String x:Key="L_Text_AlignRight">右揃え</sys:String>
+    <sys:String x:Key="L_Text_OpaqueBackground">不透明な背景</sys:String>
+    <sys:String x:Key="L_Text_Subscript">下付き文字</sys:String>
+    <sys:String x:Key="L_Text_Superscript">上付き文字</sys:String>
+    <sys:String x:Key="L_Text_Highlight">ハイライト</sys:String>
+    <sys:String x:Key="L_Text_Shadow">影効果</sys:String>
+    <sys:String x:Key="L_Text_InsertTable">表を挿入</sys:String>
+    <sys:String x:Key="L_Text_ExpandCollapse">ツールバーの展開/折りたたみ</sys:String>
+    <sys:String x:Key="L_Common_Preview">プレビュー</sys:String>
+
+    <sys:String x:Key="L_Toast_OpenUrlFailed">リンクを開けません</sys:String>
+    <sys:String x:Key="L_Key_None">なし</sys:String>
+    <sys:String x:Key="L_Info_CanvasMode_Format">キャンバスモード: {0} x {1}</sys:String>
+    <sys:String x:Key="L_Info_ResampleMode_Format">ズーム: {0:P0}  |  オリジナル: {1} x {2}</sys:String>
+    <sys:String x:Key="L_Info_DefaultScale">ズーム: 100% (元サイズ)</sys:String>
+    <sys:String x:Key="L_Progress_Loading_Format">読み込み中 {0}%</sys:String>
+    <sys:String x:Key="L_Progress_ExportingPDF_Format">PDF書き出し中... {0}/{1}</sys:String>
+    <sys:String x:Key="L_Toast_ExportPDF_Success">PDFを書き出しました</sys:String>
+
+    <!-- StatusBar Tooltips -->
+    <sys:String x:Key="L_StatusBar_FitToWindow">ウィンドウに合わせる</sys:String>
+    <sys:String x:Key="L_StatusBar_Favorite_ToolTip">お気に入り画像</sys:String>
+    <sys:String x:Key="L_StatusBar_ZoomOut">縮小</sys:String>
+    <sys:String x:Key="L_StatusBar_ZoomIn">拡大</sys:String>
+    <sys:String x:Key="L_AI_Status_Upscaling">アップスケーリング中...</sys:String>
+    <sys:String x:Key="L_AI_Status_Upscaling_Format">アップスケーリング中... {0:0}%</sys:String>
+    <sys:String x:Key="L_Toast_Upscale_Success">アップスケール完了 (400%)</sys:String>
+    <sys:String x:Key="L_Toast_Upscale_Error_Prefix">アップスケール失敗: {0}</sys:String>
+    <sys:String x:Key="L_AI_Download_Title">モデルのダウンロード</sys:String>
+    <sys:String x:Key="L_AI_Download_RMBG_Content">初めて使用するには背景削除モデルをダウンロードする必要があります。続行しますか？</sys:String>
+    <sys:String x:Key="L_AI_Download_SR_Content">初めて使用するには超解像モデルをダウンロードする必要があります。続行しますか？</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Watermark">ウォーターマーク...</sys:String>
+    <sys:String x:Key="L_Watermark_Title">ウォーターマークの追加</sys:String>
+    <sys:String x:Key="L_Watermark_Type">タイプ</sys:String>
+    <sys:String x:Key="L_Watermark_TypeText">テキスト</sys:String>
+    <sys:String x:Key="L_Watermark_TypeImage">画像</sys:String>
+    <sys:String x:Key="L_Watermark_Content">内容</sys:String>
+    <sys:String x:Key="L_Watermark_FontSize">サイズ</sys:String>
+    <sys:String x:Key="L_Watermark_ApplyToAll">すべてに適用</sys:String>
+    <sys:String x:Key="L_Watermark_Color">色</sys:String>
+    <sys:String x:Key="L_Watermark_DropImage">画像をドロップするか、クリックして選択</sys:String>
+    <sys:String x:Key="L_Watermark_ClickOrDrop">クリック または ドロップ</sys:String>
+    <sys:String x:Key="L_Watermark_ImageScale">スケール</sys:String>
+    <sys:String x:Key="L_Watermark_Opacity">不透明度</sys:String>
+    <sys:String x:Key="L_Watermark_Angle">角度</sys:String>
+    <sys:String x:Key="L_Watermark_Rows">垂直方向の数量</sys:String>
+    <sys:String x:Key="L_Watermark_Cols">水平方向の数量</sys:String>
+    <sys:String x:Key="L_Watermark_RandomOffset">ランダムオフセット</sys:String>
+    <sys:String x:Key="L_Toast_BatchStart">一括処理を開始しました...</sys:String>
+    <sys:String x:Key="L_Toast_BatchComplete">一括処理が完了しました。</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Filter">フィルター</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Sepia">セピア</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Oil">油絵風</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Vignette">周辺減光 (ビネット)</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Glow">グロー</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Sepia">セピアフィルターを適用しました</sys:String>
+    <sys:String x:Key="L_Toast_Effect_OilPainting">油絵風フィルターを適用しました</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Vignette">周辺減光エフェクトを適用しました</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Glow">グローエフェクトを適用しました</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Sharpen" xmlns:sys="clr-namespace:System;assembly=mscorlib">シャープ</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Brown" xmlns:sys="clr-namespace:System;assembly=mscorlib">ブラウン</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Sharpen" xmlns:sys="clr-namespace:System;assembly=mscorlib">シャープを適用しました</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Brown" xmlns:sys="clr-namespace:System;assembly=mscorlib">ブラウンエフェクトを適用しました</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Mosaic" xmlns:sys="clr-namespace:System;assembly=mscorlib">モザイクを適用しました</sys:String>
+    <sys:String x:Key="L_Toast_Effect_GaussianBlur" xmlns:sys="clr-namespace:System;assembly=mscorlib">ガウスぼかしを適用しました</sys:String>
+    <sys:String x:Key="L_AI_Eraser_Downloading" xmlns:sys="clr-namespace:System;assembly=mscorlib">モデルをダウンロード中...</sys:String>
+    <sys:String x:Key="L_AI_Eraser_Processing" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI処理中...</sys:String>
+    <sys:String x:Key="L_AI_Eraser_Success" xmlns:sys="clr-namespace:System;assembly=mscorlib">消しゴム（除去）を適用しました！</sys:String>
+    <sys:String x:Key="L_AI_Eraser_Error_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">消しゴムエラー: {0}</sys:String>
+    <sys:String x:Key="L_AI_Download_Inpaint_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI消しゴムには初回のみ修復モデルのダウンロードが必要です。続行しますか？</sys:String>
+    <sys:String x:Key="L_Update_Found_Title">新しいアップデートが見つかりました</sys:String>
+
+    <sys:String x:Key="L_Filter_Strength_Title">強度の調整</sys:String>
+    <sys:String x:Key="L_Filter_Value">値</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Mosaic">モザイク</sys:String>
+    <sys:String x:Key="L_Menu_Effect_GaussianBlur">ガウスぼかし</sys:String>
+    <sys:String x:Key="L_Dialog_Strength">強度</sys:String>
+    <!-- Unified AI Status (If not present) -->
+    <sys:String x:Key="L_AI_Status_Downloading_Inpaint" xmlns:sys="clr-namespace:System;assembly=mscorlib">修復モデルをダウンロード中: {0:F1}%</sys:String>
+    <sys:String x:Key="L_Progress_Saving">画像を保存中...</sys:String>
+
+</ResourceDictionary>

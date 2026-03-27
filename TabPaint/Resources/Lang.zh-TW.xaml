@@ -1,0 +1,939 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <!-- SettingsWindow -->
+    <sys:String x:Key="L_Settings_Title">設定</sys:String>
+    <sys:String x:Key="L_Ctx_CloseOtherTabs">關閉其他分頁</sys:String>
+    <sys:String x:Key="L_Settings_Nav_General">一般</sys:String>
+    <sys:String x:Key="L_Settings_Nav_Paint">繪圖設定</sys:String>
+    <sys:String x:Key="L_Settings_Nav_View">檢視設定</sys:String>
+    <sys:String x:Key="L_Settings_Nav_Shortcuts">快捷鍵設定</sys:String>
+    <sys:String x:Key="L_Settings_Nav_Advanced">進階</sys:String>
+    <sys:String x:Key="L_Settings_Nav_About">關於</sys:String>
+    <sys:String x:Key="L_Settings_Nav_Agreement">協議</sys:String>
+    <sys:String x:Key="L_Settings_Toast_Saved">設定已儲存</sys:String>
+    <sys:String x:Key="L_Settings_Toast_Conflict">快捷鍵與「{0}」衝突，已自動重設舊項目</sys:String>
+    <sys:String x:Key="L_Settings_Toast_ShellIntegration_EnableFailed">啟用系統右鍵選單失敗：{0}</sys:String>
+    <sys:String x:Key="L_Settings_Toast_ShellIntegration_DisableFailed">移除系統右鍵選單失敗：{0}</sys:String>
+    <sys:String x:Key="L_Settings_Nav_Plugins">外掛模組</sys:String>
+    <sys:String x:Key="L_ImgBar_NewImage">新圖片</sys:String>
+    <sys:String x:Key="L_CreateNewWorkSpate">選擇圖片以建立新工作區</sys:String>
+    <sys:String x:Key="L_Toast_NewWindowFromSelectionFailed">從選取範圍建立新視窗失敗：</sys:String>
+    <sys:String x:Key="L_Toast_NewWindowFailed">建立新視窗失敗：</sys:String>
+
+    <!-- 插件面板 -->
+    <sys:String x:Key="L_Settings_Plugins_Title">外掛與 AI 模型</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Desc">管理 AI 模型和選用元件。</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_RMBG_Title">背景移除</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_RMBG_Desc">用於背景移除的 AI 模型。</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_SR_Title">超解析度</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_SR_Desc">用於圖片放大的 AI 模型。</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_Inpaint_Title">AI 橡皮擦</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_Inpaint_Desc">用於物體移除和圖片修復的 AI 模型。</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_OCR_Title">AI OCR 文字辨識</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_OCR_Desc">用於擷取圖片文字的 OCR 執行階段元件。</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Status_NotInstalled">未安裝</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Status_Installed">已安裝</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Status_InstalledWithSize">已安裝（{0}）</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Status_Downloading">正在下載...</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Install">管理</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_InstallReal">安裝</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_InstallAll">一鍵下載</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_InstallAllWithProgress">一鍵下載 {0}/4</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_InstallingAll">下載中...</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Uninstall">解除安裝</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">確定要解除安裝此 AI 模型嗎？</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_OCR_Uninstall_Confirm">確定要解除安裝 OCR 執行階段嗎？</sys:String>
+    <sys:String x:Key="L_Settings_General_Title">一般</sys:String>
+    <sys:String x:Key="L_Settings_General_Startup_Header">啟動</sys:String>
+    <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Title">自動載入同資料夾圖片</sys:String>
+    <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Desc">開啟圖片時，掃描並載入同層目錄下的其他圖片</sys:String>
+    <sys:String x:Key="L_Settings_General_StartInViewMode_Title">預設進入看圖模式</sys:String>
+    <sys:String x:Key="L_Settings_General_StartInViewMode_Desc">隱藏工具列，作為看圖軟體使用</sys:String>
+    <sys:String x:Key="L_Settings_General_ShellIntegration_Title">新增至系統右鍵選單</sys:String>
+    <sys:String x:Key="L_Settings_General_ShellIntegration_Desc">為所有圖片加入右鍵選單和開啟方式</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_Header">圖片生成</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_ApiBaseUrl_Title">API 位址</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_ApiBaseUrl_Desc">OpenAI 相容介面位址</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_ApiKey_Title">API 金鑰</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_ApiKey_Desc">用於文生圖請求鑑權</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_Model_Title">模型名稱</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_Model_Desc">例如 gpt-image-1 或其他相容模型</sys:String>
+
+    <sys:String x:Key="L_Settings_General_MouseWheel_Title">滑鼠滾輪操作</sys:String>
+    <sys:String x:Key="L_Settings_General_MouseWheel_Desc">滾動滑鼠滾輪時程式的響應</sys:String>
+    <sys:String x:Key="L_Settings_General_MouseWheel_Option_Auto">自動</sys:String>
+    <sys:String x:Key="L_Settings_General_MouseWheel_Option_Up">上下捲動圖片</sys:String>
+    <sys:String x:Key="L_Settings_General_MouseWheel_Option_Switch">切換圖片</sys:String>
+    <sys:String x:Key="L_Untitled">未命名</sys:String>
+    <sys:String x:Key="L_Settings_General_Theme_Title">外觀主題</sys:String>
+    <sys:String x:Key="L_Settings_General_Theme_Desc">切換淺色或深色模式</sys:String>
+    <sys:String x:Key="L_Settings_General_Theme_Option_System">跟隨系統</sys:String>
+    <sys:String x:Key="L_Settings_General_Theme_Option_Light">淺色</sys:String>
+    <sys:String x:Key="L_Settings_General_Theme_Option_Dark">深色</sys:String>
+
+    <sys:String x:Key="L_Settings_General_Accent_Title">主題色</sys:String>
+    <sys:String x:Key="L_Settings_General_Accent_Desc">介面強調色彩與工具圖示顏色</sys:String>
+    <sys:String x:Key="L_Settings_General_Accent_Option_System">跟隨系統</sys:String>
+
+    <sys:String x:Key="L_Settings_General_Language_Title">介面語言</sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Desc">切換軟體顯示語言</sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Option_Zh">简体中文</sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Option_Tw">繁體中文</sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Option_En">English</sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Option_Ja">日本語</sys:String>
+    <sys:String x:Key="L_Ico_Title">匯出圖示</sys:String>
+    <sys:String x:Key="L_Ico_AddSize">新增尺寸</sys:String>
+    <sys:String x:Key="L_Ico_Error_NoSize">請至少新增一個圖示尺寸。</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_OpenCache_Title">開啟快取目錄</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_OpenCache_Desc">檢視位於 AppData 的暫存檔案與快取</sys:String>
+    <!-- Paint panel -->
+    <sys:String x:Key="L_Settings_Paint_Title">繪圖設定</sys:String>
+    <sys:String x:Key="L_Settings_Paint_Habits_Header">編輯習慣</sys:String>
+    <sys:String x:Key="L_Settings_Paint_AutoPopupClipboard_Title">剪貼簿圖片自動彈出</sys:String>
+    <sys:String x:Key="L_Settings_Paint_AutoPopupClipboard_Desc">剪貼簿有新圖片時，啟用並置頂視窗</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_Title">選取範圍刪除背景</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_Desc">刪除選取範圍時的填滿顏色</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_Transparent">透明</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_White">白色</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_PreserveAlpha">僅填滿顏色 (保留 Alpha)</sys:String>
+    <sys:String x:Key="L_Settings_Paint_OcrResultAction_Title">OCR 結果處理</sys:String>
+    <sys:String x:Key="L_Settings_Paint_OcrResultAction_Desc">選擇文字擷取後的預設行為</sys:String>
+    <sys:String x:Key="L_Settings_Paint_OcrResultAction_EditText">編輯辨識文字</sys:String>
+    <sys:String x:Key="L_Settings_Paint_OcrResultAction_DirectCopy">直接複製到剪貼簿</sys:String>
+    <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Title">Delete 鍵刪除目前圖片</sys:String>
+    <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Desc">按一下 Delete 刪除至資源回收筒，2 秒內可按 Ctrl+Z 復原</sys:String>
+    <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Title">形狀工具專業模式</sys:String>
+    <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Desc">繪製後可手動調整形狀大小與位置 (按 Alt 鍵切換)</sys:String>
+    <sys:String x:Key="L_Settings_Paint_BirdEye_Title">看圖模式顯示鳥瞰圖</sys:String>
+    <sys:String x:Key="L_Settings_Paint_BirdEye_Desc">右鍵關閉後，可在此重新開啟鳥瞰圖</sys:String>
+
+    <!-- View panel -->
+    <sys:String x:Key="L_Settings_View_Title">檢視設定</sys:String>
+    <sys:String x:Key="L_Settings_View_Habits_Header">互動習慣</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Title">滑鼠滾輪功能</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Desc">看圖模式下，直接捲動滾輪時的操作</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Zoom">縮放圖片</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Switch">切換圖片</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Scroll">上下捲動圖片</sys:String>
+    <sys:String x:Key="L_Settings_View_Display_Header">顯示</sys:String>
+    <sys:String x:Key="L_Settings_View_DarkBg_Title">使用深色背景</sys:String>
+    <sys:String x:Key="L_Settings_View_DarkBg_Desc">在圖片周圍顯示深灰色背景</sys:String>
+    <sys:String x:Key="L_Settings_View_TransparentGrid_Title">顯示透明度網格</sys:String>
+    <sys:String x:Key="L_Settings_View_TransparentGrid_Desc">在圖片透明區域顯示灰白網格</sys:String>
+
+    <!-- Shortcuts -->
+    <sys:String x:Key="L_Settings_Shortcuts_Title">快捷鍵設定</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Group_ViewNav">檢視與導覽</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_ToggleMode">切換看圖/繪圖模式</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_ToggleImageBar">展開/收合圖片欄</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_PrevImage">上一張圖片</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_NextImage">下一張圖片</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_FullScreen">全螢幕顯示</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Minimize">最小化視窗</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_RotateLeft">向左旋轉</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_RotateRight">向右旋轉</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_VFlip">垂直翻轉</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_HFlip">水平翻轉</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Group_BasicTools">基礎繪圖工具</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Select">選取工具</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Pen">鉛筆</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Eyedropper">滴管工具</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Eraser">橡皮擦</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Fill">填滿工具</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Text">文字工具</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Brush">筆刷</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Shape">形狀</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Group_AdvancedTools">進階工具</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_ClipMonitor">監聽剪貼簿開關</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_RemoveBg">AI 移除背景</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_ChromaKey">色差去背</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_OCR">OCR 文字辨識</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_ScreenPicker">螢幕取色器</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_CopyHex">複製目前顏色 HEX</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_AutoCrop">智慧裁切空白邊緣</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_AddBorder">圖片加邊框</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Group_FileOps">其他檔案操作</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_OpenWorkspace">開啟工作區</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_PasteNewTab">貼上為新分頁</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Group_Effects">影像效果</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_BCE">亮度/對比/曝光</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_TTS">色溫/色調/飽和度</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_BW">黑白</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_Invert">反相</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_AutoLevels">自動色階</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_Resize">調整大小</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_File_New">新建檔案</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_File_Open">開啟檔案</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_File_Save">儲存檔案</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_File_SaveAs">另存新檔</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_File_NewTab">新建分頁</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Undo">復原</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Redo">重做</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Copy">複製</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Cut">剪切</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Paste">貼上</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Bold">粗體</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Italic">斜體</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Underline">底線</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Strikethrough">刪除線</sys:String>
+
+    <!-- Advanced panel -->
+    <sys:String x:Key="L_Settings_Advanced_Title">進階</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Render_Header">算圖與效能</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Title">重取樣演算法</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Desc">用於圖片儲存或調整大小時</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Title">像素化閾值設定</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Desc">當縮放倍率超過此值時，畫面從線性插值切換為鄰近插值</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_ViewMode">看圖模式</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_PaintMode">繪圖模式</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Habits_Header">互動習慣</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_SkipResetConfirm_Title">重設工作區時不彈出視窗提示</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_SkipResetConfirm_Desc">清空所有分頁或重設工作區時跳過二次確認視窗</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_DiscardAllOnExit_Title">重啟後放棄所有變更</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_DiscardAllOnExit_Desc">關閉程式時自動放棄所有變更</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Maintenance_Header">系統維護</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_Title">收集報告</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_Desc">收集系統資訊、程序資訊與當日記錄</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_WindowTitle">系統報告</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_Copy">複製到剪貼簿</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_Regenerate">重新產生</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_CollectReport_Tip">內容可編輯，可按需求刪改資訊。</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_FactoryReset_Button">清除所有快取和設定</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_FactoryReset">恢復出廠設定</sys:String>
+    <sys:String x:Key="L_Settings_ResetShortcuts">恢復預設快捷鍵</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Title">始終顯示分頁關閉按鈕</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Desc">在圖片分頁上始終顯示關閉按鈕</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Undo_Header">復原重做</sys:String>
+    <sys:String x:Key="L_Settings_MaxGlobalUndoSteps">全域復原總量</sys:String>
+    <sys:String x:Key="L_Settings_MaxGlobalUndoSteps_Desc">所有分頁共保留的最大復原次數</sys:String>
+    <sys:String x:Key="L_Settings_MaxUndoMemory">最大復原記憶體</sys:String>
+    <sys:String x:Key="L_Settings_MaxUndoMemory_Desc">所有分頁共允許的復原堆疊最大記憶體佔用</sys:String>
+    <sys:String x:Key="L_Menu_File_RecycleBin">檔案資源回收筒</sys:String>
+
+
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Auto">自動</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Bilinear">雙線性</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Fant">Fant</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_HighQuality">高畫質</sys:String>
+
+    <!-- Common -->
+    <sys:String x:Key="L_Common_OpenLogFolder">記錄資料夾</sys:String>
+    <sys:String x:Key="L_Common_OK">確定</sys:String>
+    <sys:String x:Key="L_Common_Untitled">未命名</sys:String>
+
+    <!-- MainWindow context menu (canvas) -->
+    <sys:String x:Key="L_Main_Ctx_Copy">複製</sys:String>
+    <sys:String x:Key="L_Main_Ctx_Cut">剪切</sys:String>
+    <sys:String x:Key="L_Main_Ctx_Paste">貼上</sys:String>
+    <sys:String x:Key="L_Main_Ctx_FixedZoom">固定縮放倍率</sys:String>
+    <sys:String x:Key="L_Main_Ctx_WindowTopmost">視窗置頂</sys:String>
+    <sys:String x:Key="L_Main_Ctx_ShowRulers">顯示標尺</sys:String>
+    <sys:String x:Key="L_Main_Ctx_MiniTools">小工具</sys:String>
+    <sys:String x:Key="L_Main_Ctx_AI_RemoveBg">AI 一鍵去背 (RMBG)</sys:String>
+    <sys:String x:Key="L_Main_Ctx_AI_ChromaKey">色差去背 (移除背景)</sys:String>
+    <sys:String x:Key="L_Main_Ctx_OCR">擷取圖中文字</sys:String>
+    <sys:String x:Key="L_Main_Ctx_ScreenPicker">螢幕取色器</sys:String>
+    <sys:String x:Key="L_Main_Ctx_CopyHex">複製顏色代碼 (#HEX)</sys:String>
+    <sys:String x:Key="L_Main_Ctx_AutoCrop">智慧裁切空白</sys:String>
+    <sys:String x:Key="L_Main_Ctx_Rotate">自由旋轉</sys:String>
+    <sys:String x:Key="L_Main_Ctx_AddBorder">一鍵加邊框</sys:String>
+    <sys:String x:Key="L_Main_Ctx_AI_SuperRes">4x 超解析度</sys:String>
+    <sys:String x:Key="L_BirdEye_Ctx_Hide">關閉鳥瞰圖</sys:String>
+
+    <sys:String x:Key="L_Main_Unit_Pixel">像素</sys:String>
+    <sys:String x:Key="L_Main_Filter_AllImages">所有影像檔案</sys:String>
+    <sys:String x:Key="L_Main_Filter_PNG">PNG 圖片</sys:String>
+    <sys:String x:Key="L_Main_Filter_JPEG">JPEG 圖片</sys:String>
+    <sys:String x:Key="L_Main_Filter_WebP">WebP 圖片</sys:String>
+    <sys:String x:Key="L_Main_Filter_BMP">BMP 點陣圖</sys:String>
+    <sys:String x:Key="L_Main_Filter_GIF">GIF 動圖</sys:String>
+    <sys:String x:Key="L_Main_Filter_TIFF">TIFF 圖片</sys:String>
+    <sys:String x:Key="L_Main_Filter_ICO">ICO 圖示</sys:String>
+
+    <sys:String x:Key="L_Main_Toast_Info">提示資訊</sys:String>
+    <sys:String x:Key="L_Main_AiImage_EmptyPrompt">請輸入提示詞後再按 Enter</sys:String>
+    <sys:String x:Key="L_Main_AiImage_ConfigMissing">請先在「設定-外掛與 AI 模型」中配置 AI 文生圖 API</sys:String>
+    <sys:String x:Key="L_Main_AiImage_InvalidApiUrl">API 位址格式不正確，請輸入完整的 http/https 位址</sys:String>
+    <sys:String x:Key="L_Main_AiImage_Generating">正在生成圖片...</sys:String>
+    <sys:String x:Key="L_Main_AiImage_Generated">AI 圖片已生成並於新分頁開啟</sys:String>
+    <sys:String x:Key="L_Main_AiImage_GenerateFailed">生成失敗：{0}</sys:String>
+    <sys:String x:Key="L_Main_Drag_DropToOpen">拖放以開啟</sys:String>
+    <sys:String x:Key="L_Main_Drag_ReleaseToConfirm">放開滑鼠以確認</sys:String>
+
+
+
+    <!-- Top menu bar -->
+    <sys:String x:Key="L_Menu_File">檔案</sys:String>
+    <sys:String x:Key="L_Menu_File_New">新建</sys:String>
+    <sys:String x:Key="L_Menu_File_Open">開啟</sys:String>
+    <sys:String x:Key="L_Menu_File_Add">加入</sys:String>
+    <sys:String x:Key="L_Menu_File_OpenFolder">開啟新資料夾</sys:String>
+    <sys:String x:Key="L_Menu_File_OpenTabFolder">開啟圖片所在資料夾</sys:String>
+    <sys:String x:Key="L_Menu_File_NewWindow">開啟新視窗</sys:String>
+    <sys:String x:Key="L_Menu_File_Recent">最近開啟</sys:String>
+    <sys:String x:Key="L_Menu_File_Recent_Placeholder">佔位符</sys:String>
+    <sys:String x:Key="L_Menu_File_Save">儲存</sys:String>
+    <sys:String x:Key="L_Menu_File_SaveAs">另存新檔</sys:String>
+    <sys:String x:Key="L_Menu_File_SaveAsPDF">另存為 PDF...</sys:String>
+    <sys:String x:Key="L_Menu_File_Print">列印...</sys:String>
+    <sys:String x:Key="L_Menu_Print">列印</sys:String>
+    <sys:String x:Key="L_Menu_File_Exit">結束</sys:String>
+
+    <sys:String x:Key="L_Menu_Edit">編輯</sys:String>
+    <sys:String x:Key="L_Menu_Edit_Copy">複製</sys:String>
+    <sys:String x:Key="L_Menu_Edit_Cut">剪切</sys:String>
+    <sys:String x:Key="L_Menu_Edit_Paste">貼上</sys:String>
+
+    <sys:String x:Key="L_Menu_Effect">效果</sys:String>
+    <sys:String x:Key="L_Menu_Effect_BCE">亮度/對比/曝光</sys:String>
+    <sys:String x:Key="L_Menu_Effect_TTS">色溫/色調/飽和度</sys:String>
+    <sys:String x:Key="L_Menu_Effect_BW">黑白</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Invert">反相</sys:String>
+    <sys:String x:Key="L_Menu_Effect_AutoLevels">自動色階</sys:String>
+    <sys:String x:Key="L_Menu_Effect_RedEye">消除紅眼</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Sketch">鉛筆素描</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Edge">邊緣檢測</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Resize">調整大小</sys:String>
+
+    <!-- Menu bar quick actions tooltips -->
+    <sys:String x:Key="L_ImgBar_ToggleView">展開/收合</sys:String>
+    <sys:String x:Key="L_Menu_QA_Save">儲存</sys:String>
+    <sys:String x:Key="L_Menu_QA_Undo">復原</sys:String>
+    <sys:String x:Key="L_Menu_QA_Redo">重做</sys:String>
+    <sys:String x:Key="L_Menu_QA_NewTab">新建分頁</sys:String>
+    <sys:String x:Key="L_Menu_QA_DiscardAll">放棄所有變更</sys:String>
+    <sys:String x:Key="L_Menu_QA_DiscardImage">放棄此圖片變更</sys:String>
+    <sys:String x:Key="L_Drag_DropZone_Title">拖曳至此處建立新視窗</sys:String>
+    <sys:String x:Key="L_Drag_DropZone_Desc">釋放滑鼠以在獨立視窗中開啟此分頁</sys:String>
+    <sys:String x:Key="L_Menu_QA_Settings">設定</sys:String>
+
+    <!-- About -->
+    <sys:String x:Key="L_Settings_About_Title">關於 TabPaint</sys:String>
+    <sys:String x:Key="L_Settings_About_Subtitle">輕量級繪圖與看圖工具🖌️</sys:String>
+    <sys:String x:Key="L_Settings_About_Developer">開發者:</sys:String>
+    <sys:String x:Key="L_Settings_About_Stack">技術棧:</sys:String>
+    <sys:String x:Key="L_Settings_About_Github">GitHub 首頁</sys:String>
+    <sys:String x:Key="L_Settings_About_CheckUpdate">檢查更新</sys:String>
+    <sys:String x:Key="L_Settings_About_Help">說明文件</sys:String>
+    <sys:String x:Key="L_Settings_About_HomePage">首頁</sys:String>
+    <sys:String x:Key="L_Settings_About_Changelog">更新日誌</sys:String>
+    <sys:String x:Key="L_Settings_About_Issue">建議與回饋</sys:String>
+
+    <!-- Agreement -->
+    <sys:String x:Key="L_Settings_Agreement_Title">開源協議與政策</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Desc">點擊可展開查看完整內容</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_MIT_Title">MIT 協議</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_MIT_Key1">允許商業使用、修改、分發與私有化使用。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_MIT_Key2">分發時需附帶原始版權聲明與許可聲明。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_MIT_Key3">軟體按「原樣」提供，作者不承擔任何擔保責任。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_MIT_Full" xml:space="preserve">MIT License
+
+Copyright (c) 2025 TabPaint Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Privacy_Title">隱私政策</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Privacy_Key1">將說明收集的資訊類型與使用目的。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Privacy_Key2">將說明資料儲存、傳輸與保護方式。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Privacy_Key3">將說明使用者對資料的存取與刪除權利。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Terms_Title">使用者條款</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Terms_Key1">將說明產品的使用範圍與限制。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Terms_Key2">將說明服務中斷、更新與責任邊界。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Terms_Key3">將說明爭議處理方式與條款變更規則。</sys:String>
+    <sys:String x:Key="L_Settings_Agreement_Placeholder">（佔位符）暫未發佈，後續版本補充。</sys:String>
+
+    <!-- ToolBar -->
+    <sys:String x:Key="L_ToolBar_Tool_Select">選擇區域</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Select_Lasso">套索選擇</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Select_MagicWand">魔棒</sys:String>
+    <sys:String x:Key="L_Tool_MagicWand_Tolerance">魔棒容差</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Pen">鉛筆</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_PickColor">取色</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Eraser">橡皮擦</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Fill">填滿</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Text">文字</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_DrawTools">繪圖工具</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Eyedropper">滴管</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush">筆刷</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Round">圓形筆</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Square">方形筆</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Brush">毛刷</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Calligraphy">書法筆</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Spray">噴槍</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Crayon">蠟筆</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Watercolor">水彩筆</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Highlighter">螢光筆</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Mosaic">馬賽克</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Blur">模糊</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Gradient">漸層</sys:String>
+    <sys:String x:Key="L_ToolBar_AIEraser">智慧擦除</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape">形狀</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Rectangle">矩形</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_RoundedRectangle">圓角矩形</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Ellipse">圓形</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Line">直線</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Arrow">箭頭</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Triangle">三角形</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Diamond">菱形</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Pentagon">五邊形</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Star">五角星</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Bubble">對話氣泡</sys:String>
+
+    <sys:String x:Key="L_ToolBar_Crop">裁剪選區</sys:String>
+    <sys:String x:Key="L_ToolBar_RotateFlip">旋轉/翻轉</sys:String>
+    <sys:String x:Key="L_ToolBar_Rotate_Left">向左旋轉 90°</sys:String>
+    <sys:String x:Key="L_ToolBar_Rotate_Right">向右旋轉 90°</sys:String>
+    <sys:String x:Key="L_ToolBar_Rotate_180">旋轉 180°</sys:String>
+    <sys:String x:Key="L_ToolBar_FreeRotate">自由旋轉</sys:String>
+    <sys:String x:Key="L_Rotation_Angle">角度</sys:String>
+    <sys:String x:Key="L_Selection_Rotate">旋轉選區</sys:String>
+    <sys:String x:Key="L_ToolBar_Flip_Vertical">垂直翻轉</sys:String>
+    <sys:String x:Key="L_ToolBar_Flip_Horizontal">水平翻轉</sys:String>
+    <sys:String x:Key="L_ToolBar_CustomColor">自訂顏色</sys:String>
+    <sys:String x:Key="L_ToolBar_Color1">顏色 1</sys:String>
+    <sys:String x:Key="L_ToolBar_Color2">顏色 2</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_White">白色</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Silver">銀色</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Red">正紅</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Orange">橘色</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Yellow">正黃</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Lime">萊姆綠</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Cyan">青色/天藍</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_SkyBlue">蔚藍</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Violet">紫羅蘭</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Magenta">洋紅</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Chocolate">巧克力色</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Black">黑色</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Gray">灰色</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_DarkRed">深紅</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_DarkOrange">深橘</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Gold">金色</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Green">純綠</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Teal">水鴨青</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Blue">純藍</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Purple">紫色</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Maroon">紫紅</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Sienna">赭石</sys:String>
+
+    <!-- TitleBar -->
+    <sys:String x:Key="L_TitleBar_ExifInfo">圖片 Exif 資訊</sys:String>
+    <sys:String x:Key="L_TitleBar_ExifInfo_Details">詳細資訊</sys:String>
+    <sys:String x:Key="L_TitleBar_ToggleMode">切換 畫圖/看圖 模式</sys:String>
+    <sys:String x:Key="L_TitleBar_Minimize">最小化</sys:String>
+    <sys:String x:Key="L_TitleBar_Maximize">最大化</sys:String>
+    <sys:String x:Key="L_TitleBar_Close">結束</sys:String>
+
+    <!-- AdjustBCEWindow -->
+    <sys:String x:Key="L_AdjustBCE_Title">調整圖像</sys:String>
+    <sys:String x:Key="L_AdjustBCE_Brightness">亮度</sys:String>
+    <sys:String x:Key="L_AdjustBCE_Contrast">對比</sys:String>
+    <sys:String x:Key="L_AdjustBCE_Exposure">曝光</sys:String>
+
+    <!-- AdjustTTSWindow -->
+    <sys:String x:Key="L_AdjustTTS_Title">色彩調整</sys:String>
+    <sys:String x:Key="L_AdjustTTS_Temperature">色溫</sys:String>
+    <sys:String x:Key="L_AdjustTTS_Tint">色調</sys:String>
+    <sys:String x:Key="L_AdjustTTS_Saturation">飽和度</sys:String>
+
+    <!-- ResizeCanvasDialog -->
+    <sys:String x:Key="L_ResizeCanvas_Title">圖片尺寸</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Mode">模式：</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Mode_Resample">縮放圖片</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Mode_Canvas">調整畫布大小</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Width">寬度</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Height">高度</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_KeepAspectRatio">保持長寬比</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Info_Format">縮放: {0}%  |  原始: {1} x {2}</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Info_CanvasMode">畫布模式：{0} x {1}</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Desc_Canvas">改變畫布大小，不拉伸圖像</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Desc_Resample">拉伸/壓縮圖像內容</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Error_TooLarge">圖片尺寸不能超過 {0} 像素。</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Error_InvalidSize">尺寸必須大於 0</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_OriginSize">縮放：100% (原始大小)</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_ApplyToAll">套用到所有分頁</sys:String>
+    <sys:String x:Key="L_Toast_BatchResizeStart">正在批次調整圖片大小...</sys:String>
+    <sys:String x:Key="L_Toast_BatchResizeComplete">批次調整大小任務已完成</sys:String>
+
+    <!-- ModernColorPickerWindow -->
+    <sys:String x:Key="L_ColorPicker_Title">編輯顏色</sys:String>
+    <sys:String x:Key="L_ColorPicker_Preview">預覽</sys:String>
+    <sys:String x:Key="L_ColorPicker_BasicColors">基本顏色</sys:String>
+    <sys:String x:Key="L_ColorPicker_CustomColors">自訂顏色</sys:String>
+    <sys:String x:Key="L_ColorPicker_AddCurrentColor">添加當前顏色</sys:String>
+    <sys:String x:Key="L_ColorPicker_Red">紅 (R)</sys:String>
+    <sys:String x:Key="L_ColorPicker_Green">綠 (G)</sys:String>
+    <sys:String x:Key="L_ColorPicker_Blue">藍 (B)</sys:String>
+    <sys:String x:Key="L_ColorPicker_Hue">色調</sys:String>
+    <sys:String x:Key="L_ColorPicker_Saturation">飽和度</sys:String>
+    <sys:String x:Key="L_ColorPicker_Brightness">亮度</sys:String>
+    <sys:String x:Key="L_ColorPicker_Hex">HEX (8位)</sys:String>
+    <sys:String x:Key="L_ColorPicker_Transparent">全透明</sys:String>
+    <sys:String x:Key="L_ColorPicker_TransparentPrefix">透明</sys:String>
+
+    <!-- 100+ Color Names -->
+    <sys:String x:Key="L_Color_White">純白</sys:String>
+    <sys:String x:Key="L_Color_Snow">雪白</sys:String>
+    <sys:String x:Key="L_Color_Honeydew">蜜露色</sys:String>
+    <sys:String x:Key="L_Color_MintCream">薄荷膏色</sys:String>
+    <sys:String x:Key="L_Color_Azure">蔚藍</sys:String>
+    <sys:String x:Key="L_Color_AliceBlue">愛麗絲藍</sys:String>
+    <sys:String x:Key="L_Color_GhostWhite">幽靈白</sys:String>
+    <sys:String x:Key="L_Color_WhiteSmoke">白煙色</sys:String>
+    <sys:String x:Key="L_Color_Seashell">海貝色</sys:String>
+    <sys:String x:Key="L_Color_Beige">米色</sys:String>
+    <sys:String x:Key="L_Color_OldLace">舊蕾絲色</sys:String>
+    <sys:String x:Key="L_Color_FloralWhite">花卉白</sys:String>
+    <sys:String x:Key="L_Color_Ivory">象牙色</sys:String>
+    <sys:String x:Key="L_Color_AntiqueWhite">古董白</sys:String>
+    <sys:String x:Key="L_Color_Linen">亞麻色</sys:String>
+    <sys:String x:Key="L_Color_LavenderBlush">薰衣草紅</sys:String>
+    <sys:String x:Key="L_Color_MistyRose">薄霧玫瑰</sys:String>
+    <sys:String x:Key="L_Color_Gainsboro">亮灰色</sys:String>
+    <sys:String x:Key="L_Color_LightGray">淺灰色</sys:String>
+    <sys:String x:Key="L_Color_Silver">銀色</sys:String>
+    <sys:String x:Key="L_Color_DarkGray">深灰色</sys:String>
+    <sys:String x:Key="L_Color_Gray">灰色</sys:String>
+    <sys:String x:Key="L_Color_DimGray">暗灰色</sys:String>
+    <sys:String x:Key="L_Color_LightSlateGray">淺石板灰</sys:String>
+    <sys:String x:Key="L_Color_SlateGray">石板灰</sys:String>
+    <sys:String x:Key="L_Color_DarkSlateGray">深石板灰</sys:String>
+    <sys:String x:Key="L_Color_Black">純黑</sys:String>
+    <sys:String x:Key="L_Color_IndianRed">印度紅</sys:String>
+    <sys:String x:Key="L_Color_LightCoral">淺珊瑚紅</sys:String>
+    <sys:String x:Key="L_Color_Salmon">鮭魚色</sys:String>
+    <sys:String x:Key="L_Color_DarkSalmon">深鮭魚色</sys:String>
+    <sys:String x:Key="L_Color_LightSalmon">淺鮭魚色</sys:String>
+    <sys:String x:Key="L_Color_Crimson">深紅/緋紅</sys:String>
+    <sys:String x:Key="L_Color_Red">正紅</sys:String>
+    <sys:String x:Key="L_Color_FireBrick">耐火磚紅</sys:String>
+    <sys:String x:Key="L_Color_DarkRed">深紅</sys:String>
+    <sys:String x:Key="L_Color_Pink">粉紅</sys:String>
+    <sys:String x:Key="L_Color_HotPink">熱粉紅</sys:String>
+    <sys:String x:Key="L_Color_DeepPink">深粉紅</sys:String>
+    <sys:String x:Key="L_Color_MediumVioletRed">中紫羅蘭紅</sys:String>
+    <sys:String x:Key="L_Color_PaleVioletRed">蒼紫羅蘭紅</sys:String>
+    <sys:String x:Key="L_Color_Coral">珊瑚色</sys:String>
+    <sys:String x:Key="L_Color_Tomato">番茄紅</sys:String>
+    <sys:String x:Key="L_Color_OrangeRed">橙紅色</sys:String>
+    <sys:String x:Key="L_Color_DarkOrange">深橙色</sys:String>
+    <sys:String x:Key="L_Color_Orange">橙色</sys:String>
+    <sys:String x:Key="L_Color_Gold">金色</sys:String>
+    <sys:String x:Key="L_Color_Yellow">正黃</sys:String>
+    <sys:String x:Key="L_Color_LightYellow">淺黃色</sys:String>
+    <sys:String x:Key="L_Color_LemonChiffon">檸檬綢色</sys:String>
+    <sys:String x:Key="L_Color_PapayaWhip">番木瓜色</sys:String>
+    <sys:String x:Key="L_Color_Moccasin">鹿皮鞋色</sys:String>
+    <sys:String x:Key="L_Color_PeachPuff">桃色</sys:String>
+    <sys:String x:Key="L_Color_PaleGoldenrod">蒼麒麟色</sys:String>
+    <sys:String x:Key="L_Color_Khaki">卡其色</sys:String>
+    <sys:String x:Key="L_Color_DarkKhaki">深卡其色</sys:String>
+    <sys:String x:Key="L_Color_Lavender">薰衣草色</sys:String>
+    <sys:String x:Key="L_Color_Thistle">薊色</sys:String>
+    <sys:String x:Key="L_Color_Plum">李子色</sys:String>
+    <sys:String x:Key="L_Color_Violet">紫羅蘭色</sys:String>
+    <sys:String x:Key="L_Color_Orchid">蘭花色</sys:String>
+    <sys:String x:Key="L_Color_Magenta">品紅色</sys:String>
+    <sys:String x:Key="L_Color_MediumOrchid">中蘭花色</sys:String>
+    <sys:String x:Key="L_Color_MediumPurple">中紫色</sys:String>
+    <sys:String x:Key="L_Color_BlueViolet">藍紫色</sys:String>
+    <sys:String x:Key="L_Color_DarkViolet">深紫羅蘭色</sys:String>
+    <sys:String x:Key="L_Color_DarkOrchid">深蘭花色</sys:String>
+    <sys:String x:Key="L_Color_DarkMagenta">深品紅色</sys:String>
+    <sys:String x:Key="L_Color_Purple">紫色</sys:String>
+    <sys:String x:Key="L_Color_Indigo">靛藍色</sys:String>
+    <sys:String x:Key="L_Color_SlateBlue">石板藍</sys:String>
+    <sys:String x:Key="L_Color_DarkSlateBlue">深石板藍</sys:String>
+    <sys:String x:Key="L_Color_GreenYellow">綠黃色</sys:String>
+    <sys:String x:Key="L_Color_Chartreuse">夏翠絲綠</sys:String>
+    <sys:String x:Key="L_Color_LawnGreen">草地綠</sys:String>
+    <sys:String x:Key="L_Color_Lime">酸橙色</sys:String>
+    <sys:String x:Key="L_Color_LimeGreen">酸橙綠</sys:String>
+    <sys:String x:Key="L_Color_PaleGreen">蒼綠色</sys:String>
+    <sys:String x:Key="L_Color_LightGreen">淺綠色</sys:String>
+    <sys:String x:Key="L_Color_MediumSpringGreen">中春綠色</sys:String>
+    <sys:String x:Key="L_Color_SpringGreen">春綠色</sys:String>
+    <sys:String x:Key="L_Color_MediumSeaGreen">中海洋綠</sys:String>
+    <sys:String x:Key="L_Color_SeaGreen">海洋綠</sys:String>
+    <sys:String x:Key="L_Color_ForestGreen">森林綠</sys:String>
+    <sys:String x:Key="L_Color_Green">綠色</sys:String>
+    <sys:String x:Key="L_Color_DarkGreen">深綠色</sys:String>
+    <sys:String x:Key="L_Color_YellowGreen">黃綠色</sys:String>
+    <sys:String x:Key="L_Color_OliveDrab">橄欖褐色</sys:String>
+    <sys:String x:Key="L_Color_Olive">橄欖色</sys:String>
+    <sys:String x:Key="L_Color_DarkOliveGreen">深橄欖綠</sys:String>
+    <sys:String x:Key="L_Color_MediumAquamarine">中碧綠色</sys:String>
+    <sys:String x:Key="L_Color_DarkSeaGreen">深海洋綠</sys:String>
+    <sys:String x:Key="L_Color_LightSeaGreen">淺海洋綠</sys:String>
+    <sys:String x:Key="L_Color_DarkCyan">深青色</sys:String>
+    <sys:String x:Key="L_Color_Teal">水鴨色</sys:String>
+    <sys:String x:Key="L_Color_Cyan">青色</sys:String>
+    <sys:String x:Key="L_Color_LightCyan">淺青色</sys:String>
+    <sys:String x:Key="L_Color_PaleTurquoise">蒼寶石藍</sys:String>
+    <sys:String x:Key="L_Color_Aquamarine">碧綠色</sys:String>
+    <sys:String x:Key="L_Color_Turquoise">寶石藍色</sys:String>
+    <sys:String x:Key="L_Color_MediumTurquoise">中寶石藍</sys:String>
+    <sys:String x:Key="L_Color_DarkTurquoise">深寶石藍</sys:String>
+    <sys:String x:Key="L_Color_CadetBlue">軍服藍</sys:String>
+    <sys:String x:Key="L_Color_SteelBlue">鋼藍色</sys:String>
+    <sys:String x:Key="L_Color_LightSteelBlue">淺鋼藍色</sys:String>
+    <sys:String x:Key="L_Color_PowderBlue">粉藍色</sys:String>
+    <sys:String x:Key="L_Color_LightBlue">淺藍色</sys:String>
+    <sys:String x:Key="L_Color_SkyBlue">天藍色</sys:String>
+    <sys:String x:Key="L_Color_LightSkyBlue">淺天藍色</sys:String>
+    <sys:String x:Key="L_Color_DeepSkyBlue">深天藍色</sys:String>
+    <sys:String x:Key="L_Color_DodgerBlue">道奇藍</sys:String>
+    <sys:String x:Key="L_Color_CornflowerBlue">矢車菊藍</sys:String>
+    <sys:String x:Key="L_Color_MediumSlateBlue">中石板藍</sys:String>
+    <sys:String x:Key="L_Color_RoyalBlue">品藍/皇室藍</sys:String>
+    <sys:String x:Key="L_Color_Blue">藍色</sys:String>
+    <sys:String x:Key="L_Color_MediumBlue">中藍色</sys:String>
+    <sys:String x:Key="L_Color_DarkBlue">深藍色</sys:String>
+    <sys:String x:Key="L_Color_Navy">海軍藍</sys:String>
+    <sys:String x:Key="L_Color_MidnightBlue">午夜藍</sys:String>
+    <sys:String x:Key="L_Color_Cornsilk">玉米絲色</sys:String>
+    <sys:String x:Key="L_Color_BlanchedAlmond">杏仁白</sys:String>
+    <sys:String x:Key="L_Color_Bisque">比斯開色</sys:String>
+    <sys:String x:Key="L_Color_NavajoWhite">納瓦霍白</sys:String>
+    <sys:String x:Key="L_Color_Wheat">小麥色</sys:String>
+    <sys:String x:Key="L_Color_BurlyWood">硬木色</sys:String>
+    <sys:String x:Key="L_Color_Tan">茶色</sys:String>
+    <sys:String x:Key="L_Color_RosyBrown">褐玫瑰紅</sys:String>
+    <sys:String x:Key="L_Color_SandyBrown">沙褐色</sys:String>
+    <sys:String x:Key="L_Color_Goldenrod">麒麟菊色</sys:String>
+    <sys:String x:Key="L_Color_DarkGoldenrod">深麒麟菊色</sys:String>
+    <sys:String x:Key="L_Color_Peru">秘魯色</sys:String>
+    <sys:String x:Key="L_Color_Chocolate">巧克力色</sys:String>
+    <sys:String x:Key="L_Color_SaddleBrown">重褐色</sys:String>
+    <sys:String x:Key="L_Color_Sienna">赭色</sys:String>
+    <sys:String x:Key="L_Color_Brown">褐色</sys:String>
+    <sys:String x:Key="L_Color_Maroon">栗色</sys:String>
+    <sys:String x:Key="L_Color_DeepBrown">深褐</sys:String>
+    <sys:String x:Key="L_Color_RockCyan">深岩青</sys:String>
+    <sys:String x:Key="L_Color_Coffee">咖啡色</sys:String>
+    <sys:String x:Key="L_Color_MintGreen">薄荷綠</sys:String>
+    <sys:String x:Key="L_Color_LightPink">淡粉</sys:String>
+    <sys:String x:Key="L_Color_LightRed">淺紅</sys:String>
+    <sys:String x:Key="L_Color_LightOrange">淺橙/皮膚色</sys:String>
+    <sys:String x:Key="L_Color_DeepRed">深紅</sys:String>
+    <sys:String x:Key="L_Color_DeepOrange">深橙</sys:String>
+    <sys:String x:Key="L_Color_Ochre">赭石</sys:String>
+    <sys:String x:Key="L_Color_DeepViolet">深紫藍</sys:String>
+
+    <sys:String x:Key="L_Loading">載入中...</sys:String>
+    <sys:String x:Key="L_LoadFailed">載入失敗，請檢查網路</sys:String>
+    <!-- Common Buttons -->
+    <sys:String x:Key="L_Common_Reset">重設</sys:String>
+    <sys:String x:Key="L_Common_Cancel">返回</sys:String>
+    <sys:String x:Key="L_Common_Close">關閉</sys:String>
+    <sys:String x:Key="L_Common_No">取消</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_FactoryReset_Confirm">此操作將刪除所有快取、暫存檔案和使用者設定，並將軟體恢復到初始狀態。確定要繼續嗎？</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Reset_Confirm">確定要將所有快捷鍵恢復為預設設定嗎？此操作無法復原。</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Reset_Title">確認重設</sys:String>
+    <sys:String x:Key="L_Common_Error">錯誤</sys:String>
+    <sys:String x:Key="L_Common_Tip">提示</sys:String>
+
+    <sys:String x:Key="L_TitleBar_Help">說明</sys:String>
+    <sys:String x:Key="L_Hint_ClickLogoMenu">點擊圖示顯示選單</sys:String>
+    <sys:String x:Key="L_Hint_ClickHelp">點擊這裡查看使用指南</sys:String>
+    <sys:String x:Key="L_Help_Next">下一頁</sys:String>
+    <sys:String x:Key="L_Help_Prev">上一頁</sys:String>
+    <sys:String x:Key="L_Help_Close">關閉</sys:String>
+    <!-- 幫助界面文本 -->
+    <sys:String x:Key="L_Help_Desc_2">按 Tab 鍵可快速在「專注看圖」和「自由繪圖」模式間切換</sys:String>
+    <sys:String x:Key="L_Help_Desc_3">支援將圖片直接拖曳至 Word、桌面或任何支援的地方</sys:String>
+    <sys:String x:Key="L_Help_Desc_1">極簡的繪製功能，現在就試試看</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_ICC_Title">色彩校正</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_ICC_Desc">使用顯示器的 ICC 設定檔進行色彩校正</sys:String>
+    <!-- Toasts -->
+    <sys:String x:Key="L_Toast_Deleted">已刪除 (Ctrl+Z 復原)</sys:String>
+    <sys:String x:Key="L_Toast_UndoDelete">已撤銷刪除</sys:String>
+    <sys:String x:Key="L_Toast_FirstImage">已回到第一張圖片</sys:String>
+    <sys:String x:Key="L_Toast_LastImage">這是最後一張圖片</sys:String>
+    <sys:String x:Key="L_Toast_NoContentToCrop">未偵測到有效內容，無需裁剪</sys:String>
+    <sys:String x:Key="L_Toast_MinSize">已是最小尺寸</sys:String>
+    <sys:String x:Key="L_Toast_Copied">已複製</sys:String>
+    <sys:String x:Key="L_Toast_PressDeleteAgain">再次按下 Delete 刪除檔案</sys:String>
+    <sys:String x:Key="L_Toast_DragFailed">拖曳失敗:</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Inverted">已套用反色</sys:String>
+    <sys:String x:Key="L_Toast_Effect_AutoLevels">已自動調整色階</sys:String>
+    <sys:String x:Key="L_Toast_Effect_BW">已套用黑白</sys:String>
+    <sys:String x:Key="L_Toast_FileNotFound">檔案已不存在，無法定位資料夾。</sys:String>
+    <sys:String x:Key="L_Toast_PasteFailed">貼上圖片失敗:</sys:String>
+    <sys:String x:Key="L_Toast_DeleteFailed">刪除失敗:</sys:String>
+    <sys:String x:Key="L_Toast_CopyFailed">複製失敗</sys:String>
+    <sys:String x:Key="L_Toast_NoImageData">無法獲取該分頁的影像數據</sys:String>
+    <sys:String x:Key="L_Toast_InsertFailed">插入失敗:</sys:String>
+    <sys:String x:Key="L_Toast_CannotInsertImage">無法插入圖片:</sys:String>
+    <sys:String x:Key="L_Toast_SizeTooSmallForBorder">圖片尺寸過小，無法貼加邊框</sys:String>
+    <sys:String x:Key="L_Toast_NoSelection">未選中圖片區域</sys:String>
+    <sys:String x:Key="L_Toast_OCR_NoText">未辨識到文字</sys:String>
+    <sys:String x:Key="L_Toast_ImageTooLarge">⚠️ 圖片過大，已自動壓縮顯示</sys:String>
+    <sys:String x:Key="L_Toast_ReadFolderFailed_Prefix">讀取資料夾失敗:</sys:String>
+    <sys:String x:Key="L_Toast_LoadFailed_Prefix">啟動載入失敗:</sys:String>
+    <sys:String x:Key="L_Toast_ShapeProMode_On">專業模式開啟 (Alt)</sys:String>
+    <sys:String x:Key="L_Toast_ShapeProMode_Off">專業模式關閉 (Alt)</sys:String>
+
+    <sys:String x:Key="L_Toast_BorderAdded">已添加 2px 邊框</sys:String>
+    <sys:String x:Key="L_Toast_CropFailed_Prefix">裁切失敗: {0}</sys:String>
+    <sys:String x:Key="L_Toast_ColorCopied_Format">已複製顏色: {0}</sys:String>
+    <sys:String x:Key="L_Toast_ColorPicked_Format">已吸取顏色: #{0:X2}{1:X2}{2:X2}</sys:String>
+    <sys:String x:Key="L_Toast_RemoveBgFailed_Prefix">去背失敗: {0}</sys:String>
+
+    <sys:String x:Key="L_Toast_Apply_Success">套用成功</sys:String>
+    <sys:String x:Key="L_AI_Downloading">下載中...</sys:String>
+    <sys:String x:Key="L_Toast_DownloadCancelled">下載取消</sys:String>
+
+    <sys:String x:Key="L_Toast_OCR_VersionError">OCR 功能僅支援 Windows 10 (1803) 或更高版本。</sys:String>
+    <sys:String x:Key="L_Toast_OCR_Success_Format">成功提取 {0} 個字元到剪貼簿！</sys:String>
+    <sys:String x:Key="L_Toast_OCR_InitFailed">OCR 初始化失敗，請檢查系統設定中是否已安裝對應語言的 OCR 語言包。</sys:String>
+    <sys:String x:Key="L_Toast_OCR_NotSupported">當前系統不支援 OCR API。</sys:String>
+    <sys:String x:Key="L_Toast_OCR_Error_Prefix">OCR 錯誤: {0}</sys:String>
+    <sys:String x:Key="L_Toast_GDIReadFailed_Prefix">GDI+ 讀取失敗: {0}</sys:String>
+    <sys:String x:Key="L_Toast_ClipboardError_Prefix">剪貼簿存取錯誤: {0}</sys:String>
+    <sys:String x:Key="L_Toast_RestoreSelectionFailed_Prefix">恢復選區失敗: {0}</sys:String>
+    <sys:String x:Key="L_Toast_MD5CheckFailed">MD5 校驗失敗，重新下載...</sys:String>
+    <sys:String x:Key="L_Toast_FullScreen_On">進入全螢幕模式</sys:String>
+    <sys:String x:Key="L_Toast_FullScreen_Off">退出全螢幕模式</sys:String>
+    <sys:String x:Key="L_Toast_SaveFailed_Prefix">儲存失敗: {0}</sys:String>
+    <sys:String x:Key="L_Toast_FileNotFound_Format">找不到圖片檔案: {0}</sys:String>
+    <sys:String x:Key="L_Toast_Mode_View">進入看圖模式</sys:String>
+    <sys:String x:Key="L_Toast_Mode_Paint">進入畫圖模式</sys:String>
+    <sys:String x:Key="L_Toast_SavedCount_Format">已儲存 {0} 張圖片。</sys:String>
+    <sys:String x:Key="L_Toast_CleanedCount_Format">已清理 {0} 張未編輯圖片</sys:String>
+    <sys:String x:Key="L_Toast_CleanupFailed_Prefix">清理失敗: {0}</sys:String>
+    <sys:String x:Key="L_Toast_OpenFolderFailed_Prefix">無法打開資料夾: {0}</sys:String>
+    <sys:String x:Key="L_Toast_PrepareDragFailed_Prefix">準備拖曳檔案失敗: {0}</sys:String>
+    <sys:String x:Key="L_Toast_DragStartFailed_Prefix">啟動拖曳失敗: {0}</sys:String>
+    <sys:String x:Key="L_Toast_SwitchWorkspaceFailed_Prefix">切換工作區失敗: {0}</sys:String>
+    <sys:String x:Key="L_Toast_ImageReset">已重置圖片</sys:String>
+
+    <sys:String x:Key="L_Load_Reason_Empty">檔案為空，已建立空白畫布</sys:String>
+    <sys:String x:Key="L_Load_Reason_Header">檔案標頭損壞或格式不支援，已建立空白畫布</sys:String>
+    <sys:String x:Key="L_Load_Reason_Corrupt">檔案損壞或格式不支援，已建立空白畫布</sys:String>
+    <sys:String x:Key="L_Load_Info_Memory">[新建圖像] 記憶體檔案</sys:String>
+    <sys:String x:Key="L_Status_Unsaved">未儲存</sys:String>
+    <sys:String x:Key="L_Msg_ResetWorkspace_Title">放棄更改</sys:String>
+    <sys:String x:Key="L_Msg_ResetImage_Content">是否放棄這張圖片更改？該操作無法復原。</sys:String>
+    <sys:String x:Key="L_Msg_ResetWorkspace_Content">確定要重設當前工作區嗎？所有新建畫布將被刪除，所有打開的圖片將還原至磁碟檔案狀態。</sys:String>
+    <sys:String x:Key="L_Msg_DeleteFile_Title">刪除檔案</sys:String>
+    <sys:String x:Key="L_Msg_DeleteFile_Content">確定要將檔案 '{0}' 放入資源回收筒嗎？&#x0a;此操作無法復原。</sys:String>
+    <sys:String x:Key="L_Msg_SaveError_Title">儲存失敗</sys:String>
+    <sys:String x:Key="L_Msg_SaveError_Content">{0}&#x0a;&#x0a;是否嘗試【另存新檔】到其他位置？</sys:String>
+    <sys:String x:Key="L_Msg_UnsavedClose_Title">儲存提示</sys:String>
+    <sys:String x:Key="L_Msg_UnsavedClose_Content">圖片 {0} 尚未儲存，是否儲存？</sys:String>
+    <sys:String x:Key="L_Msg_SizeTooLarge_Title">尺寸過大</sys:String>
+    <sys:String x:Key="L_Msg_SizeTooLarge_Content">圖片尺寸不能超過 {0} 像素。</sys:String>
+    <sys:String x:Key="L_Msg_ResetFailed">重設失敗: {0}</sys:String>
+    <!-- File Size Formatting -->
+    <sys:String x:Key="L_Format_Size_B">大小: {0} B</sys:String>
+    <sys:String x:Key="L_Format_Size_KB">大小: {0:F1} KB</sys:String>
+    <sys:String x:Key="L_Format_Size_MB">大小: {0:F2} MB</sys:String>
+
+    <!-- OCR & AI Tools -->
+    <sys:String x:Key="L_OCR_Error_NoLangPack">錯誤：未安裝 OCR 語言包，請在 Windows 設定 -> 時間與語言 -> 語言中添加語言包。</sys:String>
+    <sys:String x:Key="L_OCR_Status_Processing">正在提取文字...</sys:String>
+    <sys:String x:Key="L_OCR_Overlay_CopyAll">複製全部文本</sys:String>
+    <sys:String x:Key="L_OCR_AiRuntime_FirstPrompt_Title">OCR 執行階段未安裝</sys:String>
+    <sys:String x:Key="L_OCR_AiRuntime_FirstPrompt_Content">首次使用 AI OCR 需要下載 OCR 執行階段。是否繼續下載並啟用 AI OCR？\n\n選擇「否」後將改用系統 OCR（可在 設定-外掛 中手動下載後自動恢復 AI OCR）。</sys:String>
+    <sys:String x:Key="L_OCR_Failed_Prefix">OCR 辨識失敗: {0}</sys:String>
+    <sys:String x:Key="L_PyOCR_Runtime_DownloadPython">OCR 執行階段：下載 Python</sys:String>
+    <sys:String x:Key="L_PyOCR_Runtime_ExtractPython">OCR 執行階段：解壓 Python</sys:String>
+    <sys:String x:Key="L_PyOCR_Runtime_InstallPip">OCR 執行階段：安裝 pip</sys:String>
+    <sys:String x:Key="L_PyOCR_Runtime_Preparing">OCR 執行階段準備中</sys:String>
+
+    <sys:String x:Key="L_AI_RMBG_MissingRuntime_Title">缺少必要組件</sys:String>
+    <sys:String x:Key="L_AI_RMBG_MissingRuntime_Content">AI 去背功能需要安裝 [Visual C++ 2015-2022 Runtime] 執行庫才能執行。&#x0a;&#x0a;是否立即前往微軟官網下載？</sys:String>
+    <sys:String x:Key="L_AI_Status_Preparing">正在準備 AI 模型...</sys:String>
+    <sys:String x:Key="L_AI_Status_Downloading_Format">下載模型中: {0:F1}%</sys:String>
+    <sys:String x:Key="L_AI_Status_Thinking">AI 正在思考...</sys:String>
+    <sys:String x:Key="L_AI_Error_DllNotFound">無法載入 AI 核心組件。&#x0a;這通常是因為系統缺少 C++ 執行庫或 CPU 不支援 AVX 指令集。&#x0a;請嘗試安裝 VC++ Runtime。</sys:String>
+    <!-- Exif Info -->
+    <sys:String x:Key="L_Exif_Section_File">[檔案資訊]</sys:String>
+    <sys:String x:Key="L_Exif_Path_Memory">路徑: [記憶體檔案] 未儲存到磁碟</sys:String>
+    <sys:String x:Key="L_Exif_Path_Format">路徑: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Size_MB_Format">大小: {0:F2} MB</sys:String>
+
+    <sys:String x:Key="L_Exif_Section_Canvas">[畫布資訊]</sys:String>
+    <sys:String x:Key="L_Exif_Dim_Format">尺寸: {0} × {1} px</sys:String>
+    <sys:String x:Key="L_Exif_BitDepth_Format">位元深度: {0} bit</sys:String>
+    <sys:String x:Key="L_Exif_Dpi_Format">DPI: {0:F0} × {1:F0}</sys:String>
+    <sys:String x:Key="L_Exif_PixelFormat_Format">格式: {0}</sys:String>
+
+    <sys:String x:Key="L_Exif_Section_Photo">[相片中繼資料]</sys:String>
+    <sys:String x:Key="L_Exif_Device_Format">裝置: {0}</sys:String>
+    <sys:String x:Key="L_Exif_ExpTime_Fraction_Format">曝光時間: 1/{0} 秒</sys:String>
+    <sys:String x:Key="L_Exif_ExpTime_Sec_Format">曝光時間: {0} 秒</sys:String>
+    <sys:String x:Key="L_Exif_FNumber_Format">光圈值: f/{0:0.0}</sys:String>
+    <sys:String x:Key="L_Exif_ISO_Format">ISO 速度: ISO-{0}</sys:String>
+    <sys:String x:Key="L_Exif_Bias_Format">曝光補償: {0} EV</sys:String>
+    <sys:String x:Key="L_Exif_Focal_Format">焦距: {0} mm</sys:String>
+    <sys:String x:Key="L_Exif_Focal35_Format">35mm 焦距: {0} mm</sys:String>
+    <sys:String x:Key="L_Exif_Metering_Format">測光模式: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Flash_Format">閃光燈: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Flash_On">開啟</sys:String>
+    <sys:String x:Key="L_Exif_Flash_Off">關閉</sys:String>
+    <sys:String x:Key="L_Exif_Software_Format">處理軟體: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Date_Format">拍攝日期: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Lens_Format">鏡頭: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Error_Parse">無法解析詳細資訊:</sys:String>
+
+    <sys:String x:Key="L_Exif_Meter_Unknown">未知</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Average">平均測光</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Center">中央重點平均測光</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Spot">點測光</sys:String>
+    <sys:String x:Key="L_Exif_Meter_MultiSpot">多點測光</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Pattern">矩陣測光</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Partial">局部測光</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Other">其他</sys:String>
+    <sys:String x:Key="L_Save_Error_ReadOnly">儲存失敗：檔案為唯讀，或您沒有權限寫入此位置。</sys:String>
+    <sys:String x:Key="L_Save_Error_InUse">儲存失敗：檔案可能正在被佔用。&#x0a;{0}</sys:String>
+    <sys:String x:Key="L_Save_Error_General">儲存時發生錯誤：{0}</sys:String>
+
+    <sys:String x:Key="L_Selection_Size_Format">{0}×{1} 像素</sys:String>
+    <sys:String x:Key="L_Selection_Drag_Jump">跳轉至: {0} {1} ({2:F1}s)</sys:String>
+    <sys:String x:Key="L_Selection_Drag_Quick">(快速)</sys:String>
+
+    <sys:String x:Key="L_Clipboard_InternalFormat">TabPaintInternal</sys:String>
+
+    <sys:String x:Key="L_Drag_SwitchWorkspace_Title">切換工作區</sys:String>
+    <sys:String x:Key="L_Drag_SwitchWorkspace_Desc">將清空目前畫布並開啟新資料夾</sys:String>
+    <sys:String x:Key="L_Drag_BatchOpen_Title">批次開啟</sys:String>
+    <sys:String x:Key="L_Drag_BatchOpen_Desc">將 {0} 張圖片作為新分頁開啟</sys:String>
+    <sys:String x:Key="L_Drag_AddToList_Title">加入列表</sys:String>
+    <sys:String x:Key="L_Drag_AddToList_Desc">將圖片作為新分頁加入</sys:String>
+    <sys:String x:Key="L_Drag_Insert_Title">插入圖片</sys:String>
+    <sys:String x:Key="L_Drag_Insert_Desc">在目前位置插入圖片</sys:String>
+    <sys:String x:Key="L_Drag_InsertText_Title">插入文字</sys:String>
+    <sys:String x:Key="L_Drag_InsertText_Desc">放開滑鼠以建立文字框</sys:String>
+
+    <sys:String x:Key="L_Mode_Switch_ToPaint">切換到繪圖模式</sys:String>
+    <sys:String x:Key="L_Mode_Switch_ToView">切換到檢視模式</sys:String>
+
+    <sys:String x:Key="L_Menu_Recent_None">(無最近檔案)</sys:String>
+    <sys:String x:Key="L_Menu_Recent_Clear">清除最近檔案列表</sys:String>
+    <sys:String x:Key="L_Stick_Close">關閉</sys:String>
+    <sys:String x:Key="L_Stick_TopMost">置頂顯示</sys:String>
+    <sys:String x:Key="L_Stick_Opacity">不透明度</sys:String>
+    <sys:String x:Key="L_Stick_ResetScale">重置縮放</sys:String>
+    <sys:String x:Key="L_Stick_Copy">複製</sys:String>
+    <sys:String x:Key="L_Stick_CloseAll">全部關閉</sys:String>
+
+    <sys:String x:Key="L_ToolBar_Tool_Select_Detail" xml:space="preserve">建立矩形選區以進行移動、裁剪或複製。&#x0a;支援拖曳至 Word、瀏覽器、桌面等外部程式。&#x0a;拖曳圖片到畫布可建立矩形選區。</sys:String>
+    <sys:String x:Key="L_ClipboardMonitorToggle_Detail" xml:space="preserve">截圖後自動建立包含該圖片的新分頁</sys:String>
+
+    <sys:String x:Key="L_ImgBar_ClearUnedited">關閉所有未編輯的圖片</sys:String>
+    <sys:String x:Key="L_ImgBar_NewTabLeft">在左側新建</sys:String>
+    <sys:String x:Key="L_Ctx_StickImage">貼圖</sys:String>
+    <sys:String x:Key="L_Ctx_DeleteFile">刪除檔案</sys:String>
+
+    <sys:String x:Key="L_Text_Bold">加粗</sys:String>
+    <sys:String x:Key="L_Text_Italic">斜體</sys:String>
+    <sys:String x:Key="L_Text_Underline">底線</sys:String>
+    <sys:String x:Key="L_Text_Strike">刪除線</sys:String>
+    <sys:String x:Key="L_Text_AlignLeft">靠左對齊</sys:String>
+    <sys:String x:Key="L_Text_AlignCenter">置中對齊</sys:String>
+    <sys:String x:Key="L_Text_AlignRight">靠右對齊</sys:String>
+    <sys:String x:Key="L_Text_OpaqueBackground">不透明背景</sys:String>
+    <sys:String x:Key="L_Text_Subscript">下標</sys:String>
+    <sys:String x:Key="L_Text_Superscript">上標</sys:String>
+    <sys:String x:Key="L_Text_Highlight">醒目提示</sys:String>
+    <sys:String x:Key="L_Text_Shadow">陰影特效</sys:String>
+    <sys:String x:Key="L_Text_InsertTable">插入表格</sys:String>
+    <sys:String x:Key="L_Text_ExpandCollapse">展開/收起工具列</sys:String>
+    <sys:String x:Key="L_Common_Preview">預覽</sys:String>
+    <sys:String x:Key="L_Toast_OpenUrlFailed">無法開啟連結</sys:String>
+    <sys:String x:Key="L_Key_None">無</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_LimitReached">⚠️ 已達到最大尺寸限制 ({0}px)</sys:String>
+    <sys:String x:Key="L_Info_CanvasMode_Format">畫布模式：{0} x {1}</sys:String>
+    <sys:String x:Key="L_Info_ResampleMode_Format">縮放: {0:P0}  |  原始: {1} x {2}</sys:String>
+    <sys:String x:Key="L_Info_DefaultScale">縮放：100% (原始大小)</sys:String>
+    <sys:String x:Key="L_Progress_Loading_Format">正在載入 {0}%</sys:String>
+    <sys:String x:Key="L_Progress_ExportingPDF_Format">正在匯出 PDF... {0}/{1}</sys:String>
+    <sys:String x:Key="L_Toast_ExportPDF_Success">PDF 匯出成功</sys:String>
+
+    <!-- StatusBar Tooltips -->
+    <sys:String x:Key="L_StatusBar_ClipboardMonitor_ToolTip">監看剪貼簿</sys:String>
+    <sys:String x:Key="L_StatusBar_FitToWindow">符合視窗大小</sys:String>
+    <sys:String x:Key="L_StatusBar_ZoomOut">縮小</sys:String>
+    <sys:String x:Key="L_StatusBar_ZoomIn">放大</sys:String>
+    <sys:String x:Key="L_AI_Status_Upscaling">正在進行超解析處理...</sys:String>
+    <sys:String x:Key="L_AI_Status_Upscaling_Format">正在進行超解析處理... {0:0}%</sys:String>
+    <sys:String x:Key="L_Toast_Upscale_Success">超解析度處理完成 (400%)</sys:String>
+    <sys:String x:Key="L_StatusBar_Favorite_ToolTip">收藏</sys:String>
+    <sys:String x:Key="L_Toast_Upscale_Error_Prefix">超解析失敗: {0}</sys:String>
+    <sys:String x:Key="L_AI_Download_Title">下載模型</sys:String>
+    <sys:String x:Key="L_AI_Download_RMBG_Content">首次使用需要下載移除背景模型。是否繼續？</sys:String>
+    <sys:String x:Key="L_AI_Download_SR_Content">首次使用需要下載超解析度模型。是否繼續？</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Watermark">浮水印</sys:String>
+    <sys:String x:Key="L_Watermark_Title">加入浮水印</sys:String>
+    <sys:String x:Key="L_Watermark_Type">浮水印類型</sys:String>
+    <sys:String x:Key="L_Watermark_ApplyToAll">套用至全部</sys:String>
+    <sys:String x:Key="L_Watermark_TypeText">文字</sys:String>
+    <sys:String x:Key="L_Watermark_TypeImage">圖片</sys:String>
+    <sys:String x:Key="L_Watermark_Content">內容</sys:String>
+    <sys:String x:Key="L_Watermark_FontSize">大小</sys:String>
+    <sys:String x:Key="L_Watermark_Color">顏色</sys:String>
+    <sys:String x:Key="L_Watermark_DropImage">將圖片拖曳至下方或點擊選擇</sys:String>
+    <sys:String x:Key="L_Watermark_ClickOrDrop">點擊或拖入</sys:String>
+    <sys:String x:Key="L_Watermark_ImageScale">縮放</sys:String>
+    <sys:String x:Key="L_Watermark_Opacity">不透明度</sys:String>
+    <sys:String x:Key="L_Watermark_Angle">旋轉角度</sys:String>
+    <sys:String x:Key="L_Watermark_Rows">垂直數量</sys:String>
+    <sys:String x:Key="L_Watermark_Cols">水平數量</sys:String>
+    <sys:String x:Key="L_Watermark_RandomOffset">隨機偏移</sys:String>
+    <sys:String x:Key="L_Toast_BatchStart">開始批次加入浮水印...</sys:String>
+    <sys:String x:Key="L_Toast_BatchComplete">批次處理已完成。</sys:String>
+
+
+    <!-- AI Eraser -->
+    <sys:String x:Key="L_AI_Eraser_Downloading">模型下載中...</sys:String>
+    <sys:String x:Key="L_AI_Eraser_Processing">AI 處理中...</sys:String>
+    <sys:String x:Key="L_AI_Eraser_Success">擦除完成!</sys:String>
+    <sys:String x:Key="L_AI_Eraser_Error_Prefix">擦除錯誤: {0}</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Filter">濾鏡</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Sepia">懷舊</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Oil">油畫</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Vignette">暗角</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Glow">柔光</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Sepia">已套用懷舊濾鏡</sys:String>
+    <sys:String x:Key="L_Toast_Effect_OilPainting">已套用油畫濾鏡</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Vignette">已套用暗角效果</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Glow">已套用柔光效果</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Sharpen">銳化</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Brown">褐色</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Sharpen">已套用銳化</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Brown">已套用褐色濾鏡</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Mosaic">已套用馬賽克</sys:String>
+    <sys:String x:Key="L_Toast_Effect_GaussianBlur">已套用高斯模糊</sys:String>
+    <sys:String x:Key="L_Toast_Effect_RedEye">已套用消除紅眼</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Sketch">已套用鉛筆素描</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Edge">已套用邊緣偵測</sys:String>
+    <sys:String x:Key="L_Update_Found_Title">發現新版本</sys:String>
+    <!-- AI Eraser (Inpainting) -->
+    <sys:String x:Key="L_Filter_Strength_Title">調整強度</sys:String>
+    <sys:String x:Key="L_Filter_Value">數值</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Mosaic">馬賽克</sys:String>
+    <sys:String x:Key="L_Menu_Effect_GaussianBlur">高斯模糊</sys:String>
+    <sys:String x:Key="L_Dialog_Strength">強度</sys:String>
+
+    <sys:String x:Key="L_AI_Download_Inpaint_Content">首次使用 AI 橡皮擦需要下載修復模型。是否繼續？</sys:String>
+    <sys:String x:Key="L_AI_Status_Downloading_Inpaint">正在下載修復模型: {0:F1}%</sys:String>
+    <sys:String x:Key="L_Progress_Saving">正在儲存圖片...</sys:String>
+
+</ResourceDictionary>

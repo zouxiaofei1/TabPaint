@@ -23,10 +23,6 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
-using Windows.Graphics.Printing;
-using Windows.UI.Xaml.Printing;
-using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.WindowsRuntime;
 using TabPaint.Controls;
 using TabPaint.Services;
 using TabPaint.UIHandlers;
@@ -34,15 +30,6 @@ using static TabPaint.MainWindow;
 
 namespace TabPaint
 {
-    [ComImport]
-    [Guid("35A74C51-3130-45D3-88E5-9DE0DC8D740A")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    public interface IPrintManagerInterop
-    {
-        IntPtr GetForWindow([In] IntPtr hwnd, [In] ref Guid iid);
-        void ShowPrintUIForWindowAsync([In] IntPtr hwnd);
-    }
-
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
         public static readonly RoutedEvent FavoriteClickEvent = EventManager.RegisterRoutedEvent(
@@ -106,7 +93,6 @@ namespace TabPaint
             if (_lastFocusedInstance == this)
                 _lastFocusedInstance = null;
 
-            UnregisterForPrinting();
             TrayIconService.UpdateVisibility();
         }
 
@@ -158,8 +144,6 @@ namespace TabPaint
             Activated += MainWindow_Activated;
 
             this.Focusable = true;
-
-            RegisterForPrinting();
 
             FileTabs.CollectionChanged += (s, e) =>
             {
@@ -1561,9 +1545,12 @@ namespace TabPaint
 
             double viewportArea = ScrollContainer.ViewportWidth * ScrollContainer.ViewportHeight;
             double selectionScreenArea = (selectTool._selectionRect.Width * zoomscale) * (selectTool._selectionRect.Height * zoomscale);
-            bool shouldShow = !IsViewMode && selectTool.HasActiveSelection && (viewportArea > 0 && (selectionScreenArea / viewportArea) > 0.015);
+            bool shouldShow = !IsViewMode
+                              && _isSelectToolFloatBarVisible
+                              && selectTool.HasActiveSelection
+                              && (viewportArea > 0 && (selectionScreenArea / viewportArea) > 0.015);
 
-            if (!IsViewMode && selectTool.HasActiveSelection && (viewportArea > 0 && (selectionScreenArea / viewportArea) > 0.015))
+            if (shouldShow)
             {
                 // 确保工具栏已加载
                 if (holder.Content == null) { var bar = this.SelectionToolBar; }
@@ -1738,101 +1725,5 @@ namespace TabPaint
                 sb.Begin(button);
             }
         }
-
-        #region WinRT Printing Support
-
-        private PrintManager? _printManager;
-        private PrintDocument? _printDoc;
-        private IPrintDocumentSource? _printDocSource;
-
-        private void RegisterForPrinting()
-        {
-            try
-            {
-                IntPtr hwnd = new WindowInteropHelper(this).EnsureHandle();
-                Guid guid = typeof(PrintManager).GUID;
-                var interop = (IPrintManagerInterop)WindowsRuntimeMarshal.GetActivationFactory(typeof(PrintManager));
-                IntPtr printManagerPtr = interop.GetForWindow(hwnd, ref guid);
-                _printManager = (PrintManager)Marshal.GetObjectForIUnknown(printManagerPtr);
-                _printManager.PrintTaskRequested += OnPrintTaskRequested;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Failed to register for printing: {ex.Message}");
-            }
-        }
-
-        private void UnregisterForPrinting()
-        {
-            if (_printManager != null)
-            {
-                _printManager.PrintTaskRequested -= OnPrintTaskRequested;
-                _printManager = null;
-            }
-        }
-
-        private void OnPrintTaskRequested(PrintManager sender, PrintTaskRequestedEventArgs args)
-        {
-            var deferral = args.Request.GetDeferral();
-            args.Request.CreatePrintTask(LocalizationManager.GetString("L_Menu_File_Print") ?? "Print", sourceRequestedArgs =>
-            {
-                Dispatcher.Invoke(() =>
-                {
-                    _printDoc = new PrintDocument();
-                    _printDocSource = _printDoc.DocumentSource;
-                    _printDoc.Paginate += (s, e) =>
-                    {
-                        _printDoc.SetPreviewPageCount(1, PreviewPageCountType.Final);
-                    };
-                    _printDoc.GetPreviewPage += (s, e) =>
-                    {
-                        var viewbox = new Viewbox
-                        {
-                            Stretch = Stretch.Uniform,
-                            Child = new Image
-                            {
-                                Source = BackgroundImage.Source,
-                                Stretch = Stretch.Uniform
-                            }
-                        };
-                        // 必须在 UI 线程设置预览页面
-                        _printDoc.SetPreviewPage(e.PageNumber, viewbox);
-                    };
-                    _printDoc.AddPages += (s, e) =>
-                    {
-                        var viewbox = new Viewbox
-                        {
-                            Stretch = Stretch.Uniform,
-                            Child = new Image
-                            {
-                                Source = BackgroundImage.Source,
-                                Stretch = Stretch.Uniform
-                            }
-                        };
-                        _printDoc.AddPage(viewbox);
-                        _printDoc.AddPagesComplete();
-                    };
-
-                    sourceRequestedArgs.SetSource((Windows.Graphics.Printing.IPrintDocumentSource)_printDocSource);
-                });
-            });
-            deferral.Complete();
-        }
-
-        public async Task ShowPrintUIAsync()
-        {
-            try
-            {
-                IntPtr hwnd = new WindowInteropHelper(this).Handle;
-                var interop = (IPrintManagerInterop)WindowsRuntimeMarshal.GetActivationFactory(typeof(PrintManager));
-                interop.ShowPrintUIForWindowAsync(hwnd);
-            }
-            catch (Exception ex)
-            {
-                ShowToast(string.Format(LocalizationManager.GetString("L_Common_Error"), ex.Message), ex);
-            }
-        }
-
-        #endregion
     }
 }

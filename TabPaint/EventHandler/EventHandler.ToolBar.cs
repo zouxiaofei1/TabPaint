@@ -182,6 +182,13 @@ namespace TabPaint
 
             _activeColorPicker = new ModernColorPickerWindow(initialColor, useSecondColor);
             _activeColorPicker.Owner = this;
+            _activeColorPicker.Closed += (s, args) =>
+            {
+                if (ReferenceEquals(_activeColorPicker, s))
+                {
+                    _activeColorPicker = null;
+                }
+            };
             
             bool isCompact = SettingsManager.Instance.Current.IsCompactColorPicker;
             if (isCompact)

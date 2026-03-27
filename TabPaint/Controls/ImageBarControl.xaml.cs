@@ -216,6 +216,14 @@ namespace TabPaint.Controls
                 string effectivePath = hasBackup ? backupPath : filePath;
                 bool isNewFile = string.IsNullOrEmpty(filePath) || filePath.StartsWith("::TABPAINT_NEW::");
                 bool dimsFound = false;
+
+                // 新建未落盘图片：优先显示实际新建画布尺寸，避免回退到缩略图 100×60。
+                if (!dimsFound && isNewFile)
+                {
+                    PopupDimensionsText.Text = $"{AppConsts.DefaultBlankCanvasWidth} × {AppConsts.DefaultBlankCanvasHeight} px";
+                    dimsFound = true;
+                }
+
                 if (tabData.IsSelected)
                 {
                     var mw = MainWindow.GetCurrentInstance();

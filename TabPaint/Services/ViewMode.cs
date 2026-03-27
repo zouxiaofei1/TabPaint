@@ -111,7 +111,11 @@ namespace TabPaint
             if (isView)
             {
                 SetViewCursor(false);
-                if (AppTitleBar != null) AppTitleBar.IsLogoMenuEnabled = true;
+                if (AppTitleBar != null)
+                {
+                    AppTitleBar.IsLogoMenuEnabled = true;
+                    AppTitleBar.TryShowLogoMenuHintOnce();
+                }
                 _router.CleanUpSelectionandShape();
                 if (_router.CurrentTool is TextTool textTool) textTool.Cleanup(_ctx);
                 if (_router.CurrentTool is PenTool penTool) penTool.StopDrawing(_ctx);

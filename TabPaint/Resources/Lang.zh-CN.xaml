@@ -52,6 +52,13 @@
     <sys:String x:Key="L_Settings_General_StartInViewMode_Desc">隐藏工具栏，作为看图软件使用</sys:String>
     <sys:String x:Key="L_Settings_General_ShellIntegration_Title">添加到系统右键菜单</sys:String>
     <sys:String x:Key="L_Settings_General_ShellIntegration_Desc">为所有图片加入到右键菜单和打开方式</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_Header">图片生成</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_ApiBaseUrl_Title">API 地址</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_ApiBaseUrl_Desc">OpenAI 兼容接口地址</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_ApiKey_Title">API Key</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_ApiKey_Desc">用于文生图请求鉴权</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_Model_Title">模型名称</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_Model_Desc">例如 gpt-image-1 或其他兼容模型</sys:String>
 
     <sys:String x:Key="L_Settings_General_MouseWheel_Title">鼠标滚轮操作</sys:String>
     <sys:String x:Key="L_Settings_General_MouseWheel_Desc">滑动鼠标滚轮时程序的响应</sys:String>
@@ -72,7 +79,9 @@
     <sys:String x:Key="L_Settings_General_Language_Title">界面语言</sys:String>
     <sys:String x:Key="L_Settings_General_Language_Desc">切换软件显示语言</sys:String>
     <sys:String x:Key="L_Settings_General_Language_Option_Zh">简体中文</sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Option_Tw">繁體中文</sys:String>
     <sys:String x:Key="L_Settings_General_Language_Option_En">English</sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Option_Ja">日本語</sys:String>
     <sys:String x:Key="L_Ico_Title">导出图标</sys:String>
     <sys:String x:Key="L_Ico_AddSize">添加尺寸</sys:String>
     <sys:String x:Key="L_Ico_Error_NoSize">至少添加一个图标尺寸。</sys:String>
@@ -243,6 +252,12 @@
     <sys:String x:Key="L_Main_Filter_ICO">ICO 图标</sys:String>
 
     <sys:String x:Key="L_Main_Toast_Info">提示信息</sys:String>
+    <sys:String x:Key="L_Main_AiImage_EmptyPrompt">请输入提示词后再回车</sys:String>
+    <sys:String x:Key="L_Main_AiImage_ConfigMissing">请先在设置-插件与 AI 模型中配置 AI 文生图 API</sys:String>
+    <sys:String x:Key="L_Main_AiImage_InvalidApiUrl">API 地址格式不正确，请输入完整的 http/https 地址</sys:String>
+    <sys:String x:Key="L_Main_AiImage_Generating">正在生成图片...</sys:String>
+    <sys:String x:Key="L_Main_AiImage_Generated">AI 图片已生成并打开到新标签页</sys:String>
+    <sys:String x:Key="L_Main_AiImage_GenerateFailed">生成失败：{0}</sys:String>
     <sys:String x:Key="L_Main_Drag_DropToOpen">拖放以打开</sys:String>
     <sys:String x:Key="L_Main_Drag_ReleaseToConfirm">释放鼠标以确认</sys:String>
 
@@ -634,6 +649,7 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Common_Tip">提示</sys:String>
 
     <sys:String x:Key="L_TitleBar_Help">帮助</sys:String>
+    <sys:String x:Key="L_Hint_ClickLogoMenu">点击图标显示菜单</sys:String>
     <sys:String x:Key="L_Hint_ClickHelp">点击这里查看使用指南</sys:String>
     <sys:String x:Key="L_Help_Next">下一页</sys:String>
     <sys:String x:Key="L_Help_Prev">上一页</sys:String>

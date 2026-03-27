@@ -9,7 +9,9 @@ namespace TabPaint
     public static class LocalizationManager
     {
         private static readonly Uri ZhCnDict = new Uri("pack://application:,,,/Resources/Lang.zh-CN.xaml", UriKind.Absolute);
+        private static readonly Uri ZhTwDict = new Uri("pack://application:,,,/Resources/Lang.zh-TW.xaml", UriKind.Absolute);
         private static readonly Uri EnUsDict = new Uri("pack://application:,,,/Resources/Lang.en-US.xaml", UriKind.Absolute);
+        private static readonly Uri JaJpDict = new Uri("pack://application:,,,/Resources/Lang.ja-JP.xaml", UriKind.Absolute);
         private static readonly Uri WhatsNewZhCnDict = new Uri("pack://application:,,,/Resources/WhatsNew.zh_cn.xaml", UriKind.Absolute);
         private static readonly Uri WhatsNewEnUsDict = new Uri("pack://application:,,,/Resources/WhatsNew.en_us.xaml", UriKind.Absolute);
 
@@ -19,7 +21,9 @@ namespace TabPaint
             {
                 CultureInfo ci = language switch
                 {
+                    AppLanguage.ChineseTraditional => new CultureInfo("zh-TW"),
                     AppLanguage.English => new CultureInfo("en-US"),
+                    AppLanguage.Japanese => new CultureInfo("ja-JP"),
                     _ => new CultureInfo("zh-CN")
                 };
 
@@ -33,8 +37,21 @@ namespace TabPaint
             var app = Application.Current;
             if (app == null) return;
 
-            var target = language == AppLanguage.English ? EnUsDict : ZhCnDict;
-            var whatsNewTarget = language == AppLanguage.English ? WhatsNewEnUsDict : WhatsNewZhCnDict;
+            var target = language switch
+            {
+                AppLanguage.English => EnUsDict,
+                AppLanguage.Japanese => JaJpDict,
+                AppLanguage.ChineseTraditional => ZhTwDict,
+                _ => ZhCnDict
+            };
+
+            // 当前仅有中/英 What's New 资源，繁中复用中文，日语复用英文
+            var whatsNewTarget = language switch
+            {
+                AppLanguage.English => WhatsNewEnUsDict,
+                AppLanguage.Japanese => WhatsNewEnUsDict,
+                _ => WhatsNewZhCnDict
+            };
 
             // remove existing language dictionaries
             var existing = app.Resources.MergedDictionaries

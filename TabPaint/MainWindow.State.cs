@@ -462,5 +462,7 @@ namespace TabPaint
         public static SemaphoreSlim _thumbnailSemaphore = new SemaphoreSlim(Environment.ProcessorCount);
         private double _visualRotationAngle = 0;
         private bool _isVisualRotating = false;
+        private bool _isSelectToolFloatBarVisible = false;
+        private bool _altToggleHandled = false;
     }
 }
