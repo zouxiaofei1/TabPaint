@@ -106,6 +106,7 @@ namespace TabPaint
             private byte[]? _preStrokeSnapshot;
             private readonly List<Int32Rect> _strokeRects = new();
             public int UndoCount => _undo.Count;
+            public bool HasPendingStroke => _preStrokeSnapshot != null && _strokeRects.Count > 0;
 
             private void UpdateGlobalStats(UndoAction action, bool adding)
             {
@@ -228,39 +229,83 @@ namespace TabPaint
             {
                 if (_surface?.Bitmap == null) return;
 
-                int bytes = _surface.Bitmap.BackBufferStride * _surface.Height;
-                _preStrokeSnapshot = new byte[bytes];
-                _surface.Bitmap.Lock();
-                System.Runtime.InteropServices.Marshal.Copy(_surface.Bitmap.BackBuffer, _preStrokeSnapshot, 0, bytes);
-                _surface.Bitmap.Unlock();
+                _preStrokeSnapshot = CaptureFullBitmapSnapshot();
                 _strokeRects.Clear();
-                _redo.Clear(); // 新操作截断重做链
+                ClearRedo(); // 新操作截断重做链
             }
 
             public List<Int32Rect> GetCurrentStrokeRects() => _strokeRects;
 
             public void AddDirtyRect(Int32Rect rect) => _strokeRects.Add(rect);
 
+            private byte[]? CaptureFullBitmapSnapshot()
+            {
+                if (_surface?.Bitmap == null) return null;
+
+                int bytes = _surface.Bitmap.BackBufferStride * _surface.Height;
+                var snapshot = new byte[bytes];
+                _surface.Bitmap.Lock();
+                System.Runtime.InteropServices.Marshal.Copy(_surface.Bitmap.BackBuffer, snapshot, 0, bytes);
+                _surface.Bitmap.Unlock();
+                return snapshot;
+            }
+
+            private UndoAction? BuildStrokeUndoAction(UndoActionType undoActionType)
+            {
+                var mw = MainWindow.GetCurrentInstance();
+                if (_preStrokeSnapshot == null || _strokeRects.Count == 0 || _surface?.Bitmap == null || mw?._ctx?.Bitmap == null)
+                    return null;
+
+                var combined = ClampRect(
+                    CombineRects(_strokeRects),
+                    mw._ctx.Bitmap.PixelWidth,
+                    mw._ctx.Bitmap.PixelHeight);
+
+                if (combined.Width <= 0 || combined.Height <= 0) return null;
+
+                byte[] region = ExtractRegionFromSnapshot(_preStrokeSnapshot, combined, _surface.Bitmap.BackBufferStride);
+                return new UndoAction(combined, region, undoActionType);
+            }
+
             public void CommitStroke(UndoActionType undoActionType = UndoActionType.Draw)//一般绘画
             {
 
-                if (_preStrokeSnapshot == null || _strokeRects.Count == 0 || _surface?.Bitmap == null)
+                var action = BuildStrokeUndoAction(undoActionType);
+                if (action == null)
                 {
                     _preStrokeSnapshot = null;
+                    _strokeRects.Clear();
                     return;
                 }
-                var combined = ClampRect(CombineRects(_strokeRects), (MainWindow.GetCurrentInstance())._ctx.Bitmap.PixelWidth, (MainWindow.GetCurrentInstance())._ctx.Bitmap.PixelHeight);
 
-                byte[] region = ExtractRegionFromSnapshot(_preStrokeSnapshot, combined, _surface.Bitmap.BackBufferStride);
-                var action = new UndoAction(combined, region, undoActionType);
                 _undo.Push(action);
                 UpdateGlobalStats(action, true);
 
                 TrimStack();
                 UpdateUI();
                 _preStrokeSnapshot = null;
+                _strokeRects.Clear();
 
                 (MainWindow.GetCurrentInstance()).NotifyCanvasChanged();
+            }
+
+            public bool CommitStrokeAndContinue(UndoActionType undoActionType = UndoActionType.Draw)
+            {
+                if (_surface?.Bitmap == null) return false;
+
+                var action = BuildStrokeUndoAction(undoActionType);
+                if (action == null) return false;
+
+                _undo.Push(action);
+                UpdateGlobalStats(action, true);
+
+                TrimStack();
+                UpdateUI();
+                _preStrokeSnapshot = CaptureFullBitmapSnapshot();
+                _strokeRects.Clear();
+
+                (MainWindow.GetCurrentInstance()).NotifyCanvasChanged();
+                return true;
             }
 
             public void internalUndoAction(UndoAction action)

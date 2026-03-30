@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -7,6 +8,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using TabPaint;
 using Windows.ApplicationModel.Background;
 using static TabPaint.MainWindow;
@@ -47,9 +49,68 @@ public partial class PenTool : ToolBase
     private static List<Point[]> _sprayPatterns;
     private static int _patternIndex = 0;
     private static readonly ThreadLocal<Random> _rnd = new ThreadLocal<Random>(() => new Random());
+    private DispatcherTimer _pencilTimedUndoTimer;
+
+    private bool ShouldUseTimedUndo(ToolContext ctx)
+    {
+        var mw = MainWindow.GetCurrentInstance();
+        return ctx.PenStyle == BrushStyle.Pencil && mw != null && mw.zoomscale >= AppConsts.PencilTimedUndoMinZoom;
+    }
+
+    private void EnsurePencilTimedUndoTimer()
+    {
+        if (_pencilTimedUndoTimer != null) return;
+
+        _pencilTimedUndoTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(AppConsts.PencilTimedUndoIntervalMs)
+        };
+        _pencilTimedUndoTimer.Tick += PencilTimedUndoTimer_Tick;
+    }
+
+    private void StartPencilTimedUndoTimer(ToolContext ctx)
+    {
+        if (!ShouldUseTimedUndo(ctx))
+        {
+            StopPencilTimedUndoTimer();
+            return;
+        }
+
+        EnsurePencilTimedUndoTimer();
+        _pencilTimedUndoTimer.Interval = TimeSpan.FromMilliseconds(AppConsts.PencilTimedUndoIntervalMs);
+        _pencilTimedUndoTimer.Start();
+    }
+
+    private void StopPencilTimedUndoTimer()
+    {
+        _pencilTimedUndoTimer?.Stop();
+    }
+
+    private void PencilTimedUndoTimer_Tick(object? sender, EventArgs e)
+    {
+        if (!_drawing)
+        {
+            StopPencilTimedUndoTimer();
+            return;
+        }
+
+        var mw = MainWindow.GetCurrentInstance();
+        if (mw?._ctx == null || !ShouldUseTimedUndo(mw._ctx))
+        {
+            StopPencilTimedUndoTimer();
+            return;
+        }
+
+        if (mw._ctx.Undo.HasPendingStroke)
+        {
+            mw._ctx.Undo.CommitStrokeAndContinue();
+            mw._ctx.IsDirty = true;
+        }
+    }
 
     public override void Cleanup(ToolContext ctx)
     {
+        StopPencilTimedUndoTimer();
         base.Cleanup(ctx); CleanupMask(ctx);
         _drawing = false;
         StopDrawing(ctx);
@@ -318,6 +379,7 @@ public partial class PenTool : ToolBase
         ctx.CapturePointer(); System.Windows.Input.Mouse.OverrideCursor = System.Windows.Input.Cursors.Cross;
         _brushSeed = (uint)_rnd.Value.Next();
         ctx.Undo.BeginStroke();
+        StartPencilTimedUndoTimer(ctx);
         _drawing = true;
         _lastPixel = px;
         _lastPressure = pressure;
@@ -540,6 +602,7 @@ public partial class PenTool : ToolBase
 
     public void StopDrawing(ToolContext ctx)
     {
+        StopPencilTimedUndoTimer();
         if (!_drawing) return;
         _drawing = false;
         var dirtyRects = ctx.Undo.GetCurrentStrokeRects();

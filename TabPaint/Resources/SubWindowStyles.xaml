@@ -776,7 +776,7 @@
                     <Grid>
                         <!-- 滑块外圈 -->
                         <Ellipse x:Name="OuterRing" 
-                             Fill="{DynamicResource SliderThumbFillBrush}" 
+                             Fill="{DynamicResource SliderThumbStaticBrush}" 
                              Stroke="{DynamicResource SliderThumbBorderBrush}" 
                              StrokeThickness="1"/>
                         <!-- 滑块内圆 -->

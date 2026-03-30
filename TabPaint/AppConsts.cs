@@ -135,9 +135,9 @@ namespace TabPaint
         public const double MaxTextBoxWidth = 1000.0;
         public const int EditorOverlayZIndex = 999;
         public const double TextToolOutlineThickness = 1.5;
-        public const double TextToolHandleHitTestSize = 12.0;
-        public const double TextToolBorderThicknessMin = 5.0;
-        public const double TextToolBorderThicknessMax = 10.0;
+        public const double TextToolHandleHitTestSize = 16.0;
+        public const double TextToolBorderThicknessMin = 6.0;
+        public const double TextToolBorderThicknessMax = 14.0;
         public const double TextToolPadding = 5.0;
 
         // --- 形状工具参数 ---
@@ -310,6 +310,8 @@ namespace TabPaint
         // --- 撤销管理参数 ---
         public const int UndoHotZoneSize = 3;
         public const int UndoCompressThreshold = 64 * 1024;
+        public const int PencilTimedUndoIntervalMs = 3000;
+        public const double PencilTimedUndoMinZoom = 8.0;
 
         // --- 笔刷特定逻辑参数 ---
         public const double CalligraphyMaxSpeed = 60.0;

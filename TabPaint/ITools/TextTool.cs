@@ -158,17 +158,30 @@ namespace TabPaint
                 double h = _richTextBox.ActualHeight;
                 var rect = new Int32Rect((int)x, (int)y, (int)w, (int)h);
 
-                var outline = new System.Windows.Shapes.Rectangle  // 虚线框
+                var outlineBlack = new System.Windows.Shapes.Rectangle  // 黑色虚线框
                 {
-                    Stroke = mw._darkBackgroundBrush,
+                    Stroke = Brushes.Black,
                     StrokeDashArray = new DoubleCollection { 4, 4 },
                     StrokeThickness = invScale * AppConsts.TextToolOutlineThickness,
                     Width = rect.Width,
                     Height = rect.Height
                 };
-                Canvas.SetLeft(outline, rect.X);
-                Canvas.SetTop(outline, rect.Y);
-                overlay.Children.Add(outline);
+                Canvas.SetLeft(outlineBlack, rect.X);
+                Canvas.SetTop(outlineBlack, rect.Y);
+                overlay.Children.Add(outlineBlack);
+
+                var outlineWhite = new System.Windows.Shapes.Rectangle  // 白色虚线框，错位后形成黑白交替线
+                {
+                    Stroke = Brushes.White,
+                    StrokeDashArray = new DoubleCollection { 4, 4 },
+                    StrokeDashOffset = 4,
+                    StrokeThickness = invScale * AppConsts.TextToolOutlineThickness,
+                    Width = rect.Width,
+                    Height = rect.Height
+                };
+                Canvas.SetLeft(outlineWhite, rect.X);
+                Canvas.SetTop(outlineWhite, rect.Y);
+                overlay.Children.Add(outlineWhite);
 
                 // 八个句柄
                 foreach (var p in GetHandlePositions(rect))
@@ -210,6 +223,13 @@ namespace TabPaint
                 if (Math.Abs(px.X - x2) <= size && Math.Abs(px.Y - y2) <= size) return ResizeAnchor.BottomRight;
 
                 return ResizeAnchor.None;
+            }
+
+            private double GetTextboxBorderHitThickness()
+            {
+                double zoom = Math.Max((MainWindow.GetCurrentInstance()).zoomscale, AppConsts.MinZoom);
+                double scaledThickness = AppConsts.TextToolBorderThicknessMin / zoom;
+                return Math.Clamp(scaledThickness, AppConsts.TextToolBorderThicknessMin, AppConsts.TextToolBorderThicknessMax);
             }
 
             public override void OnPointerMove(ToolContext ctx, Point viewPos, float pressure = 1.0f)
@@ -447,7 +467,7 @@ namespace TabPaint
                 double y = Canvas.GetTop(_richTextBox);
                 double w = _richTextBox.ActualWidth;
                 double h = _richTextBox.ActualHeight;
-                double borderThickness = Math.Max(AppConsts.TextToolBorderThicknessMin / (MainWindow.GetCurrentInstance()).zoomscale, AppConsts.TextToolBorderThicknessMax);
+                double borderThickness = GetTextboxBorderHitThickness();
                 bool inOuter = px.X >= x - borderThickness &&
                                px.X <= x + w + borderThickness &&
                                px.Y >= y - borderThickness &&

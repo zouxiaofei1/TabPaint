@@ -956,7 +956,7 @@ namespace TabPaint
             if (_isEdited && !string.IsNullOrEmpty(_currentFilePath))
             {
 
-                SaveBitmap(_currentFilePath);
+                SaveBitmap(_currentFilePath, allowIcoOptionsDialog: false);
                 _isEdited = false;
             }
 

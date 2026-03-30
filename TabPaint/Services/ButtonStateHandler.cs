@@ -430,7 +430,7 @@ namespace TabPaint
             }
         }
 
-        private void SaveBitmap(string path)
+        private void SaveBitmap(string path, bool allowIcoOptionsDialog = true)
         {
             // 1. 获取当前编辑的像素数据
             int width = _bitmap.PixelWidth;
@@ -465,31 +465,40 @@ namespace TabPaint
         _originalDpiX, _originalDpiY,
         PixelFormats.Bgra32, null, pixels, stride
     );
-                var icoWin = new TabPaint.Windows.IcoExportWindow(baseSource);
-                icoWin.ShowOwnerModal(this);
+                List<int> icoSizes;
 
-                if (icoWin.IsConfirmed)
+                if (allowIcoOptionsDialog)
                 {
-                    try
+                    var icoWin = new TabPaint.Windows.IcoExportWindow(baseSource);
+                    icoWin.ShowOwnerModal(this);
+
+                    if (!icoWin.IsConfirmed)
                     {
-                        using (var fs = new FileStream(path, FileMode.Create))
-                        {
-                            // 调用我们第一步写的静态类
-                            TabPaint.Core.IcoEncoder.Save(baseSource, icoWin.ResultSizes, fs);
-                        }
-                        MarkAsSaved();
-                        UpdateTabThumbnail(path);
+                        return;
                     }
-                    catch (Exception ex)
-                    {
-                        string msg = string.Format(LocalizationManager.GetString("L_Save_Error_General"), ex.Message);
-                        HandleSaveError(msg, path);
-                    }
+
+                    icoSizes = icoWin.ResultSizes;
                 }
                 else
                 {
-                    return;
+                    icoSizes = GetSilentIcoSizes(path, baseSource);
                 }
+
+                try
+                {
+                    using (var fs = new FileStream(path, FileMode.Create))
+                    {
+                        TabPaint.Core.IcoEncoder.Save(baseSource, icoSizes, fs);
+                    }
+                    MarkAsSaved();
+                    UpdateTabThumbnail(path);
+                }
+                catch (Exception ex)
+                {
+                    string msg = string.Format(LocalizationManager.GetString("L_Save_Error_General"), ex.Message);
+                    HandleSaveError(msg, path);
+                }
+
                 return; // ICO 保存完毕，退出方法
             }
             if (ext == ".webp")
@@ -580,6 +589,37 @@ namespace TabPaint
 
             MarkAsSaved();
             UpdateTabThumbnail(path);  // 5. 更新对应标签页的缩略图
+        }
+
+        private List<int> GetSilentIcoSizes(string path, BitmapSource source)
+        {
+            try
+            {
+                if (File.Exists(path))
+                {
+                    using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                    var decoder = BitmapDecoder.Create(fs, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.OnLoad);
+                    var existingSizes = decoder.Frames
+                        .Select(frame => Math.Max(frame.PixelWidth, frame.PixelHeight))
+                        .Where(size => size > 0 && size <= 256)
+                        .Distinct()
+                        .OrderByDescending(size => size)
+                        .ToList();
+
+                    if (existingSizes.Count > 0)
+                    {
+                        return existingSizes;
+                    }
+                }
+            }
+            catch
+            {
+                // 静默保存场景下尺寸读取失败时回退到默认策略，不额外弹窗打断用户
+            }
+
+            int fallbackSize = Math.Max(source.PixelWidth, source.PixelHeight);
+            fallbackSize = Math.Min(256, Math.Max(16, fallbackSize));
+            return new List<int> { fallbackSize };
         }
 
         private void HandleSaveError(string message, string failedPath)

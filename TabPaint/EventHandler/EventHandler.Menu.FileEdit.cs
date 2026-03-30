@@ -60,7 +60,7 @@ namespace TabPaint
         private void OnSaveClick(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(_currentFilePath) || IsVirtualPath(_currentFilePath)) OnSaveAsClick(sender, e);
-            else SaveBitmap(_currentFilePath);
+            else SaveBitmap(_currentFilePath, allowIcoOptionsDialog: false);
         }
 
         private void OnSaveAsClick(object sender, RoutedEventArgs e)
@@ -86,7 +86,7 @@ namespace TabPaint
             if (dlg.ShowDialog() == true)
             {
                 string newPath = dlg.FileName;
-                SaveBitmap(newPath);
+                SaveBitmap(newPath, allowIcoOptionsDialog: true);
                 _currentFilePath = newPath;
                 _currentFileName = System.IO.Path.GetFileName(newPath);
 
