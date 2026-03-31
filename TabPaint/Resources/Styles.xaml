@@ -175,7 +175,8 @@
                                 CornerRadius="4"
                                 Visibility="Collapsed"
                                 VerticalAlignment="Bottom"
-                                Height="2"/>
+                                Height="2"
+                                Margin="0,0,0,-1"/>
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -851,7 +852,7 @@
         <Style x:Key="SubMenuItemStyle" TargetType="MenuItem">
             <Setter Property="Padding" Value="12,6"/>
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
-            <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+            <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="MenuItem">

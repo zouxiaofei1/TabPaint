@@ -6,7 +6,10 @@
              mc:Ignorable="d" 
              d:DesignHeight="35" d:DesignWidth="200"
              Focusable="True"
+             GotKeyboardFocus="UserControl_GotKeyboardFocus"
+             LostKeyboardFocus="UserControl_LostKeyboardFocus"
              PreviewKeyDown="UserControl_PreviewKeyDown"
+             PreviewKeyUp="UserControl_PreviewKeyUp"
              InputMethod.IsInputMethodEnabled="False"
              PreviewMouseDown="UserControl_PreviewMouseDown">
 
@@ -45,7 +48,7 @@
             </Grid.ColumnDefinitions>
 
             <TextBlock x:Name="KeyDisplay" 
-                       Text="{Binding CurrentItem.DisplayText, RelativeSource={RelativeSource AncestorType=UserControl}, FallbackValue=1}" 
+                       Text="{Binding DisplayText, RelativeSource={RelativeSource AncestorType=UserControl}}" 
                        VerticalAlignment="Center" 
                        Margin="10,0" 
                        Foreground="{DynamicResource TextControlBrush}"

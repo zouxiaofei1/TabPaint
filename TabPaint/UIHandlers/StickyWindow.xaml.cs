@@ -5,6 +5,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using System.Collections.Specialized;
 using System.IO;
 using TabPaint.Services;
@@ -38,6 +39,10 @@ namespace TabPaint.Windows
         private double _originalWidth; // 记录原始宽度用于重置
         private HwndSource? _hwndSource;
         private readonly string? _sourceFilePath;
+        private double _pendingWheelScaleFactor = 1.0;
+        private Point _pendingWheelMousePos;
+        private bool _isWheelZoomQueued;
+        private bool _isClosed;
 
         [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
         private struct RECT
@@ -93,6 +98,10 @@ namespace TabPaint.Windows
 
         private void StickyWindow_Closed(object? sender, EventArgs e)
         {
+            _isClosed = true;
+            _isWheelZoomQueued = false;
+            _pendingWheelScaleFactor = 1.0;
+
             if (_hwndSource != null)
             {
                 _hwndSource.RemoveHook(WndProc);
@@ -234,30 +243,63 @@ namespace TabPaint.Windows
 
         private void Window_MouseWheel(object sender, MouseWheelEventArgs e)
         {
-       
-            Point mousePos = e.GetPosition(this);
-            double oldWidth = this.Width;
-            double oldHeight = this.Height;
+            if (_isClosed || _aspectRatio <= 0) return;
 
-            double scale = e.Delta > 0 ? 1.1 : 0.9;
+            e.Handled = true;
 
-            if (this.Height >= SystemParameters.PrimaryScreenHeight || this.Width >= SystemParameters.PrimaryScreenWidth)
-                if(e.Delta > 0)
-                    return;
-            double newHeight = oldHeight * scale;
+            double detents = e.Delta / 120.0;
+            if (Math.Abs(detents) < double.Epsilon) return;
+
+            double eventScale = detents > 0
+                ? Math.Pow(1.1, detents)
+                : Math.Pow(0.9, -detents);
+
+            _pendingWheelMousePos = e.GetPosition(this);
+            _pendingWheelScaleFactor *= eventScale;
+
+            if (_isWheelZoomQueued) return;
+
+            _isWheelZoomQueued = true;
+            Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(ApplyPendingWheelZoom));
+        }
+
+        private void ApplyPendingWheelZoom()
+        {
+            _isWheelZoomQueued = false;
+
+            if (_isClosed || _aspectRatio <= 0)
+            {
+                _pendingWheelScaleFactor = 1.0;
+                return;
+            }
+
+            double scale = _pendingWheelScaleFactor;
+            _pendingWheelScaleFactor = 1.0;
+
+            if (Math.Abs(scale - 1.0) < 0.0001) return;
+
+            double oldWidth = Width;
+            double oldHeight = Height;
+            if (oldWidth <= 0 || oldHeight <= 0) return;
+
+            double requestedHeight = oldHeight * scale;
+            double minHeight = Math.Max(50.0, 50.0 / _aspectRatio);
+            double maxHeight = Math.Min(SystemParameters.PrimaryScreenHeight, SystemParameters.PrimaryScreenWidth / _aspectRatio);
+            if (maxHeight < minHeight) maxHeight = minHeight;
+
+            double newHeight = Math.Clamp(requestedHeight, minHeight, maxHeight);
             double newWidth = newHeight * _aspectRatio;
 
-            if (newWidth > 50 && newHeight > 50)
-            {
-                double scaleX = newWidth / oldWidth;
-                double scaleY = newHeight / oldHeight;
+            if (Math.Abs(newWidth - oldWidth) < 0.01 && Math.Abs(newHeight - oldHeight) < 0.01) return;
 
-                // Keep the content under mouse cursor stable while zooming.
-                this.Left = this.Left + mousePos.X - (mousePos.X * scaleX);
-                this.Top = this.Top + mousePos.Y - (mousePos.Y * scaleY);
-                this.Width = newWidth;
-                this.Height = newHeight;
-            }
+            double scaleX = newWidth / oldWidth;
+            double scaleY = newHeight / oldHeight;
+
+            // Keep the content under mouse cursor stable while zooming.
+            Left = Left + _pendingWheelMousePos.X - (_pendingWheelMousePos.X * scaleX);
+            Top = Top + _pendingWheelMousePos.Y - (_pendingWheelMousePos.Y * scaleY);
+            Width = newWidth;
+            Height = newHeight;
         }
         private void OnCloseClick(object sender, RoutedEventArgs e){ this.Close(); }
 

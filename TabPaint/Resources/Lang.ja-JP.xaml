@@ -879,6 +879,7 @@ SOFTWARE.</sys:String>
 
     <sys:String x:Key="L_Toast_OpenUrlFailed">リンクを開けません</sys:String>
     <sys:String x:Key="L_Key_None">なし</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Waiting">入力待ち</sys:String>
     <sys:String x:Key="L_Info_CanvasMode_Format">キャンバスモード: {0} x {1}</sys:String>
     <sys:String x:Key="L_Info_ResampleMode_Format">ズーム: {0:P0}  |  オリジナル: {1} x {2}</sys:String>
     <sys:String x:Key="L_Info_DefaultScale">ズーム: 100% (元サイズ)</sys:String>

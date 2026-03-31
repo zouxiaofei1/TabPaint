@@ -172,6 +172,11 @@ namespace TabPaint
             await CheckForUpdatesAsync(isManual: false);
             _hasCheckedUpdateThisSession = true;
         }
+
+        public async void CheckForUpdatesManually()
+        {
+            await CheckForUpdatesAsync(isManual: true);
+        }
         
         private async Task CheckForUpdatesAsync(bool isManual)
         {

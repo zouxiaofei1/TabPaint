@@ -49,6 +49,14 @@
                 </MenuItem.Template>
             </MenuItem>
         </MenuItem>
+        <MenuItem Header="{DynamicResource L_Settings_View_MouseWheel_Title}" Tag="MouseWheelMenu" Style="{StaticResource Win11MenuItemStyle}">
+            <MenuItem.Icon>
+                <Path Data="{DynamicResource Scroll_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+            </MenuItem.Icon>
+            <MenuItem Header="{DynamicResource L_Settings_View_MouseWheel_Zoom}" Tag="WheelZoom" IsCheckable="True" Style="{StaticResource Win11MenuItemStyle}"/>
+            <MenuItem Header="{DynamicResource L_Settings_View_MouseWheel_Switch}" Tag="WheelSwitchImage" IsCheckable="True" Style="{StaticResource Win11MenuItemStyle}"/>
+            <MenuItem Header="{DynamicResource L_Settings_View_MouseWheel_Scroll}" Tag="WheelVerticalScroll" IsCheckable="True" Style="{StaticResource Win11MenuItemStyle}"/>
+        </MenuItem>
         <Separator Style="{StaticResource MenuSeparator}"/>
         <MenuItem Style="{StaticResource Win11MenuItemStyle}"  Tag="Save" Header="{DynamicResource L_Menu_File_Save}" 
                   services:ShortcutService.ShortcutKey="File.Save">

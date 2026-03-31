@@ -877,6 +877,7 @@ SOFTWARE.</sys:String>
 
     <sys:String x:Key="L_Toast_OpenUrlFailed">Cannot open link</sys:String>
     <sys:String x:Key="L_Key_None">None</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Waiting">Press shortcut</sys:String>
     <sys:String x:Key="L_Info_CanvasMode_Format">Canvas Mode: {0} x {1}</sys:String>
     <sys:String x:Key="L_Info_ResampleMode_Format">Zoom: {0:P0}  |  Original: {1} x {2}</sys:String>
     <sys:String x:Key="L_Info_DefaultScale">Zoom: 100% (Original Size)</sys:String>

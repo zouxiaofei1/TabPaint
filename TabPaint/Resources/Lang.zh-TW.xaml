@@ -859,6 +859,7 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Common_Preview">預覽</sys:String>
     <sys:String x:Key="L_Toast_OpenUrlFailed">無法開啟連結</sys:String>
     <sys:String x:Key="L_Key_None">無</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Waiting">等待錄入</sys:String>
     <sys:String x:Key="L_ResizeCanvas_LimitReached">⚠️ 已達到最大尺寸限制 ({0}px)</sys:String>
     <sys:String x:Key="L_Info_CanvasMode_Format">畫布模式：{0} x {1}</sys:String>
     <sys:String x:Key="L_Info_ResampleMode_Format">縮放: {0:P0}  |  原始: {1} x {2}</sys:String>

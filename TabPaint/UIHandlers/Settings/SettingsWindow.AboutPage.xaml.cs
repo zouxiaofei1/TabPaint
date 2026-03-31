@@ -64,5 +64,13 @@ namespace TabPaint.Pages
                 settingsWindow.NavigateToTag("Agreement");
             }
         }
+
+        private void OnCheckUpdateClick(object sender, RoutedEventArgs e)
+        {
+            if (Window.GetWindow(this) is SettingsWindow settingsWindow)
+            {
+                settingsWindow.CheckForUpdatesManually();
+            }
+        }
     }
 }

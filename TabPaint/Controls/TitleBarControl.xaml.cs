@@ -10,6 +10,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using TabPaint.Services;
+using TabPaint;
 
 namespace TabPaint.Controls
 {
@@ -270,6 +271,7 @@ namespace TabPaint.Controls
                     menu.Placement = PlacementMode.Bottom;
                     menu.HorizontalOffset = 0;
                     menu.VerticalOffset = 2;
+                    menu.Opened += OnLogoContextMenuOpened;
 
                     foreach (var item in menu.Items)
                     {
@@ -289,11 +291,85 @@ namespace TabPaint.Controls
             else if (item.Tag?.ToString() == "Settings") item.Click += OnSettingsClick;
             else if (item.Tag?.ToString() == "Exit") item.Click += OnExitClick;
             else if (item.Tag?.ToString() == "OpenFolder") item.Click += OnOpenWorkspaceClick;
+            else if (item.Tag?.ToString() == "WheelZoom") item.Click += OnWheelZoomMenuItemClick;
+            else if (item.Tag?.ToString() == "WheelSwitchImage") item.Click += OnWheelSwitchImageMenuItemClick;
+            else if (item.Tag?.ToString() == "WheelVerticalScroll") item.Click += OnWheelVerticalScrollMenuItemClick;
 
             // 递归处理子菜单
             foreach (var subItem in item.Items)
             {
                 if (subItem is MenuItem subMenuItem)   BindMenuEvents(subMenuItem);
+            }
+        }
+
+        private void OnLogoContextMenuOpened(object? sender, RoutedEventArgs e)
+        {
+            if (sender is not ContextMenu menu) return;
+
+            var currentMode = SettingsManager.Instance.Current.ViewMouseWheelMode;
+            UpdateWheelMenuCheckState(menu, currentMode);
+        }
+
+        private static void UpdateWheelMenuCheckState(ItemsControl parent, MouseWheelMode currentMode)
+        {
+            foreach (var item in parent.Items)
+            {
+                if (item is not MenuItem menuItem) continue;
+
+                var tag = menuItem.Tag?.ToString();
+                if (tag == "WheelZoom")
+                {
+                    menuItem.IsChecked = currentMode == MouseWheelMode.Zoom;
+                }
+                else if (tag == "WheelSwitchImage")
+                {
+                    menuItem.IsChecked = currentMode == MouseWheelMode.SwitchImage;
+                }
+                else if (tag == "WheelVerticalScroll")
+                {
+                    menuItem.IsChecked = currentMode == MouseWheelMode.VerticalScroll;
+                }
+
+                if (menuItem.HasItems)
+                {
+                    UpdateWheelMenuCheckState(menuItem, currentMode);
+                }
+            }
+        }
+
+        private static void SetViewMouseWheelMode(MouseWheelMode mode)
+        {
+            var settings = SettingsManager.Instance.Current;
+            if (settings.ViewMouseWheelMode == mode) return;
+
+            settings.ViewMouseWheelMode = mode;
+            SettingsManager.Instance.Save();
+        }
+
+        private void OnWheelZoomMenuItemClick(object sender, RoutedEventArgs e)
+        {
+            SetViewMouseWheelMode(MouseWheelMode.Zoom);
+            if (AppIcon.ContextMenu != null)
+            {
+                UpdateWheelMenuCheckState(AppIcon.ContextMenu, MouseWheelMode.Zoom);
+            }
+        }
+
+        private void OnWheelSwitchImageMenuItemClick(object sender, RoutedEventArgs e)
+        {
+            SetViewMouseWheelMode(MouseWheelMode.SwitchImage);
+            if (AppIcon.ContextMenu != null)
+            {
+                UpdateWheelMenuCheckState(AppIcon.ContextMenu, MouseWheelMode.SwitchImage);
+            }
+        }
+
+        private void OnWheelVerticalScrollMenuItemClick(object sender, RoutedEventArgs e)
+        {
+            SetViewMouseWheelMode(MouseWheelMode.VerticalScroll);
+            if (AppIcon.ContextMenu != null)
+            {
+                UpdateWheelMenuCheckState(AppIcon.ContextMenu, MouseWheelMode.VerticalScroll);
             }
         }
         public static readonly RoutedEvent HelpClickEvent = EventManager.RegisterRoutedEvent(

@@ -433,12 +433,12 @@ namespace TabPaint
                     else
                     {
                         CommitText(ctx);
-                        if (_richTextBox == null)
-                        {
-                            _startPos = viewPos;
-                            _dragging = true; // 这里的 dragging 是指“拖拽创建新框”
-                        }
-                        lag = 2;
+                        //if (_richTextBox == null)
+                        //{
+                        //    _startPos = viewPos;
+                        //    _dragging = true; // 这里的 dragging 是指“拖拽创建新框”
+                        //}
+                        //lag = 2;
                         return;
                     }
                 }
@@ -489,33 +489,40 @@ namespace TabPaint
                     _resizing = false;
                     _dragging = false;
                     _currentAnchor = ResizeAnchor.None;
-
-                    // 释放鼠标捕获，这样下次点击才能正常工作
                     ctx.EditorOverlay.ReleaseMouseCapture();
                     return;
                 }
                 if (_dragging && _richTextBox == null)
                 {
-                    if (lag > 0) { lag -= 1; return; }
-                    _dragging = false;
+                    if (lag > 0)
+                    {
+                        lag -= 1;
+                        _dragging = false; // 【关键修复2】必须重置拖拽状态，否则会卡在创建模式
+                        return;
+                    }
 
+                    _dragging = false;
                     _richTextBox = CreateRichTextBox(ctx, _startPos.X, _startPos.Y);
                     _richTextBox.Width = AppConsts.DefaultTextBoxWidth;
                     _richTextBox.MinHeight = AppConsts.MinTextBoxHeight;
-                    SetupRichTextBoxEvents(ctx, _richTextBox);
 
+                    // 调用统一的事件绑定
+                    SetupRichTextBoxEvents(ctx, _richTextBox);
                     ctx.EditorOverlay.Visibility = Visibility.Visible;
                     ctx.EditorOverlay.IsHitTestVisible = true;
                     Canvas.SetZIndex(ctx.EditorOverlay, AppConsts.EditorOverlayZIndex);
                     ctx.EditorOverlay.Children.Add(_richTextBox);
-
-                    (MainWindow.GetCurrentInstance()).ShowTextToolbarFor(_richTextBox);
+                    MainWindow.GetCurrentInstance().ShowTextToolbarFor(_richTextBox);
                     _richTextBox.Focus();
                 }
             }
             private void SetupRichTextBoxEvents(ToolContext ctx, System.Windows.Controls.RichTextBox rtb)
             {
                 rtb.Loaded += (s, e) => { DrawTextboxOverlay(ctx); rtb.Focus(); };
+                rtb.SelectionChanged += (s, e) =>
+                {
+                    MainWindow.GetCurrentInstance().SyncTextToolbarState(rtb);
+                };
                 rtb.PreviewKeyDown += (s, e) =>
                 {
                     if (e.Key == Key.Delete && rtb.Selection.IsEmpty && new TextRange(rtb.Document.ContentStart, rtb.Document.ContentEnd).Text.Trim() == "")
@@ -524,10 +531,14 @@ namespace TabPaint
                         e.Handled = true;
                     }
                 };
-
-                // 当内容变化时，可能需要更新选区框大小（如果我们要自适应高度）
                 rtb.TextChanged += (s, e) => { AutoFitContent(rtb); };
-
+                // 【关键修复1】必须在这里挂载 EditorOverlay 的拦截事件，否则新创建的框无法被拖动！
+                ctx.EditorOverlay.PreviewMouseUp -= Overlay_PreviewMouseUp;
+                ctx.EditorOverlay.PreviewMouseUp += Overlay_PreviewMouseUp;
+                ctx.EditorOverlay.PreviewMouseMove -= Overlay_PreviewMouseMove;
+                ctx.EditorOverlay.PreviewMouseMove += Overlay_PreviewMouseMove;
+                ctx.EditorOverlay.PreviewMouseDown -= Overlay_PreviewMouseDown;
+                ctx.EditorOverlay.PreviewMouseDown += Overlay_PreviewMouseDown;
             }
             public void CommitText(ToolContext ctx)
             {
@@ -731,12 +742,16 @@ namespace TabPaint
                 MainWindow mw = MainWindow.GetCurrentInstance();
                 ctx.SelectionOverlay.Children.Clear();
                 ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
+
                 if (ctx.EditorOverlay.Children.Contains(_richTextBox))
                     ctx.EditorOverlay.Children.Remove(_richTextBox);
-
+                // 【关键修复4】必须在清理时注销事件，防止残留导致下次操作出错
+                ctx.EditorOverlay.PreviewMouseUp -= Overlay_PreviewMouseUp;
+                ctx.EditorOverlay.PreviewMouseMove -= Overlay_PreviewMouseMove;
+                ctx.EditorOverlay.PreviewMouseDown -= Overlay_PreviewMouseDown;
                 mw.SetUndoRedoButtonState();
                 _richTextBox = null;
-                lag = 2;
+                lag = 2; // 统一在这里赋予 lag
                 if (mw._canvasResizer != null) mw._canvasResizer.SetHandleVisibility(true);
             }
        

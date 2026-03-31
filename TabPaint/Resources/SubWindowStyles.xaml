@@ -829,7 +829,8 @@
                                 CornerRadius="4"
                                 Visibility="Collapsed"
                                 VerticalAlignment="Bottom"
-                                Height="2"/>
+                                Height="2"
+                                Margin="0,0,0,-1"/>
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
