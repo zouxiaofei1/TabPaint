@@ -220,7 +220,8 @@
     <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Bilinear">バイリニア</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Fant">Fant (高品質)</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Resampling_Option_HighQuality">高品質 (HighQuality)</sys:String>
-
+    <sys:String x:Key="L_Settings_Shortcuts_File_Print">印刷</sys:String>
+ 
     <!-- Common Strings -->
     <sys:String x:Key="L_Common_OpenLogFolder">フォルダーを開く</sys:String>
     <sys:String x:Key="L_Common_OK">OK</sys:String>
@@ -957,8 +958,6 @@ SOFTWARE.</sys:String>
     <!-- Unified AI Status (If not present) -->
     <sys:String x:Key="L_AI_Status_Downloading_Inpaint" xmlns:sys="clr-namespace:System;assembly=mscorlib">修復モデルをダウンロード中: {0:F1}%</sys:String>
     <sys:String x:Key="L_Progress_Saving">画像を保存中...</sys:String>
-    <sys:String x:Key="L_QuickFormat_Title">クイックフォーマット変換</sys:String>
-    <sys:String x:Key="L_QuickFormat_Tip">Ctrlを離して変換、元のファイルは削除されます</sys:String>
     <sys:String x:Key="L_QuickFormat_Error_NoFile">現在の画像は保存されていないため、変換できません</sys:String>
 
 </ResourceDictionary>

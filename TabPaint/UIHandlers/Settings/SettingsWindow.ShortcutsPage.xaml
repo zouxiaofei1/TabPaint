@@ -173,6 +173,14 @@
                 <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_Shape}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToShape], Source={x:Static local:SettingsManager.Instance}}"/>
             </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_File_QuickFormat}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.QuickFormat], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
 
             <!-- 第三组：高级工具 -->
             <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Group_AdvancedTools}" FontWeight="Bold" Margin="0,15,0,5" Foreground="{DynamicResource TextPrimaryBrush}"/>
@@ -273,6 +281,14 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="{DynamicResource L_Settings_Shortcuts_PasteNewTab}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[File.PasteNewTab], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_File_Print}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[File.Print], Source={x:Static local:SettingsManager.Instance}}"/>
             </Grid>
 
             <!-- 第五组：图像效果 -->

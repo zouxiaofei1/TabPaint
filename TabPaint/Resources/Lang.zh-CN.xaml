@@ -20,7 +20,7 @@
     <sys:String x:Key="L_CreateNewWorkSpate">选择图片以建立新工作区</sys:String>
     <sys:String x:Key="L_Toast_NewWindowFromSelectionFailed">从选区创建新窗口失败:</sys:String>
     <sys:String x:Key="L_Toast_NewWindowFailed">创建新窗口失败:</sys:String>
-    
+    <sys:String x:Key="L_Settings_Shortcuts_File_Print">打印</sys:String>
     <!-- 插件面板 -->
     <sys:String x:Key="L_Settings_Plugins_Title">插件与 AI 模型</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Desc">管理 AI 模型和可选组件。</sys:String>
@@ -217,8 +217,6 @@
     <sys:String x:Key="L_Settings_MaxUndoMemory">最大撤销内存</sys:String>
     <sys:String x:Key="L_Settings_MaxUndoMemory_Desc">所有标签页共允许的撤销栈最大内存占用</sys:String>
     <sys:String x:Key="L_Menu_File_RecycleBin">文件回收站</sys:String>
-    <sys:String x:Key="L_QuickFormat_Title">快速转换格式</sys:String>
-    <sys:String x:Key="L_QuickFormat_Tip">松开 Ctrl 确认转换，源文件将被删除</sys:String>
     <sys:String x:Key="L_QuickFormat_Error_NoFile">当前图片未保存，无法转换</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Auto">自动</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Bilinear">双线性</sys:String>

@@ -897,7 +897,7 @@ namespace TabPaint
         { "File.Save",           new ShortcutItem { Key = Key.S, Modifiers = ModifierKeys.Control } },
         { "File.SaveAs",         new ShortcutItem { Key = Key.S, Modifiers = ModifierKeys.Control | ModifierKeys.Shift } },
         { "File.Print",          new ShortcutItem { Key = Key.P, Modifiers = ModifierKeys.Control } },
-        { "File.QuickFormat",    new ShortcutItem { Key = Key.Q, Modifiers = ModifierKeys.Control } },
+
 
         // 1. 全局/视图功能
         { "View.PrevImage",      new ShortcutItem { Key = Key.Left, Modifiers = ModifierKeys.None } },
@@ -946,8 +946,10 @@ namespace TabPaint
         { "Tool.SwitchToEraser", new ShortcutItem { Key = Key.D4, Modifiers = ModifierKeys.Control } }, // 橡皮
         { "Tool.SwitchToFill",   new ShortcutItem { Key = Key.D5, Modifiers = ModifierKeys.Control } }, // 填充
         { "Tool.SwitchToText",   new ShortcutItem { Key = Key.D6, Modifiers = ModifierKeys.Control } }, // 文字
-        { "Tool.SwitchToBrush",  new ShortcutItem { Key = Key.D7, Modifiers = ModifierKeys.Control } }, // 画刷菜单(通常只切到默认画刷)
-        { "Tool.SwitchToShape",  new ShortcutItem { Key = Key.D8, Modifiers = ModifierKeys.Control } }, // 形状菜单(通常切到默认形状)
+        { "Tool.SwitchToBrush",  new ShortcutItem { Key = Key.D7, Modifiers = ModifierKeys.Control } }, // 画刷菜单
+        { "Tool.SwitchToShape",  new ShortcutItem { Key = Key.D8, Modifiers = ModifierKeys.Control } }, // 形状菜单(通常切到默认形
+        { "Tool.QuickFormat",    new ShortcutItem { Key = Key.Q, Modifiers = ModifierKeys.Control } },
+
           // === 6. 效果菜单 (Effect) ===
         { "Effect.Brightness",   new ShortcutItem { Key = Key.R, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 亮度/对比度
         { "Effect.Temperature",  new ShortcutItem { Key = Key.T, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 色温/色调

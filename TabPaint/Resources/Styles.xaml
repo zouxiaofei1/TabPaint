@@ -666,28 +666,162 @@
         </Style>
 
     <Style TargetType="{x:Type local:Controls.QuickFormatItem}">
+        <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type local:Controls.QuickFormatItem}">
-                    <Grid Width="70" Height="70">
-                        <Ellipse x:Name="OuterCircle" 
-                                 Fill="{DynamicResource ControlBackgroundBrush}" 
-                                 Stroke="{DynamicResource BorderMediumBrush}" 
-                                 StrokeThickness="1"/>
-                        <TextBlock Text="{TemplateBinding Format}" 
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   FontSize="14" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    <Grid x:Name="RootGrid" Width="260" Height="260" RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <ScaleTransform x:Name="ItemScale" ScaleX="1" ScaleY="1"/>
+                        </Grid.RenderTransform>
+                        
+                        <!-- 扇形背景 -->
+                        <Path x:Name="SectorPath" 
+                               Data="{Binding SectorGeometry, RelativeSource={RelativeSource TemplatedParent}}"
+                               Fill="{DynamicResource ControlBackgroundBrush}" 
+                               Stroke="{DynamicResource BorderMediumBrush}" 
+                               StrokeThickness="1"
+                               Opacity="0.7">
+                            <Path.Effect>
+                                <DropShadowEffect x:Name="GlowEffect" BlurRadius="20" ShadowDepth="0" Opacity="0" Color="{DynamicResource SystemAccentColor}"/>
+                            </Path.Effect>
+                        </Path>
+
+                        <!-- 高亮覆盖层 (光泽感) -->
+                        <Path x:Name="GlossPath" 
+                               Data="{Binding SectorGeometry, RelativeSource={RelativeSource TemplatedParent}}"
+                               IsHitTestVisible="False"
+                               Opacity="0">
+                            <Path.Fill>
+                                <RadialGradientBrush Center="0.5,0.5" GradientOrigin="0.5,0.5" RadiusX="1" RadiusY="1">
+                                    <GradientStop Color="#40FFFFFF" Offset="0"/>
+                                    <GradientStop Color="Transparent" Offset="1"/>
+                                </RadialGradientBrush>
+                            </Path.Fill>
+                        </Path>
+
+                        <!-- 文字容器：用于定位在扇区中心 -->
+                        <Canvas IsHitTestVisible="False">
+                            <TextBlock x:Name="FormatText"
+                                     Text="{TemplateBinding Format}" 
+                                     FontSize="16" FontWeight="Bold"
+                                     Foreground="{DynamicResource TextPrimaryBrush}"
+                                     Canvas.Left="{Binding TextX, RelativeSource={RelativeSource TemplatedParent}}"
+                                     Canvas.Top="{Binding TextY, RelativeSource={RelativeSource TemplatedParent}}">
+                                <TextBlock.RenderTransform>
+                                    <TranslateTransform X="-25" Y="-10"/>
+                                </TextBlock.RenderTransform>
+                            </TextBlock>
+                        </Canvas>
                     </Grid>
+                    
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="OuterCircle" Property="Fill" Value="{DynamicResource SystemAccentBrush}"/>
-                            <Setter TargetName="OuterCircle" Property="Stroke" Value="{DynamicResource SystemAccentHoverBrush}"/>
-                            <Setter TargetName="OuterCircle" Property="StrokeThickness" Value="2"/>
-                            <Setter Property="Foreground" Value="White"/>
-                        </Trigger>
+                        <!-- 悬停效果：轻微放大 + 颜色变深 -->
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="OuterCircle" Property="Fill" Value="{DynamicResource SubtleHoverBrush}"/>
+                            <Setter TargetName="SectorPath" Property="Fill" Value="{DynamicResource SubtleHoverBrush}"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="RootGrid" 
+                                                       Storyboard.TargetProperty="(RenderTransform).ScaleX" 
+                                                       To="1.05" Duration="0:0:0.1"/>
+                                        <DoubleAnimation Storyboard.TargetName="RootGrid" 
+                                                       Storyboard.TargetProperty="(RenderTransform).ScaleY" 
+                                                       To="1.05" Duration="0:0:0.1"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="RootGrid" 
+                                                       Storyboard.TargetProperty="(RenderTransform).ScaleX" 
+                                                       To="1" Duration="0:0:0.1"/>
+                                        <DoubleAnimation Storyboard.TargetName="RootGrid" 
+                                                       Storyboard.TargetProperty="(RenderTransform).ScaleY" 
+                                                       To="1" Duration="0:0:0.1"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        
+                        <!-- 禁用效果：深灰色背景 + 文字变暗 -->
+                        <Trigger Property="IsDisabled" Value="True">
+                            <Setter TargetName="SectorPath" Property="Fill" Value="#444444"/>
+                            <Setter TargetName="SectorPath" Property="Stroke" Value="#666666"/>
+                            <Setter TargetName="FormatText" Property="Foreground" Value="{DynamicResource TextTertiaryBrush}"/>
+                            <Setter TargetName="FormatText" Property="Opacity" Value="0.5"/>
+                        </Trigger>
+
+                        <!-- 禁用项选中效果：稍亮的深灰色 + 主题色边框 -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="True"/>
+                                <Condition Property="IsDisabled" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="SectorPath" Property="Fill" Value="#555555"/>
+                            <Setter TargetName="SectorPath" Property="Stroke" Value="{DynamicResource SystemAccentBrush}"/>
+                            <Setter TargetName="SectorPath" Property="StrokeThickness" Value="2"/>
+                            <Setter TargetName="FormatText" Property="Foreground" Value="White"/>
+                            <Setter TargetName="FormatText" Property="Opacity" Value="0.7"/>
+                            <Setter TargetName="SectorPath" Property="Opacity" Value="1.0"/>
+                        </MultiTrigger>
+
+                        <!-- 选中效果：主题色高亮 + 呼吸发光特效 -->
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="SectorPath" Property="Fill" Value="{DynamicResource SystemAccentBrush}"/>
+                            <Setter TargetName="SectorPath" Property="Stroke" Value="{DynamicResource SystemAccentHoverBrush}"/>
+                            <Setter TargetName="SectorPath" Property="StrokeThickness" Value="2"/>
+                            <Setter TargetName="FormatText" Property="Foreground" Value="White"/>
+                            <Setter TargetName="SectorPath" Property="Opacity" Value="1.0"/>
+                            <Setter TargetName="RootGrid" Property="Panel.ZIndex" Value="10"/>
+                            <Setter TargetName="GlossPath" Property="Opacity" Value="0.3"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard x:Name="SelectedAnim">
+                                    <Storyboard>
+                                        <!-- 呼吸灯发光 -->
+                                        <DoubleAnimation Storyboard.TargetName="GlowEffect" 
+                                                       Storyboard.TargetProperty="Opacity" 
+                                                       To="0.8" Duration="0:0:0.3"/>
+                                        <DoubleAnimation Storyboard.TargetName="GlowEffect" 
+                                                       Storyboard.TargetProperty="BlurRadius" 
+                                                       From="15" To="35" Duration="0:0:1" 
+                                                       AutoReverse="True" RepeatBehavior="Forever"/>
+                                        
+                                        <!-- 弹性放大 -->
+                                        <DoubleAnimation Storyboard.TargetName="ItemScale" 
+                                                       Storyboard.TargetProperty="ScaleX" 
+                                                       To="1.1" Duration="0:0:0.4">
+                                            <DoubleAnimation.EasingFunction>
+                                                <ElasticEase Oscillations="1" Springiness="6"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="ItemScale" 
+                                                       Storyboard.TargetProperty="ScaleY" 
+                                                       To="1.1" Duration="0:0:0.4">
+                                            <DoubleAnimation.EasingFunction>
+                                                <ElasticEase Oscillations="1" Springiness="6"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <StopStoryboard BeginStoryboardName="SelectedAnim"/>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="GlowEffect" 
+                                                       Storyboard.TargetProperty="Opacity" 
+                                                       To="0" Duration="0:0:0.3"/>
+                                        <DoubleAnimation Storyboard.TargetName="ItemScale" 
+                                                       Storyboard.TargetProperty="ScaleX" 
+                                                       To="1" Duration="0:0:0.2"/>
+                                        <DoubleAnimation Storyboard.TargetName="ItemScale" 
+                                                       Storyboard.TargetProperty="ScaleY" 
+                                                       To="1" Duration="0:0:0.2"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

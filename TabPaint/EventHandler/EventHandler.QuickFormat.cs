@@ -4,6 +4,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using TabPaint.Controls;
+using System.Windows.Input;
 
 namespace TabPaint
 {
@@ -17,7 +18,8 @@ namespace TabPaint
                 return;
             }
 
-            QuickFormatPopup.ShowPanel();
+            _quickFormatModifiers = Keyboard.Modifiers;
+            QuickFormatPopup.ShowPanel(_currentTabItem.FilePath);
         }
 
         private void OnQuickFormatSelected(object sender, string format)
@@ -62,6 +64,10 @@ namespace TabPaint
             catch (Exception ex)
             {
                 ShowToast(string.Format(LocalizationManager.GetString("L_Toast_SaveFailed_Prefix"), ex.Message), ex);
+            }
+            finally
+            {
+                _quickFormatModifiers = ModifierKeys.None;
             }
         }
     }

@@ -14,7 +14,8 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-
+using System;
+using System.Linq;
 
 namespace TabPaint
 {
@@ -95,6 +96,7 @@ namespace TabPaint
 
         private void HandlePaintModeShortcuts(object sender, KeyEventArgs e)
         {
+          
             if (IsShortcut("Tool.SwitchToPen", e)) { SetBrushStyle(BrushStyle.Pencil); e.Handled = true; return; }
             if (IsShortcut("Tool.SwitchToPick", e)) { LastTool = _router.CurrentTool; _router.SetTool(_tools.Eyedropper); e.Handled = true; return; }
             if (IsShortcut("Tool.SwitchToEraser", e)) { SetBrushStyle(BrushStyle.Eraser); e.Handled = true; return; }
@@ -102,7 +104,19 @@ namespace TabPaint
             if (IsShortcut("Tool.SwitchToFill", e)) { _router.SetTool(_tools.Fill); e.Handled = true; return; }
             if (IsShortcut("Tool.SwitchToText", e)) { _router.SetTool(_tools.Text); e.Handled = true; return; }
             if (IsShortcut("Tool.SwitchToBrush", e)) { SetBrushStyle(BrushStyle.Round); e.Handled = true; return; }
-            if (IsShortcut("Tool.SwitchToShape", e)) { _router.SetTool(_tools.Shape); e.Handled = true; return; }
+            if (IsShortcut("Tool.SwitchToShape", e))
+            {
+                if (QuickFormatPopup.Visibility == Visibility.Visible) QuickFormatPopup.Rotate();
+                else ShowQuickFormatPanel();
+                e.Handled = true; return;
+            }
+            if (IsShortcut("Tool.QuickFormat", e))
+            {
+                if (QuickFormatPopup.Visibility == Visibility.Visible) QuickFormatPopup.Rotate();
+                else ShowQuickFormatPanel();
+                e.Handled = true; return;
+            }
+
             if (IsShortcut("View.ToggleMinimize", e)) { if (this.WindowState != WindowState.Minimized) this.WindowState = WindowState.Minimized; e.Handled = true; return; }
             if (IsShortcut("Tool.ClipMonitor", e))
             {
@@ -129,7 +143,7 @@ namespace TabPaint
             if (IsShortcut("Effect.Invert", e)) { OnInvertColorsClick(sender, e); e.Handled = true; return; }      // Ctrl+Alt+R
             if (IsShortcut("Effect.AutoLevels", e)) { OnAutoLevelsClick(sender, e); e.Handled = true; return; }  // Ctrl+Alt+T
             if (IsShortcut("Effect.Resize", e)) { OnResizeCanvasClick(sender, e); e.Handled = true; return; }      // Ctrl+Alt+Y
-            if (IsShortcut("File.QuickFormat", e)) { ShowQuickFormatPanel(); e.Handled = true; return; }
+         
 
             if (Keyboard.Modifiers == ModifierKeys.Control)
             {
@@ -310,6 +324,21 @@ namespace TabPaint
                 _isNavigating = false;
                 _navKeyPressStartTime = DateTime.MinValue;
             }
+
+            // 处理快捷格式调整面板的修饰键松开确认逻辑
+            if (_quickFormatModifiers != ModifierKeys.None && QuickFormatPopup.Visibility == Visibility.Visible)
+            {
+                bool modifierReleased = false;
+                if ((_quickFormatModifiers & ModifierKeys.Control) != 0 && (e.Key == Key.LeftCtrl || e.Key == Key.RightCtrl)) modifierReleased = true;
+                else if ((_quickFormatModifiers & ModifierKeys.Alt) != 0 && (e.Key == Key.LeftAlt || e.Key == Key.RightAlt || e.Key == Key.System)) modifierReleased = true;
+                else if ((_quickFormatModifiers & ModifierKeys.Shift) != 0 && (e.Key == Key.LeftShift || e.Key == Key.RightShift)) modifierReleased = true;
+                else if ((_quickFormatModifiers & ModifierKeys.Windows) != 0 && (e.Key == Key.LWin || e.Key == Key.RWin)) modifierReleased = true;
+
+                if (modifierReleased)
+                {
+                    QuickFormatPopup.Confirm();
+                }
+            }
         }
 
         private void MainWindow_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -402,6 +431,16 @@ namespace TabPaint
             if (IsViewMode) HandleViewModeShortcuts(sender, e);
             else HandlePaintModeShortcuts(sender, e);
         }
+        //private bool IsShortcut(string actionName, KeyEventArgs e)
+        //{
+        //    var settings = SettingsManager.Instance.Current;
+        //    if (settings.Shortcuts == null || !settings.Shortcuts.ContainsKey(actionName))
+        //        return false;
+
+        //    var item = settings.Shortcuts[actionName];
+        //    Key key = (e.Key == Key.System ? e.SystemKey : e.Key);
+        //    return (key == item.Key && Keyboard.Modifiers == item.Modifiers);
+        //}
         private bool IsShortcut(string actionName, KeyEventArgs e)
         {
             var settings = SettingsManager.Instance.Current;
@@ -409,8 +448,24 @@ namespace TabPaint
                 return false;
 
             var item = settings.Shortcuts[actionName];
-            Key key = (e.Key == Key.System ? e.SystemKey : e.Key);
-            return (key == item.Key && Keyboard.Modifiers == item.Modifiers);
+
+            // 1. 获取实际按键（处理 Alt 键等系统键）
+            Key realKey = (e.Key == Key.System ? e.SystemKey : e.Key);
+
+            // 2. 如果当前按下的键本身就是修饰键（如 Ctrl, Shift, Alt），直接返回 false
+            // 这样可以避免在按下 Ctrl 的那一刻就去触发逻辑
+            if (realKey == Key.LeftCtrl || realKey == Key.RightCtrl ||
+                realKey == Key.LeftShift || realKey == Key.RightShift ||
+                realKey == Key.LeftAlt || realKey == Key.RightAlt ||
+                realKey == Key.LWin || realKey == Key.RWin)
+            {
+                return false;
+            }
+
+            // 3. 匹配按键和修饰符
+            // 使用 Keyboard.Modifiers 获取当前全局修饰符状态
+            return realKey == item.Key && Keyboard.Modifiers == item.Modifiers;
         }
+
     }
 }

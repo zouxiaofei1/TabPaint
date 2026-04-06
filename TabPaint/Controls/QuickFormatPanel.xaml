@@ -5,29 +5,53 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
-    <Grid>
-        <!-- 半透明背景遮罩 -->
-        <Border Background="#40000000" MouseDown="Background_MouseDown"/>
+    <Grid x:Name="RootGrid">
+        <Grid.Resources>
+            <Storyboard x:Key="ShowAnim">
+                <DoubleAnimation Storyboard.TargetName="MainPanel" Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.3"/>
+                <DoubleAnimation Storyboard.TargetName="PanelScale" Storyboard.TargetProperty="ScaleX" From="0.4" To="1" Duration="0:0:0.5">
+                    <DoubleAnimation.EasingFunction>
+                        <ElasticEase Oscillations="1" Springiness="5" EasingMode="EaseOut"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetName="PanelScale" Storyboard.TargetProperty="ScaleY" From="0.4" To="1" Duration="0:0:0.5">
+                    <DoubleAnimation.EasingFunction>
+                        <ElasticEase Oscillations="1" Springiness="5" EasingMode="EaseOut"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetName="PanelRotate" Storyboard.TargetProperty="Angle" From="-20" To="0" Duration="0:0:0.5">
+                    <DoubleAnimation.EasingFunction>
+                        <BackEase Amplitude="1" EasingMode="EaseOut"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetName="GlowEllipse" Storyboard.TargetProperty="Opacity" From="0" To="0.4" Duration="0:0:0.6"/>
+                <DoubleAnimation Storyboard.TargetName="BackgroundMask" Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.3"/>
+            </Storyboard>
+        </Grid.Resources>
         
-        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-            <!-- 标题和提示 -->
-            <Border Background="{DynamicResource SolidBackgroundFillColorBaseBrush}" 
-                    CornerRadius="8" Padding="20" Margin="0,0,0,20"
-                    BorderThickness="1" BorderBrush="{DynamicResource SurfaceStrokeColorDefaultBrush}"
-                    Effect="{DynamicResource DropShadowEffect}">
-                <StackPanel>
-                    <TextBlock Text="{DynamicResource L_QuickFormat_Title}" 
-                               FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,0,0,8"/>
-                    <TextBlock Text="{DynamicResource L_QuickFormat_Tip}" 
-                               FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center"/>
-                </StackPanel>
-            </Border>
+        <!-- 半透明背景遮罩 -->
+        <Border x:Name="BackgroundMask" Background="#20000000" MouseDown="Background_MouseDown" Opacity="0"/>
+        
+        <StackPanel x:Name="MainPanel" VerticalAlignment="Center" HorizontalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+            <StackPanel.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform x:Name="PanelScale" ScaleX="1" ScaleY="1"/>
+                    <RotateTransform x:Name="PanelRotate" Angle="0"/>
+                </TransformGroup>
+            </StackPanel.RenderTransform>
 
             <!-- 圆形选择面板 -->
             <Grid Width="260" Height="260">
-                <!-- 圆环背景 -->
-                <Ellipse Stroke="{DynamicResource SurfaceStrokeColorDefaultBrush}" StrokeThickness="2" Margin="2"/>
-                <Ellipse Stroke="{DynamicResource SurfaceStrokeColorDefaultBrush}" StrokeThickness="2" Margin="60"/>
+                <!-- 背景氛围光晕 -->
+                <Ellipse x:Name="GlowEllipse" Fill="{DynamicResource SystemAccentBrush}" Margin="-30" Opacity="0" IsHitTestVisible="False">
+                    <Ellipse.Effect>
+                        <BlurEffect Radius="80"/>
+                    </Ellipse.Effect>
+                </Ellipse>
+                
+                <!-- 圆环背景 (装饰性) -->
+                <Ellipse Stroke="{DynamicResource SurfaceStrokeColorDefaultBrush}" StrokeThickness="1" Margin="0" Opacity="0.3"/>
+                <Ellipse Stroke="{DynamicResource SurfaceStrokeColorDefaultBrush}" StrokeThickness="1" Margin="55" Opacity="0.3"/>
 
                 <!-- 五个选项 -->
                 <Canvas x:Name="ItemsCanvas" Width="260" Height="260">
@@ -35,8 +59,20 @@
                 </Canvas>
                 
                 <!-- 中心空心部分 -->
-                <Ellipse Fill="{DynamicResource SolidBackgroundFillColorBaseBrush}" Width="110" Height="110" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                <Path Data="M 130,80 L 130,180 M 80,130 L 180,130" Stroke="{DynamicResource SurfaceStrokeColorDefaultBrush}" StrokeThickness="1" Opacity="0.3"/>
+                <Ellipse Fill="{DynamicResource SolidBackgroundFillColorBaseBrush}" Width="108" Height="108" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Ellipse.Effect>
+                        <DropShadowEffect BlurRadius="15" ShadowDepth="0" Opacity="0.1"/>
+                    </Ellipse.Effect>
+                </Ellipse>
+                
+                <!-- 中心装饰图标 (带视差效果) -->
+                <Path x:Name="CenterIcon" Data="M 130,115 L 130,145 M 115,130 L 145,130" 
+                      Stroke="{DynamicResource SurfaceStrokeColorDefaultBrush}" StrokeThickness="1.5" Opacity="0.3"
+                      RenderTransformOrigin="0.5,0.5">
+                    <Path.RenderTransform>
+                        <TranslateTransform x:Name="CenterIconTransform" X="0" Y="0"/>
+                    </Path.RenderTransform>
+                </Path>
             </Grid>
         </StackPanel>
     </Grid>

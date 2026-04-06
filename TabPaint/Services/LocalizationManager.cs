@@ -15,6 +15,44 @@ namespace TabPaint
         private static readonly Uri WhatsNewZhCnDict = new Uri("pack://application:,,,/Resources/WhatsNew.zh_cn.xaml", UriKind.Absolute);
         private static readonly Uri WhatsNewEnUsDict = new Uri("pack://application:,,,/Resources/WhatsNew.en_us.xaml", UriKind.Absolute);
 
+        private static readonly System.Collections.Generic.Dictionary<string, (string Title, string Message)> FallbackTranslations = new()
+        {
+            ["en"] = ("Language Support", "It seems TabPaint doesn't have a full translation for your language yet. You are welcome to help us translate it or open an issue on GitHub!"),
+            ["ko"] = ("언어 지원", "TabPaint에 아직 해당 언어에 대한 전체 번역이 없는 것 같습니다. 번역을 도와주시거나 GitHub에 이슈를 남겨주세요!"),
+            ["fr"] = ("Support linguistique", "Il semble que TabPaint n'ait pas encore de traduction complète pour votre langue. Vous êtes invité à nous aider à traduire ou à ouvrir un ticket sur GitHub !"),
+            ["de"] = ("Sprachunterstützung", "Es scheint, dass TabPaint noch keine vollständige Übersetzung für Ihre Sprache hat. Sie können uns gerne bei der Übersetzung helfen oder ein Problem auf GitHub melden!"),
+            ["es"] = ("Soporte de idioma", "Parece que TabPaint aún no tiene una traducción completa para su idioma. ¡Le invitamos a ayudarnos a traducir o abrir un problema en GitHub!"),
+            ["ru"] = ("Поддержка языка", "Похоже, что в TabPaint еще нет полного перевода на ваш язык. Вы можете помочь нам с переводом или создать тикет на GitHub!"),
+            ["it"] = ("Supporto linguistico", "Sembra che TabPaint non abbia ancora una traduzione completa per la tua lingua. Sei il benvenuto ad aiutarci a tradurre o ad aprire una segnalazione su GitHub!"),
+            ["pt"] = ("Suporte de idioma", "Parece que o TabPaint ainda não possui uma tradução completa para o seu idioma. Você é bem-vindo para nos ajudar a traduzir ou abrir um problema no GitHub!"),
+            ["vi"] = ("Hỗ trợ ngôn ngữ", "Có vẻ như TabPaint vẫn chưa có bản dịch đầy đủ cho ngôn ngữ của bạn. Bạn có thể giúp chúng tôi dịch hoặc mở yêu cầu trên GitHub!"),
+            ["th"] = ("การสนับสนุนด้านภาษา", "ดูเหมือนว่า TabPaint จะยังไม่มีการแปลภาษาของคุณอย่างสมบูรณ์ คุณสามารถช่วยเราแปลหรือแจ้งปัญหาบน GitHub ได้!"),
+            ["ar"] = ("دعم اللغة", "يبدو أن TabPaint لا يحتوي على ترجمة كاملة للغتك بعد. نرحب بمساعدتك في الترجمة أو فتح تذكرة على GitHub!"),
+            ["hi"] = ("भाषा समर्थन", "ऐसा लगता है कि TabPaint के पास अभी तक आपकी भाषा के लिए पूर्ण अनुवाद नहीं है। आप अनुवाद करने में हमारी सहायता कर सकते हैं या GitHub पर समस्या दर्ज कर सकते हैं!"),
+            ["tr"] = ("Dil Desteği", "Görünüşe göre TabPaint'in henüz diliniz için tam bir çevirisi yok. Çevirmemize yardımcı olabilir veya GitHub'da bir sorun bildirebilirsiniz!"),
+            ["nl"] = ("Taalondersteuning", "Het lijkt erop dat TabPaint nog geen volledige vertaling voor uw taal heeft. U bent van harte welkom om ons te helpen vertalen of een probleem te melden op GitHub!"),
+            ["pl"] = ("Wsparcie językowe", "Wygląda na to, że TabPaint nie ma jeszcze pełnego tłumaczenia na Twój język. Zapraszamy do pomocy w tłumaczeniu lub zgłoszenia problemu na GitHubie!")
+        };
+
+        public static bool IsLanguageSupported(string cultureName)
+        {
+            if (string.IsNullOrEmpty(cultureName)) return false;
+            // 检查当前已有的 XAML 资源
+            return cultureName.StartsWith("zh", StringComparison.OrdinalIgnoreCase) ||
+                   cultureName.StartsWith("en", StringComparison.OrdinalIgnoreCase) ||
+                   cultureName.StartsWith("ja", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static (string Title, string Message) GetMultilingualToast(string cultureName)
+        {
+            string key = cultureName.Split('-')[0].ToLowerInvariant();
+            if (FallbackTranslations.TryGetValue(key, out var translation))
+            {
+                return translation;
+            }
+            return FallbackTranslations["en"];
+        }
+
         public static void ApplyLanguage(AppLanguage language)
         {
             try

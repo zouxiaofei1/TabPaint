@@ -35,7 +35,7 @@
     <sys:String x:Key="L_CreateNewWorkSpate">Create New WorkSpace</sys:String>
     <sys:String x:Key="L_Toast_NewWindowFromSelectionFailed">Failed to create new window from selection:</sys:String>
     <sys:String x:Key="L_Toast_NewWindowFailed">Failed to create new window:</sys:String>
-    
+    <sys:String x:Key="L_Settings_Shortcuts_File_Print">Print</sys:String>
     <!-- SettingsWindow Navigation -->
     <sys:String x:Key="L_Settings_Title">Settings</sys:String>
     <sys:String x:Key="L_Settings_Nav_General">General</sys:String>
@@ -955,7 +955,5 @@ SOFTWARE.</sys:String>
     <!-- Unified AI Status (If not present) -->
     <sys:String x:Key="L_AI_Status_Downloading_Inpaint" xmlns:sys="clr-namespace:System;assembly=mscorlib">Downloading repair model: {0:F1}%</sys:String>
     <sys:String x:Key="L_Progress_Saving">Saving images...</sys:String>
-    <sys:String x:Key="L_QuickFormat_Title">Quick Format Conversion</sys:String>
-    <sys:String x:Key="L_QuickFormat_Tip">Release Ctrl to convert, source file will be deleted</sys:String>
     <sys:String x:Key="L_QuickFormat_Error_NoFile">Current image is not saved, cannot convert</sys:String>
 </ResourceDictionary>
