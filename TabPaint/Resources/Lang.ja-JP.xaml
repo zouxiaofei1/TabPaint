@@ -505,6 +505,7 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_File_Save">ファイルを保存</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_File_SaveAs">名前を付けて保存</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_File_NewTab">新しいタブ</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_File_QuickFormat">クイックフォーマット変換パネル</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Edit_Undo">元に戻す</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Edit_Redo">やり直し</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Edit_Copy">コピー</sys:String>
@@ -956,5 +957,8 @@ SOFTWARE.</sys:String>
     <!-- Unified AI Status (If not present) -->
     <sys:String x:Key="L_AI_Status_Downloading_Inpaint" xmlns:sys="clr-namespace:System;assembly=mscorlib">修復モデルをダウンロード中: {0:F1}%</sys:String>
     <sys:String x:Key="L_Progress_Saving">画像を保存中...</sys:String>
+    <sys:String x:Key="L_QuickFormat_Title">クイックフォーマット変換</sys:String>
+    <sys:String x:Key="L_QuickFormat_Tip">Ctrlを離して変換、元のファイルは削除されます</sys:String>
+    <sys:String x:Key="L_QuickFormat_Error_NoFile">現在の画像は保存されていないため、変換できません</sys:String>
 
 </ResourceDictionary>

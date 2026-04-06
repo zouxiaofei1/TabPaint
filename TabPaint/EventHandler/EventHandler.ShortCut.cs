@@ -129,6 +129,7 @@ namespace TabPaint
             if (IsShortcut("Effect.Invert", e)) { OnInvertColorsClick(sender, e); e.Handled = true; return; }      // Ctrl+Alt+R
             if (IsShortcut("Effect.AutoLevels", e)) { OnAutoLevelsClick(sender, e); e.Handled = true; return; }  // Ctrl+Alt+T
             if (IsShortcut("Effect.Resize", e)) { OnResizeCanvasClick(sender, e); e.Handled = true; return; }      // Ctrl+Alt+Y
+            if (IsShortcut("File.QuickFormat", e)) { ShowQuickFormatPanel(); e.Handled = true; return; }
 
             if (Keyboard.Modifiers == ModifierKeys.Control)
             {

@@ -505,6 +505,7 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_File_Save">Save File</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_File_SaveAs">Save As</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_File_NewTab">New Tab</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_File_QuickFormat">Quick Format Panel</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Edit_Undo">Undo</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Edit_Redo">Redo</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Edit_Copy">Copy</sys:String>
@@ -954,4 +955,7 @@ SOFTWARE.</sys:String>
     <!-- Unified AI Status (If not present) -->
     <sys:String x:Key="L_AI_Status_Downloading_Inpaint" xmlns:sys="clr-namespace:System;assembly=mscorlib">Downloading repair model: {0:F1}%</sys:String>
     <sys:String x:Key="L_Progress_Saving">Saving images...</sys:String>
+    <sys:String x:Key="L_QuickFormat_Title">Quick Format Conversion</sys:String>
+    <sys:String x:Key="L_QuickFormat_Tip">Release Ctrl to convert, source file will be deleted</sys:String>
+    <sys:String x:Key="L_QuickFormat_Error_NoFile">Current image is not saved, cannot convert</sys:String>
 </ResourceDictionary>

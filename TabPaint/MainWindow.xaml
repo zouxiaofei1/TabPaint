@@ -556,7 +556,8 @@
                 <ContentControl x:Name="SelectionRotateHolder" HorizontalAlignment="Left" VerticalAlignment="Top" Panel.ZIndex="300" IsTabStop="False" Focusable="False"/>
                 <ContentControl x:Name="OcrFloatBarHolder" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,80,0,0" Panel.ZIndex="260" IsTabStop="False" Focusable="False"/>
                 <controls:WandToleranceFloat x:Name="WandTolerancePopup" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,80,0,0" Panel.ZIndex="250" IsTabStop="False" Focusable="False"/>
-                
+                <controls:QuickFormatPanel x:Name="QuickFormatPopup" Visibility="Collapsed" Panel.ZIndex="500" IsTabStop="False" Focusable="True"/>
+
                 <Border x:Name="ThicknessTip" Background="{DynamicResource TextControlBrush}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="30,0,0,0" Visibility="Collapsed">
                     <TextBlock x:Name="ThicknessTipText" Foreground="{DynamicResource TextInverseBrush}" FontSize="12" TextWrapping="NoWrap" TextAlignment="Center"/>
                 </Border>

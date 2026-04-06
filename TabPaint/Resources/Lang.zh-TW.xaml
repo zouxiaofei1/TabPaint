@@ -174,6 +174,7 @@
     <sys:String x:Key="L_Settings_Shortcuts_File_Save">儲存檔案</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_File_SaveAs">另存新檔</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_File_NewTab">新建分頁</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_File_QuickFormat">快速格式轉換面板</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Edit_Undo">復原</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Edit_Redo">重做</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Edit_Copy">複製</sys:String>
@@ -944,5 +945,8 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_AI_Download_Inpaint_Content">首次使用 AI 橡皮擦需要下載修復模型。是否繼續？</sys:String>
     <sys:String x:Key="L_AI_Status_Downloading_Inpaint">正在下載修復模型: {0:F1}%</sys:String>
     <sys:String x:Key="L_Progress_Saving">正在儲存圖片...</sys:String>
+    <sys:String x:Key="L_QuickFormat_Title">快速轉換格式</sys:String>
+    <sys:String x:Key="L_QuickFormat_Tip">鬆開 Ctrl 確認轉換，源文件將被刪除</sys:String>
+    <sys:String x:Key="L_QuickFormat_Error_NoFile">當前圖片未保存，無法轉換</sys:String>
 
 </ResourceDictionary>

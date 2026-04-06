@@ -160,6 +160,8 @@ namespace TabPaint
                 ImageFilesCount = _imageFiles.Count;
                 OnPropertyChanged(nameof(CanNavigateImages));
             };
+
+            QuickFormatPopup.FormatSelected += OnQuickFormatSelected;
         }
 
 

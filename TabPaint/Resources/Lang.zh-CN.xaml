@@ -174,6 +174,7 @@
     <sys:String x:Key="L_Settings_Shortcuts_File_Save">保存文件</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_File_SaveAs">另存为</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_File_NewTab">新建标签页</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_File_QuickFormat">快速格式转换面板</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Edit_Undo">撤销</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Edit_Redo">重做</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Edit_Copy">复制</sys:String>
@@ -216,8 +217,9 @@
     <sys:String x:Key="L_Settings_MaxUndoMemory">最大撤销内存</sys:String>
     <sys:String x:Key="L_Settings_MaxUndoMemory_Desc">所有标签页共允许的撤销栈最大内存占用</sys:String>
     <sys:String x:Key="L_Menu_File_RecycleBin">文件回收站</sys:String>
- 
-
+    <sys:String x:Key="L_QuickFormat_Title">快速转换格式</sys:String>
+    <sys:String x:Key="L_QuickFormat_Tip">松开 Ctrl 确认转换，源文件将被删除</sys:String>
+    <sys:String x:Key="L_QuickFormat_Error_NoFile">当前图片未保存，无法转换</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Auto">自动</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Bilinear">双线性</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Fant">Fant</sys:String>
@@ -719,6 +721,7 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Toast_FullScreen_On">进入全屏模式</sys:String>
     <sys:String x:Key="L_Toast_FullScreen_Off">退出全屏模式</sys:String>
     <sys:String x:Key="L_Toast_SaveFailed_Prefix">保存失败: {0}</sys:String>
+    <sys:String x:Key="L_Toast_FormatConverted_Format">已转换为 {0} 格式</sys:String>
     <sys:String x:Key="L_Toast_FileNotFound_Format">找不到图片文件: {0}</sys:String>
     <sys:String x:Key="L_Toast_Mode_View">进入看图模式</sys:String>
     <sys:String x:Key="L_Toast_Mode_Paint">进入画图模式</sys:String>

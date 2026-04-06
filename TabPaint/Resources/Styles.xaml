@@ -665,7 +665,37 @@
             </Setter>
         </Style>
 
-        <!-- 通用标题栏文字样式 -->
+    <Style TargetType="{x:Type local:Controls.QuickFormatItem}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type local:Controls.QuickFormatItem}">
+                    <Grid Width="70" Height="70">
+                        <Ellipse x:Name="OuterCircle" 
+                                 Fill="{DynamicResource ControlBackgroundBrush}" 
+                                 Stroke="{DynamicResource BorderMediumBrush}" 
+                                 StrokeThickness="1"/>
+                        <TextBlock Text="{TemplateBinding Format}" 
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="OuterCircle" Property="Fill" Value="{DynamicResource SystemAccentBrush}"/>
+                            <Setter TargetName="OuterCircle" Property="Stroke" Value="{DynamicResource SystemAccentHoverBrush}"/>
+                            <Setter TargetName="OuterCircle" Property="StrokeThickness" Value="2"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="OuterCircle" Property="Fill" Value="{DynamicResource SubtleHoverBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 通用标题栏文字样式 -->
         <Style x:Key="TitleTextStyle" TargetType="TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
             <Style.Triggers>

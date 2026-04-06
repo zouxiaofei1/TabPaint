@@ -897,6 +897,7 @@ namespace TabPaint
         { "File.Save",           new ShortcutItem { Key = Key.S, Modifiers = ModifierKeys.Control } },
         { "File.SaveAs",         new ShortcutItem { Key = Key.S, Modifiers = ModifierKeys.Control | ModifierKeys.Shift } },
         { "File.Print",          new ShortcutItem { Key = Key.P, Modifiers = ModifierKeys.Control } },
+        { "File.QuickFormat",    new ShortcutItem { Key = Key.Q, Modifiers = ModifierKeys.Control } },
 
         // 1. 全局/视图功能
         { "View.PrevImage",      new ShortcutItem { Key = Key.Left, Modifiers = ModifierKeys.None } },
