@@ -943,6 +943,8 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Menu_Effect_Mosaic">Mosaic</sys:String>
     <sys:String x:Key="L_Menu_Effect_GaussianBlur">Gaussian Blur</sys:String>
     <sys:String x:Key="L_Dialog_Strength">Intensity</sys:String>
+    <sys:String x:Key="L_Dialog_Quality">Quality</sys:String>
+    <sys:String x:Key="L_Save_Quality_Title">Save Quality</sys:String>
     <!-- Unified AI Status (If not present) -->
     <sys:String x:Key="L_AI_Status_Downloading_Inpaint" xmlns:sys="clr-namespace:System;assembly=mscorlib">Downloading repair model: {0:F1}%</sys:String>
     <sys:String x:Key="L_Progress_Saving">Saving images...</sys:String>

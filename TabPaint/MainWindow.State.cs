@@ -463,6 +463,9 @@ namespace TabPaint
         private double _visualRotationAngle = 0;
         private bool _isVisualRotating = false;
         private bool _isSelectToolFloatBarVisible = false;
+        private bool _savedSelectToolFloatBarVisibleBeforeAiInference = false;
+        private bool _isAiInferenceRunning = false;
+        private System.Threading.CancellationTokenSource? _aiInferenceCts;
         private bool _altToggleHandled = false;
     }
 }

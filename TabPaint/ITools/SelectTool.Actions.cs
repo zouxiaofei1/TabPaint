@@ -404,7 +404,9 @@ namespace TabPaint
                             Mouse.OverrideCursor = System.Windows.Input.Cursors.SizeNS;
                             break;
                         default:
-                            Mouse.OverrideCursor = null;
+                            Mouse.OverrideCursor = IsPointInSelection(px)
+                                ? System.Windows.Input.Cursors.SizeAll
+                                : null;
                             break;
                     }
                 }

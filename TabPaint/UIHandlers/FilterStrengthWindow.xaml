@@ -98,7 +98,7 @@
                               Width="18" Height="18" Stretch="Uniform" Margin="0,0,12,0" 
                               VerticalAlignment="Center"/>
 
-                        <TextBlock Grid.Column="1" Text="{DynamicResource L_Dialog_Strength}" 
+                        <TextBlock x:Name="LabelTextBlock" Grid.Column="1" Text="{DynamicResource L_Dialog_Strength}" 
                                    Style="{StaticResource LabelStyle}"
                                    FontSize="14" FontWeight="SemiBold"/>
 

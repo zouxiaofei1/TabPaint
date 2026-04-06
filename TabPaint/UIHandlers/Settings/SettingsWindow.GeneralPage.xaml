@@ -20,16 +20,6 @@
                 <Setter Property="Height" Value="40"/>
                 <Setter Property="Margin" Value="0,0,6,5"/>
                 <Setter Property="Cursor" Value="Hand"/>
-                <Setter Property="Background">
-                    <Setter.Value>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                            <GradientStop Color="#FF0078D4" Offset="0.0"/>
-                            <GradientStop Color="#FF9333EA" Offset="0.33"/>
-                            <GradientStop Color="#FFD13438" Offset="0.66"/>
-                            <GradientStop Color="#FF107C10" Offset="1.0"/>
-                        </LinearGradientBrush>
-                    </Setter.Value>
-                </Setter>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="RadioButton">
@@ -38,7 +28,7 @@
                                 <Border x:Name="SelectionBorder" 
                                         CornerRadius="16" 
                                         BorderThickness="2" 
-                                        BorderBrush="{DynamicResource SystemAccentBrush}"
+                                        BorderBrush="#FF4CC2FF"
                                         Opacity="0"
                                         Width="32" Height="32"
                                         HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -48,27 +38,87 @@
                                     </Border.RenderTransform>
                                 </Border>
                                 
-                                <Grid x:Name="AnimationGrid" Width="22" Height="22" 
-                                      RenderTransformOrigin="0.5,0.5">
+                                <Grid Width="22" Height="22" RenderTransformOrigin="0.5,0.5">
                                     <Grid.RenderTransform>
-                                        <TransformGroup>
-                                            <ScaleTransform x:Name="CircleScale" ScaleX="1" ScaleY="1"/>
-                                            <RotateTransform x:Name="CircleRotate" Angle="0"/>
-                                        </TransformGroup>
+                                        <ScaleTransform x:Name="CircleScale" ScaleX="1" ScaleY="1"/>
                                     </Grid.RenderTransform>
-                                    
-                                    <Border x:Name="ColorCircle" CornerRadius="11" 
-                                            Background="{TemplateBinding Background}"/>
-                                    
-                                    <!-- 内部发光效果 -->
-                                    <Ellipse Opacity="0.3">
-                                        <Ellipse.Fill>
-                                            <RadialGradientBrush Center="0.3,0.3" GradientOrigin="0.3,0.3" RadiusX="0.5" RadiusY="0.5">
-                                                <GradientStop Color="White" Offset="0"/>
-                                                <GradientStop Color="Transparent" Offset="1"/>
-                                            </RadialGradientBrush>
-                                        </Ellipse.Fill>
-                                    </Ellipse>
+
+                                    <Viewbox Width="22" Height="22" Stretch="Fill">
+                                        <Grid Width="100" Height="100">
+                                            <!-- 去掉了原来的 Margin="2,-7,0,0" -->
+                                            <Grid>
+                                                <!-- 将裁剪区域居中并放大铺满 -->
+                                                <Grid.Clip>
+                                                    <EllipseGeometry Center="50,50" RadiusX="50" RadiusY="50"/>
+                                                </Grid.Clip>
+                                                <!-- 旋转中心点改为正中心 0.5,0.5 -->
+                                                <Grid x:Name="CircleRotateHost" RenderTransformOrigin="0.5,0.5">
+                                                    <Grid.RenderTransform>
+                                                        <RotateTransform x:Name="CircleRotate" Angle="0"/>
+                                                    </Grid.RenderTransform>
+                                                    <Grid>
+                                                        <!-- 将扇形偏移到正中心 50,50 -->
+                                                        <Grid.RenderTransform>
+                                                            <MatrixTransform Matrix="1,0,0,1,50,50"/>
+                                                        </Grid.RenderTransform>
+                                                        <Grid.Effect>
+                                                            <BlurEffect Radius="16" KernelType="Gaussian"/>
+                                                        </Grid.Effect>
+                                                        <Path Fill="#FF0000" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
+                                                            <Path.RenderTransform>
+                                                                <RotateTransform Angle="-30"/>
+                                                            </Path.RenderTransform>
+                                                        </Path>
+                                                        <Path Fill="#FFFF00" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
+                                                            <Path.RenderTransform>
+                                                                <RotateTransform Angle="30"/>
+                                                            </Path.RenderTransform>
+                                                        </Path>
+                                                        <Path Fill="#00FF00" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
+                                                            <Path.RenderTransform>
+                                                                <RotateTransform Angle="90"/>
+                                                            </Path.RenderTransform>
+                                                        </Path>
+                                                        <Path Fill="#00FFFF" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
+                                                            <Path.RenderTransform>
+                                                                <RotateTransform Angle="150"/>
+                                                            </Path.RenderTransform>
+                                                        </Path>
+                                                        <Path Fill="#0000FF" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
+                                                            <Path.RenderTransform>
+                                                                <RotateTransform Angle="210"/>
+                                                            </Path.RenderTransform>
+                                                        </Path>
+                                                        <Path Fill="#FF00FF" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
+                                                            <Path.RenderTransform>
+                                                                <RotateTransform Angle="270"/>
+                                                            </Path.RenderTransform>
+                                                        </Path>
+                                                    </Grid>
+                                                    <!-- 调整高光图层中心和大小 -->
+                                                    <Path IsHitTestVisible="False">
+                                                        <Path.Data>
+                                                            <EllipseGeometry Center="50,50" RadiusX="50" RadiusY="50"/>
+                                                        </Path.Data>
+                                                        <Path.Fill>
+                                                            <RadialGradientBrush Center="0.5,0.5" GradientOrigin="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
+                                                                <GradientStop Color="#FFFFFFFF" Offset="0"/>
+                                                                <GradientStop Color="#80FFFFFF" Offset="0.4"/>
+                                                                <GradientStop Color="#00FFFFFF" Offset="1"/>
+                                                            </RadialGradientBrush>
+                                                        </Path.Fill>
+                                                    </Path>
+                                                </Grid>
+                                                <!-- 边框铺满 100x100，去掉原来的 Margin -->
+                                                <Ellipse Width="100" Height="100"
+                                                         Stroke="#26000000"
+                                                         StrokeThickness="2"
+                                                         IsHitTestVisible="False"/>
+                                            </Grid>
+
+                                            <!-- 注：这里原来画加号的 <Grid> 已经被删除了 -->
+                                        </Grid>
+                                    </Viewbox>
                                 </Grid>
 
                                 <Canvas Width="12" Height="10" 
@@ -110,7 +160,7 @@
                                         <Storyboard RepeatBehavior="Forever">
                                             <DoubleAnimation Storyboard.TargetName="CircleRotate"
                                                              Storyboard.TargetProperty="Angle"
-                                                             From="0" To="360" Duration="0:0:6"/>
+                                                             From="0" To="360" Duration="0:10:0"/>
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </EventTrigger>
@@ -157,6 +207,49 @@
                                         </BeginStoryboard>
                                     </Trigger.ExitActions>
                                 </Trigger>
+
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard x:Name="AutoPressEnter_BSB">
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="CircleScale"
+                                                                 Storyboard.TargetProperty="ScaleX"
+                                                                 To="0.85" Duration="0:0:0.08">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <CubicEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="CircleScale"
+                                                                 Storyboard.TargetProperty="ScaleY"
+                                                                 To="0.85" Duration="0:0:0.08">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <CubicEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+                                    <Trigger.ExitActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="CircleScale"
+                                                                 Storyboard.TargetProperty="ScaleX"
+                                                                 To="1.15" Duration="0:0:0.15">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <ElasticEase Oscillations="1" Springiness="8" EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="CircleScale"
+                                                                 Storyboard.TargetProperty="ScaleY"
+                                                                 To="1.15" Duration="0:0:0.15">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <ElasticEase Oscillations="1" Springiness="8" EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.ExitActions>
+                                </Trigger>
                                 
                                 <Trigger Property="IsChecked" Value="True">
                                     <Trigger.EnterActions>
@@ -165,6 +258,20 @@
                                                 <DoubleAnimation Storyboard.TargetName="SelectionBorder" 
                                                                  Storyboard.TargetProperty="Opacity"
                                                                  To="1" Duration="0:0:0.2">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <CubicEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="SelectionBorder" 
+                                                                 Storyboard.TargetProperty="(Border.RenderTransform).(ScaleTransform.ScaleX)"
+                                                                 From="0.6" To="1" Duration="0:0:0.25">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <CubicEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="SelectionBorder" 
+                                                                 Storyboard.TargetProperty="(Border.RenderTransform).(ScaleTransform.ScaleY)"
+                                                                 From="0.6" To="1" Duration="0:0:0.25">
                                                     <DoubleAnimation.EasingFunction>
                                                         <CubicEase EasingMode="EaseOut"/>
                                                     </DoubleAnimation.EasingFunction>
@@ -208,6 +315,18 @@
                                                 <DoubleAnimation Storyboard.TargetName="CheckMarkShadow" 
                                                                  Storyboard.TargetProperty="Opacity"
                                                                  To="0" Duration="0:0:0.1"/>
+                                                 <DoubleAnimation Storyboard.TargetName="CheckScale" 
+                                                                  Storyboard.TargetProperty="ScaleX"
+                                                                  To="0.5" Duration="0:0:0.1"/>
+                                                 <DoubleAnimation Storyboard.TargetName="CheckScale" 
+                                                                  Storyboard.TargetProperty="ScaleY"
+                                                                  To="0.5" Duration="0:0:0.1"/>
+                                                 <DoubleAnimation Storyboard.TargetName="CheckShadowScale" 
+                                                                  Storyboard.TargetProperty="ScaleX"
+                                                                  To="0.5" Duration="0:0:0.1"/>
+                                                 <DoubleAnimation Storyboard.TargetName="CheckShadowScale" 
+                                                                  Storyboard.TargetProperty="ScaleY"
+                                                                  To="0.5" Duration="0:0:0.1"/>
                                             </Storyboard>
                                         </BeginStoryboard>
                                     </Trigger.ExitActions>

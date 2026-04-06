@@ -14,7 +14,7 @@ namespace TabPaint.Windows
 
         private bool _isUpdatingFromCode = false;
 
-        public FilterStrengthWindow(string title, int initialValue, int min, int max)
+        public FilterStrengthWindow(string title, int initialValue, int min, int max, string labelText = null)
         {
             InitializeComponent();
             this.SupportFocusHighlight();
@@ -22,6 +22,10 @@ namespace TabPaint.Windows
             {
                 TitleTextBlock.Text = title;
                 this.Title = title;
+            }
+            if (!string.IsNullOrEmpty(labelText))
+            {
+                LabelTextBlock.Text = labelText;
             }
             StrengthSlider.Minimum = min;
             StrengthSlider.Maximum = max;

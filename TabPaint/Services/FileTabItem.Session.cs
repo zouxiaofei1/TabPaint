@@ -928,6 +928,8 @@ namespace TabPaint
             if (_currentTabItem == tab) return;
             if (tab == null) return;
 
+            CancelRunningImageTasksSilently();
+
             if (_currentTabItem != null)
             {
                 _autoSaveTimer.Stop();

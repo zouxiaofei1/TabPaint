@@ -107,7 +107,7 @@ namespace TabPaint
             }
             finally { _sessionLock.Release();  }
         }
-        public async Task<byte[]> RunInpaintingAsync(string modelPath, byte[] imagePixels, byte[] maskPixels, int origW, int origH)
+        public async Task<byte[]> RunInpaintingAsync(string modelPath, byte[] imagePixels, byte[] maskPixels, int origW, int origH, System.Threading.CancellationToken token = default)
         {
             int targetW = AppConsts.AiInpaintSize;
             int targetH = AppConsts.AiInpaintSize;
@@ -116,8 +116,10 @@ namespace TabPaint
 
             return await Task.Run(() =>
             {
+                token.ThrowIfCancellationRequested();
                 var imgTensor = PreprocessImageBytesToTensor(imagePixels, targetW, targetH);
                 var maskTensor = PreprocessMaskBytesToTensor(maskPixels, targetW, targetH);
+                token.ThrowIfCancellationRequested();
 
                 var inputs = new List<NamedOnnxValue>
         {
@@ -128,10 +130,13 @@ namespace TabPaint
                 lock (session)
                 {
                     using var results = session.Run(inputs);
+                    token.ThrowIfCancellationRequested();
                     var outputTensor = results.First().AsTensor<float>();
-                    return PostProcessInpaintToBytes(outputTensor, targetW, targetH);
+                    var output = PostProcessInpaintToBytes(outputTensor, targetW, targetH);
+                    token.ThrowIfCancellationRequested();
+                    return output;
                 }
-            });
+            }, token);
         }
 
         private DenseTensor<float> PreprocessMaskBytesToTensor(byte[] pixels, int w, int h)
@@ -472,7 +477,7 @@ namespace TabPaint
                 }
             });
         }
-        public async Task<byte[]> RunInferenceAsync(string modelPath, WriteableBitmap originalBmp)
+        public async Task<byte[]> RunInferenceAsync(string modelPath, WriteableBitmap originalBmp, System.Threading.CancellationToken token = default)
         {
             int targetW = AppConsts.AiInferenceSizeDefault;
             int targetH = AppConsts.AiInferenceSizeDefault;
@@ -493,19 +498,24 @@ namespace TabPaint
             var session = await GetSessionAsync(AiTaskType.RemoveBackground, modelPath);
             return await Task.Run(() =>
             {
+                token.ThrowIfCancellationRequested();
                 var tensor = PreprocessPixelsToTensor(inputPixels, targetW, targetH, inputStride);
+                token.ThrowIfCancellationRequested();
                 string inputName = session.InputMetadata.Keys.First();
                 var inputs = new List<NamedOnnxValue> { NamedOnnxValue.CreateFromTensor(inputName, tensor) };
                 
                 lock (session)
                 {
                     using var results = session.Run(inputs);
+                    token.ThrowIfCancellationRequested();
 
                     // 后处理 (传入原图的 byte[] 数据，而不是 Bitmap 对象)
                     var outputTensor = results.First().AsTensor<float>();
-                    return PostProcess(outputTensor, originalPixels, origW, origH, origStride);
+                    var output = PostProcess(outputTensor, originalPixels, origW, origH, origStride);
+                    token.ThrowIfCancellationRequested();
+                    return output;
                 }
-            });
+            }, token);
         }
         public async Task<WriteableBitmap> RunSuperResolutionAsync(string modelPath, WriteableBitmap inputBitmap, IProgress<double> progress, System.Threading.CancellationToken token = default)
         {

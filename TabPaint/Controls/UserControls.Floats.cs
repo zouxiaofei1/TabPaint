@@ -97,6 +97,68 @@ namespace TabPaint
             }
         }
 
+        public System.Threading.CancellationToken BeginAiInferenceScope()
+        {
+            if (_isAiInferenceRunning && _aiInferenceCts != null)
+            {
+                return _aiInferenceCts.Token;
+            }
+
+            _aiInferenceCts?.Dispose();
+            _aiInferenceCts = new System.Threading.CancellationTokenSource();
+            _isAiInferenceRunning = true;
+
+            _savedSelectToolFloatBarVisibleBeforeAiInference = _isSelectToolFloatBarVisible;
+            _isSelectToolFloatBarVisible = false;
+            UpdateSelectionToolBarPosition(force: true);
+
+            return _aiInferenceCts.Token;
+        }
+
+        public void EndAiInferenceScope()
+        {
+            bool needRestoreFloatBar = _isAiInferenceRunning;
+
+            _isAiInferenceRunning = false;
+            _aiInferenceCts?.Dispose();
+            _aiInferenceCts = null;
+
+            if (needRestoreFloatBar)
+            {
+                _isSelectToolFloatBarVisible = _savedSelectToolFloatBarVisibleBeforeAiInference;
+                UpdateSelectionToolBarPosition(force: true);
+            }
+        }
+
+        private void CancelAiInferenceSilently()
+        {
+            if (_aiInferenceCts != null && !_aiInferenceCts.IsCancellationRequested)
+            {
+                _aiInferenceCts.Cancel();
+            }
+        }
+
+        public void CancelRunningImageTasksSilently()
+        {
+            CancelAiInferenceSilently();
+
+            if (_downloadCts != null && !_downloadCts.IsCancellationRequested)
+            {
+                _downloadCts.Cancel();
+            }
+        }
+
+        public string? GetCurrentTabId()
+        {
+            return _currentTabItem?.Id;
+        }
+
+        public bool IsAiApplyTargetCurrent(string? tabId, WriteableBitmap? sourceBitmap)
+        {
+            if (string.IsNullOrEmpty(tabId) || sourceBitmap == null) return false;
+            return _currentTabItem?.Id == tabId && ReferenceEquals(_surface?.Bitmap, sourceBitmap);
+        }
+
         public TextToolControl TextMenu { get; private set; }
         private void EnsureTextToolLoaded()
         {

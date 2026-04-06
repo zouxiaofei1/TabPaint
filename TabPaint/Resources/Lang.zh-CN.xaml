@@ -219,6 +219,8 @@
 
     <!-- Common -->
     <sys:String x:Key="L_Common_OpenLogFolder">日志文件夹</sys:String>
+    <sys:String x:Key="L_Dialog_Quality">质量</sys:String>
+    <sys:String x:Key="L_Save_Quality_Title">保存质量</sys:String>
     <sys:String x:Key="L_Common_OK">确定</sys:String>
     <sys:String x:Key="L_Common_Untitled">未命名</sys:String>
 

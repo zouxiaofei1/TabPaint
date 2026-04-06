@@ -110,6 +110,14 @@ namespace TabPaint
 
         private async void OnStatusCommandTextBoxKeyDown(object sender, KeyEventArgs e)
         {
+
+            if (e.Key == Key.Escape)
+            {
+                e.Handled = true;
+                ApplyStatusCommandBarExpandedState(false, adjustWindowHeight: true);
+                return;
+            }
+
             if (e.Key != Key.Enter) return;
 
             e.Handled = true;

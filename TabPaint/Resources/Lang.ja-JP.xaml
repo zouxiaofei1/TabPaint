@@ -945,6 +945,8 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Menu_Effect_Mosaic">モザイク</sys:String>
     <sys:String x:Key="L_Menu_Effect_GaussianBlur">ガウスぼかし</sys:String>
     <sys:String x:Key="L_Dialog_Strength">強度</sys:String>
+    <sys:String x:Key="L_Dialog_Quality">品質</sys:String>
+    <sys:String x:Key="L_Save_Quality_Title">保存品質</sys:String>
     <!-- Unified AI Status (If not present) -->
     <sys:String x:Key="L_AI_Status_Downloading_Inpaint" xmlns:sys="clr-namespace:System;assembly=mscorlib">修復モデルをダウンロード中: {0:F1}%</sys:String>
     <sys:String x:Key="L_Progress_Saving">画像を保存中...</sys:String>

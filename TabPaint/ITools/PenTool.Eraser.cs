@@ -78,19 +78,23 @@ public partial class PenTool : ToolBase
     {
         var mw = MainWindow.GetCurrentInstance();
         var aiService = AiService.Instance;
+        string oldStatus = mw.ImageSize;
+        var aiToken = System.Threading.CancellationToken.None;
 
         try
         {
             var maskBounds = GetMaskBounds();
             if (maskBounds.IsEmpty) return;
 
+            string? targetTabId = mw.GetCurrentTabId();
+            var targetBitmap = ctx.Surface.Bitmap;
+
             string modelPath = System.IO.Path.Combine(mw._cacheDir, AppConsts.Inpaint_ModelName);
-            string oldStatus = mw.ImageSize;
 
             // 开始推理阶段
             mw.ImageSize = LocalizationManager.GetString("L_AI_Eraser_Processing");
             mw.ShowToast("L_AI_Eraser_Processing");
-            mw.IsEnabled = false; // 锁定 UI
+            aiToken = mw.BeginAiInferenceScope();
 
             var oldBmp = ctx.Surface.Bitmap;
             int origW = oldBmp.PixelWidth;
@@ -139,7 +143,13 @@ public partial class PenTool : ToolBase
             wbMask.CopyPixels(maskBytes, wbMask.BackBufferStride, 0);
 
             // 执行推理
-            byte[] rawResultPixels = await aiService.RunInpaintingAsync(modelPath, imgBytes, maskBytes, targetW, targetH);
+            byte[] rawResultPixels = await aiService.RunInpaintingAsync(modelPath, imgBytes, maskBytes, targetW, targetH, aiToken);
+            aiToken.ThrowIfCancellationRequested();
+
+            if (!mw.IsAiApplyTargetCurrent(targetTabId, targetBitmap))
+            {
+                return;
+            }
 
             // --- 将结果贴回原图 ---
             var result512 = new WriteableBitmap(targetW, targetH, AppConsts.StandardDpi, AppConsts.StandardDpi, PixelFormats.Bgra32, null);
@@ -211,7 +221,9 @@ public partial class PenTool : ToolBase
 
             mw.NotifyCanvasChanged();
             mw.ShowToast("L_AI_Eraser_Success");
-            mw.ImageSize = oldStatus;
+        }
+        catch (OperationCanceledException)
+        {
         }
         catch (Exception ex)
         {
@@ -219,7 +231,8 @@ public partial class PenTool : ToolBase
         }
         finally
         {
-            mw.IsEnabled = true;
+            mw.ImageSize = oldStatus;
+            mw.EndAiInferenceScope();
             CleanupMask(ctx);
             mw.Focus();
         }

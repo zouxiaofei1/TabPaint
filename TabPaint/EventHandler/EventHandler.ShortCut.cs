@@ -315,6 +315,23 @@ namespace TabPaint
         {
             Key actualKey = (e.Key == Key.System ? e.SystemKey : e.Key);
 
+            if (actualKey == Key.Escape &&
+                _isStatusCommandBarExpanded &&
+                StatusCommandTextBox != null &&
+                StatusCommandTextBox.IsKeyboardFocusWithin)
+            {
+                ApplyStatusCommandBarExpandedState(false, adjustWindowHeight: true);
+                e.Handled = true;
+                return;
+            }
+
+            if (actualKey == Key.Escape && _isAiInferenceRunning)
+            {
+                CancelAiInferenceSilently();
+                e.Handled = true;
+                return;
+            }
+
             bool isAltOnlyToggle =
                 (actualKey == Key.LeftAlt || actualKey == Key.RightAlt) &&
                 (Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt &&

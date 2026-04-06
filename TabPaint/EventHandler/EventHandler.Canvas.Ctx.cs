@@ -552,6 +552,9 @@ namespace TabPaint
             if (_surface?.Bitmap == null) return;
             _router.CleanUpSelectionandShape();
 
+            string? targetTabId = GetCurrentTabId();
+            var targetBitmap = _surface.Bitmap;
+
             if (!IsVcRedistInstalled())
             {
                 ShowToast("L_Error_MissingVCRedist");
@@ -598,6 +601,12 @@ namespace TabPaint
                     TaskProgressPopup.UpdateProgress(p, LocalizationManager.GetString("L_AI_Status_Upscaling"), "", "");
                 });
                 var resultBitmap = await aiService.RunSuperResolutionAsync(modelPath, inputBmp, inferProgress, _downloadCts.Token);
+
+                if (!IsAiApplyTargetCurrent(targetTabId, targetBitmap))
+                {
+                    return;
+                }
+
                 ApplyUpscaleResult(resultBitmap);
                 GC.Collect(2, GCCollectionMode.Forced, true);
                 ShowToast("L_Toast_Apply_Success");
@@ -666,6 +675,9 @@ namespace TabPaint
             bool isSelectionMode = selectTool != null && selectTool.HasActiveSelection;
             if (!isSelectionMode) _router.CleanUpSelectionandShape();
 
+            string? targetTabId = GetCurrentTabId();
+            var targetBitmap = _surface.Bitmap;
+
             if (!IsVcRedistInstalled())
             {
                 var result = FluentMessageBox.Show(
@@ -688,6 +700,7 @@ namespace TabPaint
             if (!ready) return;
 
             var statusText = _imageSize; // 暂存状态栏文本
+            var aiToken = System.Threading.CancellationToken.None;
 
             try
             {
@@ -696,6 +709,7 @@ namespace TabPaint
 
                 _imageSize = LocalizationManager.GetString("L_AI_Status_Thinking");
                 OnPropertyChanged(nameof(ImageSize));
+                aiToken = BeginAiInferenceScope();
 
                 byte[] resultPixels;
                 if (isSelectionMode)
@@ -708,7 +722,9 @@ namespace TabPaint
 
                         int newW = boundingBoxBmp.PixelWidth;
                         int newH = boundingBoxBmp.PixelHeight;
-                        resultPixels = await aiService.RunInferenceAsync(modelPath, boundingBoxBmp);
+                        resultPixels = await aiService.RunInferenceAsync(modelPath, boundingBoxBmp, aiToken);
+                        aiToken.ThrowIfCancellationRequested();
+                        if (!IsAiApplyTargetCurrent(targetTabId, targetBitmap)) return;
                         selectTool.ReplaceSelectionDataWithMask(_ctx, resultPixels, newW, newH);
                     }
                     else
@@ -718,7 +734,9 @@ namespace TabPaint
 
                         int newW = cropBmp.PixelWidth;
                         int newH = cropBmp.PixelHeight;
-                        resultPixels = await aiService.RunInferenceAsync(modelPath, cropBmp);
+                        resultPixels = await aiService.RunInferenceAsync(modelPath, cropBmp, aiToken);
+                        aiToken.ThrowIfCancellationRequested();
+                        if (!IsAiApplyTargetCurrent(targetTabId, targetBitmap)) return;
                         selectTool.ReplaceSelectionData(_ctx, resultPixels, newW, newH);
                     }
 
@@ -727,13 +745,21 @@ namespace TabPaint
                 }
                 else
                 {
-                    resultPixels = await aiService.RunInferenceAsync(modelPath, _surface.Bitmap);
+                    resultPixels = await aiService.RunInferenceAsync(modelPath, _surface.Bitmap, aiToken);
+                    aiToken.ThrowIfCancellationRequested();
+
+                    if (!IsAiApplyTargetCurrent(targetTabId, targetBitmap))
+                    {
+                        return;
+                    }
 
                     ApplyAiResult(resultPixels);
                 }
                 ShowToast("L_Toast_Apply_Success");
             }
-            catch (OperationCanceledException) { TaskProgressPopup.Finish(); }
+            catch (OperationCanceledException)
+            {
+            }
             catch (Exception ex)
             {
                 if (ex is DllNotFoundException ||
@@ -752,6 +778,7 @@ namespace TabPaint
             {
                 _downloadCts?.Dispose();
                 _downloadCts = null;
+                EndAiInferenceScope();
                 _imageSize = statusText; // 恢复状态栏
                 OnPropertyChanged(nameof(ImageSize));
                 NotifyCanvasChanged();
