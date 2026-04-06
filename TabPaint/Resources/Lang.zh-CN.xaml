@@ -44,6 +44,12 @@
     <sys:String x:Key="L_Settings_Plugins_Uninstall">卸载</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">确定要卸载此 AI 模型吗？</sys:String>
     <sys:String x:Key="L_Settings_Plugins_OCR_Uninstall_Confirm">确定要卸载 OCR 运行时吗？</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_ModelDir_Title">模型默认保存目录</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_ModelDir_Desc">修改后会迁移已下载的本地模型文件</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_ModelDir_Browse">浏览</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_ModelDir_Migrating">迁移模型中...</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_ModelDir_Migrating_Left">{0}/{1}</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_ModelDir_MigrateFailed">模型迁移失败：{0}</sys:String>
     <sys:String x:Key="L_Settings_General_Title">通用</sys:String>
     <sys:String x:Key="L_Settings_General_Startup_Header">启动</sys:String>
     <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Title">自动加载同文件夹图片</sys:String>
@@ -58,7 +64,7 @@
     <sys:String x:Key="L_Settings_General_AiImage_ApiKey_Title">API Key</sys:String>
     <sys:String x:Key="L_Settings_General_AiImage_ApiKey_Desc">用于文生图请求鉴权</sys:String>
     <sys:String x:Key="L_Settings_General_AiImage_Model_Title">模型名称</sys:String>
-    <sys:String x:Key="L_Settings_General_AiImage_Model_Desc">例如 gpt-image-1 或其他兼容模型</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_Model_Desc">任何兼容模型</sys:String>
 
     <sys:String x:Key="L_Settings_General_MouseWheel_Title">鼠标滚轮操作</sys:String>
     <sys:String x:Key="L_Settings_General_MouseWheel_Desc">滑动鼠标滚轮时程序的响应</sys:String>

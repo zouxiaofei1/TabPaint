@@ -54,7 +54,7 @@ namespace TabPaint
         private const string BgRem_ModelName = AppConsts.BgRem_ModelName;
         private const string ExpectedMD5 = AppConsts.BgRem_ExpectedMD5;
 
-        private readonly string _cacheDir;
+        static private readonly string _fallbackCacheDir;
 
         private const string Sr_ModelUrl_HF = AppConsts.Sr_ModelUrl_HF;
         private const string Sr_ModelUrl_Mirror = AppConsts.Sr_ModelUrl_Mirror;
@@ -67,7 +67,7 @@ namespace TabPaint
         private const string Inpaint_ModelName = AppConsts.Inpaint_ModelName;
         private const string Inpaint_MD5 = AppConsts.Inpaint_ExpectedMD5;
         // 检查模型是否准备好
-        public bool IsInpaintModelReady(){  return File.Exists(Path.Combine(_cacheDir, Inpaint_ModelName));  }
+        public bool IsInpaintModelReady(){  return File.Exists(Path.Combine(GetEffectiveCacheDir(), Inpaint_ModelName));  }
         private async Task<InferenceSession> GetSessionAsync(AiTaskType taskType, string modelPath)
         {
             await _sessionLock.WaitAsync();
@@ -247,14 +247,35 @@ namespace TabPaint
                 case AiTaskType.Inpainting: modelName = Inpaint_ModelName; break;
                 default: return false;
             }
-            string finalPath = Path.Combine(_cacheDir, modelName);
+            string finalPath = Path.Combine(GetEffectiveCacheDir(), modelName);
             return File.Exists(finalPath);
         }
 
         public AiService(string cacheDir)
         {
-            _cacheDir = cacheDir;
-            if (!Directory.Exists(_cacheDir)) Directory.CreateDirectory(_cacheDir);
+          //  _fallbackCacheDir = AppConsts.CacheDir;
+          //  if (!Directory.Exists(_fallbackCacheDir)) Directory.CreateDirectory(_fallbackCacheDir);
+        }
+
+        static public string GetEffectiveCacheDir()
+        {
+            try
+            {
+                string? configuredDir = SettingsManager.Instance.Current?.AiModelDefaultSaveDir;
+                if (!string.IsNullOrWhiteSpace(configuredDir))
+                {
+                    string normalized = Path.GetFullPath(configuredDir);
+                    if (!Directory.Exists(normalized)) Directory.CreateDirectory(normalized);
+                    return normalized;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[AI] Resolve model dir failed: {ex.Message}");
+            }
+
+            if (!Directory.Exists(AppConsts.CacheDir)) Directory.CreateDirectory(AppConsts.CacheDir);
+            return AppConsts.CacheDir;
         }
         public enum AiTaskType { RemoveBackground, SuperResolution, Inpainting }
         private int? _bestGpuId = null;
@@ -342,7 +363,7 @@ namespace TabPaint
             string primaryUrl = preferMirror ? urlMirror : urlMain;
             string secondaryUrl = preferMirror ? urlMain : urlMirror;
 
-            string finalPath = Path.Combine(_cacheDir, modelName);
+            string finalPath = Path.Combine(GetEffectiveCacheDir(), modelName);
             if (File.Exists(finalPath))
             {
                 if (expectedMd5 == null) return finalPath; // 未提供MD5，直接返回已存在文件（开发阶段用）

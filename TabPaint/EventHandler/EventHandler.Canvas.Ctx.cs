@@ -573,7 +573,7 @@ namespace TabPaint
             try
             {
                 var aiService = AiService.Instance;
-                string modelPath = Path.Combine(_cacheDir, AppConsts.Sr_ModelName);
+                string modelPath = Path.Combine(AiService.GetEffectiveCacheDir(), AppConsts.Sr_ModelName);
 
                 WriteableBitmap inputBmp = _surface.Bitmap;
                 const int MaxLongSide = AppConsts.AiUpscaleMaxLongSide; // 限制长边最大 4096
@@ -705,8 +705,9 @@ namespace TabPaint
             try
             {
                 var aiService = AiService.Instance;
-                string modelPath = Path.Combine(_cacheDir, AppConsts.BgRem_ModelName);
-
+                string modelPath = Path.Combine(AiService.GetEffectiveCacheDir(), AppConsts.BgRem_ModelName);
+                //s(_cacheDir);
+              
                 _imageSize = LocalizationManager.GetString("L_AI_Status_Thinking");
                 OnPropertyChanged(nameof(ImageSize));
                 aiToken = BeginAiInferenceScope();

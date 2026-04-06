@@ -704,6 +704,21 @@ namespace TabPaint
             }
         }
 
+        private string _aiModelDefaultSaveDir = AppConsts.AiModelDefaultSaveDir;
+        [JsonPropertyName("ai_model_default_save_dir")]
+        public string AiModelDefaultSaveDir
+        {
+            get => _aiModelDefaultSaveDir;
+            set
+            {
+                if (_aiModelDefaultSaveDir != value)
+                {
+                    _aiModelDefaultSaveDir = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private OcrResultAction _ocrResultAction = OcrResultAction.DirectCopy;
         [JsonPropertyName("ocr_result_action")]
         public OcrResultAction OcrResultAction

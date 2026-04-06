@@ -24,6 +24,12 @@
     <sys:String x:Key="L_Settings_Plugins_Uninstall">Uninstall</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">Are you sure you want to uninstall this AI model? </sys:String>
     <sys:String x:Key="L_Settings_Plugins_OCR_Uninstall_Confirm">Are you sure you want to uninstall the OCR runtime?</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_ModelDir_Title">Default model save directory</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_ModelDir_Desc">Changing it will migrate existing downloaded model files</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_ModelDir_Browse">Browse</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_ModelDir_Migrating">Migrating models...</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_ModelDir_Migrating_Left">{0}/{1}</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_ModelDir_MigrateFailed">Model migration failed: {0}</sys:String>
     <sys:String x:Key="L_Settings_Nav_Plugins">Plugins</sys:String>
     <sys:String x:Key="L_ImgBar_NewImage">New Image</sys:String>
     <sys:String x:Key="L_CreateNewWorkSpate">Create New WorkSpace</sys:String>

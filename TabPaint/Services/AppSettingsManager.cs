@@ -192,6 +192,7 @@ namespace TabPaint
                     writer.Write(Current.AiImageApiBaseUrl ?? AppConsts.AiImageDefaultApiBaseUrl);
                     writer.Write(Current.AiImageApiKey ?? string.Empty);
                     writer.Write(Current.AiImageModel ?? AppConsts.AiImageDefaultModel);
+                    writer.Write(Current.AiModelDefaultSaveDir ?? AppConsts.AiModelDefaultSaveDir);
                     writer.Write((int)Current.OcrResultAction);
                     writer.Write(Current.IsShapeToolProMode);
                     writer.Write(Current.ViewUseDarkCanvasBackground);
@@ -293,6 +294,7 @@ namespace TabPaint
                     settings.AiImageApiBaseUrl = dataVersion >= 16 ? reader.ReadString() : AppConsts.AiImageDefaultApiBaseUrl;
                     settings.AiImageApiKey = dataVersion >= 16 ? reader.ReadString() : string.Empty;
                     settings.AiImageModel = dataVersion >= 16 ? reader.ReadString() : AppConsts.AiImageDefaultModel;
+                    settings.AiModelDefaultSaveDir = dataVersion >= 18 ? reader.ReadString() : AppConsts.AiModelDefaultSaveDir;
                     settings.OcrResultAction = dataVersion >= 10
                         ? (OcrResultAction)reader.ReadInt32()
                         : OcrResultAction.EditText;

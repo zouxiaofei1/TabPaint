@@ -26,6 +26,7 @@ public partial class ShapeTool : ToolBase
     private Point _arrowStartPoint;
     private Point _arrowEndPoint;
     private bool _hasArrowEndpoints;
+    private bool _lineUsesNegativeDiagonal;
     
     // 专业模式相关
     private enum ManipulationAnchor { None, N, S, W, E, NW, NE, SW, SE, Move, Rotate }
@@ -90,6 +91,7 @@ public partial class ShapeTool : ToolBase
         }
 
         _startPoint = px;
+        _lineUsesNegativeDiagonal = false;
         if (_currentShapeType == ShapeType.Arrow)
         {
             _arrowStartPoint = px;
@@ -204,6 +206,10 @@ public partial class ShapeTool : ToolBase
             {
                 _arrowEndPoint = endPoint;
             }
+            else if (_currentShapeType == ShapeType.Line)
+            {
+                _lineUsesNegativeDiagonal = UsesNegativeDiagonal(_startPoint, endPoint);
+            }
             _editingRect = new Rect(_startPoint, endPoint);
 
             if (_editingRect.Width <= 1 && _editingRect.Height <= 1)
@@ -314,7 +320,8 @@ public partial class ShapeTool : ToolBase
     private void UpdatePreviewFromRect(ToolContext ctx)
     {
         if (_previewShape == null) return;
-        UpdatePreviewShape(ctx, _editingRect.TopLeft, _editingRect.BottomRight, ctx.PenThickness);
+        GetCommittedShapeEndpoints(out Point renderStart, out Point renderEnd);
+        UpdatePreviewShape(ctx, renderStart, renderEnd, ctx.PenThickness);
     }
 
     private void UpdateCursorByPos(ToolContext ctx, Point px)
@@ -446,13 +453,7 @@ public partial class ShapeTool : ToolBase
     {
         if (_previewShape == null) return;
 
-        Point renderStart = _editingRect.TopLeft;
-        Point renderEnd = _editingRect.BottomRight;
-        if (_currentShapeType == ShapeType.Arrow && _hasArrowEndpoints)
-        {
-            renderStart = _arrowStartPoint;
-            renderEnd = _arrowEndPoint;
-        }
+        GetCommittedShapeEndpoints(out Point renderStart, out Point renderEnd);
 
         // 基于真实几何渲染边界计算提交区域，避免小尺寸尖角图形被裁剪
         Rect shapeGlobalBounds = CalculateShapeRenderBounds(renderStart, renderEnd, ctx.PenThickness);
@@ -571,7 +572,43 @@ public partial class ShapeTool : ToolBase
         _isEditing = false;
         _rotationAngle = 0;
         _hasArrowEndpoints = false;
+        _lineUsesNegativeDiagonal = false;
         if (ctx.ViewElement != null) ctx.ViewElement.Cursor = this.Cursor;
+    }
+
+    private static bool UsesNegativeDiagonal(Point start, Point end)
+    {
+        double dx = end.X - start.X;
+        double dy = end.Y - start.Y;
+        return dx * dy < 0;
+    }
+
+    private void GetCommittedShapeEndpoints(out Point renderStart, out Point renderEnd)
+    {
+        if (_currentShapeType == ShapeType.Arrow && _hasArrowEndpoints)
+        {
+            renderStart = _arrowStartPoint;
+            renderEnd = _arrowEndPoint;
+            return;
+        }
+
+        if (_currentShapeType == ShapeType.Line)
+        {
+            if (_lineUsesNegativeDiagonal)
+            {
+                renderStart = _editingRect.BottomLeft;
+                renderEnd = _editingRect.TopRight;
+            }
+            else
+            {
+                renderStart = _editingRect.TopLeft;
+                renderEnd = _editingRect.BottomRight;
+            }
+            return;
+        }
+
+        renderStart = _editingRect.TopLeft;
+        renderEnd = _editingRect.BottomRight;
     }
 
     public void GiveUpSelection(ToolContext ctx)

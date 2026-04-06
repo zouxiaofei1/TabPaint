@@ -89,7 +89,7 @@ public partial class PenTool : ToolBase
             string? targetTabId = mw.GetCurrentTabId();
             var targetBitmap = ctx.Surface.Bitmap;
 
-            string modelPath = System.IO.Path.Combine(mw._cacheDir, AppConsts.Inpaint_ModelName);
+            string modelPath = System.IO.Path.Combine(AiService.GetEffectiveCacheDir(), AppConsts.Inpaint_ModelName);
 
             // 开始推理阶段
             mw.ImageSize = LocalizationManager.GetString("L_AI_Eraser_Processing");

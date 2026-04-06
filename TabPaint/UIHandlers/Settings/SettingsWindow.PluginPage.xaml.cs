@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using Microsoft.Win32;
 using TabPaint.Controls;
 
 namespace TabPaint.Pages
@@ -156,7 +157,7 @@ namespace TabPaint.Pages
 
             if (string.IsNullOrEmpty(modelName)) return "0 B";
 
-            string modelPath = Path.Combine(AppConsts.CacheDir, modelName);
+            string modelPath = Path.Combine(GetCurrentAiModelDir(), modelName);
             if (!File.Exists(modelPath)) return "0 B";
 
             long bytes = new FileInfo(modelPath).Length;
@@ -178,9 +179,157 @@ namespace TabPaint.Pages
             return unitIndex == 0 ? $"{size:0} {units[unitIndex]}" : $"{size:0.##} {units[unitIndex]}";
         }
 
+        private static string GetCurrentAiModelDir()
+        {
+            try
+            {
+                string configured = SettingsManager.Instance.Current?.AiModelDefaultSaveDir ?? AppConsts.AiModelDefaultSaveDir;
+                if (string.IsNullOrWhiteSpace(configured))
+                {
+                    configured = AppConsts.AiModelDefaultSaveDir;
+                }
+
+                string normalized = Path.GetFullPath(configured);
+                if (!Directory.Exists(normalized))
+                {
+                    Directory.CreateDirectory(normalized);
+                }
+
+                return normalized;
+            }
+            catch
+            {
+                if (!Directory.Exists(AppConsts.AiModelDefaultSaveDir))
+                {
+                    Directory.CreateDirectory(AppConsts.AiModelDefaultSaveDir);
+                }
+                return AppConsts.AiModelDefaultSaveDir;
+            }
+        }
+
+        private static string[] GetManagedAiModelNames()
+        {
+            return new[]
+            {
+                AppConsts.BgRem_ModelName,
+                AppConsts.Sr_ModelName,
+                AppConsts.Inpaint_ModelName
+            };
+        }
+
         private Button? FindInstallAllButton()
         {
             return FindName("BtnInstallAllPlugins") as Button;
+        }
+
+        private async void BrowseAiModelSaveDir_Click(object sender, RoutedEventArgs e)
+        {
+            string oldDir = GetCurrentAiModelDir();
+
+            var dialog = new OpenFolderDialog
+            {
+                Title = LocalizationManager.GetString("L_Settings_Plugins_ModelDir_Browse"),
+                InitialDirectory = oldDir,
+                Multiselect = false
+            };
+
+            bool? result = dialog.ShowDialog(Window.GetWindow(this));
+            if (result != true)
+            {
+                return;
+            }
+
+            string newDir;
+            try
+            {
+                newDir = Path.GetFullPath(dialog.FolderName ?? string.Empty);
+            }
+            catch
+            {
+                return;
+            }
+
+            if (string.Equals(oldDir, newDir, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            bool migrationOk = await MigrateAiModelsAsync(oldDir, newDir);
+            if (!migrationOk)
+            {
+                return;
+            }
+
+            var settings = SettingsManager.Instance.Current;
+            settings.AiModelDefaultSaveDir = newDir;
+            SettingsManager.Instance.Save();
+
+            await UpdateAllStatusesAsync();
+        }
+
+        private async Task<bool> MigrateAiModelsAsync(string oldDir, string newDir)
+        {
+            string[] modelNames = GetManagedAiModelNames();
+            int total = modelNames.Length;
+            int current = 0;
+
+            try
+            {
+                if (!Directory.Exists(newDir))
+                {
+                    Directory.CreateDirectory(newDir);
+                }
+
+                // 防止模型文件被会话占用
+                AiService.Instance.ReleaseAllModels();
+
+                foreach (string modelName in modelNames)
+                {
+                    current++;
+
+                    string src = Path.Combine(oldDir, modelName);
+                    string dest = Path.Combine(newDir, modelName);
+
+                    if (!File.Exists(src))
+                    {
+                        FloatModelMigration.UpdateProgress(
+                            (double)current / total * 100,
+                            LocalizationManager.GetString("L_Settings_Plugins_ModelDir_Migrating"),
+                            string.Format(LocalizationManager.GetString("L_Settings_Plugins_ModelDir_Migrating_Left"), current, total),
+                            modelName);
+                        continue;
+                    }
+
+                    await Task.Run(() =>
+                    {
+                        if (File.Exists(dest))
+                        {
+                            File.Delete(dest);
+                        }
+                        File.Move(src, dest);
+                    });
+
+                    FloatModelMigration.UpdateProgress(
+                        (double)current / total * 100,
+                        LocalizationManager.GetString("L_Settings_Plugins_ModelDir_Migrating"),
+                        string.Format(LocalizationManager.GetString("L_Settings_Plugins_ModelDir_Migrating_Left"), current, total),
+                        modelName);
+                }
+
+                FloatModelMigration.Finish();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                FloatModelMigration.Finish();
+                FluentMessageBox.Show(
+                    string.Format(LocalizationManager.GetString("L_Settings_Plugins_ModelDir_MigrateFailed"), ex.Message),
+                    LocalizationManager.GetString("L_Settings_Title"),
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error,
+                    Window.GetWindow(this));
+                return false;
+            }
         }
 
         private async void InstallRMBG_Click(object sender, RoutedEventArgs e)
@@ -493,7 +642,7 @@ namespace TabPaint.Pages
                     _ => ""
                 };
 
-                string modelPath = Path.Combine(AppConsts.CacheDir, modelName);
+                string modelPath = Path.Combine(GetCurrentAiModelDir(), modelName);
                 if (File.Exists(modelPath))
                     File.Delete(modelPath);
 

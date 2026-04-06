@@ -177,6 +177,50 @@
 
 
 
+                <Grid Margin="0,5,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="153"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{DynamicResource L_Settings_Plugins_ModelDir_Title}"/>
+                        <TextBlock Text="{DynamicResource L_Settings_Plugins_ModelDir_Desc}"
+                                   Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <TextBox x:Name="TxtAiModelSaveDir"
+                             Grid.Column="1"
+                             Style="{StaticResource FluentTextBoxStyle}"
+                             Height="30" Margin="0,2,8,0"
+                             VerticalContentAlignment="Center"
+                             IsReadOnly="True"
+                             
+                             Text="{Binding Path=Current.AiModelDefaultSaveDir, Mode=OneWay, Source={x:Static local:SettingsManager.Instance}}"/>
+
+                    <Button Grid.Column="2"
+                            Style="{StaticResource Win11SecondaryButtonStyle}"
+                            Width="30"
+                            Height="30"
+                            Margin="0,2,0,0"
+                            
+                            Click="BrowseAiModelSaveDir_Click">
+                        <Path x:Name="Open_Folder_Image" Data="{DynamicResource Open_Folder_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                    </Button>
+                
+                    <controls:TaskProgressFloat x:Name="FloatModelMigration"
+                                                IsDraggable="False"
+                                                Grid.Row="1"
+                                                Grid.Column="0"
+                                                Grid.ColumnSpan="3"
+                                                Margin="0,8,0,0"/>
+                </Grid>
+
                 <TextBlock Text="{DynamicResource L_Settings_General_AiImage_Header}"
                            FontWeight="SemiBold"
                            FontSize="16"
@@ -186,7 +230,7 @@
                 <Grid Margin="0,5,0,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="220"/>
-                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="213"/>
                     </Grid.ColumnDefinitions>
 
                     <StackPanel VerticalAlignment="Center">
@@ -205,7 +249,7 @@
                 <Grid Margin="0,5,0,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="220"/>
-                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="213"/>
                     </Grid.ColumnDefinitions>
 
                     <StackPanel VerticalAlignment="Center">
@@ -224,7 +268,7 @@
                 <Grid Margin="0,5,0,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="220"/>
-                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="213"/>
                     </Grid.ColumnDefinitions>
 
                     <StackPanel VerticalAlignment="Center">
