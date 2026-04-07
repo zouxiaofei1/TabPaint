@@ -132,7 +132,8 @@ Margin="0,0,8,0"/>
                     Tag="https://github.com/zouxiaofei1/TabPaint/releases" 
                     Click="OnOpenUrlClick">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="&#xE895;" FontFamily="Segoe MDL2 Assets" Margin="0,1,8,0"/>
+                    <Path Data="{DynamicResource Update_Image}"  Width="13"  Height="13" Stretch="Uniform"  Fill="{DynamicResource IconFillBrush}"
+ Margin="0,0,8,0"/>
                     <TextBlock Text="{DynamicResource L_Settings_About_CheckUpdate}"/>
                 </StackPanel>
             </Button>
@@ -141,7 +142,8 @@ Margin="0,0,8,0"/>
                     Tag="https://zouxiaofei1.github.io/tabpaint-site/guide/start/installation.html" 
                     Click="OnOpenUrlClick">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" Margin="0,1,8,0"/>
+                    <Path Data="{DynamicResource FAQ_Image}"  Width="13"  Height="13" Stretch="Uniform"  Fill="{DynamicResource IconFillBrush}"
+ Margin="0,0,8,0"/>
                     <TextBlock Text="{DynamicResource L_Settings_About_Help}"/>
                 </StackPanel>
             </Button>

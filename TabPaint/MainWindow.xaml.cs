@@ -100,6 +100,45 @@ namespace TabPaint
 
         public bool IsWin11 => MicaAcrylicManager.IsWin11();
 
+        public WriteableBitmap CurrentBitmap => _bitmap;
+
+        /// <summary>
+        /// 检查当前位图是否含有透明像素 (Alpha < 255)
+        /// </summary>
+        public bool HasTransparency()
+        {
+            var bmp = _bitmap;
+            if (bmp == null) return false;
+
+            bmp.Lock();
+            try
+            {
+                unsafe
+                {
+                    int width = bmp.PixelWidth;
+                    int height = bmp.PixelHeight;
+                    int* p = (int*)bmp.BackBuffer;
+                    int count = width * height;
+
+                    for (int i = 0; i < count; i++)
+                    {
+                        // BGRA32 格式，Alpha 在最高字节 (0xAARRGGBB in little endian is BB GG RR AA)
+                        // 但 int* 指针访问时，位移 24 位正好是 Alpha
+                        if (((*p >> 24) & 0xFF) < 255)
+                        {
+                            return true;
+                        }
+                        p++;
+                    }
+                }
+            }
+            finally
+            {
+                bmp.Unlock();
+            }
+            return false;
+        }
+
         public MainWindow(string path, bool? fileExists = null, FileTabItem? initialTab = null, bool loadSession = true)
         {
             using var __perfCtor = StartupPerformanceTracer.Measure("MainWindow.Ctor");
@@ -502,7 +541,7 @@ namespace TabPaint
             bool showProgress = files.Length > 5;
             if (showProgress)
             {
-                TaskProgressPopup.SetIcon("📂");
+                TaskProgressPopup.SetIcon(AppConsts.PathTaskProgress);
                 TaskProgressPopup.UpdateProgress(0, LocalizationManager.GetString("L_Toast_BatchOpen_Title") ?? "Opening images...", $"0 / {files.Length}", "");
             }
 

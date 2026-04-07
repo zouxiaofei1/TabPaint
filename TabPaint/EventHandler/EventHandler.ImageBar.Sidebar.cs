@@ -49,7 +49,7 @@ namespace TabPaint
             bool showProgress = totalToSave > 20;
             if (showProgress)
             {
-                TaskProgressPopup.SetIcon("\uE74E"); // Save icon
+                TaskProgressPopup.SetIcon(AppConsts.PathTaskProgress);
                 TaskProgressPopup.UpdateProgress(0, LocalizationManager.GetString("L_Progress_Saving"));
                 TaskProgressPopup.Visibility = Visibility.Visible;
             }

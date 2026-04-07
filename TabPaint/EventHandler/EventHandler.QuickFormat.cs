@@ -31,6 +31,8 @@ namespace TabPaint
             string extension = format.ToLower();
             if (extension == "jpg") extension = "jpg"; // 规范化
 
+
+
             string newPath = Path.ChangeExtension(oldPath, extension);
 
             // 如果文件名没变，不需要转换
@@ -57,7 +59,16 @@ namespace TabPaint
                 _currentFilePath = newPath;
                 _currentFileName = Path.GetFileName(newPath);
 
+                // 检查透明度丢失风险
+
                 ShowToast(string.Format(LocalizationManager.GetString("L_Toast_FormatConverted_Format"), format.ToUpper()));
+                if (extension == "jpg" || extension == "jpeg" || extension == "bmp")
+                {
+                    if (HasTransparency())
+                    {
+                        ShowToast(string.Format(LocalizationManager.GetString("L_Toast_FormatConverted_Format"), format.ToUpper() )+ ";" + LocalizationManager.GetString("L_Toast_TransparencyLoss"));
+                    }
+                }
                 UpdateWindowTitle();
                 QuickFormatPopup.Visibility = Visibility.Collapsed;
             }

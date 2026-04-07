@@ -130,7 +130,7 @@ namespace TabPaint
             if (saveDialog.ShowDialog() == true)
             {
                 string targetPath = saveDialog.FileName;
-                TaskProgressPopup.SetIcon("📄");
+                TaskProgressPopup.SetIcon(AppConsts.PathTaskProgress);
                 TaskProgressPopup.UpdateProgress(0, LocalizationManager.GetString("L_Toast_SavingPDF_Title") ?? "Saving PDF...", "0%", "");
 
                 try

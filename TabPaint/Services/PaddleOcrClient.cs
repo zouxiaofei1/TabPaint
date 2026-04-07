@@ -54,7 +54,7 @@ namespace TabPaint
             {
                 var mw = MainWindow.GetCurrentInstance();
                 if (mw == null) return;
-                mw.TaskProgressPopup.SetIcon("🧠");
+                mw.TaskProgressPopup.SetIcon(AppConsts.PathTaskProgress);
                 mw.TaskProgressPopup.UpdateProgress(
                     status.Percentage,
                     GetStageTitle(status.Stage),

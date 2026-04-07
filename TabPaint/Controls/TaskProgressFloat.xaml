@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:root="clr-namespace:TabPaint"
              xmlns:local="clr-namespace:TabPaint.Controls"
              mc:Ignorable="d" 
              Visibility="Collapsed"
@@ -56,8 +57,13 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,8">
-                <TextBlock x:Name="TaskIconText" Text="☁️" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+             <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,8">
+                <Path x:Name="TaskIconPath" 
+                      Fill="{DynamicResource TextPrimaryBrush}" 
+                      Width="16" Height="16" 
+                      Stretch="Uniform" 
+                      Margin="0,0,6,0" 
+                      VerticalAlignment="Center"/>
                 <TextBlock x:Name="TaskNameText" 
                            Text="Downloading..." 
                            FontWeight="SemiBold" FontSize="12"

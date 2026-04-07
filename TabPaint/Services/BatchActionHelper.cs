@@ -75,7 +75,7 @@ namespace TabPaint
 
             await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
             {
-                TaskProgressPopup.SetIcon("⚙️");
+                TaskProgressPopup.SetIcon(AppConsts.PathTaskProgress);
                 TaskProgressPopup.UpdateProgress(0, taskTitle, $"0 / {tasksInfo.Count}", "");
             });
 
@@ -269,7 +269,7 @@ namespace TabPaint
 
             await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
             {
-                TaskProgressPopup.SetIcon("✨");
+                TaskProgressPopup.SetIcon(AppConsts.PathTaskProgress);
                 TaskProgressPopup.UpdateProgress(0, taskTitle, $"0 / {tasksInfo.Count}", "");
             });
 

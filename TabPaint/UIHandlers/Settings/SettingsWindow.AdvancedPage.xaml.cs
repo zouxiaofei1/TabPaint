@@ -200,7 +200,7 @@ namespace TabPaint.Pages
             var stopwatch = Stopwatch.StartNew();
             bool floatShown = false;
 
-            FloatFactoryReset.SetIcon("🧹");
+            FloatFactoryReset.SetIcon(AppConsts.PathTaskProgress);
 
             var progress = new Progress<FactoryResetDeleteProgress>(state =>
             {

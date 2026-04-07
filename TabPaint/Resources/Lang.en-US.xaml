@@ -729,6 +729,8 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Toast_LoadFailed_Prefix">Startup load failed:</sys:String>
     <sys:String x:Key="L_Toast_ShapeProMode_On">Shape Pro Mode: ON (Alt)</sys:String>
     <sys:String x:Key="L_Toast_ShapeProMode_Off">Shape Pro Mode: OFF (Alt)</sys:String>
+    <sys:String x:Key="L_Toast_TextProMode_On">Text Pro Mode: ON (Alt)</sys:String>
+    <sys:String x:Key="L_Toast_TextProMode_Off">Text Pro Mode: OFF (Alt)</sys:String>
 
     <!-- New Toast Messages -->
     <sys:String x:Key="L_Toast_BorderAdded" xmlns:sys="clr-namespace:System;assembly=mscorlib">Added 2px border</sys:String>
@@ -748,6 +750,7 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Toast_FullScreen_On" xmlns:sys="clr-namespace:System;assembly=mscorlib">Enter Fullscreen</sys:String>
     <sys:String x:Key="L_Toast_FullScreen_Off" xmlns:sys="clr-namespace:System;assembly=mscorlib">Exit Fullscreen</sys:String>
     <sys:String x:Key="L_Toast_SaveFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Save failed: {0}</sys:String>
+    <sys:String x:Key="L_Toast_TransparencyLoss">Transparency may be lost</sys:String>
     <sys:String x:Key="L_Toast_FileNotFound_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Image file not found: {0}</sys:String>
     <sys:String x:Key="L_Toast_Mode_View" xmlns:sys="clr-namespace:System;assembly=mscorlib">View Mode</sys:String>
     <sys:String x:Key="L_Toast_Mode_Paint" xmlns:sys="clr-namespace:System;assembly=mscorlib">Paint Mode</sys:String>

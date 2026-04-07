@@ -130,12 +130,19 @@ namespace TabPaint
             private int lag = 0;
             private bool _justDismissed = false; // 用于记录当前点击是否是为了销毁上一个文本框
 
+            // 专业模式：旋转相关
+            private double _rotationAngle = 0;
+            private bool _rotating = false;
+            private Point _rotateCenter;
+            private const double RotateHandleOffset = 30;
+
             public enum ResizeAnchor
             {
                 None,
                 TopLeft, TopMiddle, TopRight,
                 LeftMiddle, RightMiddle,
-                BottomLeft, BottomMiddle, BottomRight
+                BottomLeft, BottomMiddle, BottomRight,
+                Rotate
             }
 
         }

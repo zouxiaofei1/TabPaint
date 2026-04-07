@@ -13,11 +13,28 @@ namespace TabPaint.Controls
         private Point _startPoint;
         public event EventHandler CancelRequested;
         public bool IsDraggable { get; set; } = true;
-        public TaskProgressFloat() { InitializeComponent();  }
-        public void SetIcon(string icon)
+        public TaskProgressFloat()
         {
-            var iconText = this.FindName("TaskIconText") as TextBlock;
-            if (iconText != null) iconText.Text = icon;
+            InitializeComponent();
+            try
+            {
+                TaskIconPath.Data = Geometry.Parse(AppConsts.PathTaskProgress);
+            }
+            catch
+            {
+                // fallback: leave icon empty
+            }
+        }
+        public void SetIcon(string iconPath)
+        {
+            if (TaskIconPath != null && !string.IsNullOrEmpty(iconPath))
+            {
+                try
+                {
+                    TaskIconPath.Data = Geometry.Parse(iconPath);
+                }
+                catch { }
+            }
         }
         public void UpdateProgress(AiDownloadStatus status, string taskName = null)
         {

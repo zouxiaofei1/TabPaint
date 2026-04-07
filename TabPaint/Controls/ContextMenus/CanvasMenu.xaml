@@ -46,8 +46,8 @@ Style="{StaticResource Win11MenuItemStyle}"
 DataContext="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current}"
 IsChecked="{Binding ShowRulers, Mode=TwoWay}">
                 <MenuItem.Icon>
-                    <TextBlock Text="📏" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                </MenuItem.Icon>
+                <Path Data="{DynamicResource Ruler_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+            </MenuItem.Icon>
             </MenuItem>
         <Separator Style="{StaticResource Win11MenuSeparatorStyle}"/>
         <!-- 二级菜单：小工具 -->

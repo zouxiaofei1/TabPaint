@@ -771,6 +771,22 @@ namespace TabPaint
             }
         }
 
+        private bool _isTextToolProMode = false;
+
+        [JsonPropertyName("is_text_tool_pro_mode")]
+        public bool IsTextToolProMode
+        {
+            get => _isTextToolProMode;
+            set
+            {
+                if (_isTextToolProMode != value)
+                {
+                    _isTextToolProMode = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private bool _viewUseDarkCanvasBackground = true; // 默认开启深灰色背景(#1A1A1A)
 
         [JsonPropertyName("view_use_dark_canvas_background")]

@@ -195,6 +195,7 @@ namespace TabPaint
                     writer.Write(Current.AiModelDefaultSaveDir ?? AppConsts.AiModelDefaultSaveDir);
                     writer.Write((int)Current.OcrResultAction);
                     writer.Write(Current.IsShapeToolProMode);
+                    writer.Write(Current.IsTextToolProMode);
                     writer.Write(Current.ViewUseDarkCanvasBackground);
                     writer.Write(Current.ShowBirdEyeInViewMode);
                     writer.Write(Current.ViewLogoMenuHintShown);
@@ -302,6 +303,7 @@ namespace TabPaint
                         ? (OcrResultAction)reader.ReadInt32()
                         : OcrResultAction.EditText;
                     settings.IsShapeToolProMode = reader.ReadBoolean();
+                    settings.IsTextToolProMode = dataVersion >= 20 ? reader.ReadBoolean() : false;
                     settings.ViewUseDarkCanvasBackground = reader.ReadBoolean();
                     settings.ShowBirdEyeInViewMode = dataVersion >= 11
                         ? reader.ReadBoolean()
