@@ -220,6 +220,12 @@ namespace TabPaint
                                     return mw.DecodeSvg(svgFs, token);
                                 }
 
+                                if (MainWindow.IsWebpPath(targetPath))
+                                {
+                                    using var webpFs = new FileStream(targetPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                                    return MainWindow.DecodeWebpWithSkia(webpFs, targetMaxWidth: 100);
+                                }
+
                                 var bmp = new BitmapImage();
                                 bmp.BeginInit();
                                 bmp.UriSource = new Uri(targetPath);

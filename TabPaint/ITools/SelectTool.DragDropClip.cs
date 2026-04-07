@@ -266,7 +266,7 @@ namespace TabPaint
                         }
 
                         fs.Position = 0;
-                        return ctxForTimer?.ParentWindow?.DecodeWebpWithSkia(fs);
+                        return MainWindow.DecodeWebpWithSkia(fs);
                     }
                     catch
                     {

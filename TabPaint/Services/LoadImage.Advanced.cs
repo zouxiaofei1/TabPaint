@@ -19,12 +19,12 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
-        private static bool IsWebpPath(string? filePath)
+        public static bool IsWebpPath(string? filePath)
         {
             return string.Equals(System.IO.Path.GetExtension(filePath), ".webp", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static bool IsWebpStream(Stream stream)
+        public static bool IsWebpStream(Stream stream)
         {
             if (stream == null || !stream.CanSeek) return false;
 
@@ -49,12 +49,12 @@ namespace TabPaint
             }
         }
 
-        private static bool IsWebpFileOrStream(string? filePath, Stream stream)
+        public static bool IsWebpFileOrStream(string? filePath, Stream stream)
         {
             return IsWebpPath(filePath) || IsWebpStream(stream);
         }
 
-        private BitmapSource DecodeWebpWithSkia(Stream stream, int? targetMaxWidth = null, int? targetMaxHeight = null)
+        public static BitmapSource DecodeWebpWithSkia(Stream stream, int? targetMaxWidth = null, int? targetMaxHeight = null)
         {
             try
             {
@@ -102,7 +102,7 @@ namespace TabPaint
             }
         }
 
-        private (int Width, int Height)? GetWebpDimensionsWithSkia(Stream stream)
+        internal static (int Width, int Height)? GetWebpDimensionsWithSkia(Stream stream)
         {
             try
             {
@@ -117,7 +117,7 @@ namespace TabPaint
             }
         }
 
-        private int GetLargestFrameIndex(BitmapDecoder decoder)
+        internal static int GetLargestFrameIndex(BitmapDecoder decoder)
         {
             if (decoder.Frames == null || decoder.Frames.Count == 0) return 0;
             if (decoder.Frames.Count == 1) return 0;
@@ -224,7 +224,7 @@ namespace TabPaint
             }
         }
 
-        private BitmapSource SkiaBitmapToWpfSource(SKBitmap skBitmap)
+        internal static BitmapSource SkiaBitmapToWpfSource(SKBitmap skBitmap)
         {
             // 1. 创建 WPF 的 WriteableBitmap
             var wb = new WriteableBitmap(skBitmap.Width, skBitmap.Height, 96, 96, PixelFormats.Bgra32, null);

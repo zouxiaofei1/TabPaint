@@ -89,10 +89,15 @@ namespace TabPaint
         public const int PyOcrRecognizeTimeoutSeconds = 60;
 
         // --- AI 模型配置 (RMBG - 背景移除) ---
-        public const string BgRem_ModelUrl_HF = "https://huggingface.co/briaai/RMBG-1.4/resolve/main/onnx/model.onnx";
-        public const string BgRem_ModelUrl_MS = "https://modelscope.cn/models/AI-ModelScope/RMBG-1.4/resolve/master/onnx/model.onnx";
-        public const string BgRem_ModelName = "rmbg-1.4.onnx";
-        public const string BgRem_ExpectedMD5 = "8bb9b16ff49cda31e7784852873cfd0d";
+        public const string BgRem14_ModelUrl_HF = "https://huggingface.co/briaai/RMBG-1.4/resolve/main/onnx/model.onnx";
+        public const string BgRem14_ModelUrl_MS = "https://modelscope.cn/models/AI-ModelScope/RMBG-1.4/resolve/master/onnx/model.onnx";
+        public const string BgRem14_ModelName = "rmbg-1.4.onnx";
+        public const string BgRem14_ExpectedMD5 = "8bb9b16ff49cda31e7784852873cfd0d";
+
+        public const string BgRem20_ModelUrl_HF = "https://huggingface.co/briaai/RMBG-2.0/resolve/main/onnx/model_fp16.onnx";
+        public const string BgRem20_ModelUrl_MS = "https://modelscope.cn/models/AI-ModelScope/RMBG-2.0/resolve/master/onnx/model_fp16.onnx";
+        public const string BgRem20_ModelName = "rmbg-2.0.onnx";
+        public const string BgRem20_ExpectedMD5 = "3ecf310c9e7d0ac9c2ab7574ef52d747";
 
         // --- AI 模型配置 (Real-ESRGAN - 超分辨率) ---
         public const string Sr_ModelUrl_HF = "https://modelscope.cn/models/AXERA-TECH/Real-ESRGAN/resolve/master/onnx/realesrgan-x4-256.onnx";

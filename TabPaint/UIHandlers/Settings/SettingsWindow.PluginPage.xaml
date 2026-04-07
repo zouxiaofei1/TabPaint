@@ -92,9 +92,18 @@
                         <StackPanel Grid.Row="0" Grid.Column="0">
                             <TextBlock Text="{DynamicResource L_Settings_Plugins_Model_RMBG_Title}" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}"/>
                             <TextBlock Text="{DynamicResource L_Settings_Plugins_Model_RMBG_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="12" Margin="0,4,0,8" TextWrapping="Wrap"/>
+                          
+
                             <TextBlock x:Name="TxtStatusRMBG" Text="Checking..." FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}"/>
                         </StackPanel>
                         <StackPanel Grid.Row="0" Grid.Column="1" VerticalAlignment="Center">
+                            <ComboBox x:Name="ComboRmbgModel" Width="100" Height="26"  
+          Style="{StaticResource FluentComboBoxStyle}"
+          SelectionChanged="ComboRmbgModel_SelectionChanged">
+                                <ComboBoxItem Content="rmbg-1.4" Tag="Rmbg14"/>
+                                <ComboBoxItem Content="rmbg-2.0" Tag="Rmbg20"/>
+                            </ComboBox>
+                            
                             <Button x:Name="BtnInstallRMBG" Content="{DynamicResource L_Settings_Plugins_InstallReal}" Click="InstallRMBG_Click" Style="{StaticResource Win11PrimaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
                             <Button x:Name="BtnUninstallRMBG" Content="{DynamicResource L_Settings_Plugins_Uninstall}" Click="UninstallRMBG_Click" Style="{StaticResource Win11SecondaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
                         </StackPanel>

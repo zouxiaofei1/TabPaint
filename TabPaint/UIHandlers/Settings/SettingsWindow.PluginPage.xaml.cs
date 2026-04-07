@@ -31,12 +31,42 @@ namespace TabPaint.Pages
             InitializeComponent();
             this.Loaded += PluginPage_Loaded;
             this.Unloaded += PluginPage_Unloaded;
+            InitializeComboBoxes();
 
             // 订阅取消事件
             FloatRMBG.CancelRequested += (s, e) => _ctsRMBG?.Cancel();
             FloatSR.CancelRequested += (s, e) => _ctsSR?.Cancel();
             FloatInpaint.CancelRequested += (s, e) => _ctsInpaint?.Cancel();
             FloatOcrRuntime.CancelRequested += (s, e) => _ctsOcrRuntime?.Cancel();
+        }
+
+        private void InitializeComboBoxes()
+        {
+            var currentModel = SettingsManager.Instance.Current.RmbgModel;
+            foreach (ComboBoxItem item in ComboRmbgModel.Items)
+            {
+                if (item.Tag?.ToString() == currentModel.ToString())
+                {
+                    ComboRmbgModel.SelectedItem = item;
+                    break;
+                }
+            }
+        }
+
+        private void ComboRmbgModel_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ComboRmbgModel.SelectedItem is ComboBoxItem item && item.Tag != null)
+            {
+                if (Enum.TryParse<RmbgModelType>(item.Tag.ToString(), out var modelType))
+                {
+                    if (SettingsManager.Instance.Current.RmbgModel != modelType)
+                    {
+                        SettingsManager.Instance.Current.RmbgModel = modelType;
+                        SettingsManager.Instance.Save();
+                        _ = UpdateAllStatusesAsync();
+                    }
+                }
+            }
         }
 
         private void PluginPage_Unloaded(object sender, RoutedEventArgs e)
@@ -147,13 +177,20 @@ namespace TabPaint.Pages
 
         private static string GetInstalledModelSizeText(AiService.AiTaskType type)
         {
-            string modelName = type switch
+            string modelName = string.Empty;
+            switch (type)
             {
-                AiService.AiTaskType.RemoveBackground => AppConsts.BgRem_ModelName,
-                AiService.AiTaskType.SuperResolution => AppConsts.Sr_ModelName,
-                AiService.AiTaskType.Inpainting => AppConsts.Inpaint_ModelName,
-                _ => string.Empty
-            };
+                case AiService.AiTaskType.RemoveBackground:
+                    var modelType = SettingsManager.Instance.Current.RmbgModel;
+                    modelName = modelType == RmbgModelType.Rmbg20 ? AppConsts.BgRem20_ModelName : AppConsts.BgRem14_ModelName;
+                    break;
+                case AiService.AiTaskType.SuperResolution:
+                    modelName = AppConsts.Sr_ModelName;
+                    break;
+                case AiService.AiTaskType.Inpainting:
+                    modelName = AppConsts.Inpaint_ModelName;
+                    break;
+            }
 
             if (string.IsNullOrEmpty(modelName)) return "0 B";
 
@@ -211,7 +248,8 @@ namespace TabPaint.Pages
         {
             return new[]
             {
-                AppConsts.BgRem_ModelName,
+                AppConsts.BgRem14_ModelName,
+                AppConsts.BgRem20_ModelName,
                 AppConsts.Sr_ModelName,
                 AppConsts.Inpaint_ModelName
             };
@@ -634,13 +672,20 @@ namespace TabPaint.Pages
             {
                 AiService.Instance.ReleaseModel(type);
 
-                string modelName = type switch
+                string modelName = string.Empty;
+                switch (type)
                 {
-                    AiService.AiTaskType.RemoveBackground => AppConsts.BgRem_ModelName,
-                    AiService.AiTaskType.SuperResolution => AppConsts.Sr_ModelName,
-                    AiService.AiTaskType.Inpainting => AppConsts.Inpaint_ModelName,
-                    _ => ""
-                };
+                    case AiService.AiTaskType.RemoveBackground:
+                        var modelType = SettingsManager.Instance.Current.RmbgModel;
+                        modelName = modelType == RmbgModelType.Rmbg20 ? AppConsts.BgRem20_ModelName : AppConsts.BgRem14_ModelName;
+                        break;
+                    case AiService.AiTaskType.SuperResolution:
+                        modelName = AppConsts.Sr_ModelName;
+                        break;
+                    case AiService.AiTaskType.Inpainting:
+                        modelName = AppConsts.Inpaint_ModelName;
+                        break;
+                }
 
                 string modelPath = Path.Combine(GetCurrentAiModelDir(), modelName);
                 if (File.Exists(modelPath))

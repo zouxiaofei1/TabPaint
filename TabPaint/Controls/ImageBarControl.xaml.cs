@@ -300,13 +300,20 @@ namespace TabPaint.Controls
             try
             {
                 using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+                if (MainWindow.IsWebpFileOrStream(filePath, fs))
+                {
+                    var webpSize = MainWindow.GetWebpDimensionsWithSkia(fs);
+                    if (webpSize != null) return (webpSize.Value.Width, webpSize.Value.Height);
+                }
+
                 var decoder = BitmapDecoder.Create(fs,
                     BitmapCreateOptions.DelayCreation | BitmapCreateOptions.IgnoreColorProfile,
                     BitmapCacheOption.None);
 
                 if (decoder.Frames.Count > 0)
                 {
-                    int bestIndex = GetLargestFrameIndex(decoder); //多帧图像（ICO等）选择最大帧，与预览渲染逻辑一致
+                    int bestIndex = MainWindow.GetLargestFrameIndex(decoder); //多帧图像（ICO等）选择最大帧，与预览渲染逻辑一致
                     var frame = decoder.Frames[bestIndex];
                     return (frame.PixelWidth, frame.PixelHeight);
                 }
@@ -389,10 +396,22 @@ namespace TabPaint.Controls
             {
                 using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
+                    if (MainWindow.IsWebpFileOrStream(filePath, fs))
+                    {
+                        var dims = MainWindow.GetWebpDimensionsWithSkia(fs);
+                        if (dims != null)
+                        {
+                            res.Width = dims.Value.Width;
+                            res.Height = dims.Value.Height;
+                            res.Image = MainWindow.DecodeWebpWithSkia(fs, targetMaxWidth: 300);
+                            return res;
+                        }
+                    }
+
                     var decoder = BitmapDecoder.Create(fs, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.None);
                     if (decoder.Frames.Count > 0)
                     {
-                        int bestIndex = GetLargestFrameIndex(decoder);
+                        int bestIndex = MainWindow.GetLargestFrameIndex(decoder);
                         var frame = decoder.Frames[bestIndex];
                         res.Width = frame.PixelWidth;
                         res.Height = frame.PixelHeight;
@@ -425,34 +444,6 @@ namespace TabPaint.Controls
             }
             catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
             return res;
-        }
-        private int GetLargestFrameIndex(BitmapDecoder decoder)
-        {
-            if (decoder.Frames == null || decoder.Frames.Count == 0) return 0;
-            if (decoder.Frames.Count == 1) return 0;
-
-            int bestIndex = 0;
-            long maxArea = 0;
-            int maxBpp = 0;
-
-            for (int i = 0; i < decoder.Frames.Count; i++)
-            {
-                try
-                {
-                    var frame = decoder.Frames[i];
-                    long area = (long)frame.PixelWidth * frame.PixelHeight;
-                    int bpp = frame.Format.BitsPerPixel;
-
-                    if (area > maxArea || (area == maxArea && bpp > maxBpp))
-                    {
-                        maxArea = area;
-                        maxBpp = bpp;
-                        bestIndex = i;
-                    }
-                }
-                catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
-            }
-            return bestIndex;
         }
         private string FormatFileSize(long bytes)
         {

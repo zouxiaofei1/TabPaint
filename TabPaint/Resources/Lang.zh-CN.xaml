@@ -38,6 +38,7 @@
     <sys:String x:Key="L_Settings_Plugins_Status_Downloading">正在下载...</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Install">管理</sys:String>
     <sys:String x:Key="L_Settings_Plugins_InstallReal">安装</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_ModelSelection">选择模型</sys:String>
     <sys:String x:Key="L_Settings_Plugins_InstallAll">一键下载</sys:String>
     <sys:String x:Key="L_Settings_Plugins_InstallAllWithProgress">一键下载{0}/4</sys:String>
     <sys:String x:Key="L_Settings_Plugins_InstallingAll">下载中...</sys:String>

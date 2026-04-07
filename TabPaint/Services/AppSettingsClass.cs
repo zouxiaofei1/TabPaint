@@ -14,6 +14,12 @@ using static TabPaint.MainWindow;
 
 namespace TabPaint
 {
+    public enum RmbgModelType
+    {
+        Rmbg14,
+        Rmbg20
+    }
+
     public class AppSettings : INotifyPropertyChanged
     {
         private AppLanguage _language = GetDefaultLanguage();
@@ -729,6 +735,21 @@ namespace TabPaint
                 if (_ocrResultAction != value)
                 {
                     _ocrResultAction = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private RmbgModelType _rmbgModel = RmbgModelType.Rmbg14;
+        [JsonPropertyName("rmbg_model")]
+        public RmbgModelType RmbgModel
+        {
+            get => _rmbgModel;
+            set
+            {
+                if (_rmbgModel != value)
+                {
+                    _rmbgModel = value;
                     OnPropertyChanged();
                 }
             }

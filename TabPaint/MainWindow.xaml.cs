@@ -1310,11 +1310,12 @@ namespace TabPaint
                     double visualX = visualBounds.X - imageVisualBounds.X;
                     double visualY = visualBounds.Y - imageVisualBounds.Y;
 
-                    RulerTop.SelectionStart = visualX;
-                    RulerTop.SelectionEnd = visualX + visualBounds.Width;
+                    double zoom = ZoomTransform.ScaleX;
+                    RulerTop.SelectionStart = visualX / zoom;
+                    RulerTop.SelectionEnd = (visualX + visualBounds.Width) / zoom;
 
-                    RulerLeft.SelectionStart = visualY;
-                    RulerLeft.SelectionEnd = visualY + visualBounds.Height;
+                    RulerLeft.SelectionStart = visualY / zoom;
+                    RulerLeft.SelectionEnd = (visualY + visualBounds.Height) / zoom;
                     return;
                 }
             }

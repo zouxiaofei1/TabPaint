@@ -49,10 +49,24 @@ namespace TabPaint
         private readonly Dictionary<AiTaskType, InferenceSession> _sessions = new();
         private readonly System.Threading.SemaphoreSlim _sessionLock = new(1, 1);
 
-        private const string BgRem_ModelUrl_HF = AppConsts.BgRem_ModelUrl_HF;
-        private const string BgRem_ModelUrl_MS = AppConsts.BgRem_ModelUrl_MS;
-        private const string BgRem_ModelName = AppConsts.BgRem_ModelName;
-        private const string ExpectedMD5 = AppConsts.BgRem_ExpectedMD5;
+        private void GetRmbgModelInfo(out string name, out string urlHf, out string urlMs, out string md5)
+        {
+            var modelType = SettingsManager.Instance.Current.RmbgModel;
+            if (modelType == RmbgModelType.Rmbg20)
+            {
+                name = AppConsts.BgRem20_ModelName;
+                urlHf = AppConsts.BgRem20_ModelUrl_HF;
+                urlMs = AppConsts.BgRem20_ModelUrl_MS;
+                md5 = AppConsts.BgRem20_ExpectedMD5;
+            }
+            else
+            {
+                name = AppConsts.BgRem14_ModelName;
+                urlHf = AppConsts.BgRem14_ModelUrl_HF;
+                urlMs = AppConsts.BgRem14_ModelUrl_MS;
+                md5 = AppConsts.BgRem14_ExpectedMD5;
+            }
+        }
 
         static private readonly string _fallbackCacheDir;
 
@@ -242,7 +256,9 @@ namespace TabPaint
             string modelName;
             switch (taskType)
             {
-                case AiTaskType.RemoveBackground: modelName = BgRem_ModelName; break;
+                case AiTaskType.RemoveBackground:
+                    GetRmbgModelInfo(out modelName, out _, out _, out _);
+                    break;
                 case AiTaskType.SuperResolution: modelName = Sr_ModelName; break;
                 case AiTaskType.Inpainting: modelName = Inpaint_ModelName; break;
                 default: return false;
@@ -339,10 +355,7 @@ namespace TabPaint
             switch (taskType)
             {
                 case AiTaskType.RemoveBackground:
-                    modelName = BgRem_ModelName;
-                    expectedMd5 = ExpectedMD5;
-                    urlMain = BgRem_ModelUrl_HF;
-                    urlMirror = BgRem_ModelUrl_MS;
+                    GetRmbgModelInfo(out modelName, out urlMain, out urlMirror, out expectedMd5);
                     break;
                 case AiTaskType.SuperResolution:
                     modelName = Sr_ModelName;

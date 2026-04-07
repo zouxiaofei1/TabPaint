@@ -178,6 +178,12 @@ namespace TabPaint
                 }
 
                 using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+                if (IsWebpFileOrStream(path, fs))
+                {
+                    return DecodeWebpWithSkia(fs);
+                }
+
                 var decoder = BitmapDecoder.Create(fs, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
                 int frameIndex = GetLargestFrameIndex(decoder);
                 var frame = decoder.Frames[frameIndex];
@@ -208,17 +214,7 @@ namespace TabPaint
             }
             catch
             {
-                try
-                {
-                    using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-                    if (!IsWebpFileOrStream(path, fs)) return null;
-                    fs.Position = 0;
-                    return DecodeWebpWithSkia(fs);
-                }
-                catch
-                {
-                    return null;
-                }
+                return null;
             }
         }
 

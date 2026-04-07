@@ -705,7 +705,9 @@ namespace TabPaint
             try
             {
                 var aiService = AiService.Instance;
-                string modelPath = Path.Combine(AiService.GetEffectiveCacheDir(), AppConsts.BgRem_ModelName);
+                var modelType = SettingsManager.Instance.Current.RmbgModel;
+                string modelName = modelType == RmbgModelType.Rmbg20 ? AppConsts.BgRem20_ModelName : AppConsts.BgRem14_ModelName;
+                string modelPath = Path.Combine(AiService.GetEffectiveCacheDir(), modelName);
                 //s(_cacheDir);
               
                 _imageSize = LocalizationManager.GetString("L_AI_Status_Thinking");

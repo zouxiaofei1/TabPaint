@@ -262,6 +262,13 @@ namespace TabPaint
         private BitmapSource DecodePreviewBitmap(Stream stream, CancellationToken token, string? filePath = null)
         {
             if (token.IsCancellationRequested) return null;
+
+            if (IsWebpFileOrStream(filePath, stream))
+            {
+                stream.Position = 0;
+                return DecodeWebpWithSkia(stream, targetMaxWidth: AppConsts.PreviewDecodeWidth);
+            }
+
             try
             {
                 // 使用 BitmapCacheOption.OnLoad 确保流关闭后数据依然可用
@@ -302,17 +309,19 @@ namespace TabPaint
             }
             catch
             {
-                if (IsWebpFileOrStream(filePath, stream))
-                {
-                    stream.Position = 0;
-                    return DecodeWebpWithSkia(stream, targetMaxWidth: AppConsts.PreviewDecodeWidth);
-                }
                 return null;
             }
         }
         private BitmapSource DecodeFullResBitmap(Stream stream, CancellationToken token, string? filePath = null)
         {
             if (token.IsCancellationRequested) return null;
+
+            if (IsWebpFileOrStream(filePath, stream))
+            {
+                stream.Position = 0;
+                return DecodeWebpWithSkia(stream);
+            }
+
             if (SettingsManager.Instance.Current.EnableIccColorCorrection)
             {
                 try
@@ -369,11 +378,6 @@ namespace TabPaint
             }
             catch
             {
-                if (IsWebpFileOrStream(filePath, stream))
-                {
-                    stream.Position = 0;
-                    return DecodeWebpWithSkia(stream);
-                }
                 return null;
             }
         }
@@ -386,6 +390,13 @@ namespace TabPaint
                 try
                 {
                     stream.Position = 0;
+
+                    if (IsWebpFileOrStream(filePath, stream))
+                    {
+                        var webpSize = GetWebpDimensionsWithSkia(stream);
+                        if (webpSize != null) return webpSize;
+                    }
+
                     string ext = System.IO.Path.GetExtension(filePath)?.ToLower();
                     if (ext == ".svg")
                     {

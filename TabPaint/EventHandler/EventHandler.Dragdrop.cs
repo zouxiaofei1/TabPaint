@@ -462,7 +462,7 @@ namespace TabPaint
         {
             try
             {
-                BitmapSource bitmap;
+                BitmapSource bitmap = null;
                 string ext = System.IO.Path.GetExtension(filePath)?.ToLower();
                 if (ext == ".svg")
                 {
@@ -472,33 +472,41 @@ namespace TabPaint
                 else
                 {
                     using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                    var decoder = BitmapDecoder.Create(fs, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
-                    int frameIndex = GetLargestFrameIndex(decoder);
-                    var frame = decoder.Frames[frameIndex];
 
-                    int originalWidth = frame.PixelWidth;
-                    int originalHeight = frame.PixelHeight;
-
-                    BitmapImage bmi = new BitmapImage();
-                    bmi.BeginInit();
-                    fs.Position = 0;
-                    bmi.StreamSource = fs;
-                    bmi.CacheOption = BitmapCacheOption.OnLoad;
-
-                    const int maxSize = (int)AppConsts.MaxCanvasSize;
-                    if (originalWidth > maxSize || originalHeight > maxSize)
+                    if (IsWebpFileOrStream(filePath, fs))
                     {
-                        if (originalWidth >= originalHeight)
-                            bmi.DecodePixelWidth = maxSize;
-                        else
-                            bmi.DecodePixelHeight = maxSize;
-
-                        ShowToast("L_Toast_ImageTooLarge");
+                        bitmap = DecodeWebpWithSkia(fs);
                     }
+                    else
+                    {
+                        var decoder = BitmapDecoder.Create(fs, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+                        int frameIndex = GetLargestFrameIndex(decoder);
+                        var frame = decoder.Frames[frameIndex];
 
-                    bmi.EndInit();
-                    bmi.Freeze();
-                    bitmap = bmi;
+                        int originalWidth = frame.PixelWidth;
+                        int originalHeight = frame.PixelHeight;
+
+                        BitmapImage bmi = new BitmapImage();
+                        bmi.BeginInit();
+                        fs.Position = 0;
+                        bmi.StreamSource = fs;
+                        bmi.CacheOption = BitmapCacheOption.OnLoad;
+
+                        const int maxSize = (int)AppConsts.MaxCanvasSize;
+                        if (originalWidth > maxSize || originalHeight > maxSize)
+                        {
+                            if (originalWidth >= originalHeight)
+                                bmi.DecodePixelWidth = maxSize;
+                            else
+                                bmi.DecodePixelHeight = maxSize;
+
+                            ShowToast("L_Toast_ImageTooLarge");
+                        }
+
+                        bmi.EndInit();
+                        bmi.Freeze();
+                        bitmap = bmi;
+                    }
                 }
 
                 if (bitmap == null) return;
@@ -513,34 +521,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                try
-                {
-                    using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                    if (!IsWebpFileOrStream(filePath, fs))
-                    {
-                        ShowToast(string.Format(LocalizationManager.GetString("L_Toast_CannotInsertImage"), ex.Message), ex);
-                        return;
-                    }
-
-                    fs.Position = 0;
-                    var webpBitmap = DecodeWebpWithSkia(fs);
-                    if (webpBitmap == null)
-                    {
-                        ShowToast(string.Format(LocalizationManager.GetString("L_Toast_CannotInsertImage"), ex.Message), ex);
-                        return;
-                    }
-
-                    _router.SetTool(_tools.Select);
-                    if (_tools.Select is SelectTool st)
-                    {
-                        st.InsertImageAsSelection(_ctx, webpBitmap, true, dropPos);
-                    }
-                }
-                catch
-                {
-                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_CannotInsertImage"), ex.Message), ex);
-                }
-
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_CannotInsertImage"), ex.Message), ex);
             }
         }
     }

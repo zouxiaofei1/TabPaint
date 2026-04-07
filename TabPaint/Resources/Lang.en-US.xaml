@@ -18,6 +18,7 @@
     <sys:String x:Key="L_Settings_Plugins_Status_Downloading">Downloading...</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Install">Manage</sys:String>
     <sys:String x:Key="L_Settings_Plugins_InstallReal">Install</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_ModelSelection">Select Model</sys:String>
     <sys:String x:Key="L_Settings_Plugins_InstallAll">Install All</sys:String>
     <sys:String x:Key="L_Settings_Plugins_InstallAllWithProgress">One-click download {0}/4</sys:String>
     <sys:String x:Key="L_Settings_Plugins_InstallingAll">Installing...</sys:String>
