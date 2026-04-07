@@ -211,40 +211,40 @@ namespace TabPaint
 
         private static void AttachRefreshHandlers(Window window)
         {
-            if (_refreshTimers.ContainsKey(window)) return;
+            //if (_refreshTimers.ContainsKey(window)) return;
 
-            var timer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromMilliseconds(180)
-            };
-            timer.Tick += (_, _) =>
-            {
-                timer.Stop();
-                if (!IsWin11() && window.IsVisible)
-                {
-                    ApplyFallbackBackground(window);
-                }
-            };
+            //var timer = new DispatcherTimer
+            //{
+            //    Interval = TimeSpan.FromMilliseconds(180)
+            //};
+            //timer.Tick += (_, _) =>
+            //{
+            //    timer.Stop();
+            //    if (!IsWin11() && window.IsVisible)
+            //    {
+            //        ApplyFallbackBackground(window);
+            //    }
+            //};
 
-            _refreshTimers[window] = timer;
+            //_refreshTimers[window] = timer;
 
-            void QueueRefresh(object s, EventArgs e)
-            {
-                timer.Stop();
-                timer.Start();
-            }
+            //void QueueRefresh(object s, EventArgs e)
+            //{
+            //    timer.Stop();
+            //    timer.Start();
+            //}
 
-            window.LocationChanged += QueueRefresh;
-            window.SizeChanged += QueueRefresh;
-            window.StateChanged += QueueRefresh;
-            window.Closed += (_, _) =>
-            {
-                timer.Stop();
-                _refreshTimers.Remove(window);
-                window.LocationChanged -= QueueRefresh;
-                window.SizeChanged -= QueueRefresh;
-                window.StateChanged -= QueueRefresh;
-            };
+            //window.LocationChanged += QueueRefresh;
+            //window.SizeChanged += QueueRefresh;
+            //window.StateChanged += QueueRefresh;
+            //window.Closed += (_, _) =>
+            //{
+            //    timer.Stop();
+            //    _refreshTimers.Remove(window);
+            //    window.LocationChanged -= QueueRefresh;
+            //    window.SizeChanged -= QueueRefresh;
+            //    window.StateChanged -= QueueRefresh;
+            //};
         }
 
         public static void DisableMica(IntPtr hwnd, Window window)
