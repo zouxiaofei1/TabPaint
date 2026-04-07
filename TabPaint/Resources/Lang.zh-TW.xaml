@@ -45,6 +45,9 @@
     <sys:String x:Key="L_Settings_Plugins_Uninstall">解除安裝</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">確定要解除安裝此 AI 模型嗎？</sys:String>
     <sys:String x:Key="L_Settings_Plugins_OCR_Uninstall_Confirm">確定要解除安裝 OCR 執行階段嗎？</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_RmbgModel_Title">背景移除模型</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_RmbgModel_Desc">切換模型後將自動重新載入</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Rmbg20_LowEndWarning">RMBG 2.0 對顯存和算力要求較高，低配硬體可能導致運行緩慢或程式崩潰。</sys:String>
     <sys:String x:Key="L_Settings_Plugins_ModelDir_Title">模型預設儲存目錄</sys:String>
     <sys:String x:Key="L_Settings_Plugins_ModelDir_Desc">修改後會遷移已下載的本機模型檔案</sys:String>
     <sys:String x:Key="L_Settings_Plugins_ModelDir_Browse">瀏覽</sys:String>
@@ -191,6 +194,8 @@
     <sys:String x:Key="L_Settings_Advanced_Render_Header">算圖與效能</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Resampling_Title">重取樣演算法</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Resampling_Desc">用於圖片儲存或調整大小時</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_NewCanvasSize_Title">新建画布大小</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_NewCanvasSize_Desc">設置新建空白画布時的默認寬度和高度</sys:String>
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Title">像素化閾值設定</sys:String>
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Desc">當縮放倍率超過此值時，畫面從線性插值切換為鄰近插值</sys:String>
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_ViewMode">看圖模式</sys:String>
@@ -320,7 +325,7 @@
 
     <!-- About -->
     <sys:String x:Key="L_Settings_About_Title">關於 TabPaint</sys:String>
-    <sys:String x:Key="L_Settings_About_Subtitle">輕量級繪圖與看圖工具🖌️</sys:String>
+    <sys:String x:Key="L_Settings_About_Subtitle">輕量級繪圖與看圖工具</sys:String>
     <sys:String x:Key="L_Settings_About_Developer">開發者:</sys:String>
     <sys:String x:Key="L_Settings_About_Stack">技術棧:</sys:String>
     <sys:String x:Key="L_Settings_About_Github">GitHub 首頁</sys:String>

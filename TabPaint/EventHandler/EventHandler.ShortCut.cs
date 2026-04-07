@@ -377,6 +377,7 @@ namespace TabPaint
             }
 
             if (Keyboard.Modifiers == ModifierKeys.None &&
+                !IsViewMode &&
                 !IsEditingTextField() &&
                 (actualKey == Key.Oem2 || actualKey == Key.Divide))
             {

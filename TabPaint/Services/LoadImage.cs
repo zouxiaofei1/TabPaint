@@ -794,8 +794,8 @@ namespace TabPaint
             using var __perfLoadBlankCanvas = StartupPerformanceTracer.Measure("MainWindow.LoadBlankCanvasAsync");
             await Dispatcher.InvokeAsync(() =>
             {
-                int width = AppConsts.DefaultBlankCanvasWidth;
-                int height = AppConsts.DefaultBlankCanvasHeight;
+                int width = SettingsManager.Instance.Current.DefaultBlankCanvasWidth;
+                int height = SettingsManager.Instance.Current.DefaultBlankCanvasHeight;
                 _bitmap = new WriteableBitmap(width, height, 96.0, 96.0, PixelFormats.Bgra32, null);
 
                 // 优化填充白色：直接在内存中操作，不分配 byte[]

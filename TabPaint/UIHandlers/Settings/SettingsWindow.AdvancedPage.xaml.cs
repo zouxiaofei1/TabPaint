@@ -122,35 +122,10 @@ namespace TabPaint.Pages
             win?.NavigateToTag("Plugins");
         }
 
-        private void CollectSystemReport_Click(object sender, RoutedEventArgs e)
+        private void OpenDevTools_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                var win = Window.GetWindow(this) as SettingsWindow;
-                win?.NavigateToTag("SystemReport");
-            }
-            catch (Exception ex)
-            {
-                MainWindow.GetCurrentInstance()?.ShowToast(string.Format(LocalizationManager.GetString("L_Common_Error") + ": {0}", ex.Message), ex);
-            }
-        }
-
-        // 打开缓存文件夹
-        private void OpenCacheFolder_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                string cachePath = Path.Combine(localAppData, "TabPaint");
-                if (!Directory.Exists(cachePath)) Directory.CreateDirectory(cachePath);
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = cachePath,
-                    UseShellExecute = true,
-                    Verb = "open"
-                });
-            }
-            catch (Exception) {}
+            var win = Window.GetWindow(this) as SettingsWindow;
+            win?.NavigateToTag("DevTools");
         }
 
         // 恢复出厂设置
@@ -161,7 +136,7 @@ namespace TabPaint.Pages
               LocalizationManager.GetString("L_Settings_Advanced_FactoryReset"),
               MessageBoxButton.YesNo,
               MessageBoxImage.Information,
-             MainWindow.GetCurrentInstance());//设置窗口用这个，否则左边栏会显示白色背景
+             TabPaint.MainWindow.GetCurrentInstance());//设置窗口用这个，否则左边栏会显示白色背景
 
             if (result != MessageBoxResult.Yes) return;
 
@@ -337,6 +312,25 @@ namespace TabPaint.Pages
         {
             Regex regex = new Regex("[^0-9]+");
             e.Handled = regex.IsMatch(e.Text);
+        }
+
+        private void CanvasSizeTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is TextBox textBox)
+            {
+                if (int.TryParse(textBox.Text, out int value))
+                {
+                    if (value < 1) value = 1;
+                    if (value > 16384) value = 16384;
+                    textBox.Text = value.ToString();
+                }
+                else
+                {
+                    textBox.Text = "1";
+                }
+                var binding = textBox.GetBindingExpression(TextBox.TextProperty);
+                binding?.UpdateSource();
+            }
         }
 
         private void UndoMemoryTextBox_GotFocus(object sender, KeyboardFocusChangedEventArgs e)

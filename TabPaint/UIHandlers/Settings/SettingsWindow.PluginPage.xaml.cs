@@ -32,6 +32,7 @@ namespace TabPaint.Pages
             this.Loaded += PluginPage_Loaded;
             this.Unloaded += PluginPage_Unloaded;
             InitializeComboBoxes();
+            UpdateRmbgWarningVisibility();
 
             // 订阅取消事件
             FloatRMBG.CancelRequested += (s, e) => _ctsRMBG?.Cancel();
@@ -61,12 +62,26 @@ namespace TabPaint.Pages
                 {
                     if (SettingsManager.Instance.Current.RmbgModel != modelType)
                     {
+                        // 切换模型时卸载旧模型
+                        AiService.Instance.ReleaseModel(AiService.AiTaskType.RemoveBackground);
+
                         SettingsManager.Instance.Current.RmbgModel = modelType;
                         SettingsManager.Instance.Save();
                         _ = UpdateAllStatusesAsync();
+                        UpdateRmbgWarningVisibility();
                     }
                 }
             }
+        }
+
+        private void UpdateRmbgWarningVisibility()
+        {
+            if (TxtRmbgLowEndWarning == null) return;
+
+            bool isRmbg20 = SettingsManager.Instance.Current.RmbgModel == RmbgModelType.Rmbg20;
+            bool isLowEnd = AiService.IsLowEndHardware();
+
+            TxtRmbgLowEndWarning.Visibility = (isRmbg20 && isLowEnd) ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void PluginPage_Unloaded(object sender, RoutedEventArgs e)

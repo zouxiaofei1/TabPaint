@@ -203,6 +203,9 @@ namespace TabPaint
                     writer.Write(Current.LastBenchmarkDate.Ticks);
                     writer.Write(Current.MaxUndoMemoryMB);
                     writer.Write(Current.MaxGlobalUndoSteps);
+                    writer.Write(Current.DefaultBlankCanvasWidth);
+                    writer.Write(Current.DefaultBlankCanvasHeight);
+                    writer.Write((int)Current.RmbgModel);
 
                     // RecentFiles
                     var recentFiles = Current.RecentFiles ?? new List<string>();
@@ -311,6 +314,12 @@ namespace TabPaint
                     settings.LastBenchmarkDate = new DateTime(reader.ReadInt64());
                     settings.MaxUndoMemoryMB = reader.ReadInt32();
                     settings.MaxGlobalUndoSteps = reader.ReadInt32();
+                    if (dataVersion >= 19)
+                    {
+                        settings.DefaultBlankCanvasWidth = reader.ReadInt32();
+                        settings.DefaultBlankCanvasHeight = reader.ReadInt32();
+                        settings.RmbgModel = (RmbgModelType)reader.ReadInt32();
+                    }
                     // RecentFiles
                     int recentCount = reader.ReadInt32();
                     var recentFiles = new List<string>(recentCount);

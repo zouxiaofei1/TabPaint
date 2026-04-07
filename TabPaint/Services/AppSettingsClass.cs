@@ -863,6 +863,36 @@ namespace TabPaint
             }
         }
 
+        private int _defaultBlankCanvasWidth = AppConsts.DefaultBlankCanvasWidth;
+        [JsonPropertyName("default_blank_canvas_width")]
+        public int DefaultBlankCanvasWidth
+        {
+            get => _defaultBlankCanvasWidth;
+            set
+            {
+                if (_defaultBlankCanvasWidth != value)
+                {
+                    _defaultBlankCanvasWidth = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private int _defaultBlankCanvasHeight = AppConsts.DefaultBlankCanvasHeight;
+        [JsonPropertyName("default_blank_canvas_height")]
+        public int DefaultBlankCanvasHeight
+        {
+            get => _defaultBlankCanvasHeight;
+            set
+            {
+                if (_defaultBlankCanvasHeight != value)
+                {
+                    _defaultBlankCanvasHeight = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private bool _isCompactColorPicker = false;
         [JsonPropertyName("is_compact_color_picker")]
         public bool IsCompactColorPicker

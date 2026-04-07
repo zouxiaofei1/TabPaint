@@ -21,6 +21,7 @@
     <sys:String x:Key="L_Toast_NewWindowFromSelectionFailed">从选区创建新窗口失败:</sys:String>
     <sys:String x:Key="L_Toast_NewWindowFailed">创建新窗口失败:</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_File_Print">打印</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_Title">开发者工具</sys:String>
     <!-- 插件面板 -->
     <sys:String x:Key="L_Settings_Plugins_Title">插件与 AI 模型</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Desc">管理 AI 模型和可选组件。</sys:String>
@@ -45,6 +46,9 @@
     <sys:String x:Key="L_Settings_Plugins_Uninstall">卸载</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">确定要卸载此 AI 模型吗？</sys:String>
     <sys:String x:Key="L_Settings_Plugins_OCR_Uninstall_Confirm">确定要卸载 OCR 运行时吗？</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_RmbgModel_Title">背景移除模型</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_RmbgModel_Desc">切换模型后将自动重新加载</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Rmbg20_LowEndWarning">RMBG 2.0在此配置上运行可能过慢或导致程序崩溃。</sys:String>
     <sys:String x:Key="L_Settings_Plugins_ModelDir_Title">模型默认保存目录</sys:String>
     <sys:String x:Key="L_Settings_Plugins_ModelDir_Desc">修改后会迁移已下载的本地模型文件</sys:String>
     <sys:String x:Key="L_Settings_Plugins_ModelDir_Browse">浏览</sys:String>
@@ -191,6 +195,8 @@
     <sys:String x:Key="L_Settings_Advanced_Render_Header">渲染与性能</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Resampling_Title">重采样算法</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Resampling_Desc">用于图片保存或调整大小时</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_NewCanvasSize_Title">新建画布大小</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_NewCanvasSize_Desc">设置新建空白画布时的默认宽度和高度</sys:String>
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Title">像素化阈值设置</sys:String>
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Desc">当缩放倍率超过此值时，画面从线性插值切换为邻近插值</sys:String>
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_ViewMode">看图模式</sys:String>
@@ -319,7 +325,7 @@
 
     <!-- About -->
     <sys:String x:Key="L_Settings_About_Title">关于 TabPaint</sys:String>
-    <sys:String x:Key="L_Settings_About_Subtitle">轻量级绘画与看图工具🖌️</sys:String>
+    <sys:String x:Key="L_Settings_About_Subtitle">轻量级绘画与看图工具</sys:String>
     <sys:String x:Key="L_Settings_About_Developer">开发者:</sys:String>
     <sys:String x:Key="L_Settings_About_Stack">技术栈:</sys:String>
     <sys:String x:Key="L_Settings_About_Github">GitHub 主页</sys:String>
@@ -328,7 +334,7 @@
     <sys:String x:Key="L_Settings_About_HomePage">首页</sys:String>
     <sys:String x:Key="L_Settings_About_Changelog">更新日志</sys:String>
     <sys:String x:Key="L_Settings_About_Issue">建议反馈</sys:String>
-    
+
     <!-- Agreement -->
     <sys:String x:Key="L_Settings_Agreement_Title">开源协议与政策</sys:String>
     <sys:String x:Key="L_Settings_Agreement_Desc">点击可展开查看完整内容</sys:String>
@@ -732,7 +738,7 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Toast_DragStartFailed_Prefix">启动拖拽失败: {0}</sys:String>
     <sys:String x:Key="L_Toast_SwitchWorkspaceFailed_Prefix">切换工作区失败: {0}</sys:String>
     <sys:String x:Key="L_Toast_ImageReset">已重置图片</sys:String>
-    
+
     <sys:String x:Key="L_Load_Reason_Empty">文件为空，已创建空白画布</sys:String>
     <sys:String x:Key="L_Load_Reason_Header">文件头部损坏或格式不支持，已创建空白画布</sys:String>
     <sys:String x:Key="L_Load_Reason_Corrupt">文件损坏或格式不支持，已创建空白画布</sys:String>
@@ -947,5 +953,13 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_AI_Download_Inpaint_Content">首次使用 AI 橡皮擦需要下载修复模型。是否继续？</sys:String>
     <sys:String x:Key="L_AI_Status_Downloading_Inpaint">正在下载修复模型: {0:F1}%</sys:String>
     <sys:String x:Key="L_Progress_Saving">正在保存图片...</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_DevTools_Title">开发者工具</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_DevTools_Desc">调试工具</sys:String>
+    <sys:String x:Key="L_DevTools_Title">开发者工具</sys:String>
+    <sys:String x:Key="L_DevTools_DropHint">拖入文件至此处以计算 MD5 和 SHA256 哈希值</sys:String>
+    <sys:String x:Key="L_DevTools_HashResult">计算结果</sys:String>
+    <sys:String x:Key="L_DevTools_CopyHashPrompt">点击确定复制</sys:String>
 
 </ResourceDictionary>
+
+

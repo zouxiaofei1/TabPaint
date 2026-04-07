@@ -23,8 +23,11 @@
     <sys:String x:Key="L_Settings_Plugins_InstallAllWithProgress">One-click download {0}/4</sys:String>
     <sys:String x:Key="L_Settings_Plugins_InstallingAll">Installing...</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall">Uninstall</sys:String>
-    <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">Are you sure you want to uninstall this AI model? </sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">Are you sure you want to uninstall this AI model?</sys:String>
     <sys:String x:Key="L_Settings_Plugins_OCR_Uninstall_Confirm">Are you sure you want to uninstall the OCR runtime?</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_RmbgModel_Title">Background Removal Model</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_RmbgModel_Desc">Model will be reloaded automatically after change</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Rmbg20_LowEndWarning">RMBG 2.0 requires high VRAM/GPU power. Low-end hardware may be slow or crash.</sys:String>
     <sys:String x:Key="L_Settings_Plugins_ModelDir_Title">Default model save directory</sys:String>
     <sys:String x:Key="L_Settings_Plugins_ModelDir_Desc">Changing it will migrate existing downloaded model files</sys:String>
     <sys:String x:Key="L_Settings_Plugins_ModelDir_Browse">Browse</sys:String>
@@ -92,7 +95,7 @@
     <sys:String x:Key="L_Settings_General_Accent_Option_System">Follow System</sys:String>
 
     <sys:String x:Key="L_Settings_General_Language_Title">Language</sys:String>
-    <sys:String x:Key="L_Settings_General_Language_Desc">Change the display language </sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Desc">Change the display language</sys:String>
     <sys:String x:Key="L_Settings_General_Language_Option_Zh">简体中文</sys:String>
     <sys:String x:Key="L_Settings_General_Language_Option_Tw">繁體中文</sys:String>
     <sys:String x:Key="L_Settings_General_Language_Option_En">English</sys:String>
@@ -185,8 +188,8 @@
     <sys:String x:Key="L_Help_Prev">Previous</sys:String>
     <sys:String x:Key="L_Help_Close">Close</sys:String>
     <sys:String x:Key="L_Loading">Loading...</sys:String>
-    <sys:String x:Key="L_LoadFailed">Failed to load image</sys:String> 
-    
+    <sys:String x:Key="L_LoadFailed">Failed to load image</sys:String>
+
     <sys:String x:Key="L_Help_Desc_2">Press Tab to quickly switch between View Mode and Paint Mode.</sys:String>
     <sys:String x:Key="L_Help_Desc_3">Break boundaries! Drag and drop images directly to Word, Desktop, or anywhere.</sys:String>
     <sys:String x:Key="L_Help_Desc_1">Try now! Very simple painting tools and easy to learn.</sys:String>
@@ -196,6 +199,8 @@
     <sys:String x:Key="L_Settings_Advanced_Render_Header">Rendering &amp; Performance</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Resampling_Title">Resampling</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Resampling_Desc">Used when saving or resizing images</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_NewCanvasSize_Title">New Canvas Size</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_NewCanvasSize_Desc">Set the default width and height for new blank canvases</sys:String>
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Title">Pixelation threshold</sys:String>
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Desc">Linear interpolation / nearest-neighbor switch zoom level</sys:String>
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_ViewMode">View mode</sys:String>
@@ -214,7 +219,14 @@
     <sys:String x:Key="L_Settings_Advanced_CollectReport_Tip">The content is editable. Remove sensitive info before sharing if needed.</sys:String>
     <sys:String x:Key="L_Settings_Advanced_FactoryReset_Button">Clear all caches and settings</sys:String>
     <sys:String x:Key="L_Settings_Advanced_FactoryReset">Factory reset</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_DevTools_Title">Dev Tools</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_DevTools_Desc">Advanced tools for development and debugging.</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_Title">Developer Tools</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_Hash_Title">File Hash / MD5</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_Hash_Desc">Drag and drop files here to view MD5 and SHA256 hashes.</sys:String>
     <sys:String x:Key="L_Settings_ResetShortcuts">Reset shortcuts to default</sys:String>
+    <sys:String x:Key="L_DevTools_CopyHashPrompt">Click Yes to Copy</sys:String>
+
 
     <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Auto">Auto</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Bilinear">Bilinear</sys:String>
@@ -364,7 +376,7 @@
 
     <!-- About Section -->
     <sys:String x:Key="L_Settings_About_Title">About TabPaint</sys:String>
-    <sys:String x:Key="L_Settings_About_Subtitle">Lightweight painting and image viewing tool🖌️</sys:String>
+    <sys:String x:Key="L_Settings_About_Subtitle">Lightweight painting and image viewing tool</sys:String>
     <sys:String x:Key="L_Settings_About_Developer">Developer:</sys:String>
     <sys:String x:Key="L_Settings_About_Stack">Tech stack:</sys:String>
     <sys:String x:Key="L_Settings_About_Github">GitHub</sys:String>
@@ -373,7 +385,7 @@
     <sys:String x:Key="L_Settings_About_HomePage">Home Page</sys:String>
     <sys:String x:Key="L_Settings_About_Changelog">Changelog</sys:String>
     <sys:String x:Key="L_Settings_About_Issue">FeedBack</sys:String>
-    
+
     <!-- Agreement -->
     <sys:String x:Key="L_Settings_Agreement_Title">Open Source License &amp; Policies</sys:String>
     <sys:String x:Key="L_Settings_Agreement_Desc">Click each section to expand full text. Collapsed mode shows only three key points.</sys:String>
@@ -557,7 +569,7 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_ColorPicker_Brightness">Brightness</sys:String>
     <sys:String x:Key="L_ColorPicker_Hex">HEX (8-digit)</sys:String>
     <sys:String x:Key="L_ColorPicker_Transparent">Fully Transparent</sys:String>
-    <sys:String x:Key="L_ColorPicker_TransparentPrefix">Transparent </sys:String>
+    <sys:String x:Key="L_ColorPicker_TransparentPrefix">Transparent</sys:String>
 
     <sys:String x:Key="L_Toast_Apply_Success">Apply Success</sys:String>
     <sys:String x:Key="L_AI_Downloading">Downloading...</sys:String>
@@ -857,9 +869,9 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Stick_TopMost" xmlns:sys="clr-namespace:System;assembly=mscorlib">Always on Top</sys:String>
     <sys:String x:Key="L_Stick_Opacity" xmlns:sys="clr-namespace:System;assembly=mscorlib">Opacity</sys:String>
     <sys:String x:Key="L_Stick_ResetScale" xmlns:sys="clr-namespace:System;assembly=mscorlib">Reset Scale</sys:String>
-   <sys:String x:Key="L_Stick_Copy" xmlns:sys="clr-namespace:System;assembly=mscorlib">Copy</sys:String>
-   <sys:String x:Key="L_Stick_CloseAll" xmlns:sys="clr-namespace:System;assembly=mscorlib">Close All</sys:String>
-   <sys:String x:Key="L_ClipboardMonitorToggle_Detail" xml:space="preserve"  xmlns:sys="clr-namespace:System;assembly=mscorlib">Automatically create a tab include content of screen after screenshot.</sys:String>
+    <sys:String x:Key="L_Stick_Copy" xmlns:sys="clr-namespace:System;assembly=mscorlib">Copy</sys:String>
+    <sys:String x:Key="L_Stick_CloseAll" xmlns:sys="clr-namespace:System;assembly=mscorlib">Close All</sys:String>
+    <sys:String x:Key="L_ClipboardMonitorToggle_Detail" xml:space="preserve"  xmlns:sys="clr-namespace:System;assembly=mscorlib">Automatically create a tab include content of screen after screenshot.</sys:String>
 
     <sys:String x:Key="L_ImgBar_ClearUnedited">Close all unedited images</sys:String>
     <sys:String x:Key="L_ImgBar_NewTabLeft">New tab on the left</sys:String>
@@ -957,4 +969,10 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_AI_Status_Downloading_Inpaint" xmlns:sys="clr-namespace:System;assembly=mscorlib">Downloading repair model: {0:F1}%</sys:String>
     <sys:String x:Key="L_Progress_Saving">Saving images...</sys:String>
     <sys:String x:Key="L_QuickFormat_Error_NoFile">Current image is not saved, cannot convert</sys:String>
+
+    <sys:String x:Key="L_DevTools_Title">Developer Tools</sys:String>
+    <sys:String x:Key="L_DevTools_DropHint">Drop files here to calculate MD5 and SHA256 hash values</sys:String>
+    <sys:String x:Key="L_DevTools_HashResult">Calculation Result</sys:String>
+
 </ResourceDictionary>
+

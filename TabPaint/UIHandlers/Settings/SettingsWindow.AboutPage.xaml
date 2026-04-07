@@ -39,7 +39,7 @@
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
                     <Button Cursor="Hand"
                             Margin="0,0,8,0"
-                            Padding="8,4"
+                            Padding="8,4" 
                             Height="Auto"
                             MinHeight="0"
                             Background="{DynamicResource GlassBackgroundMediumBrush}"
@@ -47,13 +47,13 @@
                             BorderThickness="1"
                             Tag="https://github.com/zouxiaofei1"
                             Click="OnOpenUrlClick">
-                        <StackPanel Orientation="Horizontal">
+                        <StackPanel Orientation="Horizontal" Margin="4">
                             <TextBlock Text="{DynamicResource L_Settings_About_Developer}" Foreground="{DynamicResource TextTertiaryBrush}" Margin="0,0,4,0" FontSize="11"/>
                             <TextBlock Text="zouxiaofei1" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="11" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Button>
                     <Button Cursor="Hand"
-                            Padding="8,4"
+                            Padding="8,4,8,4"
                             Height="Auto"
                             MinHeight="0"
                             Background="{DynamicResource GlassBackgroundMediumBrush}"

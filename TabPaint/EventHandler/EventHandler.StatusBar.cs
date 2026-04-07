@@ -70,6 +70,10 @@ namespace TabPaint
         private void ApplyStatusCommandBarExpandedState(bool isExpanded, bool adjustWindowHeight)
         {
             if (StatusCommandBar == null) return;
+
+            // 看图模式下强制不展开
+            if (IsViewMode && isExpanded) isExpanded = false;
+
             if (_isStatusCommandBarExpanded == isExpanded &&
                 ((StatusCommandBar.Visibility == Visibility.Visible) == isExpanded))
             {

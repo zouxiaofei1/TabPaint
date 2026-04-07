@@ -220,7 +220,7 @@ namespace TabPaint.Controls
                 // 新建未落盘图片：优先显示实际新建画布尺寸，避免回退到缩略图 100×60。
                 if (!dimsFound && isNewFile)
                 {
-                    PopupDimensionsText.Text = $"{AppConsts.DefaultBlankCanvasWidth} × {AppConsts.DefaultBlankCanvasHeight} px";
+                    PopupDimensionsText.Text = $"{SettingsManager.Instance.Current.DefaultBlankCanvasWidth} × {SettingsManager.Instance.Current.DefaultBlankCanvasHeight} px";
                     dimsFound = true;
                 }
 

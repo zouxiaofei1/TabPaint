@@ -14,6 +14,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using System.Net.Http;
+using System.Collections.Generic;
 
 //设置窗口
 
@@ -304,6 +305,7 @@ namespace TabPaint
             if (TxtAdvanced != null) TxtAdvanced.Visibility = textVis;
             if (TxtAbout != null) TxtAbout.Visibility = textVis;
             if (TxtPlugins != null) TxtPlugins.Visibility = textVis;
+            if (TxtDevTools != null) TxtDevTools.Visibility = textVis;
             if (TxtSystemReport != null) TxtSystemReport.Visibility = textVis;
             if (FindName("TxtAgreement") is TextBlock txtAgreement) txtAgreement.Visibility = textVis;
         }
@@ -388,6 +390,9 @@ namespace TabPaint
                     case "Plugins":
                         page = new Pages.PluginPage();
                         break;
+                    case "DevTools":
+                        page = new Pages.DevToolsPage();
+                        break;
                     case "SystemReport":
                         page = new Pages.SystemReportPage();
                         break;
@@ -445,6 +450,7 @@ namespace TabPaint
         private void UpdateSpecialNavItemsVisibility(string tag)
         {
             var pluginsItem = FindNavItemByTag("Plugins");
+            var devToolsItem = FindNavItemByTag("DevTools");
             var systemReportItem = FindNavItemByTag("SystemReport");
             var agreementItem = FindNavItemByTag("Agreement");
 
@@ -453,6 +459,13 @@ namespace TabPaint
                 AnimateSpecialNavItemVisibility(
                     pluginsItem,
                     string.Equals(tag, "Plugins", StringComparison.Ordinal));
+            }
+
+            if (devToolsItem != null)
+            {
+                AnimateSpecialNavItemVisibility(
+                    devToolsItem,
+                    string.Equals(tag, "DevTools", StringComparison.Ordinal));
             }
 
             if (systemReportItem != null)

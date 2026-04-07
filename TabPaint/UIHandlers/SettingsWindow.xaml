@@ -273,6 +273,17 @@
                                 <TextBlock Grid.Column="1" Margin="8,0,0,0" Foreground="{DynamicResource TextPrimaryBrush}" Text="{DynamicResource L_Settings_Nav_Plugins}" VerticalAlignment="Center" x:Name="TxtPlugins"/>
                             </Grid>
                         </ListBoxItem>
+                        <ListBoxItem x:Name="NavDevToolsItem" Tag="DevTools" Visibility="Collapsed">
+                            <Grid Width="212" Height="40">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Path Data="{DynamicResource DevTools_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                <TextBlock Grid.Column="1" Margin="8,0,0,0" Foreground="{DynamicResource TextPrimaryBrush}" Text="{DynamicResource L_Settings_Nav_DevTools}" VerticalAlignment="Center" x:Name="TxtDevTools"/>
+                            </Grid>
+                        </ListBoxItem>
+
                         <ListBoxItem x:Name="NavSystemReportItem" Tag="SystemReport" Visibility="Collapsed">
                             <Grid Width="212" Height="40">
                                 <Grid.ColumnDefinitions>

@@ -97,12 +97,6 @@
                             <TextBlock x:Name="TxtStatusRMBG" Text="Checking..." FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}"/>
                         </StackPanel>
                         <StackPanel Grid.Row="0" Grid.Column="1" VerticalAlignment="Center">
-                            <ComboBox x:Name="ComboRmbgModel" Width="100" Height="26"  
-          Style="{StaticResource FluentComboBoxStyle}"
-          SelectionChanged="ComboRmbgModel_SelectionChanged">
-                                <ComboBoxItem Content="rmbg-1.4" Tag="Rmbg14"/>
-                                <ComboBoxItem Content="rmbg-2.0" Tag="Rmbg20"/>
-                            </ComboBox>
                             
                             <Button x:Name="BtnInstallRMBG" Content="{DynamicResource L_Settings_Plugins_InstallReal}" Click="InstallRMBG_Click" Style="{StaticResource Win11PrimaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
                             <Button x:Name="BtnUninstallRMBG" Content="{DynamicResource L_Settings_Plugins_Uninstall}" Click="UninstallRMBG_Click" Style="{StaticResource Win11SecondaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
@@ -185,6 +179,35 @@
                 </Border>
 
 
+
+                <Grid Margin="0,5,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="213"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{DynamicResource L_Settings_Plugins_RmbgModel_Title}"/>
+                        <TextBlock Text="{DynamicResource L_Settings_Plugins_RmbgModel_Desc}"
+                                   Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <ComboBox x:Name="ComboRmbgModel" Grid.Column="1"
+                              Style="{StaticResource FluentComboBoxStyle}"
+                              Height="30" Margin="0,2,30,0"
+                              SelectionChanged="ComboRmbgModel_SelectionChanged">
+                        <ComboBoxItem Content="rmbg-1.4" Tag="Rmbg14"/>
+                        <ComboBoxItem Content="rmbg-2.0" Tag="Rmbg20"/>
+                    </ComboBox>
+                </Grid>
+
+                <TextBlock x:Name="TxtRmbgLowEndWarning" 
+                           Text="{DynamicResource L_Settings_Plugins_Rmbg20_LowEndWarning}"
+                           Foreground="#E74C3C" 
+                           FontSize="11" 
+                           Margin="220,-5,30,10" 
+                           TextWrapping="Wrap"
+                           Visibility="Collapsed"/>
 
                 <Grid Margin="0,5,0,10">
                     <Grid.ColumnDefinitions>

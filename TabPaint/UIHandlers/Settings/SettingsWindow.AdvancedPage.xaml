@@ -146,6 +146,39 @@
             </ComboBox>
         </Grid>
 
+        <!-- 新建画布大小 -->
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{DynamicResource L_Settings_Advanced_NewCanvasSize_Title}"/>
+                <TextBlock Text="{DynamicResource L_Settings_Advanced_NewCanvasSize_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBox Width="60" Height="30" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                         Style="{StaticResource LeftPartTextBoxStyle}"
+                         PreviewTextInput="NumberValidationTextBox"
+                         LostFocus="CanvasSizeTextBox_LostFocus"
+                         Text="{Binding Path=Current.DefaultBlankCanvasWidth, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"/>
+                <Button Width="30" Height="30" IsHitTestVisible="False"
+                        Style="{StaticResource RightPartButtonStyle}"
+                        Content="×" FontSize="14" FontWeight="Bold"/>
+                <TextBox Width="60" Height="30" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                         Margin="5,0,0,0"
+                         Style="{StaticResource LeftPartTextBoxStyle}"
+                         PreviewTextInput="NumberValidationTextBox"
+                         LostFocus="CanvasSizeTextBox_LostFocus"
+                         Text="{Binding Path=Current.DefaultBlankCanvasHeight, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"/>
+                <Button Width="30" Height="30" IsHitTestVisible="False"
+                        Style="{StaticResource RightPartButtonStyle}"
+                        Content="px" FontSize="11"/>
+            </StackPanel>
+        </Grid>
+
         <!-- ICC 颜色校正 -->
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
@@ -360,41 +393,24 @@
 
         <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
 
-        <!-- 维护设置 -->
-        <TextBlock Text="{DynamicResource L_Settings_Advanced_Maintenance_Header}" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
-
         <Grid Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Button Content="{DynamicResource L_Settings_Advanced_OpenCache_Title}" Width="120" Height="32" 
-                    HorizontalAlignment="Left" Click="OpenCacheFolder_Click"
+            <Button Content="{DynamicResource L_Settings_Advanced_DevTools_Title}" Width="120" Height="32"
+                    HorizontalAlignment="Left" Click="OpenDevTools_Click"
                     Style="{StaticResource Win11SecondaryButtonStyle}"
                     BorderThickness="1"/>
 
-            <TextBlock Grid.Column="1" Text="{DynamicResource L_Settings_Advanced_OpenCache_Desc}" 
-                       VerticalAlignment="Center" Margin="15,0,0,0" 
-                       Foreground="{DynamicResource TextTertiaryBrush}"/>
-        </Grid>
-
-        <Grid Margin="0,0,0,10">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            <Button Content="{DynamicResource L_Settings_Advanced_CollectReport_Title}" Width="120" Height="32"
-                    HorizontalAlignment="Left" Click="CollectSystemReport_Click"
-                    Style="{StaticResource Win11SecondaryButtonStyle}"
-                    BorderThickness="1"/>
-
-            <TextBlock Grid.Column="1" Text="{DynamicResource L_Settings_Advanced_CollectReport_Desc}"
+            <TextBlock Grid.Column="1" Text="{DynamicResource L_Settings_Advanced_DevTools_Desc}"
                        VerticalAlignment="Center" Margin="15,0,0,0"
                        Foreground="{DynamicResource TextTertiaryBrush}" TextWrapping="Wrap"/>
         </Grid>
 
-        <Grid>
-            <Grid.ColumnDefinitions>
+            <Grid>
+
+                <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>

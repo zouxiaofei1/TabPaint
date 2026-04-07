@@ -189,6 +189,10 @@ namespace TabPaint
         {
             var window = (MainWindow)d;
             bool isView = (bool)e.NewValue;
+            if (isView)
+            {
+                window.ApplyStatusCommandBarExpandedState(false, adjustWindowHeight: true);
+            }
         }
 
     }

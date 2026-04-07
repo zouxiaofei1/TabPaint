@@ -294,13 +294,15 @@ namespace TabPaint
             return AppConsts.CacheDir;
         }
         public enum AiTaskType { RemoveBackground, SuperResolution, Inpainting }
-        private int? _bestGpuId = null;
+        private static int? _bestGpuId = null;
+        private static bool? _isHighPerfGpu = null;
 
-        private int GetBestGpuDeviceId()
+        private static int GetBestGpuDeviceId()
         {
             if (_bestGpuId.HasValue) return _bestGpuId.Value;
 
             int bestId = 0; // 默认使用 0
+            bool detectedHighPerf = false;
             try
             {
                 using (var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController"))
@@ -314,6 +316,7 @@ namespace TabPaint
                             name.Contains("Arc", StringComparison.OrdinalIgnoreCase)) // Intel 独显
                         {
                             bestId = i;
+                            detectedHighPerf = true;
                             System.Diagnostics.Debug.WriteLine($"[AI] Detected High-Perf GPU: {name} (ID: {i})");
                             break;
                         }
@@ -326,8 +329,20 @@ namespace TabPaint
             }
 
             _bestGpuId = bestId;
+            _isHighPerfGpu = detectedHighPerf;
             return bestId;
         }
+
+        public static bool IsLowEndHardware()
+        {
+            // return true; // 模拟低配环境用于测试
+            if (!_isHighPerfGpu.HasValue)
+            {
+                GetBestGpuDeviceId();
+            }
+            return _isHighPerfGpu == false;
+        }
+
         private SessionOptions GetSessionOptions()
         {
             var options = new SessionOptions();
