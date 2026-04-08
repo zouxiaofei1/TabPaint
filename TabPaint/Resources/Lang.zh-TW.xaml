@@ -113,8 +113,8 @@
     <sys:String x:Key="L_Settings_Paint_OcrResultAction_DirectCopy">直接複製到剪貼簿</sys:String>
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Title">Delete 鍵刪除目前圖片</sys:String>
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Desc">按一下 Delete 刪除至資源回收筒，2 秒內可按 Ctrl+Z 復原</sys:String>
-    <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Title">形狀工具專業模式</sys:String>
-    <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Desc">繪製後可手動調整形狀大小與位置 (按 Alt 鍵切換)</sys:String>
+    <sys:String x:Key="L_Settings_Paint_ProfessionalMode_Title">專業模式</sys:String>
+    <sys:String x:Key="L_Settings_Paint_ProfessionalMode_Desc">開啟後，選取範圍、文字、形狀將顯示進阶控制手柄 (Alt 鍵切換)</sys:String>
     <sys:String x:Key="L_Settings_Paint_BirdEye_Title">看圖模式顯示鳥瞰圖</sys:String>
     <sys:String x:Key="L_Settings_Paint_BirdEye_Desc">右鍵關閉後，可在此重新開啟鳥瞰圖</sys:String>
 
@@ -701,8 +701,8 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Toast_ImageTooLarge">⚠️ 圖片過大，已自動壓縮顯示</sys:String>
     <sys:String x:Key="L_Toast_ReadFolderFailed_Prefix">讀取資料夾失敗:</sys:String>
     <sys:String x:Key="L_Toast_LoadFailed_Prefix">啟動載入失敗:</sys:String>
-    <sys:String x:Key="L_Toast_ShapeProMode_On">專業模式開啟 (Alt)</sys:String>
-    <sys:String x:Key="L_Toast_ShapeProMode_Off">專業模式關閉 (Alt)</sys:String>
+    <sys:String x:Key="L_Toast_ProMode_On">專業模式：開啟 (Alt)</sys:String>
+    <sys:String x:Key="L_Toast_ProMode_Off">專業模式：關閉 (Alt)</sys:String>
 
     <sys:String x:Key="L_Toast_BorderAdded">已添加 2px 邊框</sys:String>
     <sys:String x:Key="L_Toast_CropFailed_Prefix">裁切失敗: {0}</sys:String>

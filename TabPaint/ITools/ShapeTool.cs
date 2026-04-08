@@ -218,7 +218,7 @@ public partial class ShapeTool : ToolBase
                 return;
             }
 
-            if (SettingsManager.Instance.Current.IsShapeToolProMode)
+            if (SettingsManager.Instance.Current.IsProfessionalMode)
             {
                 _isEditing = true;
                 RefreshHandles(ctx);
@@ -651,39 +651,6 @@ public partial class ShapeTool : ToolBase
     public override void OnKeyDown(ToolContext ctx, KeyEventArgs e)
     {
         if (e.IsRepeat) return;
-
-        Key key = (e.Key == Key.System ? e.SystemKey : e.Key);
-        if (key == Key.LeftAlt || key == Key.RightAlt)
-        {
-            // 单击 Alt 切换模式
-            bool newState = !SettingsManager.Instance.Current.IsShapeToolProMode;
-            SettingsManager.Instance.Current.IsShapeToolProMode = newState;
-
-            string toastKey = newState ? "L_Toast_ShapeProMode_On" : "L_Toast_ShapeProMode_Off";
-            ctx.ParentWindow.ShowToast(LocalizationManager.GetString(toastKey));
-
-            // 如果关闭了专业模式且正在编辑，立即提交
-            if (!newState && _isEditing)
-            {
-                CommitActiveShape(ctx);
-            }
-            else if (newState && _previewShape != null && !_isEditing && !_isDrawing)
-            {
-                // 如果开启了专业模式且有预览形状且当前没在画，进入编辑状态
-                _isEditing = true;
-                RefreshHandles(ctx);
-            }
-            
-            // 立即刷新光标
-            if (ctx.ViewElement != null)
-            {
-                var px = ctx.ToPixel(Mouse.GetPosition(ctx.ViewElement));
-                UpdateCursorByPos(ctx, px);
-            }
-            
-            e.Handled = true;
-            return;
-        }
 
         if (e.Key == Key.Z && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
         {

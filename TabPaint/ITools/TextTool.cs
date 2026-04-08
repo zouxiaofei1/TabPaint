@@ -90,24 +90,6 @@ namespace TabPaint
             public override void OnKeyDown(ToolContext ctx, KeyEventArgs e)
             {
                 if (e.IsRepeat) return;
-                Key key = (e.Key == Key.System ? e.SystemKey : e.Key);
-                if (key == Key.LeftAlt || key == Key.RightAlt)
-                {
-                    bool newState = !SettingsManager.Instance.Current.IsTextToolProMode;
-                    SettingsManager.Instance.Current.IsTextToolProMode = newState;
-
-                    string toastKey = newState ? "L_Toast_TextProMode_On" : "L_Toast_TextProMode_Off";
-                    ctx.ParentWindow.ShowToast(LocalizationManager.GetString(toastKey));
-
-                    if (!newState)
-                    {
-                        _rotationAngle = 0;
-                        _rotating = false;
-                    }
-                    if (_richTextBox != null) DrawTextboxOverlay(ctx);
-                    e.Handled = true;
-                    return;
-                }
                 base.OnKeyDown(ctx, e);
             }
 
@@ -186,7 +168,7 @@ namespace TabPaint
                 double h = _richTextBox.ActualHeight;
                 var rect = new Int32Rect((int)x, (int)y, (int)w, (int)h);
 
-                bool isProMode = SettingsManager.Instance.Current.IsTextToolProMode;
+                bool isProMode = SettingsManager.Instance.Current.IsProfessionalMode;
 
                 // 实时更新文本框自身的旋转中心 (修复输入时由于大小变化导致的错位)
                 if (Math.Abs(_rotationAngle) > 0.01)
@@ -317,7 +299,7 @@ namespace TabPaint
                 double my = (y1 + y2) / 2;
 
                 // 专业模式：先检测旋转手柄（优先级最高）
-                if (SettingsManager.Instance.Current.IsTextToolProMode)
+                if (SettingsManager.Instance.Current.IsProfessionalMode)
                 {
                     double adaptiveRotateOffset = RotateHandleOffset / mw.zoomscale;
                     double rotateX = mx;

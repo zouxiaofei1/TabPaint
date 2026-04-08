@@ -108,8 +108,9 @@ namespace TabPaint
             _aiInferenceCts = new System.Threading.CancellationTokenSource();
             _isAiInferenceRunning = true;
 
-            _savedSelectToolFloatBarVisibleBeforeAiInference = _isSelectToolFloatBarVisible;
-            _isSelectToolFloatBarVisible = false;
+            var settings = SettingsManager.Instance.Current;
+            _savedSelectToolFloatBarVisibleBeforeAiInference = settings.IsProfessionalMode;
+            settings.IsProfessionalMode = false;
             UpdateSelectionToolBarPosition(force: true);
 
             return _aiInferenceCts.Token;
@@ -125,7 +126,7 @@ namespace TabPaint
 
             if (needRestoreFloatBar)
             {
-                _isSelectToolFloatBarVisible = _savedSelectToolFloatBarVisibleBeforeAiInference;
+                SettingsManager.Instance.Current.IsProfessionalMode = _savedSelectToolFloatBarVisibleBeforeAiInference;
                 UpdateSelectionToolBarPosition(force: true);
             }
         }

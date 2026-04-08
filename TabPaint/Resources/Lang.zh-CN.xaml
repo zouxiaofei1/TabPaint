@@ -114,8 +114,8 @@
     <sys:String x:Key="L_Settings_Paint_OcrResultAction_DirectCopy">直接复制到剪贴板</sys:String>
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Title">Delete 键删除当前图片</sys:String>
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Desc">单击 Delete 删除至回收站，2秒内可 Ctrl+Z 撤销</sys:String>
-    <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Title">形状工具专业模式</sys:String>
-    <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Desc">绘制后可手动调整形状大小与位置 (按 Alt 键切换)</sys:String>
+    <sys:String x:Key="L_Settings_Paint_ProfessionalMode_Title">专业模式</sys:String>
+    <sys:String x:Key="L_Settings_Paint_ProfessionalMode_Desc">开启后，选区、文字、形状将显示高级控制手柄 (Alt 键切换)</sys:String>
     <sys:String x:Key="L_Settings_Paint_BirdEye_Title">看图模式显示鸟瞰图</sys:String>
     <sys:String x:Key="L_Settings_Paint_BirdEye_Desc">在此重新开启鸟瞰图</sys:String>
 
@@ -701,10 +701,8 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Toast_ImageTooLarge">图片过大，已自动压缩显示</sys:String>
     <sys:String x:Key="L_Toast_ReadFolderFailed_Prefix">读取文件夹失败:</sys:String>
     <sys:String x:Key="L_Toast_LoadFailed_Prefix">启动加载失败:</sys:String>
-    <sys:String x:Key="L_Toast_ShapeProMode_On">专业模式开启</sys:String>
-    <sys:String x:Key="L_Toast_ShapeProMode_Off">专业模式关闭</sys:String>
-    <sys:String x:Key="L_Toast_TextProMode_On">专业模式开启</sys:String>
-    <sys:String x:Key="L_Toast_TextProMode_Off">专业模式关闭</sys:String>
+    <sys:String x:Key="L_Toast_ProMode_On">专业模式：开启 (Alt)</sys:String>
+    <sys:String x:Key="L_Toast_ProMode_Off">专业模式：关闭 (Alt)</sys:String>
 
     <sys:String x:Key="L_Toast_BorderAdded">已添加边框</sys:String>
     <sys:String x:Key="L_Toast_CropFailed_Prefix">裁切失败: {0}</sys:String>

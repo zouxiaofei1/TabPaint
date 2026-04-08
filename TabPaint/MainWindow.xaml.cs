@@ -1600,6 +1600,30 @@ namespace TabPaint
             }
         }
 
+        public void ToggleProfessionalMode()
+        {
+            var settings = SettingsManager.Instance.Current;
+            settings.IsProfessionalMode = !settings.IsProfessionalMode;
+
+            string toastKey = settings.IsProfessionalMode ? "L_Toast_ProMode_On" : "L_Toast_ProMode_Off";
+            ShowToast(toastKey);
+
+            // 统一刷新所有工具的专业模式 UI
+            UpdateSelectionToolBarPosition(force: true);
+            
+            // 无论当前是什么工具，都尝试刷新可能存在的覆盖层
+            if (_router?.CurrentTool is TextTool textTool)
+            {
+                textTool.DrawTextboxOverlay(_ctx);
+            }
+            else if (_router?.CurrentTool is ShapeTool shapeTool)
+            {
+                shapeTool.RefreshPreview(_ctx);
+            }
+
+            SettingsManager.Instance.Save();
+        }
+
         public void UpdateSelectionToolBarPosition(bool force = false)
         {
             // 如果还没初始化且当前没有选区，直接返回，避免不必要的实例化
@@ -1613,7 +1637,7 @@ namespace TabPaint
             double viewportArea = ScrollContainer.ViewportWidth * ScrollContainer.ViewportHeight;
             double selectionScreenArea = (selectTool._selectionRect.Width * zoomscale) * (selectTool._selectionRect.Height * zoomscale);
             bool shouldShow = !IsViewMode
-                              && _isSelectToolFloatBarVisible
+                              && settings.IsProfessionalMode
                               && selectTool.HasActiveSelection
                               && (viewportArea > 0 && (selectionScreenArea / viewportArea) > 0.015);
 

@@ -755,36 +755,36 @@ namespace TabPaint
             }
         }
 
-        private bool _isShapeToolProMode = false;
+        private bool _isProfessionalMode = false;
 
-        [JsonPropertyName("is_shape_tool_pro_mode")]
-        public bool IsShapeToolProMode
+        [JsonPropertyName("is_professional_mode")]
+        public bool IsProfessionalMode
         {
-            get => _isShapeToolProMode;
+            get => _isProfessionalMode;
             set
             {
-                if (_isShapeToolProMode != value)
+                if (_isProfessionalMode != value)
                 {
-                    _isShapeToolProMode = value;
+                    _isProfessionalMode = value;
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(IsTextToolProMode));
+                    OnPropertyChanged(nameof(IsShapeToolProMode));
                 }
             }
         }
 
-        private bool _isTextToolProMode = false;
-
-        [JsonPropertyName("is_text_tool_pro_mode")]
+        [JsonIgnore]
         public bool IsTextToolProMode
         {
-            get => _isTextToolProMode;
-            set
-            {
-                if (_isTextToolProMode != value)
-                {
-                    _isTextToolProMode = value;
-                    OnPropertyChanged();
-                }
-            }
+            get => IsProfessionalMode;
+            set => IsProfessionalMode = value;
+        }
+
+        [JsonIgnore]
+        public bool IsShapeToolProMode
+        {
+            get => IsProfessionalMode;
+            set => IsProfessionalMode = value;
         }
 
         private bool _viewUseDarkCanvasBackground = true; // 默认开启深灰色背景(#1A1A1A)

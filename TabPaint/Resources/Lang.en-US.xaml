@@ -121,8 +121,8 @@
     <sys:String x:Key="L_Settings_Paint_OcrResultAction_DirectCopy">Directly copy to clipboard</sys:String>
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Title">Allow Delete key to delete file</sys:String>
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Desc">Allow pressing Delete to delete the current file</sys:String>
-    <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Title">Shape Tool Professional Mode</sys:String>
-    <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Desc">Allow resizing and repositioning shapes after drawing (Toggle with Alt)</sys:String>
+    <sys:String x:Key="L_Settings_Paint_ProfessionalMode_Title">Professional Mode (Universal)</sys:String>
+    <sys:String x:Key="L_Settings_Paint_ProfessionalMode_Desc">Enable advanced editing for Text, Shapes, and Selection (Toggle with Alt)</sys:String>
     <sys:String x:Key="L_Settings_Paint_BirdEye_Title">Show bird's-eye view in viewer mode</sys:String>
     <sys:String x:Key="L_Settings_Paint_BirdEye_Desc">If hidden from the right-click menu, re-enable it here.</sys:String>
 

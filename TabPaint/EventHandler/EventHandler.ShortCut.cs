@@ -369,9 +369,8 @@ namespace TabPaint
 
             if (isAltOnlyToggle && !_altToggleHandled)
             {
-                _isSelectToolFloatBarVisible = !_isSelectToolFloatBarVisible;
                 _altToggleHandled = true;
-                UpdateSelectionToolBarPosition(force: true);
+                ToggleProfessionalMode();
                 e.Handled = true;
                 return;
             }

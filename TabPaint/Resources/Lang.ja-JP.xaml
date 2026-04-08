@@ -122,8 +122,8 @@
     <sys:String x:Key="L_Settings_Paint_OcrResultAction_DirectCopy">クリップボードに直接コピー</sys:String>
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Title">Deleteキーでのファイル削除を許可</sys:String>
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Desc">Deleteキーを押して現在のファイルを削除できるようにします</sys:String>
-    <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Title">図形ツールのプロモード</sys:String>
-    <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Desc">描画後に図形のサイズ変更や位置調整を可能にします (Altキーで切り替え)</sys:String>
+    <sys:String x:Key="L_Settings_Paint_ProfessionalMode_Title">プロモード (共通)</sys:String>
+    <sys:String x:Key="L_Settings_Paint_ProfessionalMode_Desc">テキスト、図形、および選択範囲の高度な編集機能を有効にします (Altキーで切り替え)</sys:String>
     <sys:String x:Key="L_Settings_Paint_BirdEye_Title">閲覧モードで全体図 (ナビゲーター) を表示</sys:String>
     <sys:String x:Key="L_Settings_Paint_BirdEye_Desc">右クリックメニューから非表示にした場合、ここで再表示できます。</sys:String>
 
@@ -723,8 +723,8 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Toast_ImageTooLarge">⚠️ 画像が大きすぎるため、表示用に自動縮小されました</sys:String>
     <sys:String x:Key="L_Toast_ReadFolderFailed_Prefix">フォルダの読み込みに失敗しました:</sys:String>
     <sys:String x:Key="L_Toast_LoadFailed_Prefix">起動時の読み込みに失敗しました:</sys:String>
-    <sys:String x:Key="L_Toast_ShapeProMode_On">シェイプ・プロモード: ON (Alt)</sys:String>
-    <sys:String x:Key="L_Toast_ShapeProMode_Off">シェイプ・プロモード: OFF (Alt)</sys:String>
+    <sys:String x:Key="L_Toast_ProMode_On">プロモード: ON (Alt)</sys:String>
+    <sys:String x:Key="L_Toast_ProMode_Off">プロモード: OFF (Alt)</sys:String>
 
     <!-- New Toast Messages -->
     <sys:String x:Key="L_Toast_BorderAdded" xmlns:sys="clr-namespace:System;assembly=mscorlib">2pxの枠線を追加しました</sys:String>
