@@ -789,6 +789,7 @@ namespace TabPaint
                 if (_selectionData == null) return;
                 _rotationAngle = 0;
                 if (!_hasLifted) LiftSelectionFromCanvas(ctx);
+                ctx.SelectionPreview.Clip = null; // 清除拖动残留的 Clip，防止旋转预览错位
 
                 // 如果有缩放，先应用缩放 (Bake current scale into pixels)
                 if (_originalRect.Width > 0 && (_selectionRect.Width != _originalRect.Width || _selectionRect.Height != _originalRect.Height))
@@ -950,13 +951,21 @@ namespace TabPaint
                     double localX = _preRotationRect.X * dpiScaleX + diff * 0.75;
                     double localY = _preRotationRect.Y * dpiScaleY;
 
+                    // 计算缩放比例：预览源图是 _preRotationDataWidth x _preRotationDataHeight，
+                    // 需要缩放到当前 _preRotationRect 的尺寸
+                    double displayW = _preRotationDataWidth * dpiScaleX;
+                    double displayH = _preRotationDataHeight * dpiScaleY;
+                    double scaleX2 = (logicW * dpiScaleX) / displayW;
+                    double scaleY2 = (logicH * dpiScaleY) / displayH;
+
                     var tg = new TransformGroup();
+                    tg.Children.Add(new ScaleTransform(scaleX2, scaleY2));
                     tg.Children.Add(new RotateTransform(_rotationAngle, (logicW * dpiScaleX) / 2.0, (logicH * dpiScaleY) / 2.0));
                     tg.Children.Add(new TranslateTransform(localX, localY));
 
                     ctx.SelectionPreview.RenderTransform = tg;
-                    ctx.SelectionPreview.Width = logicW * dpiScaleX;
-                    ctx.SelectionPreview.Height = logicH * dpiScaleY;
+                    ctx.SelectionPreview.Width = displayW;
+                    ctx.SelectionPreview.Height = displayH;
                 }
                 else
                 {

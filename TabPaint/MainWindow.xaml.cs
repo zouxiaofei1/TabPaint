@@ -1025,6 +1025,7 @@ namespace TabPaint
             }
 
             _currentImageIndex = newIndex;
+            UpdateWindowTitle();
 
             RequestImageLoad(_imageFiles[_currentImageIndex]);
             ScrollToTabCenter(_currentTabItem ?? FileTabs.FirstOrDefault(t => t.FilePath == _imageFiles[newIndex]));
@@ -1650,7 +1651,14 @@ namespace TabPaint
                 {
                     SelectionRotatePopup.SetValue(0);
                     SelectionRotatePopup.Visibility = Visibility.Visible;
-                    selectTool.PrepareRotation(_ctx);
+                    // 延迟到下一帧执行 PrepareRotation，确保预览图先渲染，避免选区闪烁
+                    Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
+                    {
+                        if (_router?.CurrentTool is SelectTool st && st.HasActiveSelection)
+                        {
+                            st.PrepareRotation(_ctx);
+                        }
+                    });
                 }
 
                 Int32Rect rect = selectTool._selectionRect;
