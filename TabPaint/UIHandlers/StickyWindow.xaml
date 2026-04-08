@@ -61,16 +61,37 @@
                     <MenuItem Header="{DynamicResource L_Stick_Opacity}" 
                               Style="{DynamicResource Win11MenuItemStyle}">
                         <MenuItem.Icon>
-                            <TextBlock Text="&#xE793;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
+                            <Path Data="{DynamicResource Brightness_Image}" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" Width="16" Height="16"/>
                         </MenuItem.Icon>
-                        <MenuItem Header="100%" Tag="1.0" Click="OnOpacityChangeClick" Style="{DynamicResource Win11MenuItemStyle}"/>
-                        <MenuItem Header="80%"  Tag="0.8" Click="OnOpacityChangeClick" Style="{DynamicResource Win11MenuItemStyle}"/>
-                        <MenuItem Header="60%"  Tag="0.6" Click="OnOpacityChangeClick" Style="{DynamicResource Win11MenuItemStyle}"/>
-                        <MenuItem Header="40%"  Tag="0.4" Click="OnOpacityChangeClick" Style="{DynamicResource Win11MenuItemStyle}"/>
-                        <MenuItem Header="20%"  Tag="0.2" Click="OnOpacityChangeClick" Style="{DynamicResource Win11MenuItemStyle}"/>
+                        <MenuItem Header="100%" Tag="1.0" Click="OnOpacityChangeClick" Style="{DynamicResource Win11MenuItemStyle}">
+                            <MenuItem.Icon>
+                                <Path Data="{DynamicResource Brightness_Image}" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="80%"  Tag="0.8" Click="OnOpacityChangeClick" Style="{DynamicResource Win11MenuItemStyle}">
+                            <MenuItem.Icon>
+                                <Path Data="{DynamicResource Brightness80_Image}" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        
+                        <MenuItem Header="60%"  Tag="0.6" Click="OnOpacityChangeClick" Style="{DynamicResource Win11MenuItemStyle}">
+                            <MenuItem.Icon>
+                                <Path Data="{DynamicResource Brightness60_Image}" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="40%"  Tag="0.4" Click="OnOpacityChangeClick" Style="{DynamicResource Win11MenuItemStyle}">
+                            <MenuItem.Icon>
+                                <Path Data="{DynamicResource Brightness40_Image}" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="20%"  Tag="0.2" Click="OnOpacityChangeClick" Style="{DynamicResource Win11MenuItemStyle}">
+                            <MenuItem.Icon>
+                                <Path Data="{DynamicResource Brightness20_Image}" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
                     </MenuItem>
 
-                    <!-- 重置缩放 (实用小功能) -->
+                    <!-- 重置缩放 -->
                     <MenuItem Header="{DynamicResource L_Stick_ResetScale}" 
                               Click="OnResetScaleClick"
                               Style="{DynamicResource Win11MenuItemStyle}">
@@ -82,7 +103,7 @@
                               Click="OnCopyClick"
                               Style="{DynamicResource Win11MenuItemStyle}">
                         <MenuItem.Icon>
-                            <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
+                            <Path Data="{DynamicResource Copy_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
 
@@ -96,14 +117,14 @@
                               InputGestureText="DblClick"
                               Style="{DynamicResource Win11MenuItemStyle}">
                         <MenuItem.Icon>
-                            <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
+                            <Path Data="{DynamicResource Exit_Image}" Stretch="Uniform" Fill="Transparent" StrokeThickness="1.5"  Stroke="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem Header="{DynamicResource L_Stick_CloseAll}"
                               Click="OnCloseAllClick"
                               Style="{DynamicResource Win11MenuItemStyle}">
                         <MenuItem.Icon>
-                            <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
+                            <Path Data="{DynamicResource Exit_Image}" Stretch="Uniform" Fill="Transparent" StrokeThickness="1.5"  Stroke="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                 </ContextMenu>

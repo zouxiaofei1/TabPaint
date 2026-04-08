@@ -254,14 +254,22 @@
                                         </Border>
                                         <TextBlock Grid.Column="1" Text="{Binding DisplayText}" 
                                                VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="Medium"/>
-                                        <Button Grid.Column="2" Content="&#xE711;" FontFamily="Segoe MDL2 Assets"
-                                            Style="{DynamicResource TitleBarButtonStyle}"  Foreground="{DynamicResource TextSecondaryBrush}"
-                                            Click="OnDeleteSizeClick" Tag="{Binding}" Width="24" Height="24" FontSize="10"
-                                            x:Name="DelBtn" Opacity="0">
+                                        <Button Grid.Column="2"
+    Style="{DynamicResource TitleBarButtonStyle}" Foreground="{DynamicResource TextSecondaryBrush}"
+    Click="OnDeleteSizeClick" Tag="{Binding}" Width="24" Height="24"
+    x:Name="DelBtn" Opacity="0">
+                                            <Path Data="M1,1 L9,9 M9,1 L1,9" 
+          Stroke="{DynamicResource TextSecondaryBrush}" 
+          StrokeThickness="1.5" 
+          StrokeStartLineCap="Round" 
+          StrokeEndLineCap="Round"
+          Width="10" Height="10" 
+          Stretch="Uniform"/>
                                             <Button.RenderTransform>
                                                 <ScaleTransform ScaleX="0.8" ScaleY="0.8"/>
                                             </Button.RenderTransform>
                                         </Button>
+
                                     </Grid>
                                     <DataTemplate.Triggers>
                                         <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">

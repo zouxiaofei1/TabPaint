@@ -58,19 +58,19 @@
             <!-- 基础样式 -->
             <ToggleButton x:Name="BoldBtn" Style="{StaticResource FluentToggleButtonStyle}" 
                           services:ShortcutService.BaseToolTip="L_Text_Bold" services:ShortcutService.ShortcutKey="Edit.Bold">
-                <TextBlock Text="B" FontWeight="Bold" FontFamily="Segoe UI" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <Path x:Name="Bold_Image" Data="{DynamicResource Bold_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="13" Height="13"/>
             </ToggleButton>
             <ToggleButton x:Name="ItalicBtn" Style="{StaticResource FluentToggleButtonStyle}" 
                           services:ShortcutService.BaseToolTip="L_Text_Italic" services:ShortcutService.ShortcutKey="Edit.Italic">
-                <TextBlock Text="I" FontStyle="Italic" FontFamily="Times New Roman" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <Path x:Name="Italic_Image" Data="{DynamicResource Italic_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="13" Height="13"/>
             </ToggleButton>
             <ToggleButton x:Name="UnderlineBtn" Style="{StaticResource FluentToggleButtonStyle}" 
                           services:ShortcutService.BaseToolTip="L_Text_Underline" services:ShortcutService.ShortcutKey="Edit.Underline">
-                <TextBlock Text="U" TextDecorations="Underline" FontFamily="Segoe UI" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <Path x:Name="Underline_Image" Data="{DynamicResource Underline_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="13" Height="13"/>
             </ToggleButton>
             <ToggleButton x:Name="StrikeBtn" Style="{StaticResource FluentToggleButtonStyle}" 
                           services:ShortcutService.BaseToolTip="L_Text_Strike" services:ShortcutService.ShortcutKey="Edit.Strikethrough">
-                <TextBlock Text="S" TextDecorations="Strikethrough" FontFamily="Segoe UI" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <Path x:Name="Strike_Image" Data="{DynamicResource Strikethrough_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="13" Height="13"/>
             </ToggleButton>
 
             <Rectangle Width="1" Height="20" Fill="{DynamicResource BorderBrush}" Margin="8,0,4,0"/>
@@ -97,7 +97,7 @@
                 <ToggleButton x:Name="TextBackgroundBtn" Style="{StaticResource FluentToggleButtonStyle}" ToolTip="{DynamicResource L_Text_OpaqueBackground}">
                     <Grid>
                         <Rectangle Width="14" Height="14" Fill="{DynamicResource ControlBackgroundBrush}" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1"/>
-                        <TextBlock Text="A" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="A" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
                     </Grid>
                 </ToggleButton>
 
@@ -105,29 +105,23 @@
 
                 <!-- 上下标 -->
                 <ToggleButton x:Name="SubscriptBtn" Style="{StaticResource FluentToggleButtonStyle}" ToolTip="{DynamicResource L_Text_Subscript}">
-                    <TextBlock Text="X₂" FontFamily="Segoe UI" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    <Path x:Name="Subscript_Image" Data="{DynamicResource Subscript_Image}" Stretch="Uniform" Margin="0,0,0,-4" Fill="{DynamicResource IconFillBrush}" Width="14" Height="14" />
                 </ToggleButton>
                 <ToggleButton x:Name="SuperscriptBtn" Style="{StaticResource FluentToggleButtonStyle}" ToolTip="{DynamicResource L_Text_Superscript}">
-                    <TextBlock Text="X²" FontFamily="Segoe UI" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    <Path x:Name="Superscript_Image" Data="{DynamicResource Superscript_Image}" Stretch="Uniform" Margin="0,0,0,4" Fill="{DynamicResource IconFillBrush}" Width="14" Height="14"/>
                 </ToggleButton>
 
                 <Rectangle Width="1" Height="20" Fill="{DynamicResource BorderBrush}" Margin="8,0,8,0"/>
 
                 <!-- 特效区 -->
                 <ToggleButton x:Name="HighlightBtn" Style="{StaticResource FluentToggleButtonStyle}" ToolTip="{DynamicResource L_Text_Highlight}">
-                    <Grid>
-                        <Path Data="M0,12 L12,12 L12,8 L0,8 Z" Fill="Yellow" Opacity="0.6"/>
-                        <TextBlock Text="H" FontWeight="Bold" FontFamily="Segoe UI" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                    </Grid>
+                    <Path x:Name="Highlight_Image" Data="{DynamicResource Highlight_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="13" Height="13"/>
                 </ToggleButton>
                 <ToggleButton x:Name="ShadowBtn" Style="{StaticResource FluentToggleButtonStyle}" ToolTip="{DynamicResource L_Text_Shadow}">
-                    <TextBlock Text="S" FontWeight="Bold" FontFamily="Segoe UI" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}">
-                        <TextBlock.Effect>
-                            <DropShadowEffect BlurRadius="2" ShadowDepth="2" Opacity="0.5"/>
-                        </TextBlock.Effect>
-                    </TextBlock>
-                </ToggleButton>
+                    <Path x:Name="Texteff_Image" Data="{DynamicResource   Texteffect_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="14" Height="14"/>
 
+                </ToggleButton>
+              
                 <Rectangle Width="1" Height="20" Fill="{DynamicResource BorderBrush}" Margin="8,0,8,0"/>
 
                 <!-- 表格 -->

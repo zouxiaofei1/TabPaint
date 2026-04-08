@@ -43,8 +43,7 @@
                             <DropShadowEffect BlurRadius="15" ShadowDepth="0" Opacity="0.2" Color="Black"/>
                         </Border.Effect>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="💡" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="14"/>
-                            <TextBlock Text="{DynamicResource L_Hint_ClickLogoMenu}"
+                             <TextBlock Text="{DynamicResource L_Hint_ClickLogoMenu}"
                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                        FontSize="13"
                                        FontWeight="Medium"
@@ -103,8 +102,7 @@
                                 <DropShadowEffect BlurRadius="15" ShadowDepth="0" Opacity="0.2" Color="Black"/>
                             </Border.Effect>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="💡" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="14"/>
-                                <TextBlock Text="{DynamicResource L_Hint_ClickHelp}" 
+                                  <TextBlock Text="{DynamicResource L_Hint_ClickHelp}" 
                                            Foreground="{DynamicResource TextPrimaryBrush}" 
                                            FontSize="13" 
                                            FontWeight="Medium"

@@ -109,15 +109,13 @@ namespace TabPaint
                 }
                 finally
                 {
-                    _isProgrammaticScroll = false; // 🔓 解锁
+                    _isProgrammaticScroll = false; 
                 }
             });
         }
         public void ScrollToTabCenter(FileTabItem targetTab)
         {
             if (targetTab == null) return;
-
-            // 使用 ContextIdle 优先级，确保在 UI 布局更新（比如 Tab 变大或变色后）再执行滚动
             System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 try

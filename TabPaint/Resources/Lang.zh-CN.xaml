@@ -12,7 +12,7 @@
     <sys:String x:Key="L_Settings_Nav_About">关于</sys:String>
     <sys:String x:Key="L_Settings_Nav_Agreement">协议</sys:String>
     <sys:String x:Key="L_Settings_Toast_Saved">设置已保存</sys:String>
-    <sys:String x:Key="L_Settings_Toast_Conflict">快捷键与“{0}”冲突，已自动重置旧项</sys:String>
+    <sys:String x:Key="L_Settings_Toast_Conflict">快捷键与 {0} 冲突，已自动重置旧项</sys:String>
     <sys:String x:Key="L_Settings_Toast_ShellIntegration_EnableFailed">启用系统右键菜单失败：{0}</sys:String>
     <sys:String x:Key="L_Settings_Toast_ShellIntegration_DisableFailed">移除系统右键菜单失败：{0}</sys:String>
     <sys:String x:Key="L_Settings_Nav_Plugins">插件</sys:String>
@@ -117,7 +117,7 @@
     <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Title">形状工具专业模式</sys:String>
     <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Desc">绘制后可手动调整形状大小与位置 (按 Alt 键切换)</sys:String>
     <sys:String x:Key="L_Settings_Paint_BirdEye_Title">看图模式显示鸟瞰图</sys:String>
-    <sys:String x:Key="L_Settings_Paint_BirdEye_Desc">右键关闭后，可在此重新开启鸟瞰图</sys:String>
+    <sys:String x:Key="L_Settings_Paint_BirdEye_Desc">在此重新开启鸟瞰图</sys:String>
 
     <!-- View panel -->
     <sys:String x:Key="L_Settings_View_Title">看图设置</sys:String>
@@ -245,8 +245,8 @@
     <sys:String x:Key="L_Main_Ctx_WindowTopmost">窗口置顶</sys:String>
     <sys:String x:Key="L_Main_Ctx_ShowRulers">显示标尺</sys:String>
     <sys:String x:Key="L_Main_Ctx_MiniTools">小工具</sys:String>
-    <sys:String x:Key="L_Main_Ctx_AI_RemoveBg">AI 一键抠图 (RMBG)</sys:String>
-    <sys:String x:Key="L_Main_Ctx_AI_ChromaKey">色差抠图 (去除背景)</sys:String>
+    <sys:String x:Key="L_Main_Ctx_AI_RemoveBg">AI 一键抠图</sys:String>
+    <sys:String x:Key="L_Main_Ctx_AI_ChromaKey">色差抠图</sys:String>
     <sys:String x:Key="L_Main_Ctx_OCR">提取图中文字</sys:String>
     <sys:String x:Key="L_Main_Ctx_ScreenPicker">屏幕取色器</sys:String>
     <sys:String x:Key="L_Main_Ctx_CopyHex">复制颜色代码 (#HEX)</sys:String>
@@ -670,43 +670,43 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Help_Prev">上一页</sys:String>
     <sys:String x:Key="L_Help_Close">关闭</sys:String>
     <!-- 帮助界面文本 -->
-    <sys:String x:Key="L_Help_Desc_2">按 Tab 键可快速在“专注看图”和“自由绘图”模式间切换</sys:String>
+    <sys:String x:Key="L_Help_Desc_2">按 Tab 键可快速在看图和绘图模式间切换</sys:String>
     <sys:String x:Key="L_Help_Desc_3">支持将图片直接拖拽至 Word、桌面或任何支持的地方</sys:String>
     <sys:String x:Key="L_Help_Desc_1">极简的绘制功能，现在就试试看</sys:String>
     <sys:String x:Key="L_Settings_Advanced_ICC_Title">颜色校准</sys:String>
     <sys:String x:Key="L_Settings_Advanced_ICC_Desc">使用显示器的 ICC 配置文件进行色彩校正</sys:String>
     <!-- Toasts -->
     <sys:String x:Key="L_Toast_Deleted">已删除 (Ctrl+Z 撤销)</sys:String>
-    <sys:String x:Key="L_Toast_UndoDelete">已撤销删除</sys:String>
-    <sys:String x:Key="L_Toast_FirstImage">已回到第一张图片</sys:String>
+    <sys:String x:Key="L_Toast_UndoDelete">撤销删除</sys:String>
+    <sys:String x:Key="L_Toast_FirstImage">回到第一张图片</sys:String>
     <sys:String x:Key="L_Toast_LastImage">这是最后一张图片</sys:String>
     <sys:String x:Key="L_Toast_NoContentToCrop">未检测到有效内容，无需裁剪</sys:String>
-    <sys:String x:Key="L_Toast_MinSize">已是最小尺寸</sys:String>
+    <sys:String x:Key="L_Toast_MinSize">最小尺寸</sys:String>
     <sys:String x:Key="L_Toast_Copied">已复制</sys:String>
     <sys:String x:Key="L_Toast_PressDeleteAgain">再次按下 Delete 删除文件</sys:String>
     <sys:String x:Key="L_Toast_DragFailed">拖拽失败:</sys:String>
     <sys:String x:Key="L_Toast_Effect_Inverted">已应用反色</sys:String>
     <sys:String x:Key="L_Toast_Effect_AutoLevels">已自动调整色阶</sys:String>
     <sys:String x:Key="L_Toast_Effect_BW">已应用黑白</sys:String>
-    <sys:String x:Key="L_Toast_FileNotFound">文件已不存在，无法定位文件夹。</sys:String>
+    <sys:String x:Key="L_Toast_FileNotFound">文件不存在</sys:String>
     <sys:String x:Key="L_Toast_PasteFailed">粘贴图片失败:</sys:String>
     <sys:String x:Key="L_Toast_DeleteFailed">删除失败:</sys:String>
     <sys:String x:Key="L_Toast_CopyFailed">复制失败</sys:String>
-    <sys:String x:Key="L_Toast_NoImageData">无法获取该标签页的图像数据</sys:String>
+    <sys:String x:Key="L_Toast_NoImageData">无法获取图像数据</sys:String>
     <sys:String x:Key="L_Toast_InsertFailed">插入失败:</sys:String>
     <sys:String x:Key="L_Toast_CannotInsertImage">无法插入图片:</sys:String>
     <sys:String x:Key="L_Toast_SizeTooSmallForBorder">图片尺寸过小，无法添加边框</sys:String>
     <sys:String x:Key="L_Toast_NoSelection">未选中图片区域</sys:String>
     <sys:String x:Key="L_Toast_OCR_NoText">未识别到文字</sys:String>
-    <sys:String x:Key="L_Toast_ImageTooLarge">⚠️ 图片过大，已自动压缩显示</sys:String>
+    <sys:String x:Key="L_Toast_ImageTooLarge">图片过大，已自动压缩显示</sys:String>
     <sys:String x:Key="L_Toast_ReadFolderFailed_Prefix">读取文件夹失败:</sys:String>
     <sys:String x:Key="L_Toast_LoadFailed_Prefix">启动加载失败:</sys:String>
-    <sys:String x:Key="L_Toast_ShapeProMode_On">专业模式开启 (Alt)</sys:String>
-    <sys:String x:Key="L_Toast_ShapeProMode_Off">专业模式关闭 (Alt)</sys:String>
-    <sys:String x:Key="L_Toast_TextProMode_On">文字专业模式开启 (Alt)</sys:String>
-    <sys:String x:Key="L_Toast_TextProMode_Off">文字专业模式关闭 (Alt)</sys:String>
+    <sys:String x:Key="L_Toast_ShapeProMode_On">专业模式开启</sys:String>
+    <sys:String x:Key="L_Toast_ShapeProMode_Off">专业模式关闭</sys:String>
+    <sys:String x:Key="L_Toast_TextProMode_On">专业模式开启</sys:String>
+    <sys:String x:Key="L_Toast_TextProMode_Off">专业模式关闭</sys:String>
 
-    <sys:String x:Key="L_Toast_BorderAdded">已添加 2px 边框</sys:String>
+    <sys:String x:Key="L_Toast_BorderAdded">已添加边框</sys:String>
     <sys:String x:Key="L_Toast_CropFailed_Prefix">裁切失败: {0}</sys:String>
     <sys:String x:Key="L_Toast_ColorCopied_Format">已复制颜色: {0}</sys:String>
     <sys:String x:Key="L_Toast_ColorPicked_Format">已吸取颜色: #{0:X2}{1:X2}{2:X2}</sys:String>
@@ -717,8 +717,8 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Toast_DownloadCancelled">下载取消</sys:String>
 
     <sys:String x:Key="L_Toast_OCR_VersionError">OCR 功能仅支持 Windows 10 (1803) 或更高版本。</sys:String>
-    <sys:String x:Key="L_Toast_OCR_Success_Format">成功提取 {0} 个字符到剪切板！</sys:String>
-    <sys:String x:Key="L_Toast_OCR_InitFailed">OCR 初始化失败，请检查系统设置中是否已安装对应语言的 OCR 数据包。</sys:String>
+    <sys:String x:Key="L_Toast_OCR_Success_Format">成功提取 {0} 个字符到剪切板</sys:String>
+    <sys:String x:Key="L_Toast_OCR_InitFailed">OCR 初始化失败，请检查是否已安装 OCR 数据包。</sys:String>
     <sys:String x:Key="L_Toast_OCR_NotSupported">当前系统不支持 OCR API。</sys:String>
     <sys:String x:Key="L_Toast_OCR_Error_Prefix">OCR 错误: {0}</sys:String>
     <sys:String x:Key="L_Toast_GDIReadFailed_Prefix">GDI+ 读取失败: {0}</sys:String>
@@ -769,7 +769,7 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_OCR_Status_Processing">正在提取文字...</sys:String>
     <sys:String x:Key="L_OCR_Overlay_CopyAll">复制全部文本</sys:String>
     <sys:String x:Key="L_OCR_AiRuntime_FirstPrompt_Title">OCR 运行时未安装</sys:String>
-    <sys:String x:Key="L_OCR_AiRuntime_FirstPrompt_Content">首次使用 AI OCR 需要下载 OCR 运行时。是否继续下载并启用 AI OCR？\n\n选择“否”后将改用系统 OCR（可在 设置-插件 中手动下载后自动恢复 AI OCR）。</sys:String>
+    <sys:String x:Key="L_OCR_AiRuntime_FirstPrompt_Content">首次使用需要下载运行时。是否继续下载并启用 AI OCR？\n\n选择“否”后将改用系统 OCR。</sys:String>
     <sys:String x:Key="L_OCR_Failed_Prefix">OCR 识别失败: {0}</sys:String>
     <sys:String x:Key="L_PyOCR_Runtime_DownloadPython">OCR 运行时：下载 Python</sys:String>
     <sys:String x:Key="L_PyOCR_Runtime_ExtractPython">OCR 运行时：解压 Python</sys:String>
@@ -777,7 +777,7 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_PyOCR_Runtime_Preparing">OCR 运行时准备中</sys:String>
 
     <sys:String x:Key="L_AI_RMBG_MissingRuntime_Title">缺少必要组件</sys:String>
-    <sys:String x:Key="L_AI_RMBG_MissingRuntime_Content">AI 抠图功能需要安装 [Visual C++ 2015-2022 Runtime] 运行库才能运行。&#x0a;&#x0a;是否立即前往微软官网下载？</sys:String>
+    <sys:String x:Key="L_AI_RMBG_MissingRuntime_Content">AI 抠图功能需要安装 [Visual C++ 2015-2022 Runtime] 运行库。&#x0a;&#x0a;是否立即前往微软官网下载？</sys:String>
     <sys:String x:Key="L_AI_Status_Preparing">正在准备 AI 模型...</sys:String>
     <sys:String x:Key="L_AI_Status_Downloading_Format">下载模型中: {0:F1}%</sys:String>
     <sys:String x:Key="L_AI_Status_Thinking">AI 正在思考...</sys:String>
@@ -880,7 +880,7 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Toast_OpenUrlFailed">无法打开链接</sys:String>
     <sys:String x:Key="L_Key_None">无</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Waiting">等待录入</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_LimitReached">⚠️ 已达到最大尺寸限制 ({0}px)</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_LimitReached">已达到最大尺寸限制 ({0}px)</sys:String>
     <sys:String x:Key="L_Info_CanvasMode_Format">画布模式：{0} x {1}</sys:String>
     <sys:String x:Key="L_Info_ResampleMode_Format">缩放: {0:P0}  |  原始: {1} x {2}</sys:String>
     <sys:String x:Key="L_Info_DefaultScale">缩放：100% (原始大小)</sys:String>

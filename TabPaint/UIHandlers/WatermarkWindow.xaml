@@ -280,7 +280,6 @@
                         <Grid>
                             <!-- 分层预览：底图层 -->
                             <Image x:Name="ImgWindowBackground" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
-                            <!-- 分层预览：水印层 (实时矢量预览，移除昂贵的 DropShadowEffect 以确保流畅) -->
                             <Image x:Name="ImgWindowPreview" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
                         </Grid>
                     </Border>

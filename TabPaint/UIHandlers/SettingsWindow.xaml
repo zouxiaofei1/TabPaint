@@ -335,7 +335,6 @@
                                 <TranslateTransform X="50"/>
                             </Border.RenderTransform>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,10,0" VerticalAlignment="Center" FontSize="16"/>
                                 <StackPanel>
                                     <TextBlock Text="{DynamicResource L_Update_Found_Title}" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" FontSize="12"/>
                                     <TextBlock x:Name="TxtUpdateVer" Text="New version available" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="11"/>
@@ -354,7 +353,12 @@
                                 <TranslateTransform X="50"/>
                             </Border.RenderTransform>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <Path Data="M0.5,10.125 L4.5,14.125 L15.5,3.125 L14.5,2.125 L4.5,12.125 L1.5,9.125 Z" 
+          Fill="{DynamicResource TextPrimaryBrush}" 
+          Width="12" Height="12" 
+          Stretch="Uniform" 
+          Margin="0,0,8,0" 
+          VerticalAlignment="Center"/>
                                 <TextBlock x:Name="TxtSavedToast" Text="{DynamicResource L_Settings_Toast_Saved}" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Border>
@@ -370,7 +374,6 @@
                                 <TranslateTransform X="50"/>
                             </Border.RenderTransform>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" Foreground="White" Margin="0,0,8,0" VerticalAlignment="Center"/>
                                 <TextBlock x:Name="TxtConflict" Text="Conflict" Foreground="White" FontWeight="SemiBold" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Border>

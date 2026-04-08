@@ -347,7 +347,7 @@ namespace TabPaint
             return false;
         }
         // --- 文件过滤器与扩展名 ---
-        public const string ImageFilterFormat = "{0}|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp;*.avif;*.ico;*.heic;*.jfif;*.exif;*.jpe;*.jxl;*.heif;*.hif;*.dib;*.wdp;*.wmp;*.jxr;*.svg|{1} (*.png)|*.png|{2} (*.jpg;*.jpeg)|*.jpg;*.jpeg|{3} (*.webp)|*.webp|{4} (*.bmp)|*.bmp|{5} (*.gif)|*.gif|{6} (*.tif;*.tiff)|*.tif;*.tiff|{7} (*.ico)|*.ico|{8} (*.svg)|*.svg";
+        public const string ImageFilterFormat = "{0}|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp;*.avif;*.ico;*.heic;*.jfif;*.exif;*.jpe;*.jxl;*.heif;*.hif;*.dib;*.wdp;*.wmp;*.jxr;*.svg|{1} (*.png)|*.png|{2} (*.jpg;*.jpeg)|*.jpg;*.jpeg|{3} (*.webp)|*.webp|{4} (*.bmp)|*.bmp|{5} (*.gif)|*.gif|{6} (*.tif;*.tiff)|*.tif;*.tiff|{7} (*.ico)|*.ico";
         public static readonly string[] ImageExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".avif", ".ico", ".tiff", ".heic", ".tif", ".jfif", ".exif", ".jpe", ".jxl", ".heif", ".hif", ".dib", ".wdp", ".wmp", ".jxr", ".svg" };
     }
 }

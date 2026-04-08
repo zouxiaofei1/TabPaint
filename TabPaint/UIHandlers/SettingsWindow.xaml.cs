@@ -410,7 +410,81 @@ namespace TabPaint
             else page = _pages[tag];
             if (page != null)
             {
-                MainContent.Content = page;
+                AnimatePageTransition(page);
+            }
+        }
+
+        private void AnimatePageTransition(UserControl newPage)
+        {
+            var oldPage = MainContent.Content as UIElement;
+            
+            // 如果目标页面已经是当前页面，跳过动画
+            if (oldPage == newPage) return;
+            
+            // 新页面初始状态：透明，向右偏移30，轻微放大1.05
+            newPage.Opacity = 0;
+            var newPageTransform = new TranslateTransform(30, 0);
+            var newPageScale = new ScaleTransform(1.0, 1.0);
+            newPage.RenderTransform = new TransformGroup
+            {
+                Children = new TransformCollection { newPageTransform, newPageScale }
+            };
+            
+            // 先显示新页面
+            MainContent.Content = newPage;
+            
+            const int durationMs = 70;
+            var duration = TimeSpan.FromMilliseconds(durationMs);
+            var easeOut = new CubicEase { EasingMode = EasingMode.EaseOut };
+            
+            // 新页面进入动画：从右侧滑入，淡入，缩放
+            var fadeIn = new DoubleAnimation(1, duration) { EasingFunction = easeOut };
+            var slideIn = new DoubleAnimation(0, duration) { EasingFunction = easeOut };
+            var scaleIn = new DoubleAnimation(1, duration) { EasingFunction = easeOut };
+            
+            newPage.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+            newPageTransform.BeginAnimation(TranslateTransform.XProperty, slideIn);
+            newPageScale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleIn);
+            newPageScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleIn);
+            
+            // 旧页面退出动画：左移，淡出，缩小
+            if (oldPage != null)
+            {
+                var oldTransform = oldPage.RenderTransform as TranslateTransform;
+                if (oldTransform == null)
+                {
+                    oldTransform = new TranslateTransform(0, 0);
+                    oldPage.RenderTransform = oldTransform;
+                }
+                
+                var fadeOut = new DoubleAnimation(0, duration);
+                var slideOut = new DoubleAnimation(-30, duration);
+                var scaleOut = new DoubleAnimation(0.95, duration);
+                
+                oldPage.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+                oldTransform.BeginAnimation(TranslateTransform.XProperty, slideOut);
+                
+                var oldScale = oldPage.RenderTransform as ScaleTransform;
+                if (oldScale == null)
+                {
+                    var group = oldPage.RenderTransform as TransformGroup;
+                    if (group != null)
+                    {
+                        foreach (var child in group.Children)
+                        {
+                            if (child is ScaleTransform st)
+                            {
+                                oldScale = st;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (oldScale != null)
+                {
+                    oldScale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleOut);
+                    oldScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleOut);
+                }
             }
         }
 

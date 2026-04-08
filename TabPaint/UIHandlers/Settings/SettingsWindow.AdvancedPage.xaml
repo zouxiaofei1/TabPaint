@@ -166,8 +166,9 @@
                          Text="{Binding Path=Current.DefaultBlankCanvasWidth, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"/>
                 <Button Width="30" Height="30" IsHitTestVisible="False"
                         Style="{StaticResource RightPartButtonStyle}"
-                        Content="×" FontSize="14" FontWeight="Bold"/>
-                <TextBox Width="60" Height="30" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                        Content="px" FontSize="11"/>
+                    <TextBlock Text="×" FontSize="14" Padding="5,5,0,0"/>
+                    <TextBox Width="60" Height="30" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
                          Margin="5,0,0,0"
                          Style="{StaticResource LeftPartTextBoxStyle}"
                          PreviewTextInput="NumberValidationTextBox"
