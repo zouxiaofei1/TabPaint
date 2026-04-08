@@ -657,12 +657,19 @@ namespace TabPaint
         }
         private bool IsVisualAncestorOf<T>(DependencyObject node) where T : DependencyObject
         {
+            try {
             while (node != null)
             {
                 if (node is T) return true;
                 node = VisualTreeHelper.GetParent(node);
             }
             return false;
+            }
+            catch(Exception e)
+            {
+                Debug.WriteLine(e);
+                return false;
+            }
         }
 
 

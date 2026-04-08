@@ -390,19 +390,51 @@ public partial class ShapeTool : ToolBase
         foreach (var anchor in anchors)
         {
             Point p = ctx.FromPixel(GetAnchorPoint(ctx, anchor));
-            var ellipse = new Ellipse
+            if (anchor == ManipulationAnchor.Rotate)
             {
-                Width = adaptiveHandleSize,
-                Height = adaptiveHandleSize,
-                Fill = anchor == ManipulationAnchor.Rotate ? Brushes.DeepSkyBlue : Brushes.White,
-                Stroke = Brushes.DeepSkyBlue,
-                StrokeThickness = adaptiveThickness,
-                IsHitTestVisible = false
-            };
-            Canvas.SetLeft(ellipse, p.X - adaptiveHandleSize / 2);
-            Canvas.SetTop(ellipse, p.Y - adaptiveHandleSize / 2);
-            ctx.EditorOverlay.Children.Add(ellipse);
-            _handleVisuals.Add(ellipse);
+                double rotateSize = adaptiveHandleSize * 2.5;
+                var grid = new Grid { Width = rotateSize, Height = rotateSize, IsHitTestVisible = false };
+                // 外圈
+                grid.Children.Add(new Ellipse
+                {
+                    Stroke = Brushes.DeepSkyBlue,
+                    StrokeThickness = adaptiveThickness
+                });
+                // 内圆背景
+                grid.Children.Add(new Ellipse
+                {
+                    Fill = Brushes.White,
+                    Margin = new Thickness(rotateSize * 0.1)
+                });
+                var iconPath = new System.Windows.Shapes.Path
+                {
+                    Data = Application.Current.TryFindResource("Rotate_Right_Image") as Geometry,
+                    Fill = Brushes.DeepSkyBlue,
+                    Stretch = Stretch.Uniform,
+                    Margin = new Thickness(rotateSize * 0.25)
+                };
+                grid.Children.Add(iconPath);
+                Canvas.SetLeft(grid, p.X - rotateSize / 2);
+                Canvas.SetTop(grid, p.Y - rotateSize / 2);
+                ctx.EditorOverlay.Children.Add(grid);
+                _handleVisuals.Add(grid);
+            }
+            else
+            {
+                var ellipse = new Ellipse
+                {
+                    Width = adaptiveHandleSize,
+                    Height = adaptiveHandleSize,
+                    Fill = Brushes.White,
+                    Stroke = Brushes.DeepSkyBlue,
+                    StrokeThickness = adaptiveThickness,
+                    IsHitTestVisible = false
+                };
+                Canvas.SetLeft(ellipse, p.X - adaptiveHandleSize / 2);
+                Canvas.SetTop(ellipse, p.Y - adaptiveHandleSize / 2);
+                ctx.EditorOverlay.Children.Add(ellipse);
+                _handleVisuals.Add(ellipse);
+            }
         }
     }
 

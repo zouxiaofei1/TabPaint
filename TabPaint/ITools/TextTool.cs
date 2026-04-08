@@ -173,6 +173,8 @@ namespace TabPaint
             {
                 MainWindow mw = MainWindow.GetCurrentInstance();
                 if (_richTextBox == null) return;
+                double dpiScaleX = AppConsts.StandardDpi / ctx.Surface.Bitmap.DpiX;
+                double dpiScaleY = AppConsts.StandardDpi / ctx.Surface.Bitmap.DpiY;
 
                 double invScale = 1 / mw.zoomscale;
                 var overlay = ctx.SelectionOverlay;
@@ -186,12 +188,23 @@ namespace TabPaint
 
                 bool isProMode = SettingsManager.Instance.Current.IsTextToolProMode;
 
+                // 实时更新文本框自身的旋转中心 (修复输入时由于大小变化导致的错位)
+                if (Math.Abs(_rotationAngle) > 0.01)
+                {
+                    _richTextBox.RenderTransformOrigin = new Point(0, 0);
+                    _richTextBox.RenderTransform = new RotateTransform(_rotationAngle, w / 2.0, h / 2.0);
+                }
+                else
+                {
+                    _richTextBox.RenderTransform = null;
+                }
+
                 // 如果有旋转角度，给整个 overlay 应用旋转变换
                 if (isProMode && Math.Abs(_rotationAngle) > 0.01)
                 {
                     double cx = rect.X + rect.Width / 2.0;
                     double cy = rect.Y + rect.Height / 2.0;
-                    overlay.RenderTransform = new RotateTransform(_rotationAngle, cx, cy);
+                    overlay.RenderTransform = new RotateTransform(_rotationAngle, cx * mw.zoomscale, cy * mw.zoomscale);
                 }
                 else
                 {
@@ -253,25 +266,38 @@ namespace TabPaint
                     {
                         X1 = topMidX, Y1 = topMidY,
                         X2 = topMidX, Y2 = rotateY,
-                        Stroke = Brushes.DeepSkyBlue,
+                        Stroke = Brushes.Black,
                         StrokeThickness = invScale,
                         IsHitTestVisible = false
                     };
                     overlay.Children.Add(line);
 
-                    // 旋转手柄（圆形）
-                    var rotateHandle = new System.Windows.Shapes.Ellipse
+                    // 旋转手柄（圆圈内包含图标）
+                    double rotateIconSize = handleSize * 2.5;
+                    var grid = new Grid { Width = rotateIconSize, Height = rotateIconSize, IsHitTestVisible = false };
+                    // 外圈
+                    grid.Children.Add(new System.Windows.Shapes.Ellipse
                     {
-                        Width = handleSize,
-                        Height = handleSize,
-                        Fill = Brushes.DeepSkyBlue,
-                        Stroke = Brushes.White,
-                        StrokeThickness = invScale,
-                        IsHitTestVisible = false
+                        Stroke = Brushes.Black,
+                        StrokeThickness = invScale
+                    });
+                    // 内圆背景
+                    grid.Children.Add(new System.Windows.Shapes.Ellipse
+                    {
+                        Fill = Brushes.White,
+                        Margin = new Thickness(rotateIconSize * 0.1)
+                    });
+                    var iconPath = new System.Windows.Shapes.Path
+                    {
+                        Data = Application.Current.TryFindResource("Rotate_Right_Image") as Geometry,
+                        Fill = Brushes.Black,
+                        Stretch = Stretch.Uniform,
+                        Margin = new Thickness(rotateIconSize * 0.15)
                     };
-                    Canvas.SetLeft(rotateHandle, topMidX - handleSize / 2);
-                    Canvas.SetTop(rotateHandle, rotateY - handleSize / 2);
-                    overlay.Children.Add(rotateHandle);
+                    grid.Children.Add(iconPath);
+                    Canvas.SetLeft(grid, topMidX - rotateIconSize / 2);
+                    Canvas.SetTop(grid, rotateY - rotateIconSize / 2);
+                    overlay.Children.Add(grid);
                 }
 
                 overlay.IsHitTestVisible = false;
@@ -392,15 +418,17 @@ namespace TabPaint
                     // 旋转拖拽
                     if (_rotating)
                     {
-                        Vector v = px - _rotateCenter;
-                        _rotationAngle = Math.Atan2(v.Y, v.X) * 180 / Math.PI + 90;
-                        // 同步旋转 RichTextBox
-                        _richTextBox.RenderTransformOrigin = new Point(0.5, 0.5);
-                        _richTextBox.RenderTransform = new RotateTransform(_rotationAngle);
+                        double left = Canvas.GetLeft(_richTextBox);
+                        double top = Canvas.GetTop(_richTextBox);
+                        double w = _richTextBox.ActualWidth;
+                        double h = _richTextBox.ActualHeight;
+                        double cx = left + w / 2.0;
+                        double cy = top + h / 2.0;
+                        Vector v = px - new Point(cx, cy);
+                        _rotationAngle = Math.Atan2(v.Y, v.X) * 180.0 / Math.PI + 90.0;
                         DrawTextboxOverlay(ctx);
                         return;
                     }
-
                     double dx = px.X - _startMouse.X;
                     double dy = px.Y - _startMouse.Y;
                     if (_resizing)
@@ -508,10 +536,8 @@ namespace TabPaint
                     if (anchor == ResizeAnchor.Rotate)
                     {
                         _rotating = true;
-                        double x1 = Canvas.GetLeft(_richTextBox);
-                        double y1 = Canvas.GetTop(_richTextBox);
-                        _rotateCenter = new Point(x1 + _richTextBox.ActualWidth / 2, y1 + _richTextBox.ActualHeight / 2);
                         if (ctx.EditorOverlay.IsHitTestVisible) ctx.EditorOverlay.CaptureMouse();
+                        return;
                         return;
                     }
                     if (anchor != ResizeAnchor.None)
@@ -924,6 +950,8 @@ namespace TabPaint
                 ctx.EditorOverlay.PreviewMouseDown -= Overlay_PreviewMouseDown;
                 mw.SetUndoRedoButtonState();
                 _richTextBox = null;
+                _rotationAngle = 0;   // 重置旋转角度
+                _rotating = false;
                 lag = 2; // 统一在这里赋予 lag
                 if (mw._canvasResizer != null) mw._canvasResizer.SetHandleVisibility(true);
             }
@@ -1020,9 +1048,7 @@ namespace TabPaint
                 if (anchor == ResizeAnchor.Rotate)
                 {
                     _rotating = true;
-                    double x1 = Canvas.GetLeft(_richTextBox);
-                    double y1 = Canvas.GetTop(_richTextBox);
-                    _rotateCenter = new Point(x1 + _richTextBox.ActualWidth / 2, y1 + _richTextBox.ActualHeight / 2);
+                    // 不再缓存 _rotateCenter，move 里实时计算
                     ctx.EditorOverlay.CaptureMouse();
                     e.Handled = true;
                 }

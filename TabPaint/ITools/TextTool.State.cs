@@ -134,7 +134,7 @@ namespace TabPaint
             private double _rotationAngle = 0;
             private bool _rotating = false;
             private Point _rotateCenter;
-            private const double RotateHandleOffset = 30;
+            private const double RotateHandleOffset = 12;
 
             public enum ResizeAnchor
             {
