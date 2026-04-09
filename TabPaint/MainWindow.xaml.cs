@@ -1025,10 +1025,24 @@ namespace TabPaint
             }
 
             _currentImageIndex = newIndex;
-            UpdateWindowTitle();
 
-            RequestImageLoad(_imageFiles[_currentImageIndex]);
-            ScrollToTabCenter(_currentTabItem ?? FileTabs.FirstOrDefault(t => t.FilePath == _imageFiles[newIndex]));
+            // 1. 尝试提前定位对应的 Tab，以便高亮和标题显示
+            var targetFilePath = _imageFiles[_currentImageIndex];
+            var targetTab = FileTabs.FirstOrDefault(t => t.FilePath == targetFilePath);
+
+            // 2. 更新标题（即使 Tab 没加载也能显示正确序号）
+            UpdateWindowTitle(targetTab?.FileName ?? System.IO.Path.GetFileName(targetFilePath), _currentImageIndex);
+
+            // 3. 提前设置选中状态（如果 Tab 已存在）
+            if (targetTab != null)
+            {
+                foreach (var tab in FileTabs) tab.IsSelected = false;
+                targetTab.IsSelected = true;
+                _currentTabItem = targetTab;
+            }
+
+            RequestImageLoad(targetFilePath);
+            ScrollToTabCenter(targetTab);
         }
 
 

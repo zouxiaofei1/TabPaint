@@ -467,5 +467,6 @@ namespace TabPaint
         private System.Threading.CancellationTokenSource? _aiInferenceCts;
         private bool _altToggleHandled = false;
         private ModifierKeys _quickFormatModifiers = ModifierKeys.None;
+        public static bool IsInternalTextDragging { get; set; } = false;
     }
 }

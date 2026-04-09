@@ -62,7 +62,7 @@ namespace TabPaint
                 }
                 int newIndex = _imageFiles.IndexOf(filePath);
                 _currentImageIndex = newIndex;
-                RefreshTabPageAsync(_currentImageIndex, refresh);
+                await RefreshTabPageAsync(_currentImageIndex, refresh);
 
                 var current = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
 
@@ -208,8 +208,7 @@ namespace TabPaint
         {
             try
             {
-                OpenImageAndTabs(filePath, lazyload: true);
-
+                await OpenImageAndTabs(filePath,  lazyload: true);
             }
             catch (Exception ex)
             {

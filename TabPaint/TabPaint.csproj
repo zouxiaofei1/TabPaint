@@ -78,6 +78,7 @@
     <PackageReference Include="Svg.Skia" Version="3.4.1" />
     <PackageReference Include="System.Drawing.Common" Version="9.0.10" />
     <PackageReference Include="System.Management" Version="10.0.2" />
+    <PackageReference Include="Vortice.DXGI" Version="3.8.3" />
     <PackageReference Include="WriteableBitmapEx" Version="1.6.9" />
     <PackageReference Include="XamlAnimatedGif" Version="2.3.1" />
   </ItemGroup>

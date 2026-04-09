@@ -80,9 +80,13 @@ namespace TabPaint.Controls
                 var scroller = this.FindName("FavoriteScroller") as ScrollViewer;
                 if (scroller != null && IsMouseOverControl(scroller))
                 {
-                    int delta = (short)((wParam.ToInt64() >> 16) & 0xFFFF);
-                    scroller.ScrollToHorizontalOffset(scroller.HorizontalOffset + delta);
-                    handled = true;
+                    short tilt = (short)((wParam.ToInt64() >> 16) & 0xFFFF);
+                    if (tilt != 0)
+                    {
+                        double scrollAmount = tilt * AppConsts.WheelScrollFactor;
+                        scroller.ScrollToHorizontalOffset(scroller.HorizontalOffset + scrollAmount);
+                        handled = true;
+                    }
                 }
             }
             return IntPtr.Zero;
@@ -729,8 +733,13 @@ namespace TabPaint.Controls
         {
             var scrollViewer = sender as ScrollViewer;
             if (scrollViewer == null) return;
-            scrollViewer.ScrollToHorizontalOffset(scrollViewer.HorizontalOffset - e.Delta);
-            e.Handled = true;
+
+            if (e.Delta != 0)
+            {
+                double scrollAmount = e.Delta * AppConsts.WheelScrollFactor;
+                scrollViewer.ScrollToHorizontalOffset(scrollViewer.HorizontalOffset - scrollAmount);
+                e.Handled = true;
+            }
         }
 
         private void SaveAndAddImage(BitmapSource bitmap)

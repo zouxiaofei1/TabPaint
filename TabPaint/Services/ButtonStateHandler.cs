@@ -191,43 +191,42 @@ namespace TabPaint
             ThicknessPreview.Fill = Brushes.Transparent;
             ThicknessPreview.StrokeThickness = 2;
         }
-        private void UpdateWindowTitle()
+        private void UpdateWindowTitle(string? overrideFileName = null, int? overrideIndex = null)
         {
-          
-            if (_currentTabItem == null)
+            if (_currentTabItem == null && overrideFileName == null)
             {
                 this.Title = $"TabPaint";
                 if (AppTitleBar.TitleTextControl != null) AppTitleBar.TitleTextControl.Text = this.Title;
                 return;
             }
 
-            string dirtyMark = _currentTabItem.IsDirty ? "*" : "";
-
-            string displayFileName = _currentTabItem.FileName;
-
+            string dirtyMark = (_currentTabItem != null && _currentTabItem.IsDirty) ? "*" : "";
+            string displayFileName = overrideFileName ?? _currentTabItem?.FileName ?? "";
             string countInfo = "";
 
-            if (!_currentTabItem.IsNew)
-            {
-                int total = _imageFiles.Count;
-                int currentIndex = -1;
+            int total = _imageFiles.Count;
+            int currentIndex = overrideIndex ?? _currentImageIndex;
 
-                if (!string.IsNullOrEmpty(_currentTabItem.FilePath))
+            if (_currentTabItem != null && _currentTabItem.IsNew && overrideIndex == null)
+            {
+                // 如果是新文件且没有覆盖索引，不显示计数
+            }
+            else if (total > 0)
+            {
+                if (currentIndex < 0 && _currentTabItem != null && !string.IsNullOrEmpty(_currentTabItem.FilePath))
                 {
                     currentIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
                 }
 
-                // 只有找到了有效的索引且总数大于0才显示
-                if (currentIndex >= 0 && total > 0)
+                if (currentIndex >= 0)
                 {
                     countInfo = $" ({currentIndex + 1}/{total})";
                 }
             }
-            string newTitle = $"{dirtyMark}{displayFileName}{countInfo} - TabPaint";
 
+            string newTitle = $"{dirtyMark}{displayFileName}{countInfo} - TabPaint";
             this.Title = newTitle;
             if (AppTitleBar.TitleTextControl != null) AppTitleBar.TitleTextControl.Text = newTitle;
-          
         }
 
 

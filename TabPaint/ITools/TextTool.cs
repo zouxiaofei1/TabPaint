@@ -655,6 +655,14 @@ namespace TabPaint
             }
             private void SetupRichTextBoxEvents(ToolContext ctx, System.Windows.Controls.RichTextBox rtb)
             {
+                rtb.PreviewQueryContinueDrag += (s, e) =>
+                {
+                    MainWindow.IsInternalTextDragging = true;
+                    if (e.Action == DragAction.Drop || e.Action == DragAction.Cancel)
+                    {
+                        MainWindow.IsInternalTextDragging = false;
+                    }
+                };
                 rtb.Loaded += (s, e) => { DrawTextboxOverlay(ctx); rtb.Focus(); };
                 rtb.SelectionChanged += (s, e) =>
                 {
@@ -940,6 +948,14 @@ namespace TabPaint
        
             private void SetupTextBoxEvents(ToolContext ctx, System.Windows.Controls.RichTextBox rtb)
             {
+                rtb.PreviewQueryContinueDrag += (s, e) =>
+                {
+                    MainWindow.IsInternalTextDragging = true;
+                    if (e.Action == DragAction.Drop || e.Action == DragAction.Cancel)
+                    {
+                        MainWindow.IsInternalTextDragging = false;
+                    }
+                };
                 // 绘制虚线框和句柄
                 rtb.Loaded += (s, e) => { DrawTextboxOverlay(ctx); };
                 rtb.SelectionChanged += (s, e) =>

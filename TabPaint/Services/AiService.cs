@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Vortice.DXGI;
 
 namespace TabPaint
 {
@@ -300,37 +301,43 @@ namespace TabPaint
         private static int GetBestGpuDeviceId()
         {
             if (_bestGpuId.HasValue) return _bestGpuId.Value;
-
-            int bestId = 0; // 默认使用 0
+            uint bestId = 0;
             bool detectedHighPerf = false;
             try
             {
-                using (var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController"))
+                // 使用 DXGI 获取真正的 DirectML 硬件索引
+                using var factory = DXGI.CreateDXGIFactory1<IDXGIFactory1>();
+
+                for (uint i = 0; ; i++)
                 {
-                    var devices = searcher.Get().Cast<ManagementObject>().ToList();
-                    for (int i = 0; i < devices.Count; i++)
+                    var result = factory.EnumAdapters1(i, out var adapter);
+                    if (result.Failure)
+                        break; // 遍历结束
+                    var desc = adapter.Description1;
+                    string name = desc.Description;
+                    System.Diagnostics.Debug.WriteLine($"[AI] DXGI Adapter {i}: {name}");
+                    // 匹配逻辑：优先 NVIDIA，其次非核显 AMD，其次 Intel 独显
+                    if (name.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase) ||
+                        (name.Contains("AMD", StringComparison.OrdinalIgnoreCase) && !name.Contains("Radeon TM Graphics", StringComparison.OrdinalIgnoreCase) && !name.Contains("Radeon(TM) Graphics", StringComparison.OrdinalIgnoreCase)) ||
+                        name.Contains("Arc", StringComparison.OrdinalIgnoreCase))
                     {
-                        var name = devices[i]["Name"]?.ToString() ?? "";
-                        if (name.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase) ||
-                            (name.Contains("AMD", StringComparison.OrdinalIgnoreCase) && !name.Contains("Radeon TM Graphics", StringComparison.OrdinalIgnoreCase)) || // 排除 AMD 核显
-                            name.Contains("Arc", StringComparison.OrdinalIgnoreCase)) // Intel 独显
-                        {
-                            bestId = i;
-                            detectedHighPerf = true;
-                            System.Diagnostics.Debug.WriteLine($"[AI] Detected High-Perf GPU: {name} (ID: {i})");
-                            break;
-                        }
+                        bestId = i;
+                        detectedHighPerf = true;
+                        adapter.Dispose();
+                        System.Diagnostics.Debug.WriteLine($"[AI] Selected High-Perf GPU: {name} (True DML ID: {i})");
+                        break;
                     }
+
+                    adapter.Dispose();
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[AI] GPU Detection failed: {ex.Message}. Defaulting to 0.");
+                System.Diagnostics.Debug.WriteLine($"[AI] DXGI GPU Detection failed: {ex.Message}. Defaulting to 0.");
             }
-
-            _bestGpuId = bestId;
+            _bestGpuId = (int)bestId;
             _isHighPerfGpu = detectedHighPerf;
-            return bestId;
+            return (int)bestId;
         }
 
         public static bool IsLowEndHardware()

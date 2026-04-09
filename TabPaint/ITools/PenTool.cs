@@ -172,7 +172,6 @@ public partial class PenTool : ToolBase
     private void UpdateCursorVisual(ToolContext ctx, Point viewPos)
     {
         if (_brushCursor == null || _cursorTransform == null) return;
-        var t = new TimeRecorder(); t.Toggle();
         double size = ctx.PenThickness;
 
         // 如果处于预览模式（显示尺寸小于原始尺寸），缩放光标以维持视觉比例一致
@@ -184,7 +183,6 @@ public partial class PenTool : ToolBase
             }
         }
 
-        // ★ 修改：始终显示十字光标，不再因为有自定义光标就隐藏
     if (ctx.ViewElement != null && ctx.ViewElement.Cursor != System.Windows.Input.Cursors.Cross)
     {
         ctx.ViewElement.Cursor = System.Windows.Input.Cursors.Cross;
@@ -198,10 +196,8 @@ public partial class PenTool : ToolBase
     }
     else
     {
-        // ★ 修改：只控制自定义光标的可见性，不再隐藏系统光标
         if (_brushCursor.Visibility != Visibility.Visible)
             _brushCursor.Visibility = Visibility.Visible;
-        // ★ 删除了原来的: ctx.ViewElement.Cursor = Cursors.None;
     }
 
         double halfSize = size / 2.0;
@@ -279,7 +275,7 @@ public partial class PenTool : ToolBase
                 _brushCursor.StrokeThickness = AppConsts.PenLowOpacityStrokeThickness;
             }
             else  _brushCursor.Stroke = null;
-        } t.Toggle(slient: true);
+        }// t.Toggle(slient: true);
     }
     public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f)
     {

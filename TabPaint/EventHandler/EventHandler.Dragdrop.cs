@@ -36,6 +36,11 @@ namespace TabPaint
         }
         private void OnGlobalDragOver(object sender, DragEventArgs e)
         {
+            if (MainWindow.IsInternalTextDragging)
+            {
+                HideDragOverlay();
+                return;
+            }
 
             if (e.Data.GetDataPresent("TabPaintSelectionDrag"))
             {
@@ -213,6 +218,12 @@ namespace TabPaint
         private async void OnGlobalDrop(object sender, DragEventArgs e)
         {
             HideDragOverlay();
+
+            if (MainWindow.IsInternalTextDragging)
+            {
+                return;
+            }
+
             if (e.Data.GetDataPresent("TabPaintSelectionDrag"))
             {
                 var sourceWindowData = e.Data.GetData("TabPaintSourceWindow");

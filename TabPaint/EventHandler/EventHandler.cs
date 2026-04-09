@@ -228,7 +228,7 @@ namespace TabPaint
         {
             if (msg == AppConsts.WM_MOUSEHWHEEL)
             {
-                if (ScrollContainer != null && !_isZoomAnimating)
+                if (ScrollContainer != null && !_isZoomAnimating && ScrollContainer.IsMouseOver)
                 {
                     short tilt = (short)((wParam.ToInt64() >> 16) & 0xFFFF);
 

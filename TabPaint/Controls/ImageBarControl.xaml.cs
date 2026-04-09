@@ -502,10 +502,13 @@ namespace TabPaint.Controls
         {
             if (msg == WM_MOUSEHWHEEL && IsMouseOverControl(FileTabsScroller))
             {
-                int delta = (short)((wParam.ToInt64() >> 16) & 0xFFFF);
-                FileTabsScroller.ScrollToHorizontalOffset(FileTabsScroller.HorizontalOffset + delta);
-
-                handled = true; // 标记消息已处理
+                short tilt = (short)((wParam.ToInt64() >> 16) & 0xFFFF);
+                if (tilt != 0)
+                {
+                    double scrollAmount = tilt * AppConsts.WheelScrollFactor;
+                    FileTabsScroller.ScrollToHorizontalOffset(FileTabsScroller.HorizontalOffset + scrollAmount);
+                    handled = true;
+                }
             }
 
             return IntPtr.Zero;
@@ -592,9 +595,13 @@ namespace TabPaint.Controls
         {
             var scroller = sender as ScrollViewer;
             if (scroller == null) return;
+
+            // 1. 正常滚轮 -> 纵向转横向
+            // 2. 按住 Shift -> 强制横向 (即便系统没转)
             if (e.Delta != 0)
             {
-                scroller.ScrollToHorizontalOffset(scroller.HorizontalOffset - e.Delta);
+                double scrollAmount = e.Delta * AppConsts.WheelScrollFactor;
+                scroller.ScrollToHorizontalOffset(scroller.HorizontalOffset - scrollAmount);
                 e.Handled = true;
             }
         }
