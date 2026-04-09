@@ -177,33 +177,68 @@
             
             <!-- Border 内部唯一的容器 Grid -->
             <Grid x:Name="LayoutRoot">
-                <DockPanel LastChildFill="True">
+                <Grid x:Name="LayoutRoots">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <!-- TitleBar -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- MenuBar -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- Separator -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- ToolBar -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- ImageBar -->
+                        <RowDefinition Height="*"/>
+                        <!-- Canvas 主区域 -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- Separator -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- StatusBar -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- StatusCommandBar -->
+                    </Grid.RowDefinitions>
                     <!-- 1. 自定义标题栏 -->
-                    <controls:TitleBarControl x:Name="AppTitleBar" 
+                    <controls:TitleBarControl x:Name="AppTitleBar"  Grid.Row="0"
                           DockPanel.Dock="Top" 
                           MinimizeClick="Minimize_Click"
                           MaximizeRestoreClick="MaximizeRestore_Click"
                           CloseClick="Close_Click"
                           TitleBarMouseDown="Border_MouseLeftButtonDown"
-                          ModeSwitchClick="OnTitleBarModeSwitch" />
-
+                          ModeSwitchClick="OnTitleBarModeSwitch" >
+                        <controls:TitleBarControl.CacheMode>
+                            <BitmapCache EnableClearType="True" SnapsToDevicePixels="True"/>
+                        </controls:TitleBarControl.CacheMode>
+                    </controls:TitleBarControl>
+                    
+                    
                     <!-- 2. 菜单栏 -->
-                    <ContentControl x:Name="MenuBarHolder" DockPanel.Dock="Top"
-                          Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
-
+                    <ContentControl x:Name="MenuBarHolder" DockPanel.Dock="Top" Grid.Row="1"
+                          Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}">
+                        <ContentControl.CacheMode>
+                            <BitmapCache EnableClearType="True"/>
+                        </ContentControl.CacheMode>
+                    </ContentControl>
                     <!-- 分割线 -->
-                    <Rectangle DockPanel.Dock="Top" Height="1" Fill="{DynamicResource BorderLightBrush}" SnapsToDevicePixels="True"        
+                    <Rectangle DockPanel.Dock="Top" Height="1" Fill="{DynamicResource BorderLightBrush}" SnapsToDevicePixels="True"     Grid.Row="2"    
                                Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
 
                     <!-- 3. 工具栏 -->
-                    <ContentControl x:Name="ToolBarHolder" DockPanel.Dock="Top" 
-                               Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
-
+                    <ContentControl x:Name="ToolBarHolder" DockPanel.Dock="Top" Grid.Row="3"
+                               Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}">
+                    <ContentControl.CacheMode>
+                        <BitmapCache EnableClearType="True"/>
+                    </ContentControl.CacheMode>
+                    </ContentControl>
                     <!-- 4. 图片列表栏 -->
-                    <ContentControl x:Name="ImageBarHolder" DockPanel.Dock="Top" IsTabStop="False" Focusable="False"/>
-
+                    <ContentControl x:Name="ImageBarHolder" DockPanel.Dock="Top" IsTabStop="False" Focusable="False" Grid.Row="4">
+                        <ContentControl.CacheMode>
+                            <BitmapCache EnableClearType="True"/>
+                        </ContentControl.CacheMode>
+                    </ContentControl>
+                    
                     <!-- 5. 状态栏命令行（双击状态栏展开） -->
-                    <Border x:Name="StatusCommandBar"
+                    <Border x:Name="StatusCommandBar" Grid.Row="8"
                             DockPanel.Dock="Bottom"
                             Height="38"
                             Margin="8,0,8,8"
@@ -223,16 +258,22 @@
                                  FontSize="12"
                                  Text=""
                                  KeyDown="OnStatusCommandTextBoxKeyDown"/>
+                        <Border.CacheMode>
+                            <BitmapCache EnableClearType="True"/>
+                        </Border.CacheMode>
                     </Border>
 
                     <!-- 6. 底部状态栏 -->
-                    <ContentControl x:Name="StatusBarHolder" DockPanel.Dock="Bottom"
-                               Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
-
-                    <Rectangle DockPanel.Dock="Bottom" Height="1" Fill="{DynamicResource BorderLightBrush}" SnapsToDevicePixels="True"/>
+                    <ContentControl x:Name="StatusBarHolder" DockPanel.Dock="Bottom" Grid.Row="7"
+                               Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}">
+                    <ContentControl.CacheMode>
+                        <BitmapCache EnableClearType="True"/>
+                    </ContentControl.CacheMode>
+                    </ContentControl>
+                    <Rectangle Grid.Row="6" Height="1" Fill="{DynamicResource BorderLightBrush}" SnapsToDevicePixels="True"/>
 
                     <!-- 6. 主画布区域 -->
-                    <Grid ClipToBounds="False" Background="Transparent">
+                    <Grid ClipToBounds="False" Background="Transparent" Grid.Row="5">
                         <Grid.Resources>
                             <local:ScaleToTileRectConverter x:Key="ScaleToTileRectConverter"/>
                         </Grid.Resources>
@@ -547,7 +588,7 @@
                             </Grid>
                         </Border>
                     </Grid>
-                </DockPanel>
+                </Grid>
 
                 <!-- 浮动层 (必须与 DockPanel 平级) -->
                 <ContentControl x:Name="TextToolHolder" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,80,0,0" Panel.ZIndex="200" IsTabStop="False"/>

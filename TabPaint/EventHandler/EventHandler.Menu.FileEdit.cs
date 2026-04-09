@@ -119,6 +119,10 @@ namespace TabPaint
         {
             if (FileTabs.Count == 0) return;
 
+            // 确定导出列表：如果有选中的标签页则只存选中的，否则存全部
+            var exportList = FileTabs.Where(t => t.IsMultiSelected).ToList();
+            if (exportList.Count == 0) exportList = FileTabs.ToList();
+
             var saveDialog = new Microsoft.Win32.SaveFileDialog
             {
                 Filter = "PDF Files (*.pdf)|*.pdf",
@@ -140,10 +144,10 @@ namespace TabPaint
                         using (var stream = new FileStream(targetPath, FileMode.Create))
                         using (var document = SkiaSharp.SKDocument.CreatePdf(stream))
                         {
-                            int count = FileTabs.Count;
+                            int count = exportList.Count;
                             for (int i = 0; i < count; i++)
                             {
-                                var tab = FileTabs[i];
+                                var tab = exportList[i];
                                 this.Dispatcher.Invoke(() =>
                                 {
                                     TaskProgressPopup.UpdateProgress((double)i / count * 100, null, $"{i + 1} / {count}", tab.FileName);

@@ -197,6 +197,10 @@ namespace TabPaint
             {
                 _closedTabIds.Add(item.Id);
             }
+
+            if (ReferenceEquals(_selectionAnchorTab, item)) _selectionAnchorTab = null;
+            foreach (var tab in FileTabs) tab.IsMultiSelected = false;
+
             // 2. 从集合中移除
             FileTabs.Remove(item);
             if (!string.IsNullOrEmpty(pathToRemove) && _imageFiles.Contains(pathToRemove))

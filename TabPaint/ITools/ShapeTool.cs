@@ -17,6 +17,34 @@ public partial class ShapeTool : ToolBase
 
     public ShapeType _currentShapeType = ShapeType.Rectangle;
     public ShapeType CurrentShapeType => _currentShapeType;
+    public bool HasRulerHighlight => _isDrawing || _isEditing;
+    public double RotationAngle => _rotationAngle;
+    public Int32Rect SelectionRect
+    {
+        get
+        {
+            Rect bounds;
+            if (_isDrawing)
+            {
+                double x = Math.Min(_startPoint.X, _lastMousePos.X);
+                double y = Math.Min(_startPoint.Y, _lastMousePos.Y);
+                double w = Math.Abs(_lastMousePos.X - _startPoint.X);
+                double h = Math.Abs(_lastMousePos.Y - _startPoint.Y);
+                bounds = new Rect(x, y, w, h);
+            }
+            else
+            {
+                bounds = _editingRect;
+            }
+
+            if (Math.Abs(_rotationAngle) > 0.01)
+            {
+                var rt = new RotateTransform(_rotationAngle, bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2);
+                bounds = rt.TransformBounds(bounds);
+            }
+            return new Int32Rect((int)bounds.X, (int)bounds.Y, (int)Math.Max(1, (int)bounds.Width), (int)Math.Max(1, (int)bounds.Height));
+        }
+    }
     private Point _startPoint;
     private bool _isDrawing;
     private bool _isEditing = false;
@@ -102,9 +130,11 @@ public partial class ShapeTool : ToolBase
         UpdatePreviewShape(ctx, _startPoint, _startPoint, ctx.PenThickness);
         
         _isDrawing = true;
+        _lastMousePos = px;
         ctx.CapturePointer();
         
         if (_previewShape != null) ctx.EditorOverlay.Children.Add(_previewShape);
+        ctx.ParentWindow.UpdateRulerSelection();
     }
 
     private void CreatePreviewShape(ToolContext ctx)
@@ -158,10 +188,12 @@ public partial class ShapeTool : ToolBase
             {
                 _arrowEndPoint = px;
             }
+            _lastMousePos = px;
             UpdatePreviewShape(ctx, _startPoint, px, ctx.PenThickness);
             int w = (int)Math.Abs(px.X - _startPoint.X);
             int h = (int)Math.Abs(px.Y - _startPoint.Y);
             ctx.ParentWindow.SelectionSize = string.Format(LocalizationManager.GetString("L_Selection_Size_Format"), w, h);
+            ctx.ParentWindow.UpdateRulerSelection();
         }
         else if (_isEditing && _activeAnchor != ManipulationAnchor.None)
         {
@@ -191,6 +223,7 @@ public partial class ShapeTool : ToolBase
             _lastMousePos = px;
             UpdatePreviewFromRect(ctx);
             RefreshHandles(ctx);
+            ctx.ParentWindow.UpdateRulerSelection();
         }
     }
 
@@ -215,6 +248,7 @@ public partial class ShapeTool : ToolBase
             if (_editingRect.Width <= 1 && _editingRect.Height <= 1)
             {
                 ClearPreview(ctx);
+                ctx.ParentWindow.UpdateRulerSelection();
                 return;
             }
 
@@ -228,6 +262,7 @@ public partial class ShapeTool : ToolBase
             {
                 CommitActiveShape(ctx);
             }
+            ctx.ParentWindow.UpdateRulerSelection();
         }
         else if (_isEditing)
         {
@@ -484,42 +519,56 @@ public partial class ShapeTool : ToolBase
     private void CommitActiveShape(ToolContext ctx)
     {
         if (_previewShape == null) return;
-
         GetCommittedShapeEndpoints(out Point renderStart, out Point renderEnd);
-
-        // 基于真实几何渲染边界计算提交区域，避免小尺寸尖角图形被裁剪
         Rect shapeGlobalBounds = CalculateShapeRenderBounds(renderStart, renderEnd, ctx.PenThickness);
-
         Rect canvasBounds = new Rect(0, 0, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
         Rect intersectBounds = Rect.Intersect(shapeGlobalBounds, canvasBounds);
-
         if (intersectBounds != Rect.Empty && intersectBounds.Width >= 1 && intersectBounds.Height >= 1)
         {
-            // 关键：对齐到整数像素边界，消除偏移错位
             int ix = (int)Math.Floor(intersectBounds.X);
             int iy = (int)Math.Floor(intersectBounds.Y);
             int iw = (int)Math.Ceiling(intersectBounds.Right) - ix;
             int ih = (int)Math.Ceiling(intersectBounds.Bottom) - iy;
             Rect validBounds = new Rect(ix, iy, iw, ih);
-
             var shapeBitmap = RenderShapeToBitmapClipped(renderStart, renderEnd, validBounds, ctx.PenColor, ctx.PenThickness, ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY);
             if (shapeBitmap != null)
             {
                 ctx.Undo.BeginStroke();
-                
                 int stride = iw * 4;
-                byte[] pixels = new byte[stride * ih];
-                shapeBitmap.CopyPixels(pixels, stride, 0);
-                
-                ctx.Surface.WriteRegion(new Int32Rect(ix, iy, iw, ih), pixels, stride, false);
-                
+                byte[] shapePixels = new byte[stride * ih];
+                shapeBitmap.CopyPixels(shapePixels, stride, 0);
+                // 读取目标区域现有像素，进行 alpha 混合
+                byte[] destPixels = new byte[stride * ih];
+                ctx.Surface.Bitmap.CopyPixels(new Int32Rect(ix, iy, iw, ih), destPixels, stride, 0);
+                for (int i = 0; i < shapePixels.Length; i += 4)
+                {
+                    byte sA = shapePixels[i + 3]; // 源 alpha (premultiplied)
+                    if (sA == 0) continue;         // 透明像素跳过，保留原有内容
+                    if (sA == 255)
+                    {
+                        // 完全不透明，直接覆盖
+                        destPixels[i] = shapePixels[i];
+                        destPixels[i + 1] = shapePixels[i + 1];
+                        destPixels[i + 2] = shapePixels[i + 2];
+                        destPixels[i + 3] = 255;
+                    }
+                    else
+                    {
+                        // Premultiplied alpha 混合: dst = src + dst * (1 - srcA)
+                        double srcA = sA / 255.0;
+                        double invA = 1.0 - srcA;
+                        destPixels[i] = (byte)Math.Min(255, shapePixels[i] + destPixels[i] * invA);
+                        destPixels[i + 1] = (byte)Math.Min(255, shapePixels[i + 1] + destPixels[i + 1] * invA);
+                        destPixels[i + 2] = (byte)Math.Min(255, shapePixels[i + 2] + destPixels[i + 2] * invA);
+                        destPixels[i + 3] = (byte)Math.Min(255, sA + destPixels[i + 3] * invA);
+                    }
+                }
+                ctx.Surface.WriteRegion(new Int32Rect(ix, iy, iw, ih), destPixels, stride, false);
                 ctx.Undo.AddDirtyRect(new Int32Rect(ix, iy, iw, ih));
                 ctx.Undo.CommitStroke();
-                
                 ctx.ParentWindow.SetUndoRedoButtonState();
             }
         }
-
         ClearPreview(ctx);
     }
 
@@ -531,11 +580,57 @@ public partial class ShapeTool : ToolBase
             Math.Abs(globalStart.X - globalEnd.X),
             Math.Abs(globalStart.Y - globalEnd.Y));
 
-        Geometry geometry = BuildGeometryForCurrentShape(globalStart, globalEnd, logicalRect);
-        if (geometry == null) return Rect.Empty;
+        Rect bounds;
 
-        Pen pen = CreateShapePen(Brushes.Black, thickness);
-        Rect bounds = geometry.GetRenderBounds(pen);
+        switch (_currentShapeType)
+        {
+            case ShapeType.Line:
+                bounds = new Rect(globalStart, globalEnd);
+                break;
+            case ShapeType.Arrow:
+                {
+                    var geom = BuildArrowGeometry(globalStart, globalEnd, Gethandlength(globalStart, globalEnd));
+                    bounds = geom.Bounds;
+                }
+                break;
+            case ShapeType.Star:
+                {
+                    var geom = BuildStarGeometry(logicalRect);
+                    bounds = geom.Bounds;
+                }
+                break;
+            case ShapeType.Bubble:
+                {
+                    var geom = BuildBubbleGeometry(logicalRect);
+                    bounds = geom.Bounds;
+                }
+                break;
+            case ShapeType.Triangle:
+                {
+                    var geom = BuildRegularPolygon(logicalRect, 3, -Math.PI / 2);
+                    bounds = geom.Bounds;
+                }
+                break;
+            case ShapeType.Diamond:
+                {
+                    var geom = BuildRegularPolygon(logicalRect, 4, 0);
+                    bounds = geom.Bounds;
+                }
+                break;
+            case ShapeType.Pentagon:
+                {
+                    var geom = BuildRegularPolygon(logicalRect, 5, -Math.PI / 2);
+                    bounds = geom.Bounds;
+                }
+                break;
+            default:
+                // Rectangle, RoundedRectangle, Ellipse
+                bounds = logicalRect;
+                break;
+        }
+
+        // 笔触向外扩展 thickness/2，再加 1px 抗锯齿余量
+
 
         if (Math.Abs(_rotationAngle) > 0.01)
         {
@@ -543,8 +638,6 @@ public partial class ShapeTool : ToolBase
             bounds = rt.TransformBounds(bounds);
         }
 
-        // 额外给抗锯齿预留像素余量，避免边缘被截断
-        bounds.Inflate(1.5, 1.5);
         return bounds;
     }
 
@@ -606,6 +699,7 @@ public partial class ShapeTool : ToolBase
         _hasArrowEndpoints = false;
         _lineUsesNegativeDiagonal = false;
         if (ctx.ViewElement != null) ctx.ViewElement.Cursor = this.Cursor;
+        ctx.ParentWindow.UpdateRulerSelection();
     }
 
     private static bool UsesNegativeDiagonal(Point start, Point end)
@@ -685,6 +779,7 @@ public partial class ShapeTool : ToolBase
         int pixelHeight = (int)validBounds.Height;
         if (pixelWidth <= 0 || pixelHeight <= 0) return null;
 
+
         DrawingVisual drawingVisual = new DrawingVisual();
         using (DrawingContext dc = drawingVisual.RenderOpen())
         {
@@ -699,7 +794,7 @@ public partial class ShapeTool : ToolBase
             pen.Freeze();
 
             Rect logicalRect = new Rect(Math.Min(globalStart.X, globalEnd.X), Math.Min(globalStart.Y, globalEnd.Y), Math.Abs(globalStart.X - globalEnd.X), Math.Abs(globalStart.Y - globalEnd.Y));
-
+            a.s(logicalRect);
             switch (_currentShapeType)
             {
                 case ShapeType.Rectangle:
@@ -740,7 +835,7 @@ public partial class ShapeTool : ToolBase
             dc.Pop();
         }
 
-        RenderTargetBitmap bmp = new RenderTargetBitmap(pixelWidth, pixelHeight, dpiX, dpiY, PixelFormats.Pbgra32);
+        RenderTargetBitmap bmp = new RenderTargetBitmap(pixelWidth, pixelHeight, 96, 96, PixelFormats.Pbgra32);
         bmp.Render(drawingVisual);
         bmp.Freeze();
         return bmp;

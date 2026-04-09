@@ -340,6 +340,9 @@
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter Property="Background" Value="{DynamicResource ListItemHoverBrush}"/>
                                                     </Trigger>
+                                                    <DataTrigger Binding="{Binding IsMultiSelected}" Value="True">
+                                                        <Setter Property="Background" Value="{DynamicResource ListItemSelectedBackgroundBrush}"/>
+                                                    </DataTrigger>
                                                     <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                                         <Setter Property="Background" Value="{DynamicResource ListItemSelectedBackgroundBrush}"/>
                                                         <Setter Property="BorderBrush" Value="{DynamicResource ListItemSelectedBorderBrush}"/>

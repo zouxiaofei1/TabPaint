@@ -956,7 +956,12 @@ namespace TabPaint
 
             if (!IsTransferringSelection) _router.CleanUpSelectionandShape();
 
-            foreach (var t in FileTabs) t.IsSelected = (t == tab);
+            foreach (var t in FileTabs)
+            {
+                t.IsSelected = (t == tab);
+                t.IsMultiSelected = false;
+            }
+            _selectionAnchorTab = tab;
 
             _currentFilePath = tab.FilePath;
             _currentFileName = tab.FileName;

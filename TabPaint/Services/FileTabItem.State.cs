@@ -99,6 +99,13 @@ namespace TabPaint
                 set { _isSelected = value; OnPropertyChanged(nameof(IsSelected)); }
             }
 
+            private bool _isMultiSelected;
+            public bool IsMultiSelected
+            {
+                get => _isMultiSelected;
+                set { _isMultiSelected = value; OnPropertyChanged(nameof(IsMultiSelected)); }
+            }
+
             private bool _isLoading;
             public bool IsLoading
             {
@@ -300,6 +307,7 @@ namespace TabPaint
         // 上次成功备份时的版本号
         private long _lastBackedUpVersion = -1;
         private FileTabItem _mouseDownTabItem;
+        private FileTabItem _selectionAnchorTab;
         private int _dragThreshold = AppConsts.DragMoveThreshold;//判定拖拽的阈值（像素）
     }
 }

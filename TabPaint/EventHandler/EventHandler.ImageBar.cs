@@ -31,7 +31,43 @@ namespace TabPaint
         }
         private async void OnFileTabClick(object sender, RoutedEventArgs e)
         {
-            if (e.OriginalSource is FrameworkElement element && element.DataContext is FileTabItem clickedItem)  SwitchToTab(clickedItem);
+            if (!(e.OriginalSource is FrameworkElement element) || !(element.DataContext is FileTabItem clickedItem)) return;
+
+            var modifiers = Keyboard.Modifiers;
+
+            if (modifiers == ModifierKeys.Shift)
+            {
+                var anchor = _selectionAnchorTab ?? _currentTabItem;
+                if (anchor != null && FileTabs.Contains(anchor))
+                {
+                    int start = FileTabs.IndexOf(anchor);
+                    int end = FileTabs.IndexOf(clickedItem);
+
+                    if (start > end) { int tmp = start; start = end; end = tmp; }
+
+                    foreach (var tab in FileTabs) tab.IsMultiSelected = false;
+                    for (int i = start; i <= end; i++)
+                    {
+                        FileTabs[i].IsMultiSelected = true;
+                    }
+                }
+                else
+                {
+                    clickedItem.IsMultiSelected = true;
+                    _selectionAnchorTab = clickedItem;
+                }
+            }
+            else if (modifiers == ModifierKeys.Control)
+            {
+                clickedItem.IsMultiSelected = !clickedItem.IsMultiSelected;
+                _selectionAnchorTab = clickedItem;
+            }
+            else
+            {
+                foreach (var tab in FileTabs) tab.IsMultiSelected = false;
+                _selectionAnchorTab = clickedItem;
+                SwitchToTab(clickedItem);
+            }
         }
 
         private FileTabItem CreateNewUntitledTab()
@@ -454,7 +490,15 @@ namespace TabPaint
         {
             if (sender is MenuItem item && item.Tag is FileTabItem tab)
             {
-                CloseTab(tab);
+                if (tab.IsMultiSelected)
+                {
+                    var selectedTabs = FileTabs.Where(t => t.IsMultiSelected).ToList();
+                    foreach (var t in selectedTabs) CloseTab(t);
+                }
+                else
+                {
+                    CloseTab(tab);
+                }
             }
         }
 

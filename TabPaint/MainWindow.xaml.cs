@@ -1326,10 +1326,26 @@ namespace TabPaint
             if (selectTool == null)
                 selectTool = _tools?.Select as SelectTool;
 
+            var shapeTool = _router?.CurrentTool as ShapeTool;
+            if (shapeTool == null)
+                shapeTool = _tools?.Shape as ShapeTool;
+
+            bool hasHighlight = false;
+            Int32Rect rect = new Int32Rect();
+
             if (selectTool != null && selectTool.HasRulerHighlight)
             {
-                var rect = selectTool.SelectionRect;
+                rect = selectTool.SelectionRect;
+                hasHighlight = true;
+            }
+            else if (shapeTool != null && shapeTool.HasRulerHighlight)
+            {
+                rect = shapeTool.SelectionRect;
+                hasHighlight = true;
+            }
 
+            if (hasHighlight)
+            {
                 if (rect.Width > 0 && rect.Height > 0)
                 {
                     // 将原始坐标系的选区矩形转换为视觉坐标系（考虑旋转）
