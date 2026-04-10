@@ -929,6 +929,7 @@ namespace TabPaint
             private void CleanUpUI(ToolContext ctx)
             {
                 MainWindow mw = MainWindow.GetCurrentInstance();
+                mw.HideTextToolbar();
                 ctx.SelectionOverlay.Children.Clear();
                 ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
 
@@ -940,9 +941,14 @@ namespace TabPaint
                 ctx.EditorOverlay.PreviewMouseDown -= Overlay_PreviewMouseDown;
                 mw.SetUndoRedoButtonState();
                 _richTextBox = null;
-                _rotationAngle = 0;   // 重置旋转角度
+                _dragging = false;
+                _resizing = false;
                 _rotating = false;
+                _rotationAngle = 0;
+                _currentAnchor = ResizeAnchor.None;
+                _textRect = new Int32Rect();
                 lag = 2; // 统一在这里赋予 lag
+                Mouse.OverrideCursor = null;
                 if (mw._canvasResizer != null) mw._canvasResizer.SetHandleVisibility(true);
             }
        

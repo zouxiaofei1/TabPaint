@@ -207,6 +207,7 @@ namespace TabPaint
                     writer.Write(Current.DefaultBlankCanvasWidth);
                     writer.Write(Current.DefaultBlankCanvasHeight);
                     writer.Write((int)Current.RmbgModel);
+                    writer.Write(Current.UseWin10StyleOnWin11);
 
                     // RecentFiles
                     var recentFiles = Current.RecentFiles ?? new List<string>();
@@ -321,6 +322,10 @@ namespace TabPaint
                         settings.DefaultBlankCanvasWidth = reader.ReadInt32();
                         settings.DefaultBlankCanvasHeight = reader.ReadInt32();
                         settings.RmbgModel = (RmbgModelType)reader.ReadInt32();
+                    }
+                    if (dataVersion >= 21)
+                    {
+                        settings.UseWin10StyleOnWin11 = reader.ReadBoolean();
                     }
                     // RecentFiles
                     int recentCount = reader.ReadInt32();

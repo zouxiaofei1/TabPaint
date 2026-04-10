@@ -504,12 +504,12 @@ namespace TabPaint
                 }
                 if (_parentWindow._router.CurrentTool is ShapeTool shapetool)
                 {
-                    shapetool.GiveUpSelection(_ctx);
+                    shapetool.CommitActiveShape(_ctx);
                     GetSelectTool()?.Cleanup(_ctx);
                 }
                 if (_parentWindow._router.CurrentTool is TextTool textTool)
                 {
-                    textTool.Cleanup(_ctx);
+                    textTool.CommitText(_ctx);
                 }
 
             }

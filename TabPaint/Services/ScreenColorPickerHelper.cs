@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Drawing; // NuGet: System.Drawing.Common
+using System.Drawing; 
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;

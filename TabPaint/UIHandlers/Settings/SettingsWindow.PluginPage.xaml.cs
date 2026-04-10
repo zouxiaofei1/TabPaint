@@ -1,12 +1,15 @@
+using Microsoft.Win32;
 using System;
+using System.Globalization;
 using System.IO;
+using System.IO.Compression;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using Microsoft.Win32;
 using TabPaint.Controls;
 
 namespace TabPaint.Pages
@@ -17,12 +20,15 @@ namespace TabPaint.Pages
         private CancellationTokenSource _ctsSR;
         private CancellationTokenSource _ctsInpaint;
         private CancellationTokenSource _ctsOcrRuntime;
+        private CancellationTokenSource _ctsZXing;
         private ScrollViewer? _pluginScrollViewer;
         private int _ocrRuntimeStatusRequestId;
+        private int _zxingStatusRequestId;
         private int _rmbgInstallRequestId;
         private int _srInstallRequestId;
         private int _inpaintInstallRequestId;
         private int _ocrRuntimeInstallRequestId;
+        private int _zxingInstallRequestId;
         private int _installAllRequestId;
         private readonly PythonRuntimeManager _pythonRuntimeManager = new PythonRuntimeManager();
 
@@ -39,6 +45,7 @@ namespace TabPaint.Pages
             FloatSR.CancelRequested += (s, e) => _ctsSR?.Cancel();
             FloatInpaint.CancelRequested += (s, e) => _ctsInpaint?.Cancel();
             FloatOcrRuntime.CancelRequested += (s, e) => _ctsOcrRuntime?.Cancel();
+            FloatZXing.CancelRequested += (s, e) => _ctsZXing?.Cancel();
         }
 
         private void InitializeComboBoxes()
@@ -87,15 +94,18 @@ namespace TabPaint.Pages
         private void PluginPage_Unloaded(object sender, RoutedEventArgs e)
         {
             Interlocked.Increment(ref _ocrRuntimeStatusRequestId);
+            Interlocked.Increment(ref _zxingStatusRequestId);
             Interlocked.Increment(ref _rmbgInstallRequestId);
             Interlocked.Increment(ref _srInstallRequestId);
             Interlocked.Increment(ref _inpaintInstallRequestId);
             Interlocked.Increment(ref _ocrRuntimeInstallRequestId);
+            Interlocked.Increment(ref _zxingInstallRequestId);
             Interlocked.Increment(ref _installAllRequestId);
             _ctsRMBG?.Cancel();
             _ctsSR?.Cancel();
             _ctsInpaint?.Cancel();
             _ctsOcrRuntime?.Cancel();
+            _ctsZXing?.Cancel();
         }
 
         private async void PluginPage_Loaded(object sender, RoutedEventArgs e)
@@ -119,6 +129,7 @@ namespace TabPaint.Pages
                          TxtStatusInpaint, BtnInstallInpaint, BtnUninstallInpaint);
 
             await UpdateOcrRuntimeStatusAsync();
+            UpdateZXingStatus();
             UpdateInstallAllQuickActionState();
         }
 
@@ -133,11 +144,46 @@ namespace TabPaint.Pages
             if (AiService.Instance.IsModelReady(AiService.AiTaskType.SuperResolution)) installedCount++;
             if (AiService.Instance.IsModelReady(AiService.AiTaskType.Inpainting)) installedCount++;
             if (PythonRuntimeManager.IsRuntimeInstalled()) installedCount++;
+            if (TabPaint.Services.QrCodeDecoder.IsZXingAvailable()) installedCount++;
 
             installAllButton.Content = string.Format(
                 LocalizationManager.GetString("L_Settings_Plugins_InstallAllWithProgress"),
                 installedCount);
-            installAllButton.Visibility = installedCount >= 4 ? Visibility.Collapsed : Visibility.Visible;
+            installAllButton.Visibility = installedCount >= 5 ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        private void UpdateZXingStatus()
+        {
+            int requestId = Interlocked.Increment(ref _zxingStatusRequestId);
+            bool installed = TabPaint.Services.QrCodeDecoder.IsZXingAvailable();
+            if (installed)
+            {
+                TxtStatusZXing.Text = LocalizationManager.GetString("L_Settings_Plugins_Status_Installed");
+                TxtStatusZXing.Foreground = (System.Windows.Media.Brush)FindResource("SystemAccentBrush");
+                BtnInstallZXing.Visibility = Visibility.Collapsed;
+                BtnInstallZXing.IsEnabled = true;
+                BtnUninstallZXing.Visibility = Visibility.Visible;
+
+                try
+                {
+                    string dllPath = Path.Combine(AppConsts.PluginsDir, AppConsts.ZXing_DllName);
+                    if (File.Exists(dllPath))
+                    {
+                        long sizeBytes = new FileInfo(dllPath).Length;
+                        string sizeText = FormatSize(sizeBytes);
+                        TxtStatusZXing.Text = string.Format(LocalizationManager.GetString("L_Settings_Plugins_Status_InstalledWithSize"), sizeText);
+                    }
+                }
+                catch { }
+            }
+            else
+            {
+                TxtStatusZXing.Text = LocalizationManager.GetString("L_Settings_Plugins_Status_NotInstalled");
+                TxtStatusZXing.Foreground = (System.Windows.Media.Brush)FindResource("TextTertiaryBrush");
+                BtnInstallZXing.Visibility = Visibility.Visible;
+                BtnInstallZXing.IsEnabled = true;
+                BtnUninstallZXing.Visibility = Visibility.Collapsed;
+            }
         }
 
         private async Task UpdateOcrRuntimeStatusAsync()
@@ -464,6 +510,14 @@ namespace TabPaint.Pages
                     int modelRequestId = Interlocked.Increment(ref _ocrRuntimeInstallRequestId);
                     await InstallOcrRuntimeAsync(modelRequestId, _ctsOcrRuntime.Token);
                 }
+
+                if (!TabPaint.Services.QrCodeDecoder.IsZXingAvailable())
+                {
+                    _ctsZXing?.Cancel();
+                    _ctsZXing = new CancellationTokenSource();
+                    int modelRequestId = Interlocked.Increment(ref _zxingInstallRequestId);
+                    await DownloadAndExtractZXingAsync(modelRequestId, _ctsZXing.Token);
+                }
             }
             catch (OperationCanceledException)
             {
@@ -514,6 +568,127 @@ namespace TabPaint.Pages
             _ctsOcrRuntime = new CancellationTokenSource();
             int requestId = Interlocked.Increment(ref _ocrRuntimeInstallRequestId);
             await InstallOcrRuntimeAsync(requestId, _ctsOcrRuntime.Token);
+        }
+
+        private async void InstallZXing_Click(object sender, RoutedEventArgs e)
+        {
+            _ctsZXing?.Cancel();
+            _ctsZXing = new CancellationTokenSource();
+            int requestId = Interlocked.Increment(ref _zxingInstallRequestId);
+            await DownloadAndExtractZXingAsync(requestId, _ctsZXing.Token);
+        }
+
+        private async Task DownloadAndExtractZXingAsync(int requestId, CancellationToken token)
+        {
+            BtnInstallZXing.IsEnabled = false;
+            TxtStatusZXing.Text = LocalizationManager.GetString("L_Settings_Plugins_Status_Downloading");
+
+            try
+            {
+                if (!Directory.Exists(AppConsts.PluginsDir)) Directory.CreateDirectory(AppConsts.PluginsDir);
+
+                string nupkgPath = Path.Combine(AppConsts.PluginsDir, "zxing.nupkg");
+                string dllPath = Path.Combine(AppConsts.PluginsDir, AppConsts.ZXing_DllName);
+
+                using (var client = new System.Net.Http.HttpClient())
+                {
+                    var progressReporter = new Progress<AiDownloadStatus>(status =>
+                    {
+                        Dispatcher.Invoke(() =>
+                        {
+                            FloatZXing.UpdateProgress(status.Percentage,
+                                LocalizationManager.GetString("L_Settings_Plugins_ZXing_Title"),
+                                FormatSize((long)status.BytesReceived),
+                                status.TotalBytes > 0 ? FormatSize(status.TotalBytes) : "");
+                        });
+                    });
+
+                    string downloadUrl = AppConsts.ZXing_DownloadUrl;
+                    string lang = CultureInfo.CurrentUICulture.Name;
+                    if (lang == "zh-CN" || lang == "zh-TW" || lang == "zh-HK")
+                    {
+                        downloadUrl = AppConsts.ZXing_DownloadUrl_Mirror;
+                    }
+
+                    using (var response = await client.GetAsync(downloadUrl, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, token))
+                    {
+                        response.EnsureSuccessStatusCode();
+                        var totalBytes = response.Content.Headers.ContentLength ?? -1L;
+                        using (var contentStream = await response.Content.ReadAsStreamAsync(token))
+                        using (var fileStream = new FileStream(nupkgPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                        {
+                            var totalRead = 0L;
+                            var buffer = new byte[8192];
+                            var isMoreToRead = true;
+                            do
+                            {
+                                token.ThrowIfCancellationRequested();
+                                var read = await contentStream.ReadAsync(buffer, 0, buffer.Length, token);
+                                if (read == 0) isMoreToRead = false;
+                                else
+                                {
+                                    await fileStream.WriteAsync(buffer, 0, read, token);
+                                    totalRead += read;
+                                    ((IProgress<AiDownloadStatus>)progressReporter).Report(new AiDownloadStatus
+                                    {
+                                        BytesReceived = totalRead,
+                                        TotalBytes = totalBytes,
+                                        Percentage = totalBytes > 0 ? (double)totalRead / totalBytes * 100 : 0
+                                    });
+                                }
+                            } while (isMoreToRead);
+                        }
+                    }
+                }
+
+                // 解压 zxing.dll
+                await Task.Run(() =>
+                {
+                    using (var archive = System.IO.Compression.ZipFile.OpenRead(nupkgPath))
+                    {
+                        // 寻找最合适的 DLL
+                        var entry = archive.Entries.FirstOrDefault(e => e.FullName.Equals("lib/net8.0-windows7.0/zxing.dll", StringComparison.OrdinalIgnoreCase))
+                                 ?? archive.Entries.FirstOrDefault(e => e.FullName.Equals("lib/net6.0/zxing.dll", StringComparison.OrdinalIgnoreCase))
+                                 ?? archive.Entries.FirstOrDefault(e => e.FullName.Equals("lib/netstandard2.0/zxing.dll", StringComparison.OrdinalIgnoreCase));
+
+                        if (entry != null)
+                        {
+                            if (File.Exists(dllPath)) File.Delete(dllPath);
+                            entry.ExtractToFile(dllPath);
+                           // entry.ExtractToFile
+                        }
+                        else
+                        {
+                            throw new Exception("Could not find zxing.dll in package");
+                        }
+                    }
+                    if (File.Exists(nupkgPath)) File.Delete(nupkgPath);
+                }, token);
+
+                FloatZXing.Finish();
+            }
+            catch (OperationCanceledException)
+            {
+                if (requestId != Volatile.Read(ref _zxingInstallRequestId) || !IsLoaded) return;
+                FloatZXing.Finish();
+                TxtStatusZXing.Text = LocalizationManager.GetString("L_Settings_Plugins_Status_NotInstalled");
+                BtnInstallZXing.IsEnabled = true;
+            }
+            catch (Exception ex)
+            {
+                if (requestId != Volatile.Read(ref _zxingInstallRequestId) || !IsLoaded) return;
+                FloatZXing.Finish();
+                TxtStatusZXing.Text = "Error: " + ex.Message;
+                BtnInstallZXing.IsEnabled = true;
+            }
+            finally
+            {
+                if (requestId == Volatile.Read(ref _zxingInstallRequestId) && IsLoaded)
+                {
+                    TabPaint.Services.QrCodeDecoder.ResetAvailability();
+                    await UpdateAllStatusesAsync();
+                }
+            }
         }
 
         private async Task InstallOcrRuntimeAsync(int requestId, CancellationToken token)
@@ -577,6 +752,7 @@ namespace TabPaint.Pages
                 }
             }
         }
+
         private async Task InstallModel(
             AiService.AiTaskType type,
             TextBlock txtStatus,
@@ -649,7 +825,35 @@ namespace TabPaint.Pages
             await UninstallModelAsync(AiService.AiTaskType.Inpainting);
         }
 
-        private async void UninstallOcrRuntime_Click(object sender, RoutedEventArgs e)
+        private void UninstallZXing_Click(object sender, RoutedEventArgs e)
+        {
+            var result = FluentMessageBox.Show(
+                LocalizationManager.GetString("L_Settings_Plugins_Uninstall_Confirm"),
+                LocalizationManager.GetString("L_Settings_Plugins_Uninstall"),
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question,
+                Window.GetWindow(this));
+
+            if (result != MessageBoxResult.Yes) return;
+
+            try
+            {
+                TabPaint.Services.QrCodeDecoder.ResetAvailability();
+
+                string dllPath = Path.Combine(AppConsts.PluginsDir, AppConsts.ZXing_DllName);
+                if (File.Exists(dllPath))
+                    File.Delete(dllPath);
+
+                UpdateZXingStatus();
+                UpdateInstallAllQuickActionState();
+            }
+            catch (Exception ex)
+            {
+                FluentMessageBox.Show("Uninstall failed: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error, Window.GetWindow(this));
+            }
+        }
+
+        private void UninstallOcrRuntime_Click(object sender, RoutedEventArgs e)
         {
             var result = FluentMessageBox.Show(
                 LocalizationManager.GetString("L_Settings_Plugins_OCR_Uninstall_Confirm"),
@@ -664,7 +868,7 @@ namespace TabPaint.Pages
             {
                 OcrService.ReleasePaddleRuntime();
                 PythonRuntimeManager.UninstallRuntime();
-                await UpdateAllStatusesAsync();
+                _ = UpdateAllStatusesAsync();
             }
             catch (Exception ex)
             {

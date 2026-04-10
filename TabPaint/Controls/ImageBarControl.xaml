@@ -109,6 +109,7 @@
                     <MultiDataTrigger>
                         <MultiDataTrigger.Conditions>
                             <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                            <Condition Binding="{Binding IsMouseCaptureWithin, RelativeSource={RelativeSource Self}}" Value="False"/>
                             <Condition Binding="{Binding IsViewMode, ElementName=RootControl}" Value="True"/>
                             <Condition Binding="{Binding IsPinned, ElementName=RootControl}" Value="False"/>
                         </MultiDataTrigger.Conditions>

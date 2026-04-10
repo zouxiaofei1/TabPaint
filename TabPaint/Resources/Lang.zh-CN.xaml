@@ -24,6 +24,8 @@
     <sys:String x:Key="L_Toast_NewWindowFailed">创建新窗口失败:</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_File_Print">打印</sys:String>
     <sys:String x:Key="L_Settings_DevTools_Title">开发者工具</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_UseWin10StyleOnWin11_Title">使用 Windows 10 样式</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_UseWin10StyleOnWin11_Desc">改用桌面背景采样和噪点叠加</sys:String>
     <!-- 插件面板 -->
     <sys:String x:Key="L_Settings_Plugins_Title">插件与 AI 模型</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Desc">管理 AI 模型和可选组件。</sys:String>
@@ -33,6 +35,8 @@
     <sys:String x:Key="L_Settings_Plugins_Model_SR_Desc">用于图片放大的 AI 模型。</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_Inpaint_Title">AI 橡皮擦</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_Inpaint_Desc">用于物体移除和图片修复的 AI 模型。</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_ZXing_Title">二维码识别</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_ZXing_Desc">识别图像中的二维码或条形码内容</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_OCR_Title">AI OCR 文字识别</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_OCR_Desc">用于提取图片文字的 OCR 运行时组件。</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_NotInstalled">未安装</sys:String>
@@ -43,11 +47,12 @@
     <sys:String x:Key="L_Settings_Plugins_InstallReal">安装</sys:String>
     <sys:String x:Key="L_Settings_Plugins_ModelSelection">选择模型</sys:String>
     <sys:String x:Key="L_Settings_Plugins_InstallAll">一键下载</sys:String>
-    <sys:String x:Key="L_Settings_Plugins_InstallAllWithProgress">一键下载{0}/4</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_InstallAllWithProgress">一键下载{0}/5</sys:String>
     <sys:String x:Key="L_Settings_Plugins_InstallingAll">下载中...</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall">卸载</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">确定要卸载此 AI 模型吗？</sys:String>
     <sys:String x:Key="L_Settings_Plugins_OCR_Uninstall_Confirm">确定要卸载 OCR 运行时吗？</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_QrCode_Uninstall_Confirm">确定要卸载二维码识别插件吗？</sys:String>
     <sys:String x:Key="L_Settings_Plugins_RmbgModel_Title">背景移除模型</sys:String>
     <sys:String x:Key="L_Settings_Plugins_RmbgModel_Desc">切换模型后将自动重新加载</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Rmbg20_LowEndWarning">RMBG 2.0在此配置上运行可能过慢或导致程序崩溃。</sys:String>
@@ -962,6 +967,17 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_DevTools_DropHint">拖入文件至此处以计算 MD5 和 SHA256 哈希值</sys:String>
     <sys:String x:Key="L_DevTools_HashResult">计算结果</sys:String>
     <sys:String x:Key="L_DevTools_CopyHashPrompt">点击确定复制</sys:String>
+
+    <sys:String x:Key="L_DevTools_QrCode_Title">二维码识别</sys:String>
+    <sys:String x:Key="L_DevTools_QrCode_DropHint">拖入图片至此处进行二维码识别</sys:String>
+
+    <!-- QrCodeDecoder -->
+    <sys:String x:Key="L_QrCode_Error_NotInstalled">插件未安装：请在设置-插件中下载 ZXing.Net 依赖以启用二维码识别。</sys:String>
+    <sys:String x:Key="L_QrCode_Error_LoadImageFailed">识别失败：无法加载图像文件。</sys:String>
+    <sys:String x:Key="L_QrCode_Error_TypeNotFound">识别出错: 无法找到 {0} 类型</sys:String>
+    <sys:String x:Key="L_QrCode_Error_NotFound">识别失败：未能在图像中找到有效的二维码或条码。</sys:String>
+    <sys:String x:Key="L_QrCode_Error_Internal">识别出错(内部): {0}</sys:String>
+    <sys:String x:Key="L_QrCode_Error_General">识别出错: {0}</sys:String>
 
 </ResourceDictionary>
 

@@ -21,6 +21,9 @@
     <sys:String x:Key="L_Toast_NewWindowFromSelectionFailed">從選取範圍建立新視窗失敗：</sys:String>
     <sys:String x:Key="L_Toast_NewWindowFailed">建立新視窗失敗：</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_File_Print">打印</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_Title">開發者工具</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_UseWin10StyleOnWin11_Title">在 Windows 11 上使用 Windows 10 樣式</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_UseWin10StyleOnWin11_Desc">禁用 Mica/Acrylic 效果，改用桌面背景採樣和噪點疊加（Win10 視覺體驗）。</sys:String>
     <!-- 插件面板 -->
     <sys:String x:Key="L_Settings_Plugins_Title">外掛與 AI 模型</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Desc">管理 AI 模型和選用元件。</sys:String>
@@ -952,5 +955,13 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_AI_Status_Downloading_Inpaint">正在下載修復模型: {0:F1}%</sys:String>
     <sys:String x:Key="L_Progress_Saving">正在儲存圖片...</sys:String>
     <sys:String x:Key="L_QuickFormat_Error_NoFile">當前圖片未保存，無法轉換</sys:String>
+
+    <!-- QrCodeDecoder -->
+    <sys:String x:Key="L_QrCode_Error_NotInstalled">外掛未安裝：請在設定-外掛中下載 ZXing.Net 依賴以啟用二維碼識別。</sys:String>
+    <sys:String x:Key="L_QrCode_Error_LoadImageFailed">辨識失敗：無法載入圖像檔案。</sys:String>
+    <sys:String x:Key="L_QrCode_Error_TypeNotFound">辨識出錯: 無法找到 {0} 類型</sys:String>
+    <sys:String x:Key="L_QrCode_Error_NotFound">辨識失敗：未能在圖像中找到有效的二維碼或條碼。</sys:String>
+    <sys:String x:Key="L_QrCode_Error_Internal">辨識出錯(內部): {0}</sys:String>
+    <sys:String x:Key="L_QrCode_Error_General">辨識出錯: {0}</sys:String>
 
 </ResourceDictionary>

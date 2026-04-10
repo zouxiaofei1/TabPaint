@@ -94,7 +94,20 @@ namespace TabPaint
             if (_lastFocusedInstance == this)
                 _lastFocusedInstance = null;
 
+            SettingsManager.Instance.Current.PropertyChanged -= Settings_PropertyChanged;
+
             TrayIconService.UpdateVisibility();
+        }
+
+        private async void Settings_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(AppSettings.EnableIccColorCorrection))
+            {
+                if (!string.IsNullOrEmpty(_currentFilePath) && !IsVirtualPath(_currentFilePath))
+                {
+                    await OpenImageAndTabs(_currentFilePath, refresh: true);
+                }
+            }
         }
 
 
@@ -187,6 +200,8 @@ namespace TabPaint
             Activated += MainWindow_Activated;
 
             this.Focusable = true;
+
+            SettingsManager.Instance.Current.PropertyChanged += Settings_PropertyChanged;
 
             FileTabs.CollectionChanged += (s, e) =>
             {

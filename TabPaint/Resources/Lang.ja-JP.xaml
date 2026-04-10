@@ -227,6 +227,9 @@
     <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Fant">Fant (高品質)</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Resampling_Option_HighQuality">高品質 (HighQuality)</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_File_Print">印刷</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_Title">開発者ツール</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_UseWin10StyleOnWin11_Title">Windows 11でWindows 10スタイルを使用する</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_UseWin10StyleOnWin11_Desc">Mica/Acrylic効果を無効にし、デスクトップ背景のサンプリングとノイズオーバーレイ（Win10の視覚体験）を使用します。</sys:String>
  
     <!-- Common Strings -->
     <sys:String x:Key="L_Common_OpenLogFolder">フォルダーを開く</sys:String>
@@ -965,5 +968,13 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_AI_Status_Downloading_Inpaint" xmlns:sys="clr-namespace:System;assembly=mscorlib">修復モデルをダウンロード中: {0:F1}%</sys:String>
     <sys:String x:Key="L_Progress_Saving">画像を保存中...</sys:String>
     <sys:String x:Key="L_QuickFormat_Error_NoFile">現在の画像は保存されていないため、変換できません</sys:String>
+
+    <!-- QrCodeDecoder -->
+    <sys:String x:Key="L_QrCode_Error_NotInstalled">プラグインがインストールされていません：設定-プラグインで ZXing.Net 依存関係をダウンロードして、QRコード認識を有効にしてください。</sys:String>
+    <sys:String x:Key="L_QrCode_Error_LoadImageFailed">認識に失敗しました：画像ファイルを読み込めません。</sys:String>
+    <sys:String x:Key="L_QrCode_Error_TypeNotFound">認識エラー: {0} 型が見つかりません</sys:String>
+    <sys:String x:Key="L_QrCode_Error_NotFound">認識に失敗しました：画像内に有効なQRコードまたはバーコードが見つかりませんでした。</sys:String>
+    <sys:String x:Key="L_QrCode_Error_Internal">認識エラー(内部): {0}</sys:String>
+    <sys:String x:Key="L_QrCode_Error_General">認識エラー: {0}</sys:String>
 
 </ResourceDictionary>

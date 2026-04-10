@@ -184,14 +184,17 @@ public partial class ShapeTool : ToolBase
 
         if (_isDrawing)
         {
+            bool isShiftDown = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
+            Point adjustedPx = isShiftDown ? GetShiftAdjustedPoint(_startPoint, px) : px;
+
             if (_currentShapeType == ShapeType.Arrow)
             {
-                _arrowEndPoint = px;
+                _arrowEndPoint = adjustedPx;
             }
-            _lastMousePos = px;
-            UpdatePreviewShape(ctx, _startPoint, px, ctx.PenThickness);
-            int w = (int)Math.Abs(px.X - _startPoint.X);
-            int h = (int)Math.Abs(px.Y - _startPoint.Y);
+            _lastMousePos = adjustedPx;
+            UpdatePreviewShape(ctx, _startPoint, adjustedPx, ctx.PenThickness);
+            int w = (int)Math.Abs(adjustedPx.X - _startPoint.X);
+            int h = (int)Math.Abs(adjustedPx.Y - _startPoint.Y);
             ctx.ParentWindow.SelectionSize = string.Format(LocalizationManager.GetString("L_Selection_Size_Format"), w, h);
             ctx.ParentWindow.UpdateRulerSelection();
         }
@@ -234,7 +237,10 @@ public partial class ShapeTool : ToolBase
             _isDrawing = false;
             ctx.ReleasePointerCapture();
             
-            var endPoint = ctx.ToPixel(viewPos);
+            var px = ctx.ToPixel(viewPos);
+            bool isShiftDown = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
+            Point endPoint = isShiftDown ? GetShiftAdjustedPoint(_startPoint, px) : px;
+
             if (_currentShapeType == ShapeType.Arrow)
             {
                 _arrowEndPoint = endPoint;
@@ -516,7 +522,7 @@ public partial class ShapeTool : ToolBase
         return ManipulationAnchor.None;
     }
 
-    private void CommitActiveShape(ToolContext ctx)
+    public void CommitActiveShape(ToolContext ctx)
     {
         if (_previewShape == null) return;
         GetCommittedShapeEndpoints(out Point renderStart, out Point renderEnd);
@@ -740,6 +746,27 @@ public partial class ShapeTool : ToolBase
     public void GiveUpSelection(ToolContext ctx)
     {
         ClearPreview(ctx);
+    }
+
+    private Point GetShiftAdjustedPoint(Point start, Point current)
+    {
+        double dx = current.X - start.X;
+        double dy = current.Y - start.Y;
+
+        if (_currentShapeType == ShapeType.Line || _currentShapeType == ShapeType.Arrow)
+        {
+            // 对齐到 45 度的倍数
+            double angle = Math.Atan2(dy, dx);
+            double length = Math.Sqrt(dx * dx + dy * dy);
+            double snappedAngle = Math.Round(angle / (Math.PI / 4)) * (Math.PI / 4);
+            return new Point(start.X + length * Math.Cos(snappedAngle), start.Y + length * Math.Sin(snappedAngle));
+        }
+        else
+        {
+            // 强制正方形比例
+            double side = Math.Max(Math.Abs(dx), Math.Abs(dy));
+            return new Point(start.X + side * Math.Sign(dx), start.Y + side * Math.Sign(dy));
+        }
     }
 
     public override void OnKeyDown(ToolContext ctx, KeyEventArgs e)

@@ -11,7 +11,7 @@ namespace TabPaint
     public static class AppConsts
     {
         // --- 版本信息 ---
-        public const string ProgramVersion = "v0.9.7.0";
+        public const string ProgramVersion = "v0.9.7.1";
 
         // --- Win32 消息常量 ---
         public const int WM_NCHITTEST = 0x0084;
@@ -68,6 +68,7 @@ namespace TabPaint
         public static readonly string AppDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TabPaint");
         public static readonly string CacheDir = Path.Combine(AppDataFolder, "Cache");
         public static readonly string FavoriteDir = Path.Combine(CacheDir, "Favorite");
+        public static readonly string PluginsDir = Path.Combine(CacheDir, "Plugins");
         public static readonly string DragTempDir = Path.Combine(CacheDir, "DragTemp");
         public static readonly string SessionPath = Path.Combine(AppDataFolder, "session.bin");
         public static readonly string LegacySessionPath = Path.Combine(AppDataFolder, "session.json");
@@ -112,6 +113,12 @@ namespace TabPaint
         public const string Inpaint_ModelUrl_Mirror = "https://modelscope.cn/models/codetrend/LaMa_Inpainting_Model_ONNX/resolve/master/lama_fp32.onnx";
         public const string Inpaint_ModelName = "lama_fp32.onnx";
         public const string Inpaint_ExpectedMD5 = "2777748DC5275B27DAFC63C5D4F1F730";
+
+        // --- 二维码识别插件 (ZXing.Net) ---
+        public const string ZXing_Version = "0.16.9";
+        public const string ZXing_DllName = "zxing.dll";
+        public const string ZXing_DownloadUrl = "https://www.nuget.org/api/v2/package/ZXing.Net/0.16.9";
+        public const string ZXing_DownloadUrl_Mirror = "https://repo.huaweicloud.com/repository/nuget/v3/zxing.net/0.16.9/zxing.net.0.16.9.nupkg";
 
         // --- 绘图工具参数 ---
         public const double DefaultPenThickness = 5.0;
@@ -334,7 +341,7 @@ namespace TabPaint
 
         // --- 服务与性能配置 ---
         public const int MaxDiskConcurrency = 4;
-        public const int AppSettingsBinaryVersion = 20;
+        public const int AppSettingsBinaryVersion = 21;
 
         public static bool IsSupportedImage(string path)
         {

@@ -788,7 +788,7 @@ namespace TabPaint.Controls
 
             // 限制在 60 到 150 之间
             if (idealWidth > 150.0) idealWidth = 150.0;
-            if (idealWidth < 60.0) idealWidth = 60.0;
+            if (idealWidth < 80.0) idealWidth = 80.0;
 
             CurrentTabWidth = idealWidth;
         }

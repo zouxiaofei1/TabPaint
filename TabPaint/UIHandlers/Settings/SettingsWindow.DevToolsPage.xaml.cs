@@ -2,10 +2,10 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Security.Cryptography;
-using System.Security.Policy;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using TabPaint.Services;
 
 namespace TabPaint.Pages
 {
@@ -14,6 +14,13 @@ namespace TabPaint.Pages
         public DevToolsPage()
         {
             InitializeComponent();
+            DataContext = SettingsManager.Instance.Current;
+
+            // 仅在 Win11 下显示 Win10 样式开关
+            if (MicaAcrylicManager.IsWin11())
+            {
+                UseWin10StyleCheckBox.Visibility = Visibility.Visible;
+            }
         }
 
         private void CollectSystemReport_Click(object sender, RoutedEventArgs e)
@@ -72,6 +79,111 @@ namespace TabPaint.Pages
             }
         }
 
+        private async void QrCodeDropZone_Drop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                if (files != null && files.Length > 0)
+                {
+                    string filePath = files[0];
+                    await RecognizeQrCodeAsync(filePath);
+                }
+            }
+        }
+
+        private async void HashDropZone_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (Clipboard.ContainsFileDropList())
+            {
+                var files = Clipboard.GetFileDropList();
+                if (files.Count > 0)
+                {
+                    await CalculateHashesAsync(files[0]);
+                }
+            }
+            else
+            {
+                TabPaint.MainWindow.GetCurrentInstance()?.ShowToast(LocalizationManager.GetString("L_DevTools_DropHint"));
+            }
+        }
+
+        private async void QrCodeDropZone_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (Clipboard.ContainsFileDropList())
+            {
+                var files = Clipboard.GetFileDropList();
+                if (files.Count > 0)
+                {
+                    await RecognizeQrCodeAsync(files[0]);
+                }
+            }
+            else if (Clipboard.ContainsImage())
+            {
+                var bitmap = Clipboard.GetImage();
+                if (bitmap != null)
+                {
+                    await RecognizeQrCodeAsync(bitmap);
+                }
+            }
+            else
+            {
+                TabPaint.MainWindow.GetCurrentInstance()?.ShowToast(LocalizationManager.GetString("L_DevTools_QrCode_DropHint"));
+            }
+        }
+
+        private async Task RecognizeQrCodeAsync(System.Windows.Media.Imaging.BitmapSource bitmap)
+        {
+            try
+            {
+                string resultText = await Task.Run(() => QrCodeDecoder.Decode(bitmap));
+                ShowQrCodeResult(resultText);
+            }
+            catch (Exception ex)
+            {
+                TabPaint.MainWindow.GetCurrentInstance()?.ShowToast(ex.Message, ex);
+            }
+        }
+
+        private void ShowQrCodeResult(string resultText)
+        {
+            if (string.IsNullOrEmpty(resultText))
+            {
+                TabPaint.MainWindow.GetCurrentInstance()?.ShowToast(
+                    LocalizationManager.GetString("L_Common_Error"));
+                return;
+            }
+
+            var result = FluentMessageBox.Show(
+                resultText + " " + LocalizationManager.GetString("L_DevTools_CopyHashPrompt"),
+                LocalizationManager.GetString("L_DevTools_QrCode_Title"),
+                MessageBoxButton.OKCancel,
+                MessageBoxImage.Information
+            );
+
+            if (result == MessageBoxResult.OK)
+            {
+                Clipboard.SetText(resultText);
+                TabPaint.MainWindow.GetCurrentInstance()?.ShowToast(
+                    LocalizationManager.GetString("L_Toast_Copied"));
+            }
+        }
+
+        private async Task RecognizeQrCodeAsync(string filePath)
+        {
+            try
+            {
+                if (!File.Exists(filePath)) return;
+
+                string resultText = await Task.Run(() => QrCodeDecoder.Decode(filePath));
+                ShowQrCodeResult(resultText);
+            }
+            catch (Exception ex)
+            {
+                TabPaint.MainWindow.GetCurrentInstance()?.ShowToast(ex.Message, ex);
+            }
+        }
+
         private async Task CalculateHashesAsync(string filePath)
         {
             try
@@ -82,8 +194,7 @@ namespace TabPaint.Pages
                 string resultText = $"MD5: {md5}";
                 // MessageBox 显示结果，点击"确定"复制到剪贴板，点击"取消"则不复制
                 var result = FluentMessageBox.Show(
-                    resultText + "\n\n" + LocalizationManager.GetString("L_DevTools_CopyHashPrompt"),
-             
+                    resultText + " " + LocalizationManager.GetString("L_DevTools_CopyHashPrompt"),
                     "MD5 Hash",
                     MessageBoxButton.OKCancel,
                     MessageBoxImage.Information

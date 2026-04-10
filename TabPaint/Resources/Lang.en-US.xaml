@@ -10,6 +10,8 @@
     <sys:String x:Key="L_Settings_Plugins_Model_SR_Desc">AI model for 4x image upscaling and enhancement.</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_Inpaint_Title">LaMa (AI Eraser)</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_Inpaint_Desc">AI model for removal and inpainting.</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_ZXing_Title">QR Code Recognition</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_ZXing_Desc">Identify QR codes or barcodes in images.</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_OCR_Title">AI OCR</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_OCR_Desc">Runtime component for extracting text from images.</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_NotInstalled">Not Installed</sys:String>
@@ -25,6 +27,7 @@
     <sys:String x:Key="L_Settings_Plugins_Uninstall">Uninstall</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">Are you sure you want to uninstall this AI model?</sys:String>
     <sys:String x:Key="L_Settings_Plugins_OCR_Uninstall_Confirm">Are you sure you want to uninstall the OCR runtime?</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_QrCode_Uninstall_Confirm">Are you sure you want to uninstall the QR Code Recognition plugin?</sys:String>
     <sys:String x:Key="L_Settings_Plugins_RmbgModel_Title">Background Removal Model</sys:String>
     <sys:String x:Key="L_Settings_Plugins_RmbgModel_Desc">Model will be reloaded automatically after change</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Rmbg20_LowEndWarning">RMBG 2.0 requires high VRAM/GPU power. Low-end hardware may be slow or crash.</sys:String>
@@ -222,6 +225,8 @@
     <sys:String x:Key="L_Settings_Advanced_DevTools_Title">Dev Tools</sys:String>
     <sys:String x:Key="L_Settings_Advanced_DevTools_Desc">Advanced tools for development and debugging.</sys:String>
     <sys:String x:Key="L_Settings_DevTools_Title">Developer Tools</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_UseWin10StyleOnWin11_Title">Use Windows 10 Style on Windows 11</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_UseWin10StyleOnWin11_Desc">Disable Mica/Acrylic effects and use desktop backdrop sampling with noise overlay instead (Windows 10 visual experience).</sys:String>
     <sys:String x:Key="L_Settings_DevTools_Hash_Title">File Hash / MD5</sys:String>
     <sys:String x:Key="L_Settings_DevTools_Hash_Desc">Drag and drop files here to view MD5 and SHA256 hashes.</sys:String>
     <sys:String x:Key="L_Settings_ResetShortcuts">Reset shortcuts to default</sys:String>
@@ -978,6 +983,17 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_DevTools_Title">Developer Tools</sys:String>
     <sys:String x:Key="L_DevTools_DropHint">Drop files here to calculate MD5 and SHA256 hash values</sys:String>
     <sys:String x:Key="L_DevTools_HashResult">Calculation Result</sys:String>
+
+    <sys:String x:Key="L_DevTools_QrCode_Title">QR Code Recognition</sys:String>
+    <sys:String x:Key="L_DevTools_QrCode_DropHint">Drop image here for QR code recognition</sys:String>
+
+    <!-- QrCodeDecoder -->
+    <sys:String x:Key="L_QrCode_Error_NotInstalled">Plugin not installed: Please download ZXing.Net dependency in Settings-Plugins to enable QR code recognition.</sys:String>
+    <sys:String x:Key="L_QrCode_Error_LoadImageFailed">Recognition failed: Unable to load image file.</sys:String>
+    <sys:String x:Key="L_QrCode_Error_TypeNotFound">Recognition error: Unable to find {0} type</sys:String>
+    <sys:String x:Key="L_QrCode_Error_NotFound">Recognition failed: No valid QR code or barcode found in the image.</sys:String>
+    <sys:String x:Key="L_QrCode_Error_Internal">Recognition error (internal): {0}</sys:String>
+    <sys:String x:Key="L_QrCode_Error_General">Recognition error: {0}</sys:String>
 
 </ResourceDictionary>
 

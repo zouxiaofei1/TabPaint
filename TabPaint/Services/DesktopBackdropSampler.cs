@@ -96,7 +96,8 @@ namespace TabPaint
 
                 Color baseColor = isDark ? Colors.Black : Colors.White;
                 double backdropOpacity = isDark ? 0.15 : 0.18;
-                Color tint = isDark ? Color.FromArgb(34, 0, 0, 0) : Color.FromArgb(12, 255, 255, 255);
+                Color tint = isDark ? Color.FromArgb(34, 0, 0, 0) :
+                             (window.IsActive ? Color.FromArgb(34, 245, 245, 125) : Color.FromArgb(8, 245, 245, 125));
 
                 BitmapSource composed = ComposeBackdrop(blurred, baseColor, backdropOpacity, tint);
                 if (composed.CanFreeze) composed.Freeze();
@@ -106,7 +107,7 @@ namespace TabPaint
                     Stretch = Stretch.Fill,
                     AlignmentX = AlignmentX.Center,
                     AlignmentY = AlignmentY.Center,
-                    Opacity = 1.0
+                    Opacity = isDark ? 1.0:0.7
                 };
 
                 if (brush.CanFreeze) brush.Freeze();

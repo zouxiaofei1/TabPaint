@@ -178,7 +178,29 @@
                     </Grid>
                 </Border>
 
-
+                <!-- QR Code Recognition (ZXing.Net) -->
+                <Border Style="{StaticResource PluginCardStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0" Grid.Column="0">
+                            <TextBlock Text="{DynamicResource L_Settings_Plugins_ZXing_Title}" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{DynamicResource L_Settings_Plugins_ZXing_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="12" Margin="0,4,0,8" TextWrapping="Wrap"/>
+                            <TextBlock x:Name="TxtStatusZXing" Text="Checking..." FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="0" Grid.Column="1" VerticalAlignment="Center">
+                            <Button x:Name="BtnInstallZXing" Content="{DynamicResource L_Settings_Plugins_InstallReal}" Click="InstallZXing_Click" Style="{StaticResource Win11PrimaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
+                            <Button x:Name="BtnUninstallZXing" Content="{DynamicResource L_Settings_Plugins_Uninstall}" Click="UninstallZXing_Click" Style="{StaticResource Win11SecondaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
+                        </StackPanel>
+                        <controls:TaskProgressFloat x:Name="FloatZXing" IsDraggable="False" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,8,0,0"/>
+                    </Grid>
+                </Border>
 
                 <Grid Margin="0,5,0,10">
                     <Grid.ColumnDefinitions>

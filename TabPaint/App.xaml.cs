@@ -5,6 +5,7 @@
 using System.Buffers;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Runtime.InteropServices; // 必须引用，用于置顶窗口
 using System.Text;
 using System.Windows;
@@ -132,7 +133,12 @@ namespace TabPaint
             try
             {
                 string errorMessage = ex?.Message ?? "未知异常";
-                string msg = $"TabPaint 捕获到可恢复异常，程序将继续运行。\n\n错误信息: {errorMessage}\n\n建议先保存当前工作。\n日志位置: {LogDirectory}";
+                string msg = $@"TabPaint 捕获到可恢复异常，程序将继续运行。
+
+错误信息: {errorMessage}
+
+建议先保存当前工作。
+日志位置: {LogDirectory}";
                 FluentMessageBox.Show(msg, "已恢复异常", MessageBoxButton.OK, MessageBoxImage.Warning, null, LogDirectory);
             }
             catch (Exception notifyEx)
@@ -222,7 +228,11 @@ namespace TabPaint
         }
         private void ShutdownAppWithErrorMessage(Exception ex)
         {
-            string msg = $"TabPaint 遇到错误需要关闭。\n\n错误信息: {ex.Message}\n\n日志已保存至: {LogDirectory}";
+            string msg = $@"TabPaint 遇到错误需要关闭。
+
+错误信息: {ex.Message}
+
+日志已保存至: {LogDirectory}";
             FluentMessageBox.Show(msg, "程序崩溃", MessageBoxButton.OK, MessageBoxImage.Error, null, LogDirectory);
 
             try
@@ -234,6 +244,7 @@ namespace TabPaint
         }
         protected override void OnStartup(StartupEventArgs e)
         {//680ms
+            AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
             StartupPerformanceTracer.StartSession($"Startup_PID{Environment.ProcessId}");
             using var __perfOnStartup = StartupPerformanceTracer.Measure("App.OnStartup");
             StartupPerformanceTracer.Point("App.OnStartup.Enter");
@@ -386,6 +397,27 @@ namespace TabPaint
             }), DispatcherPriority.ApplicationIdle);
          
 
+        }
+
+        private Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
+        {
+            try
+            {
+                AssemblyName assemblyName = new AssemblyName(args.Name);
+                if (assemblyName.Name == "zxing")
+                {
+                    string dllPath = Path.Combine(AppConsts.PluginsDir, AppConsts.ZXing_DllName);
+                    if (File.Exists(dllPath))
+                    {
+                        return Assembly.LoadFrom(dllPath);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"AssemblyResolve error: {ex.Message}");
+            }
+            return null;
         }
 
         private void TryShowWhatsNew(AppSettings settings)

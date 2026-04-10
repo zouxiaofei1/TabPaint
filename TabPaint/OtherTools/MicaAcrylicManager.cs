@@ -17,10 +17,11 @@ using System.Windows.Threading;
 
 namespace TabPaint
 {
- 
+
     public static class MicaAcrylicManager
     {
         private static readonly Dictionary<Window, DispatcherTimer> _refreshTimers = new();
+        private static readonly HashSet<Window> _initializedWindows = new();
 
         // ===== DWM API（Win11 Mica） =====
         [DllImport("dwmapi.dll")]
@@ -91,13 +92,20 @@ namespace TabPaint
         {
             var hwnd = new WindowInteropHelper(window).Handle;
 
-            if (IsWin11())
+            bool forceWin10Style = SettingsManager.Instance.Current.UseWin10StyleOnWin11;
+
+            if (IsWin11() && !forceWin10Style)
             {
-                // 修复：传入当前 window 实例
                 EnableMica(hwnd, window);
+                //RemoveWin10Style(window);
             }
             else
             {
+                if (IsWin11() && forceWin10Style)
+                {
+                    DisableMica(hwnd, window);
+                }
+
                 // 如果是主窗口且是 Win10，我们保持 AllowsTransparency 逻辑
                 if (window is MainWindow)
                 {
@@ -106,6 +114,7 @@ namespace TabPaint
                 ApplyFallbackBackground(window);
             }
         }
+
         public static void DisableEffect(Window window)
         {
             var hwnd = new WindowInteropHelper(window).Handle;
@@ -140,37 +149,50 @@ namespace TabPaint
                 window.Background = backgroundBrush;
             }
 
-            // 叠加噪点纹理（在 MainWindow 中，LayoutRoot 是更好的选择）
-            Grid rootGrid = null;
-            if (window is MainWindow mw2) rootGrid = mw2.FindName("LayoutRoot") as Grid;
-            if (rootGrid == null && window.Content is Grid g) rootGrid = g;
-
-            if (rootGrid != null)
+            if (sampledBrush == null)
             {
-                const string NOISE_TAG = "Win10NoiseOverlay";
-                var existing = rootGrid.Children.OfType<System.Windows.Shapes.Rectangle>()
-                    .FirstOrDefault(r => r.Tag as string == NOISE_TAG);
+                // 叠加噪点纹理（在 MainWindow 中，LayoutRoot 是更好的选择）
+                Grid rootGrid = null;
+                if (window is MainWindow mw2) rootGrid = mw2.FindName("LayoutRoot") as Grid;
+                if (rootGrid == null && window.Content is Grid g) rootGrid = g;
 
-                if (existing != null)
+                if (rootGrid != null)
                 {
-                    existing.Fill = NoiseTextureGenerator.CreateNoiseBrush(isDark);
-                }
-                else
-                {
-                    var noiseRect = new System.Windows.Shapes.Rectangle
+                    const string NOISE_TAG = "Win10NoiseOverlay";
+                    var existing = rootGrid.Children.OfType<System.Windows.Shapes.Rectangle>()
+                        .FirstOrDefault(r => r.Tag as string == NOISE_TAG);
+
+                    if (existing != null)
                     {
-                        Tag = NOISE_TAG,
-                        Fill = NoiseTextureGenerator.CreateNoiseBrush(isDark),
-                        IsHitTestVisible = false,
-                        HorizontalAlignment = HorizontalAlignment.Stretch,
-                        VerticalAlignment = VerticalAlignment.Stretch,
-                    };
-                    Panel.SetZIndex(noiseRect, -1);
-                    rootGrid.Children.Insert(0, noiseRect);
+                        existing.Fill = NoiseTextureGenerator.CreateNoiseBrush(isDark);
+                    }
+                    else
+                    {
+                        var noiseRect = new System.Windows.Shapes.Rectangle
+                        {
+                            Tag = NOISE_TAG,
+                            Fill = NoiseTextureGenerator.CreateNoiseBrush(isDark),
+                            IsHitTestVisible = false,
+                            HorizontalAlignment = HorizontalAlignment.Stretch,
+                            VerticalAlignment = VerticalAlignment.Stretch,
+                        };
+                        Panel.SetZIndex(noiseRect, -1);
+                        rootGrid.Children.Insert(0, noiseRect);
+                    }
                 }
             }
-
             AttachRefreshHandlers(window);
+        }
+
+        private static void AttachRefreshHandlers(Window window)
+        {
+            if (_initializedWindows.Contains(window)) return;
+
+            window.Activated += (s, e) => ApplyFallbackBackground(window);
+            window.Deactivated += (s, e) => ApplyFallbackBackground(window);
+            window.Closed += (s, e) => _initializedWindows.Remove(window);
+
+            _initializedWindows.Add(window);
         }
 
         private static Brush CreateGradientFallback(bool isDark)
@@ -209,43 +231,7 @@ namespace TabPaint
             return gradient;
         }
 
-        private static void AttachRefreshHandlers(Window window)
-        {
-            //if (_refreshTimers.ContainsKey(window)) return;
 
-            //var timer = new DispatcherTimer
-            //{
-            //    Interval = TimeSpan.FromMilliseconds(180)
-            //};
-            //timer.Tick += (_, _) =>
-            //{
-            //    timer.Stop();
-            //    if (!IsWin11() && window.IsVisible)
-            //    {
-            //        ApplyFallbackBackground(window);
-            //    }
-            //};
-
-            //_refreshTimers[window] = timer;
-
-            //void QueueRefresh(object s, EventArgs e)
-            //{
-            //    timer.Stop();
-            //    timer.Start();
-            //}
-
-            //window.LocationChanged += QueueRefresh;
-            //window.SizeChanged += QueueRefresh;
-            //window.StateChanged += QueueRefresh;
-            //window.Closed += (_, _) =>
-            //{
-            //    timer.Stop();
-            //    _refreshTimers.Remove(window);
-            //    window.LocationChanged -= QueueRefresh;
-            //    window.SizeChanged -= QueueRefresh;
-            //    window.StateChanged -= QueueRefresh;
-            //};
-        }
 
         public static void DisableMica(IntPtr hwnd, Window window)
         {
@@ -265,12 +251,12 @@ namespace TabPaint
         }
         [DllImport("dwmapi.dll")]
         private static extern int DwmIsCompositionEnabled(out bool enabled);
-      
+
         public static bool IsWin11()
         {// 粗略判断：Win11 Version >= 22000
             var version = Environment.OSVersion.Version.Build;
             return version >= AppConsts.Windows11BuildThreshold;
         }
-     
+
     }
 }

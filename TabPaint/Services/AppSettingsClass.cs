@@ -864,6 +864,41 @@ namespace TabPaint
             }
         }
 
+        private bool _useWin10StyleOnWin11 = false;
+        [JsonPropertyName("use_win10_style_on_win11")]
+        public bool UseWin10StyleOnWin11
+        {
+            get => _useWin10StyleOnWin11;
+            set
+            {
+                if (_useWin10StyleOnWin11 != value)
+                {
+                    _useWin10StyleOnWin11 = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(DevTools_UseWin10StyleOnWin11));
+                    NotifyWin10StyleChanged();
+                }
+            }
+        }
+
+        [JsonIgnore]
+        public bool DevTools_UseWin10StyleOnWin11
+        {
+            get => UseWin10StyleOnWin11;
+            set => UseWin10StyleOnWin11 = value;
+        }
+
+        private void NotifyWin10StyleChanged()
+        {
+            Application.Current?.Dispatcher?.BeginInvoke(new Action(() =>
+            {
+                foreach (Window window in Application.Current.Windows)
+                {
+                    MicaAcrylicManager.ApplyEffect(window);
+                }
+            }), System.Windows.Threading.DispatcherPriority.Background);
+        }
+
         private int _maxUndoMemoryMB = 2048;
         [JsonPropertyName("max_undo_memory_mb")]
         public int MaxUndoMemoryMB

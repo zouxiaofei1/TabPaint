@@ -57,31 +57,84 @@
                        VerticalAlignment="Center" Margin="15,0,0,0"
                        Foreground="{DynamicResource TextTertiaryBrush}" TextWrapping="Wrap"/>
         </Grid>
-        <TextBlock Grid.Row="3" Text="{DynamicResource L_Exif_Meter_Other}" FontSize="16" FontWeight="SemiBold" Margin="0,8,0,-30" Foreground="{DynamicResource TextPrimaryBrush}"/>
-
-        <Border Grid.Row="4" 
-        Height="50"
-        Background="{DynamicResource GlassBackgroundLowBrush}" 
-        CornerRadius="8" 
-        AllowDrop="True"
-        Drop="HashDropZone_Drop"
-        DragOver="HashDropZone_DragOver">
-            <Grid>
-                <Rectangle RadiusX="8" RadiusY="8"
-                   Stroke="{DynamicResource BorderBrush}" 
-                   StrokeThickness="2"
-                   StrokeDashArray="4 2"/>
-                <StackPanel x:Name="DropHintPanel" Orientation="Horizontal" 
-                    VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <Path Data="{DynamicResource Import_Image}" 
-                  Fill="{DynamicResource TextTertiaryBrush}" 
-                  Width="20" Height="20" Stretch="Uniform" Margin="0,0,8,0"/>
-                    <TextBlock Text="{DynamicResource L_DevTools_DropHint}" 
-                       Foreground="{DynamicResource TextTertiaryBrush}" 
-                       FontSize="13" VerticalAlignment="Center"/>
+        <StackPanel Grid.Row="3" Margin="0,8,0,10">
+            <TextBlock Text="{DynamicResource L_Exif_Meter_Other}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="{DynamicResource L_Settings_DevTools_UseWin10StyleOnWin11_Title}"/>
+                    <TextBlock Text="{DynamicResource L_Settings_DevTools_UseWin10StyleOnWin11_Desc}" 
+                Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                 </StackPanel>
+
+                <CheckBox  Grid.Column="2" x:Name="UseWin10StyleCheckBox" 
+                    
+                      IsChecked="{Binding UseWin10StyleOnWin11}" 
+                      Style="{StaticResource FluentCheckBoxStyle}" 
+                      Margin="0,0,0,10"
+                      Visibility="Collapsed"/>
             </Grid>
-        </Border>
+        </StackPanel>
+
+        <StackPanel Grid.Row="4">
+            <!-- MD5 / SHA256 Hash Zone -->
+            <Border Height="50"
+                    Background="{DynamicResource GlassBackgroundLowBrush}" 
+                    CornerRadius="8" 
+                    AllowDrop="True"
+                    Drop="HashDropZone_Drop"
+                    DragOver="HashDropZone_DragOver"
+                    MouseLeftButtonDown="HashDropZone_MouseLeftButtonDown"
+                    Cursor="Hand"
+                    Margin="0,0,0,15">
+                <Grid>
+                    <Rectangle RadiusX="8" RadiusY="8"
+                               Stroke="{DynamicResource BorderBrush}" 
+                               StrokeThickness="2"
+                               StrokeDashArray="4 2"/>
+                    <StackPanel x:Name="DropHintPanel" Orientation="Horizontal" 
+                                VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <Path Data="{DynamicResource Import_Image}" 
+                              Fill="{DynamicResource TextTertiaryBrush}" 
+                              Width="20" Height="20" Stretch="Uniform" Margin="0,0,8,0"/>
+                        <TextBlock Text="{DynamicResource L_DevTools_DropHint}" 
+                                   Foreground="{DynamicResource TextTertiaryBrush}" 
+                                   FontSize="13" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- QR Code Recognition Zone -->
+              <Border Height="50"
+                    Background="{DynamicResource GlassBackgroundLowBrush}" 
+                    CornerRadius="8" 
+                    AllowDrop="True"
+                    Drop="QrCodeDropZone_Drop"
+                    DragOver="HashDropZone_DragOver"
+                    MouseLeftButtonDown="QrCodeDropZone_MouseLeftButtonDown"
+                    Cursor="Hand">
+                <Grid>
+                    <Rectangle RadiusX="8" RadiusY="8"
+                               Stroke="{DynamicResource BorderBrush}" 
+                               StrokeThickness="2"
+                               StrokeDashArray="4 2"/>
+                    <StackPanel Orientation="Horizontal" 
+                                VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <Path Data="{DynamicResource QR_Code}" 
+                              Fill="{DynamicResource TextTertiaryBrush}" 
+                              Width="20" Height="20" Stretch="Uniform" Margin="0,0,8,0"/>
+                        <TextBlock Text="{DynamicResource L_DevTools_QrCode_DropHint}" 
+                                   Foreground="{DynamicResource TextTertiaryBrush}" 
+                                   FontSize="13" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </StackPanel>
+
          <Grid x:Name="HashResultPanel" Grid.Row="5" Margin="0,10,0,0" MaxHeight="100" Visibility="Collapsed">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
