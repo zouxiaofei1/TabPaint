@@ -121,6 +121,7 @@ namespace TabPaint
         }
         protected override void OnRender(DrawingContext drawingContext)
         {
+            
             base.OnRender(drawingContext);
             Brush textBrush = (Brush)TryFindResource("TextPrimaryBrush") ?? Brushes.Black;
             Brush tickBrush = (Brush)TryFindResource("TextTertiaryBrush") ?? Brushes.Gray;

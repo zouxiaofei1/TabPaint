@@ -14,322 +14,52 @@
                 <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <local:ColorMatchConverter x:Key="ColorMatchConverter"/>
+            <local:TagToCornerRadiusConverter x:Key="TagToCornerRadiusConverter"/>
 
-            <Style TargetType="RadioButton" x:Key="AutoColorRadioStyle">
-                <Setter Property="Width" Value="40"/>
-                <Setter Property="Height" Value="40"/>
-                <Setter Property="Margin" Value="0,0,6,5"/>
+            <Style TargetType="RadioButton" x:Key="SystemAccentBarRadioStyle">
+                <Setter Property="Height" Value="28"/>
                 <Setter Property="Cursor" Value="Hand"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="RadioButton">
-                            <Grid Width="40" Height="40"
-                                  HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <Border x:Name="SelectionBorder" 
-                                        CornerRadius="16" 
-                                        BorderThickness="2" 
-                                        BorderBrush="#FF4CC2FF"
-                                        Opacity="0"
-                                        Width="32" Height="32"
-                                        HorizontalAlignment="Center" VerticalAlignment="Center"
-                                        RenderTransformOrigin="0.5,0.5">
-                                    <Border.RenderTransform>
-                                        <ScaleTransform ScaleX="1" ScaleY="1"/>
-                                    </Border.RenderTransform>
-                                </Border>
-                                
-                                <Grid Width="22" Height="22" RenderTransformOrigin="0.5,0.5">
-                                    <Grid.RenderTransform>
-                                        <ScaleTransform x:Name="CircleScale" ScaleX="1" ScaleY="1"/>
-                                    </Grid.RenderTransform>
+                            <Grid Background="Transparent">
+                                <Border x:Name="ColorPart" 
+                                        Background="{Binding Background, RelativeSource={RelativeSource TemplatedParent}}"
+                                        BorderThickness="0"  
+                                        CornerRadius="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource TagToCornerRadiusConverter}}"/>
 
-                                    <Viewbox Width="22" Height="22" Stretch="Fill">
-                                        <Grid Width="100" Height="100">
-                                            <!-- 去掉了原来的 Margin="2,-7,0,0" -->
-                                            <Grid>
-                                                <!-- 将裁剪区域居中并放大铺满 -->
-                                                <Grid.Clip>
-                                                    <EllipseGeometry Center="50,50" RadiusX="50" RadiusY="50"/>
-                                                </Grid.Clip>
-                                                <!-- 旋转中心点改为正中心 0.5,0.5 -->
-                                                <Grid x:Name="CircleRotateHost" RenderTransformOrigin="0.5,0.5">
-                                                    <Grid.RenderTransform>
-                                                        <RotateTransform x:Name="CircleRotate" Angle="0"/>
-                                                    </Grid.RenderTransform>
-                                                    <Grid>
-                                                        <!-- 将扇形偏移到正中心 50,50 -->
-                                                        <Grid.RenderTransform>
-                                                            <MatrixTransform Matrix="1,0,0,1,50,50"/>
-                                                        </Grid.RenderTransform>
-                                                        <Grid.Effect>
-                                                            <BlurEffect Radius="16" KernelType="Gaussian"/>
-                                                        </Grid.Effect>
-                                                        <Path Fill="#FF0000" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
-                                                            <Path.RenderTransform>
-                                                                <RotateTransform Angle="-30"/>
-                                                            </Path.RenderTransform>
-                                                        </Path>
-                                                        <Path Fill="#FFFF00" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
-                                                            <Path.RenderTransform>
-                                                                <RotateTransform Angle="30"/>
-                                                            </Path.RenderTransform>
-                                                        </Path>
-                                                        <Path Fill="#00FF00" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
-                                                            <Path.RenderTransform>
-                                                                <RotateTransform Angle="90"/>
-                                                            </Path.RenderTransform>
-                                                        </Path>
-                                                        <Path Fill="#00FFFF" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
-                                                            <Path.RenderTransform>
-                                                                <RotateTransform Angle="150"/>
-                                                            </Path.RenderTransform>
-                                                        </Path>
-                                                        <Path Fill="#0000FF" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
-                                                            <Path.RenderTransform>
-                                                                <RotateTransform Angle="210"/>
-                                                            </Path.RenderTransform>
-                                                        </Path>
-                                                        <Path Fill="#FF00FF" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
-                                                            <Path.RenderTransform>
-                                                                <RotateTransform Angle="270"/>
-                                                            </Path.RenderTransform>
-                                                        </Path>
-                                                    </Grid>
-                                                    <!-- 调整高光图层中心和大小 -->
-                                                    <Path IsHitTestVisible="False">
-                                                        <Path.Data>
-                                                            <EllipseGeometry Center="50,50" RadiusX="50" RadiusY="50"/>
-                                                        </Path.Data>
-                                                        <Path.Fill>
-                                                            <RadialGradientBrush Center="0.5,0.5" GradientOrigin="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
-                                                                <GradientStop Color="#FFFFFFFF" Offset="0"/>
-                                                                <GradientStop Color="#80FFFFFF" Offset="0.4"/>
-                                                                <GradientStop Color="#00FFFFFF" Offset="1"/>
-                                                            </RadialGradientBrush>
-                                                        </Path.Fill>
-                                                    </Path>
-                                                </Grid>
-                                                <!-- 边框铺满 100x100，去掉原来的 Margin -->
-                                                <Ellipse Width="100" Height="100"
-                                                         Stroke="#26000000"
-                                                         StrokeThickness="2"
-                                                         IsHitTestVisible="False"/>
-                                            </Grid>
-
-                                            <!-- 注：这里原来画加号的 <Grid> 已经被删除了 -->
-                                        </Grid>
-                                    </Viewbox>
-                                </Grid>
-
-                                <Canvas Width="12" Height="10" 
-                                        HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <Path x:Name="CheckMark"
-                                          Data="M1,5.5 L4.5,9 L11,1.5"
-                                          Stroke="White" StrokeThickness="1.8"
-                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
-                                          Fill="Transparent"
-                                          Opacity="0"
-                                          RenderTransformOrigin="0.5,0.5">
-                                        <Path.RenderTransform>
-                                            <ScaleTransform x:Name="CheckScale" ScaleX="0.5" ScaleY="0.5"
-                                                            CenterX="6" CenterY="5"/>
-                                        </Path.RenderTransform>
-                                    </Path>
-                                </Canvas>
-                                
-                                <Canvas Width="12" Height="10" 
-                                        HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <Path x:Name="CheckMarkShadow"
-                                          Data="M1,5.5 L4.5,9 L11,1.5"
-                                          Stroke="#40000000" StrokeThickness="3"
-                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
-                                          Fill="Transparent"
-                                          Opacity="0"
-                                          RenderTransformOrigin="0.5,0.5">
-                                        <Path.RenderTransform>
-                                            <ScaleTransform x:Name="CheckShadowScale" ScaleX="0.5" ScaleY="0.5"
-                                                            CenterX="6" CenterY="5"/>
-                                        </Path.RenderTransform>
-                                    </Path>
-                                </Canvas>
+                              
+                                <Path x:Name="CheckMark"
+                                      Data="M1,5.5 L4.5,9 L11,1.5"
+                                      Stroke="White" StrokeThickness="1.8"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                      Fill="Transparent"
+                                      Opacity="0"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                                      RenderTransformOrigin="0.5,0.5">
+                                    <Path.RenderTransform>
+                                        <ScaleTransform x:Name="CheckScale" ScaleX="0.5" ScaleY="0.5"/>
+                                    </Path.RenderTransform>
+                                </Path>
                             </Grid>
-
                             <ControlTemplate.Triggers>
-                                <EventTrigger RoutedEvent="Loaded">
-                                    <BeginStoryboard>
-                                        <Storyboard RepeatBehavior="Forever">
-                                            <DoubleAnimation Storyboard.TargetName="CircleRotate"
-                                                             Storyboard.TargetProperty="Angle"
-                                                             From="0" To="360" Duration="0:10:0"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </EventTrigger>
-                                
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Trigger.EnterActions>
-                                        <BeginStoryboard x:Name="HoverEnter_BSB">
-                                            <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetName="CircleScale" 
-                                                                 Storyboard.TargetProperty="ScaleX"
-                                                                 To="1.15" Duration="0:0:0.15">
-                                                    <DoubleAnimation.EasingFunction>
-                                                        <CubicEase EasingMode="EaseOut"/>
-                                                    </DoubleAnimation.EasingFunction>
-                                                </DoubleAnimation>
-                                                <DoubleAnimation Storyboard.TargetName="CircleScale" 
-                                                                 Storyboard.TargetProperty="ScaleY"
-                                                                 To="1.15" Duration="0:0:0.15">
-                                                    <DoubleAnimation.EasingFunction>
-                                                        <CubicEase EasingMode="EaseOut"/>
-                                                    </DoubleAnimation.EasingFunction>
-                                                </DoubleAnimation>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </Trigger.EnterActions>
-                                    <Trigger.ExitActions>
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetName="CircleScale" 
-                                                                 Storyboard.TargetProperty="ScaleX"
-                                                                 Duration="0:0:0.2">
-                                                    <DoubleAnimation.EasingFunction>
-                                                        <CubicEase EasingMode="EaseOut"/>
-                                                    </DoubleAnimation.EasingFunction>
-                                                </DoubleAnimation>
-                                                <DoubleAnimation Storyboard.TargetName="CircleScale" 
-                                                                 Storyboard.TargetProperty="ScaleY"
-                                                                 Duration="0:0:0.2">
-                                                    <DoubleAnimation.EasingFunction>
-                                                        <CubicEase EasingMode="EaseOut"/>
-                                                    </DoubleAnimation.EasingFunction>
-                                                </DoubleAnimation>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </Trigger.ExitActions>
+                                    <Setter TargetName="ColorPart" Property="Opacity" Value="0.85"/>
                                 </Trigger>
-
                                 <Trigger Property="IsPressed" Value="True">
-                                    <Trigger.EnterActions>
-                                        <BeginStoryboard x:Name="AutoPressEnter_BSB">
-                                            <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetName="CircleScale"
-                                                                 Storyboard.TargetProperty="ScaleX"
-                                                                 To="0.85" Duration="0:0:0.08">
-                                                    <DoubleAnimation.EasingFunction>
-                                                        <CubicEase EasingMode="EaseOut"/>
-                                                    </DoubleAnimation.EasingFunction>
-                                                </DoubleAnimation>
-                                                <DoubleAnimation Storyboard.TargetName="CircleScale"
-                                                                 Storyboard.TargetProperty="ScaleY"
-                                                                 To="0.85" Duration="0:0:0.08">
-                                                    <DoubleAnimation.EasingFunction>
-                                                        <CubicEase EasingMode="EaseOut"/>
-                                                    </DoubleAnimation.EasingFunction>
-                                                </DoubleAnimation>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </Trigger.EnterActions>
-                                    <Trigger.ExitActions>
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetName="CircleScale"
-                                                                 Storyboard.TargetProperty="ScaleX"
-                                                                 To="1.15" Duration="0:0:0.15">
-                                                    <DoubleAnimation.EasingFunction>
-                                                        <ElasticEase Oscillations="1" Springiness="8" EasingMode="EaseOut"/>
-                                                    </DoubleAnimation.EasingFunction>
-                                                </DoubleAnimation>
-                                                <DoubleAnimation Storyboard.TargetName="CircleScale"
-                                                                 Storyboard.TargetProperty="ScaleY"
-                                                                 To="1.15" Duration="0:0:0.15">
-                                                    <DoubleAnimation.EasingFunction>
-                                                        <ElasticEase Oscillations="1" Springiness="8" EasingMode="EaseOut"/>
-                                                    </DoubleAnimation.EasingFunction>
-                                                </DoubleAnimation>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </Trigger.ExitActions>
+                                    <Setter TargetName="ColorPart" Property="Opacity" Value="0.7"/>
                                 </Trigger>
-                                
                                 <Trigger Property="IsChecked" Value="True">
+                                    
+                                    <Setter TargetName="CheckMark" Property="Opacity" Value="1"/>
                                     <Trigger.EnterActions>
                                         <BeginStoryboard>
                                             <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetName="SelectionBorder" 
-                                                                 Storyboard.TargetProperty="Opacity"
-                                                                 To="1" Duration="0:0:0.2">
-                                                    <DoubleAnimation.EasingFunction>
-                                                        <CubicEase EasingMode="EaseOut"/>
-                                                    </DoubleAnimation.EasingFunction>
-                                                </DoubleAnimation>
-                                                <DoubleAnimation Storyboard.TargetName="SelectionBorder" 
-                                                                 Storyboard.TargetProperty="(Border.RenderTransform).(ScaleTransform.ScaleX)"
-                                                                 From="0.6" To="1" Duration="0:0:0.25">
-                                                    <DoubleAnimation.EasingFunction>
-                                                        <CubicEase EasingMode="EaseOut"/>
-                                                    </DoubleAnimation.EasingFunction>
-                                                </DoubleAnimation>
-                                                <DoubleAnimation Storyboard.TargetName="SelectionBorder" 
-                                                                 Storyboard.TargetProperty="(Border.RenderTransform).(ScaleTransform.ScaleY)"
-                                                                 From="0.6" To="1" Duration="0:0:0.25">
-                                                    <DoubleAnimation.EasingFunction>
-                                                        <CubicEase EasingMode="EaseOut"/>
-                                                    </DoubleAnimation.EasingFunction>
-                                                </DoubleAnimation>
-                                                <DoubleAnimation Storyboard.TargetName="CheckMark" 
-                                                                 Storyboard.TargetProperty="Opacity"
-                                                                 To="1" Duration="0:0:0.2"
-                                                                 BeginTime="0:0:0.08"/>
-                                                <DoubleAnimation Storyboard.TargetName="CheckMarkShadow" 
-                                                                 Storyboard.TargetProperty="Opacity"
-                                                                 To="1" Duration="0:0:0.2"
-                                                                 BeginTime="0:0:0.08"/>
-                                                <DoubleAnimation Storyboard.TargetName="CheckScale" 
-                                                                 Storyboard.TargetProperty="ScaleX"
-                                                                 From="0.3" To="1" Duration="0:0:0.3"
-                                                                 BeginTime="0:0:0.05">
-                                                    <DoubleAnimation.EasingFunction>
-                                                        <ElasticEase Oscillations="1" Springiness="6" EasingMode="EaseOut"/>
-                                                    </DoubleAnimation.EasingFunction>
-                                                </DoubleAnimation>
-                                                <DoubleAnimation Storyboard.TargetName="CheckScale" 
-                                                                 Storyboard.TargetProperty="ScaleY"
-                                                                 From="0.3" To="1" Duration="0:0:0.3"
-                                                                 BeginTime="0:0:0.05">
-                                                    <DoubleAnimation.EasingFunction>
-                                                        <ElasticEase Oscillations="1" Springiness="6" EasingMode="EaseOut"/>
-                                                    </DoubleAnimation.EasingFunction>
-                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="CheckScale" Storyboard.TargetProperty="ScaleX" From="0.3" To="1" Duration="0:0:0.2"/>
+                                                <DoubleAnimation Storyboard.TargetName="CheckScale" Storyboard.TargetProperty="ScaleY" From="0.3" To="1" Duration="0:0:0.2"/>
                                             </Storyboard>
                                         </BeginStoryboard>
                                     </Trigger.EnterActions>
-                                    <Trigger.ExitActions>
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetName="SelectionBorder" 
-                                                                 Storyboard.TargetProperty="Opacity"
-                                                                 To="0" Duration="0:0:0.15"/>
-                                                <DoubleAnimation Storyboard.TargetName="CheckMark" 
-                                                                 Storyboard.TargetProperty="Opacity"
-                                                                 To="0" Duration="0:0:0.1"/>
-                                                <DoubleAnimation Storyboard.TargetName="CheckMarkShadow" 
-                                                                 Storyboard.TargetProperty="Opacity"
-                                                                 To="0" Duration="0:0:0.1"/>
-                                                 <DoubleAnimation Storyboard.TargetName="CheckScale" 
-                                                                  Storyboard.TargetProperty="ScaleX"
-                                                                  To="0.5" Duration="0:0:0.1"/>
-                                                 <DoubleAnimation Storyboard.TargetName="CheckScale" 
-                                                                  Storyboard.TargetProperty="ScaleY"
-                                                                  To="0.5" Duration="0:0:0.1"/>
-                                                 <DoubleAnimation Storyboard.TargetName="CheckShadowScale" 
-                                                                  Storyboard.TargetProperty="ScaleX"
-                                                                  To="0.5" Duration="0:0:0.1"/>
-                                                 <DoubleAnimation Storyboard.TargetName="CheckShadowScale" 
-                                                                  Storyboard.TargetProperty="ScaleY"
-                                                                  To="0.5" Duration="0:0:0.1"/>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </Trigger.ExitActions>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -722,49 +452,82 @@
                            Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
             </StackPanel>
 
-            <!-- 颜色选择区域 -->
-            <ItemsControl x:Name="AccentColorItemsControl" Grid.Column="1" PreviewKeyDown="OnAccentColorPreviewKeyDown">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel x:Name="AccentColorWrapPanel" Orientation="Horizontal"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#0078D4" 
-                             IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#0078D4}"
-                             Click="OnColorRadioClick"/>
-                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#9333EA"
-                             IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance},  Converter={StaticResource ColorMatchConverter}, ConverterParameter=#9333EA}"
-                             Click="OnColorRadioClick"/>
-                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#107C10"
-                             IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance},  Converter={StaticResource ColorMatchConverter}, ConverterParameter=#107C10}"
-                             Click="OnColorRadioClick"/>
-                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#D13438"
-                             IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#D13438}"
-                             Click="OnColorRadioClick"/>
-                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#E3008C"
-                             IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#E3008C}"
-                             Click="OnColorRadioClick"/>
-                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#505050"
-                             IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#505050}"
-                             Click="OnColorRadioClick"/>
-                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#FF8C00"
-                             IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#FF8C00}"
-                             Click="OnColorRadioClick"/>
-                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#00B294"
-                             IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#00B294}"
-                             Click="OnColorRadioClick"/>
-                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#4F46E5"
-                             IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#4F46E5}"
-                             Click="OnColorRadioClick"/>
-                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#FFB900"
-                             IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#FFB900}"
-                             Click="OnColorRadioClick"/>
-                <RadioButton Style="{StaticResource AutoColorRadioStyle}"
-                             Tag="Auto"
-                             ToolTip="{DynamicResource L_Settings_General_Accent_Option_System}"
-                             IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=Auto}"
-                             Click="OnColorRadioClick"/>
-            </ItemsControl>
+            <StackPanel Grid.Column="1" HorizontalAlignment="Left">
+                <!-- 系统强调色分段长条 -->
+                <UniformGrid Rows="1"  Height="32" Margin="-0,0,-7,15" MaxWidth="350">
+                    <RadioButton Style="{StaticResource SystemAccentBarRadioStyle}" Tag="Auto_0"
+                                 Background="{Binding SystemColorShade0}"
+                                 IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=Auto_0}"
+                                 Click="OnColorRadioClick"/>
+                    <RadioButton Style="{StaticResource SystemAccentBarRadioStyle}" Tag="Auto_1"
+                                 Background="{Binding SystemColorShade1}"
+                                 IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=Auto_1}"
+                                 Click="OnColorRadioClick"/>
+                    <RadioButton Style="{StaticResource SystemAccentBarRadioStyle}" Tag="Auto_2"
+                                 Background="{Binding SystemColorShade2}"
+                                 IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=Auto_2}"
+                                 Click="OnColorRadioClick"/>
+                    <RadioButton Style="{StaticResource SystemAccentBarRadioStyle}" Tag="Auto_3"
+                                 Background="{Binding SystemColorShade3}"
+                                 IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=Auto_3}"
+                                 Click="OnColorRadioClick"/>
+                    <RadioButton Style="{StaticResource SystemAccentBarRadioStyle}" Tag="Auto_4"
+                                 Background="{Binding SystemColorShade4}"
+                                 IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=Auto_4}"
+                                 Click="OnColorRadioClick"/>
+                    <RadioButton Style="{StaticResource SystemAccentBarRadioStyle}" Tag="Auto_5"
+                                 Background="{Binding SystemColorShade5}"
+                                 IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=Auto_5}"
+                                 Click="OnColorRadioClick"/>
+                    <RadioButton Style="{StaticResource SystemAccentBarRadioStyle}" Tag="Auto_6"
+                                 Background="{Binding SystemColorShade6}"
+                                 IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=Auto_6}"
+                                 Click="OnColorRadioClick"/>
+                    <RadioButton Style="{StaticResource SystemAccentBarRadioStyle}" Tag="Auto_7"
+                                 Background="{Binding SystemColorShade7}"
+                                 IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=Auto_7}"
+                                 Click="OnColorRadioClick"/>
+                </UniformGrid>
+
+                <!-- 颜色选择区域 -->
+                <ItemsControl x:Name="AccentColorItemsControl" PreviewKeyDown="OnAccentColorPreviewKeyDown">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel x:Name="AccentColorWrapPanel" Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#0078D4" 
+                                 IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#0078D4}"
+                                 Click="OnColorRadioClick"/>
+                    <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#9333EA"
+                                 IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance},  Converter={StaticResource ColorMatchConverter}, ConverterParameter=#9333EA}"
+                                 Click="OnColorRadioClick"/>
+                    <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#107C10"
+                                 IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance},  Converter={StaticResource ColorMatchConverter}, ConverterParameter=#107C10}"
+                                 Click="OnColorRadioClick"/>
+                    <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#D13438"
+                                 IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#D13438}"
+                                 Click="OnColorRadioClick"/>
+                    <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#E3008C"
+                                 IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#E3008C}"
+                                 Click="OnColorRadioClick"/>
+                    <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#505050"
+                                 IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#505050}"
+                                 Click="OnColorRadioClick"/>
+                    <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#FF8C00"
+                                 IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#FF8C00}"
+                                 Click="OnColorRadioClick"/>
+                    <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#00B294"
+                                 IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#00B294}"
+                                 Click="OnColorRadioClick"/>
+                    <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#4F46E5"
+                                 IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#4F46E5}"
+                                 Click="OnColorRadioClick"/>
+                    <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#FFB900"
+                                 IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#FFB900}"
+                                 Click="OnColorRadioClick"/>
+                </ItemsControl>
+            </StackPanel>
         </Grid>
 
         <!-- 语言设置 -->

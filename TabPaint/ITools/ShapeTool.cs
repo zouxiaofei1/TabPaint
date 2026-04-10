@@ -880,67 +880,63 @@ public partial class ShapeTool : ToolBase
         double viewScale = ctx.ViewElement.ActualWidth / ctx.FullImageWidth;
         double displayThickness = thickness * viewScale;
 
+        Point viewPos = ctx.FromPixel(new Point(x, y));
+        Point viewSize = ctx.FromPixel(new Point(x + w, y + h));
+        double vw = viewSize.X - viewPos.X;
+        double vh = viewSize.Y - viewPos.Y;
+
+        Canvas.SetLeft(_previewShape, viewPos.X);
+        Canvas.SetTop(_previewShape, viewPos.Y);
+        _previewShape.Width = Math.Max(0, vw);
+        _previewShape.Height = Math.Max(0, vh);
+        _previewShape.StrokeThickness = displayThickness;
+
         if (_currentShapeType == ShapeType.Line)
         {
             var line = _previewShape as System.Windows.Shapes.Line;
-            if (line == null) return;
-            Point p1 = ctx.FromPixel(start);
-            Point p2 = ctx.FromPixel(end);
-            line.X1 = p1.X; line.Y1 = p1.Y; line.X2 = p2.X; line.Y2 = p2.Y;
-            line.StrokeThickness = displayThickness;
-        }
-        else
-        {
-            Point viewPos = ctx.FromPixel(new Point(x, y));
-            Point viewSize = ctx.FromPixel(new Point(x + w, y + h));
-            double vw = viewSize.X - viewPos.X;
-            double vh = viewSize.Y - viewPos.Y;
-
-            if (_previewShape is System.Windows.Shapes.Path path)
+            if (line != null)
             {
-                Rect r = new Rect(viewPos.X, viewPos.Y, vw, vh);
-                Point vStart = ctx.FromPixel(start);
-                Point vEnd = ctx.FromPixel(end);
-
-                switch (_currentShapeType)
-                {
-                    case ShapeType.Arrow:
-                        // 使用原始像素坐标计算头部长度，确保预览和渲染一致
-                        path.Data = BuildArrowGeometry(vStart, vEnd, Gethandlength(start, end));
-                        break;
-                    case ShapeType.Triangle:
-                        path.Data = BuildRegularPolygon(r, 3, -Math.PI / 2);
-                        break;
-                    case ShapeType.Diamond:
-                        path.Data = BuildRegularPolygon(r, 4, 0);
-                        break;
-                    case ShapeType.Pentagon:
-                        path.Data = BuildRegularPolygon(r, 5, -Math.PI / 2);
-                        break;
-                    case ShapeType.Star:
-                        path.Data = BuildStarGeometry(r);
-                        break;
-                    case ShapeType.Bubble:
-                        path.Data = BuildBubbleGeometry(r);
-                        break;
-                }
-                path.StrokeThickness = displayThickness;
+                Point p1 = ctx.FromPixel(start);
+                Point p2 = ctx.FromPixel(end);
+                line.X1 = p1.X - viewPos.X;
+                line.Y1 = p1.Y - viewPos.Y;
+                line.X2 = p2.X - viewPos.X;
+                line.Y2 = p2.Y - viewPos.Y;
             }
-            else
+        }
+        else if (_previewShape is System.Windows.Shapes.Path path)
+        {
+            Rect localR = new Rect(0, 0, vw, vh);
+            Point vStart = ctx.FromPixel(start);
+            Point vEnd = ctx.FromPixel(end);
+            Point localStart = new Point(vStart.X - viewPos.X, vStart.Y - viewPos.Y);
+            Point localEnd = new Point(vEnd.X - viewPos.X, vEnd.Y - viewPos.Y);
+
+            switch (_currentShapeType)
             {
-                Canvas.SetLeft(_previewShape, viewPos.X);
-                Canvas.SetTop(_previewShape, viewPos.Y);
-                _previewShape.Width = Math.Max(0, vw);
-                _previewShape.Height = Math.Max(0, vh);
-                _previewShape.StrokeThickness = displayThickness;
+                case ShapeType.Arrow:
+                    path.Data = BuildArrowGeometry(localStart, localEnd, Gethandlength(start, end));
+                    break;
+                case ShapeType.Triangle:
+                    path.Data = BuildRegularPolygon(localR, 3, -Math.PI / 2);
+                    break;
+                case ShapeType.Diamond:
+                    path.Data = BuildRegularPolygon(localR, 4, 0);
+                    break;
+                case ShapeType.Pentagon:
+                    path.Data = BuildRegularPolygon(localR, 5, -Math.PI / 2);
+                    break;
+                case ShapeType.Star:
+                    path.Data = BuildStarGeometry(localR);
+                    break;
+                case ShapeType.Bubble:
+                    path.Data = BuildBubbleGeometry(localR);
+                    break;
             }
         }
 
-        if (_previewShape != null)
-        {
-            _previewShape.RenderTransformOrigin = new Point(0.5, 0.5);
-            _previewShape.RenderTransform = new RotateTransform(_rotationAngle);
-        }
+        _previewShape.RenderTransformOrigin = new Point(0.5, 0.5);
+        _previewShape.RenderTransform = new RotateTransform(_rotationAngle);
     }
 
     private double Gethandlength(Point start, Point end)

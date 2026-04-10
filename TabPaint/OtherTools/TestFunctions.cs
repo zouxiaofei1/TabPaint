@@ -274,7 +274,7 @@ namespace TabPaint
             string stored = value.ToString();
             string param = parameter.ToString();
 
-            if (stored == "Auto" || param == "Auto")
+            if (stored == "Auto" || param == "Auto" || stored.StartsWith("Auto_") || param.StartsWith("Auto_"))
             {
                 return stored.Equals(param, StringComparison.OrdinalIgnoreCase);
             }
@@ -308,6 +308,18 @@ namespace TabPaint
 
             return color;
         }
+    }
+
+    public class TagToCornerRadiusConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            string tag = value?.ToString();
+            if (tag == "Auto_0") return new CornerRadius(6, 0, 0, 6);
+            if (tag == "Auto_7") return new CornerRadius(0, 6, 6, 0);
+            return new CornerRadius(0);
+        }
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
     }
 
     public class ZoomToInverseValueConverter : IValueConverter

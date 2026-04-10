@@ -16,6 +16,7 @@
 
             <local:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
             <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+            <local:BindingProxy x:Key="Proxy" Data="{Binding IsSingleTabMode, ElementName=RootControl}"/>
         </ResourceDictionary>
     </UserControl.Resources>
     <Border x:Name="MainContainer"
@@ -260,19 +261,35 @@
                                                     </MenuItem.Icon>
                                       
                                                 </MenuItem>
-                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}"
-                        Header="{DynamicResource L_Ctx_CloseOtherTabs}"
-                        Click="Internal_OnTabCloseOthersClick"
-                        Tag="{Binding}">
+                                                <MenuItem Header="{DynamicResource L_Ctx_CloseOtherTabs}"
+                                                          Click="Internal_OnTabCloseOthersClick"
+                                                          Tag="{Binding}">
+                                                    <MenuItem.Style>
+                                                        <Style TargetType="MenuItem" BasedOn="{StaticResource Win11MenuItemStyle}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Data, Source={StaticResource Proxy}}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </MenuItem.Style>
                                                     <MenuItem.Icon>
                                                         <Path Data="{DynamicResource New_Window_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
 
-                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}"
-                                                          Header="{DynamicResource L_Menu_Tab_MoveToNewWindow}"
+                                                <MenuItem Header="{DynamicResource L_Menu_Tab_MoveToNewWindow}"
                                                           Click="Internal_OnTabMoveToNewWindowClick"
                                                           Tag="{Binding}">
+                                                    <MenuItem.Style>
+                                                        <Style TargetType="MenuItem" BasedOn="{StaticResource Win11MenuItemStyle}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Data, Source={StaticResource Proxy}}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </MenuItem.Style>
                                                     <MenuItem.Icon>
                                                         <Path Data="{DynamicResource New_Window_Image}" Fill="{DynamicResource IconFillBrush}" Stretch="Uniform" Width="14" Height="14" />
                                                     </MenuItem.Icon>

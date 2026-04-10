@@ -46,9 +46,10 @@ namespace TabPaint
                     ApplyTheme(AppTheme.System);
                 }
                 
-                if (SettingsManager.Instance.Current.ThemeAccentColor == "Auto")
+                string currentAccent = SettingsManager.Instance.Current.ThemeAccentColor;
+                if (currentAccent != null && (currentAccent == "Auto" || currentAccent.StartsWith("Auto_")))
                 {
-                    RefreshAccentColor("Auto");
+                    RefreshAccentColor(currentAccent);
                 }
             }
         }
@@ -154,6 +155,25 @@ namespace TabPaint
             if (hexColor == "Auto")
             {
                 hexColor = GetSystemAccentColorHex();
+            }
+            else if (hexColor != null && hexColor.StartsWith("Auto_"))
+            {
+                string baseHex = GetSystemAccentColorHex();
+                Color baseColor = (Color)ColorConverter.ConvertFromString(baseHex);
+                
+                // 根据索引调整亮度: 0->最浅, 1->较浅, 2->原生, 3->较深
+                float factor = 0;
+                if (hexColor == "Auto_0") factor = 0.4f;
+                else if (hexColor == "Auto_1") factor = 0.3f;
+                else if (hexColor == "Auto_2") factor = 0.2f;
+                else if (hexColor == "Auto_3") factor = 0.1f;
+                else if (hexColor == "Auto_4") factor = 0f;
+                else if (hexColor == "Auto_5") factor = -0.1f;
+                else if (hexColor == "Auto_6") factor = -0.2f;
+                else if (hexColor == "Auto_7") factor = -0.3f;
+
+                Color adjustedColor = ChangeColorBrightness(baseColor, factor);
+                hexColor = adjustedColor.ToString();
             }
 
             UpdateAccentResources(hexColor);

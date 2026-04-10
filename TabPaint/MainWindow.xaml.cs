@@ -79,6 +79,9 @@ namespace TabPaint
 
         private UIHandlers.DropZoneWindow? _dropZone;
 
+        private DateTime _lastFirstImageToastTime = DateTime.MinValue;
+        private DateTime _lastLastImageToastTime = DateTime.MinValue;
+
         private bool _shouldLoadSession = true;
         private bool _startupTraceFlushed = false;
 
@@ -207,12 +210,14 @@ namespace TabPaint
             {
                 ImageFilesCount = _imageFiles.Count;
                 OnPropertyChanged(nameof(CanNavigateImages));
+                UpdateImageBarVisibilityState();
             };
 
             this.Loaded += (s, e) =>
             {
                 ImageFilesCount = _imageFiles.Count;
                 OnPropertyChanged(nameof(CanNavigateImages));
+                UpdateImageBarVisibilityState();
             };
 
             QuickFormatPopup.FormatSelected += OnQuickFormatSelected;
@@ -1025,7 +1030,11 @@ namespace TabPaint
                 newIndex = newIndex % _imageFiles.Count; // 循环回到开头附近
                 if (gap == 1)
                 {
-                    ShowToast("L_Toast_FirstImage");
+                    if ((DateTime.Now - _lastFirstImageToastTime).TotalSeconds > 15)
+                    {
+                        ShowToast("L_Toast_FirstImage");
+                        _lastFirstImageToastTime = DateTime.Now;
+                    }
                     TriggerNavButtonAnimation(NextImageButton);
                 }
             }
@@ -1034,7 +1043,11 @@ namespace TabPaint
                 newIndex = (_imageFiles.Count + (newIndex % _imageFiles.Count)) % _imageFiles.Count;
                 if (gap == 1)
                 {
-                    ShowToast("L_Toast_LastImage");
+                    if ((DateTime.Now - _lastLastImageToastTime).TotalSeconds > 15)
+                    {
+                        ShowToast("L_Toast_LastImage");
+                        _lastLastImageToastTime = DateTime.Now;
+                    }
                     TriggerNavButtonAnimation(PrevImageButton);
                 }
             }
