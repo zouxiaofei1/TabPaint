@@ -284,5 +284,68 @@ namespace TabPaint
                 }
             }
         }
+
+        private void OnTabMoveToNewWindowClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem item && item.Tag is FileTabItem tab)
+            {
+                // 1. 如果只有一个标签页，没必要移动到新窗口（已经是独立窗口了）
+                // 但考虑到用户可能想要一个干净的新进程/新窗口，这里还是允许
+                
+                // 2. 准备转移
+                // 如果是当前活动的标签页，先确保保存/备份
+                if (tab == _currentTabItem)
+                {
+                    UpdateTabThumbnail(tab);
+                    TriggerBackgroundBackup();
+                }
+
+                // 3. 创建新窗口
+                MainWindow newWindow = new MainWindow(tab.FilePath);
+                newWindow.Show();
+
+                // 4. 在新窗口中打开该标签页
+                // 由于目前 TabPaint 的架构，跨窗口移动 Tab 较为复杂
+                // 简化的方案是：在新窗口打开同样的路径/备份，并在旧窗口关闭它
+                
+                // 处理虚拟路径/新建文件
+                if (tab.IsNew)
+                {
+                    // 如果有备份，在新窗口恢复备份
+                    if (!string.IsNullOrEmpty(tab.BackupPath) && File.Exists(tab.BackupPath))
+                    {
+                        _ = newWindow.OpenImageAndTabs(tab.BackupPath);
+                    }
+                    else
+                    {
+                        // 实在没有备份（刚新建还没画），就开个新的
+                        newWindow.CreateNewTab(switchto: true);
+                    }
+                }
+                else
+                {
+                    _ = newWindow.OpenImageAndTabs(tab.FilePath);
+                }
+
+                // 5. 关闭当前窗口的标签页
+                CloseTab(tab);
+            }
+        }
+
+        private void OnTabNewTabRightClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem item && item.Tag is FileTabItem tab)
+            {
+                int index = FileTabs.IndexOf(tab);
+                if (index >= 0)
+                {
+                    CreateNewTab(tabposition: TabInsertPosition.AfterCurrent, switchto: true, insertIndex: index + 1);
+                }
+                else
+                {
+                    CreateNewTab(tabposition: TabInsertPosition.AfterCurrent, switchto: true);
+                }
+            }
+        }
     }
 }

@@ -875,7 +875,7 @@ namespace TabPaint
             AtEnd,
             AtStart
         }
-        private void CreateNewTab(TabInsertPosition tabposition = TabInsertPosition.AfterCurrent, bool switchto = false)
+        private void CreateNewTab(TabInsertPosition tabposition = TabInsertPosition.AfterCurrent, bool switchto = false, int? insertIndex = null)
         {
             int availableNumber = GetNextAvailableUntitledNumber();
             string uniqueId = $"Virtual_{Guid.NewGuid():N}";
@@ -902,9 +902,9 @@ namespace TabPaint
             _imageFiles.Insert(listInsertIndex, virtualPath);
             ImageFilesCount = _imageFiles.Count;
 
-            int uiInsertIndex = _currentTabItem != null ? FileTabs.IndexOf(_currentTabItem) + 1 : FileTabs.Count;
+            int uiInsertIndex = insertIndex ?? (_currentTabItem != null ? FileTabs.IndexOf(_currentTabItem) + 1 : FileTabs.Count);
             if (tabposition == TabInsertPosition.AfterCurrent)
-                FileTabs.Insert(uiInsertIndex, newTab);
+                FileTabs.Insert(Math.Clamp(uiInsertIndex, 0, FileTabs.Count), newTab);
             if (tabposition == TabInsertPosition.AtEnd)
             {
                 FileTabs.Add(newTab);

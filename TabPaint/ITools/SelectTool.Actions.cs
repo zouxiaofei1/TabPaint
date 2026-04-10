@@ -523,7 +523,7 @@ namespace TabPaint
                         _selectionRect = _preRotationRect;
 
                         // 重新旋转渲染
-                        UpdateRotation(ctx, (int)_rotationAngle, false);
+                        UpdateRotation(ctx, _rotationAngle, false);
                     }
                     else
                     {
@@ -817,14 +817,14 @@ namespace TabPaint
                 _transformStep++;
             }
 
-            public void UpdateRotation(ToolContext ctx, int angle, bool commit)
+            public void UpdateRotation(ToolContext ctx, double angle, bool commit)
             {
                 if (_preRotationSelectionData == null || ctx == null) return;
                 _rotationAngle = angle;
 
                 // 强制限制角度在 [-180, 180] 范围内，避免 UI 滑块等引起的问题
-                if (_rotationAngle > 180) _rotationAngle -= 360;
-                if (_rotationAngle < -180) _rotationAngle += 360;
+                while (_rotationAngle > 180) _rotationAngle -= 360;
+                while (_rotationAngle < -180) _rotationAngle += 360;
 
                 // 性能优化：矩形选区在预览阶段不重绘像素，仅使用 RenderTransform
                 // 注意：由于不应更改套索和魔棒逻辑，此处仅针对矩形选区进行预览优化
@@ -856,7 +856,7 @@ namespace TabPaint
                 double targetW = _preRotationRect.Width;
                 double targetH = _preRotationRect.Height;
 
-                var rotateTransform = new RotateTransform(angle, targetW / 2.0, targetH / 2.0);
+                var rotateTransform = new RotateTransform(_rotationAngle, targetW / 2.0, targetH / 2.0);
                 Rect rect = new Rect(0, 0, targetW, targetH);
                 Rect rotatedBounds = rotateTransform.TransformBounds(rect);
 
@@ -870,7 +870,7 @@ namespace TabPaint
                 {
                     RenderOptions.SetBitmapScalingMode(dv, BitmapScalingMode.HighQuality);
                     dc.PushTransform(new TranslateTransform(-rotatedBounds.X, -rotatedBounds.Y));
-                    dc.PushTransform(new RotateTransform(angle, targetW / 2.0, targetH / 2.0));
+                    dc.PushTransform(new RotateTransform(_rotationAngle, targetW / 2.0, targetH / 2.0));
                     dc.DrawImage(srcBmp, rect);
                 }
 
@@ -931,7 +931,7 @@ namespace TabPaint
             {
                 if (_preRotationSelectionData != null && Math.Abs(_rotationAngle) > 0.01)
                 {
-                    UpdateRotation(ctx, (int)_rotationAngle, true);
+                    UpdateRotation(ctx, _rotationAngle, true);
                 }
             }
 
@@ -974,7 +974,7 @@ namespace TabPaint
                 }
             }
 
-            public void RotateSelection(ToolContext ctx, int angle)
+            public void RotateSelection(ToolContext ctx, double angle)
             {
                 PrepareRotation(ctx);
                 UpdateRotation(ctx, angle, true);

@@ -268,6 +268,23 @@
                                                     </MenuItem.Icon>
                                                 </MenuItem>
 
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}"
+                                                          Header="{DynamicResource L_Menu_Tab_MoveToNewWindow}"
+                                                          Click="Internal_OnTabMoveToNewWindowClick"
+                                                          Tag="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <Path Data="{DynamicResource New_Window_Image}" Fill="{DynamicResource IconFillBrush}" Stretch="Uniform" Width="14" Height="14" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}"
+                                                          Header="{DynamicResource L_Menu_Tab_NewTabRight}"
+                                                          Click="Internal_OnTabNewTabRightClick"
+                                                          Tag="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <Path Data="{DynamicResource Attachright_Image}" Fill="{DynamicResource IconFillBrush}" Stretch="Uniform" Width="14" Height="14" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+
                                                 <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Ctx_DeleteFile}" 
                              Visibility="{Binding IsNew, Converter={StaticResource InverseBoolToVis}}"
                              Click="Internal_OnTabFileDeleteClick" Foreground="Red" Tag="{Binding}">
@@ -333,7 +350,7 @@
                                                 <Setter Property="Background" Value="Transparent"/>
                                                 <Setter Property="BorderBrush" Value="{DynamicResource BorderMediumBrush}"/>
                                                 <Setter Property="BorderThickness" Value="1"/>
-                                                <Setter Property="Width" Value="120"/>
+                                                <Setter Property="Width" Value="{Binding CurrentTabWidth, ElementName=RootControl}"/>
                                                 <Setter Property="Height" Value="80"/>
                                                 <Setter Property="ToolTip" Value="{Binding FileName}"/>
                                                 <Style.Triggers>
@@ -348,7 +365,6 @@
                                                         <Setter Property="BorderBrush" Value="{DynamicResource ListItemSelectedBorderBrush}"/>
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding IsCompactMode, ElementName=RootControl}" Value="True">
-                                                        <Setter Property="Width" Value="150"/>
                                                         <Setter Property="ToolTip" Value="{x:Null}"/>
                                                         <Setter Property="Height" Value="32"/>
                                                         <Setter Property="Padding" Value="8,0,8,0"/>

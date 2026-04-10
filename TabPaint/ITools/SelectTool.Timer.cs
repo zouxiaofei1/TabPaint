@@ -69,16 +69,30 @@ namespace TabPaint
                     Mouse.OverrideCursor = null;
 
                     _draggingSelection = false;
-                    EnsureRotationBaked(ctxForTimer);
-                    int w = _originalRect.Width > 0 ? _originalRect.Width : _selectionRect.Width;
-                    int h = _originalRect.Height > 0 ? _originalRect.Height : _selectionRect.Height;
+
                     byte[] dataClone = null;
-                    if (_selectionData != null)
+                    int w, h;
+                    double? angle = null;
+
+                    if (_preRotationSelectionData != null && Math.Abs(_rotationAngle) > 0.01)
                     {
-                        dataClone = new byte[_selectionData.Length];
-                        Array.Copy(_selectionData, dataClone, _selectionData.Length);
+                        w = _preRotationDataWidth;
+                        h = _preRotationDataHeight;
+                        angle = _rotationAngle;
+                        dataClone = (byte[])_preRotationSelectionData.Clone();
                     }
-                    mw.TransferSelectionToTab(_pendingTab, dataClone, w, h);
+                    else
+                    {
+                        EnsureRotationBaked(ctxForTimer);
+                        w = _originalRect.Width > 0 ? _originalRect.Width : _selectionRect.Width;
+                        h = _originalRect.Height > 0 ? _originalRect.Height : _selectionRect.Height;
+                        if (_selectionData != null)
+                        {
+                            dataClone = (byte[])_selectionData.Clone();
+                        }
+                    }
+
+                    mw.TransferSelectionToTab(_pendingTab, dataClone, w, h, angle);
 
                     ResetSwitchTimer();
                 }

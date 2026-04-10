@@ -71,6 +71,7 @@ namespace TabPaint.Controls
             InitializeComponent();
             this.Loaded += ImageBarControl_Loaded;
             this.Unloaded += ImageBarControl_Unloaded;
+            this.SizeChanged += (s, e) => UpdateTabWidth();
 
             _hoverTimer = new DispatcherTimer();
             _hoverTimer.Interval = TimeSpan.FromSeconds(0.2); // 0.2s 后显示基础预览
@@ -459,6 +460,13 @@ namespace TabPaint.Controls
         }
         private void ImageBarControl_Loaded(object sender, RoutedEventArgs e)
         {
+            var mw = MainWindow.GetCurrentInstance();
+            if (mw != null && mw.FileTabs != null)
+            {
+                mw.FileTabs.CollectionChanged -= FileTabs_CollectionChanged;
+                mw.FileTabs.CollectionChanged += FileTabs_CollectionChanged;
+            }
+
             var window = Window.GetWindow(this);
             if (window != null)
             {
@@ -472,9 +480,21 @@ namespace TabPaint.Controls
                 var source = HwndSource.FromHwnd(new WindowInteropHelper(window).Handle);
                 source?.AddHook(WndProc);
             }
+            UpdateTabWidth();
+        }
+
+        private void FileTabs_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            UpdateTabWidth();
         }
         private void ImageBarControl_Unloaded(object sender, RoutedEventArgs e)
         {
+            var mw = MainWindow.GetCurrentInstance();
+            if (mw != null && mw.FileTabs != null)
+            {
+                mw.FileTabs.CollectionChanged -= FileTabs_CollectionChanged;
+            }
+
             if (_hostWindow != null)
             {
                 _hostWindow.Deactivated -= HostWindow_Deactivated;
@@ -565,6 +585,8 @@ namespace TabPaint.Controls
         public event RoutedEventHandler TabOpenFolderClick;
         public event RoutedEventHandler TabDeleteClick;
         public event RoutedEventHandler TabCloseOthersClick;
+        public event RoutedEventHandler TabMoveToNewWindowClick;
+        public event RoutedEventHandler TabNewTabRightClick;
         public event RoutedEventHandler TabFileDeleteClick;
 
         private void Internal_OnTabCopyClick(object sender, RoutedEventArgs e) => TabCopyClick?.Invoke(sender, e);
@@ -573,6 +595,8 @@ namespace TabPaint.Controls
         private void Internal_OnTabOpenFolderClick(object sender, RoutedEventArgs e) => TabOpenFolderClick?.Invoke(sender, e);
         private void Internal_OnTabDeleteClick(object sender, RoutedEventArgs e) => TabDeleteClick?.Invoke(sender, e);
         private void Internal_OnTabCloseOthersClick(object sender, RoutedEventArgs e) => TabCloseOthersClick?.Invoke(sender, e);
+        private void Internal_OnTabMoveToNewWindowClick(object sender, RoutedEventArgs e) => TabMoveToNewWindowClick?.Invoke(sender, e);
+        private void Internal_OnTabNewTabRightClick(object sender, RoutedEventArgs e) => TabNewTabRightClick?.Invoke(sender, e);
         private void Internal_OnTabFileDeleteClick(object sender, RoutedEventArgs e) => TabFileDeleteClick?.Invoke(sender, e);
 
         public event MouseButtonEventHandler FileTabPreviewMouseDown;
@@ -695,6 +719,16 @@ namespace TabPaint.Controls
             get { return (bool)GetValue(IsCompactModeProperty); }
             set { SetValue(IsCompactModeProperty, value); }
         }
+
+        public static readonly DependencyProperty CurrentTabWidthProperty =
+            DependencyProperty.Register("CurrentTabWidth", typeof(double), typeof(ImageBarControl), new PropertyMetadata(150.0));
+
+        public double CurrentTabWidth
+        {
+            get { return (double)GetValue(CurrentTabWidthProperty); }
+            set { SetValue(CurrentTabWidthProperty, value); }
+        }
+
         public double DesiredHeight
         {
             get { return (double)GetValue(DesiredHeightProperty); }
@@ -712,8 +746,51 @@ namespace TabPaint.Controls
             {
                 // 切换模式时调整容器的预期高度，以便动画正常工作
                 ctrl.DesiredHeight = (bool)e.NewValue ? 45.0 : 100.0;
+                ctrl.UpdateTabWidth();
                 ctrl.InvalidateVisual();
             }
+        }
+
+        private void UpdateTabWidth()
+        {
+            if (!IsCompactMode)
+            {
+                CurrentTabWidth = 120.0;
+                return;
+            }
+
+            var mw = MainWindow.GetCurrentInstance();
+            if (mw == null || mw.FileTabs == null || mw.FileTabs.Count == 0)
+            {
+                CurrentTabWidth = 150.0;
+                return;
+            }
+
+            double availableWidth = FileTabsScroller.ActualWidth;
+            if (availableWidth <= 0)
+            {
+                // 如果还没加载好，延迟一下再算
+                Dispatcher.BeginInvoke(new Action(UpdateTabWidth), System.Windows.Threading.DispatcherPriority.Loaded);
+                return;
+            }
+
+            // 扣除“新建”按钮的宽度（大约 32-40px，包括 Margin）
+            double reservedWidth = NewTabBtn.ActualWidth + NewTabBtn.Margin.Left + NewTabBtn.Margin.Right + 10;
+            if (LeftAddBtn.Visibility == Visibility.Visible)
+            {
+                reservedWidth += LeftAddBtn.ActualWidth + LeftAddBtn.Margin.Left + LeftAddBtn.Margin.Right;
+            }
+
+            double tabAreaWidth = availableWidth - reservedWidth;
+            int count = mw.FileTabs.Count;
+
+            double idealWidth = tabAreaWidth / count;
+
+            // 限制在 60 到 150 之间
+            if (idealWidth > 150.0) idealWidth = 150.0;
+            if (idealWidth < 60.0) idealWidth = 60.0;
+
+            CurrentTabWidth = idealWidth;
         }
         private void Internal_OnToggleViewModeClick(object sender, RoutedEventArgs e)
         {

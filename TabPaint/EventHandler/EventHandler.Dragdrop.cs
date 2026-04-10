@@ -234,8 +234,14 @@ namespace TabPaint
                         string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
                         if (files != null && files.Length > 0)
                         {
+                            double? angle = null;
+                            if (e.Data.GetDataPresent("TabPaintSelectionAngle"))
+                            {
+                                angle = e.Data.GetData("TabPaintSelectionAngle") as double?;
+                            }
+
                             Point pos = e.GetPosition(BackgroundImage);
-                            InsertImageToCanvas(files[0], pos);
+                            InsertImageToCanvas(files[0], pos, angle);
                         }
                     }
                 }
@@ -469,7 +475,7 @@ namespace TabPaint
             catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
         }
 
-        private void InsertImageToCanvas(string filePath, Point? dropPos = null)
+        private void InsertImageToCanvas(string filePath, Point? dropPos = null, double? rotationAngle = null)
         {
             try
             {
@@ -527,7 +533,7 @@ namespace TabPaint
 
                 if (_tools.Select is SelectTool st)
                 {
-                    st.InsertImageAsSelection(_ctx, bitmap, true, dropPos);
+                    st.InsertImageAsSelection(_ctx, bitmap, true, dropPos, rotationAngle);
                 }
             }
             catch (Exception ex)

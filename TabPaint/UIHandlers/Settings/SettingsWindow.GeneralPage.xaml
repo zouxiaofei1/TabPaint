@@ -723,10 +723,10 @@
             </StackPanel>
 
             <!-- 颜色选择区域 -->
-            <ItemsControl Grid.Column="1">
+            <ItemsControl x:Name="AccentColorItemsControl" Grid.Column="1" PreviewKeyDown="OnAccentColorPreviewKeyDown">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <WrapPanel Orientation="Horizontal"/>
+                        <WrapPanel x:Name="AccentColorWrapPanel" Orientation="Horizontal"/>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#0078D4" 

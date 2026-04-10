@@ -11,7 +11,7 @@ namespace TabPaint.Controls
     {
         private const int MinAngle = -180;
         private const int MaxAngle = 180;
-        private const double VisibleAngleRange = 30.0;
+        private const double VisibleAngleRange = 60.0;
 
         public event RoutedEventHandler? AngleChanged;
 
@@ -28,11 +28,13 @@ namespace TabPaint.Controls
         }
 
         private bool _isDragging = false;
-        private int _currentAngle = 0;
+        private double _currentAngle = 0;
+        private double _dragStartAngle = 0;
+        private double _dragStartMouseX = 0;
 
-        public int CurrentAngle => _currentAngle;
+        public double CurrentAngle => _currentAngle;
 
-        private static int ClampAngle(int value)
+        private static double ClampAngle(double value)
         {
             if (value < MinAngle) return MinAngle;
             if (value > MaxAngle) return MaxAngle;
@@ -57,11 +59,13 @@ namespace TabPaint.Controls
             Brush normalBrush = ResolveBrush("TextSecondaryBrush", new SolidColorBrush(Color.FromArgb(120, 150, 150, 150)));
             Brush focusBrush = ResolveBrush("TextPrimaryBrush", new SolidColorBrush(Color.FromArgb(220, 200, 200, 200)));
 
+            // 计算可见角度范围，支持平滑滚动
             double visibleStart = _currentAngle - VisibleAngleRange / 2.0;
             double visibleEnd = _currentAngle + VisibleAngleRange / 2.0;
 
-            int startAngle = (int)Math.Ceiling(visibleStart);
-            int endAngle = (int)Math.Floor(visibleEnd);
+            // 稍微扩大绘制边界，避免边缘刻度突然消失
+            int startAngle = (int)Math.Floor(visibleStart) - 1;
+            int endAngle = (int)Math.Ceiling(visibleEnd) + 1;
 
             for (int angle = startAngle; angle <= endAngle; angle++)
             {
@@ -91,31 +95,25 @@ namespace TabPaint.Controls
             }
         }
 
-        private int PositionToAngle(Point p)
-        {
-            if (RotateTickCanvas == null || RotateTickCanvas.ActualWidth <= 0) return _currentAngle;
-
-            double x = p.X;
-            if (x < 0) x = 0;
-            if (x > RotateTickCanvas.ActualWidth) x = RotateTickCanvas.ActualWidth;
-
-            double normalized = x / RotateTickCanvas.ActualWidth;
-            double offset = (normalized - 0.5) * VisibleAngleRange;
-            int angle = (int)Math.Round(_currentAngle + offset);
-            return ClampAngle(angle);
-        }
-
-        private void UpdateAngle(int angle, bool raiseEvent)
+        private void UpdateAngle(double angle, bool raiseEvent)
         {
             angle = ClampAngle(angle);
+            
+            // Shift 键吸附
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
+            {
+                angle = Math.Round(angle / 15.0) * 15.0;
+            }
+
+            double oldAngle = _currentAngle;
             _currentAngle = angle;
 
             if (FindName("RotateAngleText") is TextBlock angleText)
-                angleText.Text = $"{angle}°";
+                angleText.Text = $"{(int)Math.Round(angle)}°";
 
             DrawTicks();
 
-            if (raiseEvent)
+            if (raiseEvent && Math.Abs(oldAngle - _currentAngle) > 0.001)
                 AngleChanged?.Invoke(this, new RoutedEventArgs());
         }
 
@@ -124,8 +122,10 @@ namespace TabPaint.Controls
             _isDragging = true;
             RotateBarBorder.CaptureMouse();
 
-            int angle = PositionToAngle(e.GetPosition(RotateTickCanvas));
-            UpdateAngle(angle, true);
+            Point pos = e.GetPosition(RotateTickCanvas);
+            _dragStartMouseX = pos.X;
+            _dragStartAngle = _currentAngle;
+
             e.Handled = true;
         }
 
@@ -133,8 +133,17 @@ namespace TabPaint.Controls
         {
             if (!_isDragging || e.LeftButton != MouseButtonState.Pressed) return;
 
-            int angle = PositionToAngle(e.GetPosition(RotateTickCanvas));
-            UpdateAngle(angle, true);
+            Point pos = e.GetPosition(RotateTickCanvas);
+            double deltaX = pos.X - _dragStartMouseX;
+            double width = RotateTickCanvas.ActualWidth;
+
+            if (width > 0)
+            {
+                // 线性映射：鼠标移动一个容器宽度，旋转一个量程的角度
+                double deltaAngle = (deltaX / width) * VisibleAngleRange;
+                UpdateAngle(_dragStartAngle + deltaAngle, true);
+            }
+            
             e.Handled = true;
         }
 
@@ -166,7 +175,7 @@ namespace TabPaint.Controls
             }
         }
 
-        public void SetValue(int value)
+        public void SetValue(double value)
         {
             UpdateAngle(value, false);
         }

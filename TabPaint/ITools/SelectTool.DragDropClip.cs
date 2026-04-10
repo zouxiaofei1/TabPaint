@@ -21,16 +21,31 @@ namespace TabPaint
             private void StartDragDropOperation(ToolContext ctx)
             {
                 if (_selectionData == null) return;
-                EnsureRotationBaked(ctx);
 
-                int width = _originalRect.Width > 0 ? _originalRect.Width : _selectionRect.Width;
-                int height = _originalRect.Height > 0 ? _originalRect.Height : _selectionRect.Height;
-                byte[] data = _selectionData;
+                // 记录旋转信息以便跨窗口传递
+                double dragAngle = _rotationAngle;
+                Int32Rect dragPreRect = _preRotationRect;
+                bool hasRotation = _preRotationSelectionData != null && Math.Abs(dragAngle) > 0.01;
+
+                byte[] data;
+                int width, height;
+
+                if (hasRotation)
+                {
+                    data = _preRotationSelectionData;
+                    width = _preRotationDataWidth;
+                    height = _preRotationDataHeight;
+                }
+                else
+                {
+                    EnsureRotationBaked(ctx);
+                    width = _originalRect.Width > 0 ? _originalRect.Width : _selectionRect.Width;
+                    height = _originalRect.Height > 0 ? _originalRect.Height : _selectionRect.Height;
+                    data = _selectionData;
+                }
+
                 if (width == 0 || height == 0) return;
-                int stride = width * 4;
-                int expectedStride = _originalRect.Width * 4;
-                int actualStride = _selectionData.Length / _originalRect.Height;
-                int dataStride = Math.Min(expectedStride, actualStride);
+                int dataStride = width * 4;
                 var bitmapSource = BitmapSource.Create(
                     width, height,
                     ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
@@ -54,7 +69,14 @@ namespace TabPaint
                     var dataObject = new System.Windows.DataObject();
 
                     dataObject.SetData(System.Windows.DataFormats.FileDrop, new string[] { tempFilePath });
-                    dataObject.SetData("TabPaintSelectionDrag", true); dataObject.SetData("TabPaintSourceWindow", ctx.ParentWindow.GetHashCode());
+                    dataObject.SetData("TabPaintSelectionDrag", true);
+                    dataObject.SetData("TabPaintSourceWindow", ctx.ParentWindow.GetHashCode());
+
+                    if (hasRotation)
+                    {
+                        dataObject.SetData("TabPaintSelectionAngle", dragAngle);
+                        dataObject.SetData("TabPaintSelectionPreRect", dragPreRect);
+                    }
 
                     if (_hasLifted)
                     {
@@ -317,7 +339,7 @@ namespace TabPaint
                 }
             }
 
-            public void InsertImageAsSelection(ToolContext ctx, BitmapSource sourceBitmap, bool expandCanvas = true, Point? dropPos = null)
+            public void InsertImageAsSelection(ToolContext ctx, BitmapSource sourceBitmap, bool expandCanvas = true, Point? dropPos = null, double? rotationAngle = null)
             {
 
                 // 1. 提交当前的选区（如果有）
@@ -436,9 +458,25 @@ namespace TabPaint
                 ctx.SelectionPreview.Width = imgW;
                 ctx.SelectionPreview.Height = imgH;
 
-                // 绘制 8 个句柄和虚线框
-                DrawOverlay(ctx, _selectionRect);
-                _transformStep = 0;
+                if (rotationAngle.HasValue && Math.Abs(rotationAngle.Value) > 0.01)
+                {
+                    _rotationAngle = rotationAngle.Value;
+                    _preRotationSelectionData = (byte[])_selectionData.Clone();
+                    _preRotationDataWidth = imgW;
+                    _preRotationDataHeight = imgH;
+                    _preRotationRect = _selectionRect;
+                    _originalRect = _selectionRect;
+                    _transformStep = 1;
+
+                    // 应用旋转效果
+                    UpdateRotation(ctx, (int)_rotationAngle, false);
+                }
+                else
+                {
+                    // 绘制 8 个句柄和虚线框
+                    DrawOverlay(ctx, _selectionRect);
+                    _transformStep = 0;
+                }
                 _hasLifted = true;
 
                 mw.UpdateSelectionToolBarPosition();

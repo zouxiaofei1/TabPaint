@@ -79,6 +79,8 @@ SetZoom(targetScale, slient: true);
             MainImageBar.TabOpenFolderClick += OnTabOpenFolderClick;
             MainImageBar.TabDeleteClick += OnTabDeleteClick;
             MainImageBar.TabCloseOthersClick += OnTabCloseOthersClick;
+            MainImageBar.TabMoveToNewWindowClick += OnTabMoveToNewWindowClick;
+            MainImageBar.TabNewTabRightClick += OnTabNewTabRightClick;
             MainImageBar.TabFileDeleteClick += OnTabFileDeleteClick;
             ImageBarHolder.Content = MainImageBar;
             if (MainImageBar != null)

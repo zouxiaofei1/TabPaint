@@ -1523,8 +1523,9 @@ namespace TabPaint
         private byte[] _transferSelectionData;
         private int _transferWidth;
         private int _transferHeight;
+        private double? _transferAngle;
 
-        public async void TransferSelectionToTab(FileTabItem targetTab, byte[] selectionData, int width, int height)
+        public async void TransferSelectionToTab(FileTabItem targetTab, byte[] selectionData, int width, int height, double? angle = null)
         {
             if (targetTab == null || targetTab == _currentTabItem) return;
 
@@ -1532,6 +1533,7 @@ namespace TabPaint
             _transferSelectionData = selectionData;
             _transferWidth = width;
             _transferHeight = height;
+            _transferAngle = angle;
             try
             {
                 SwitchToTab(targetTab);
@@ -1560,7 +1562,7 @@ namespace TabPaint
                     _ctx.SelectionPreview.Visibility = Visibility.Collapsed;
                     _ctx.SelectionPreview.Source = null;
                 }
-                st.InsertImageAsSelection(_ctx, bmp, expandCanvas: true);
+                st.InsertImageAsSelection(_ctx, bmp, expandCanvas: true, rotationAngle: _transferAngle);
 
                 st.ForceDragState(this);
 
@@ -1623,7 +1625,7 @@ namespace TabPaint
         {
             if (SelectionRotatePopup != null)
             {
-                int angle = SelectionRotatePopup.CurrentAngle;
+                double angle = SelectionRotatePopup.CurrentAngle;
                 if (_router?.CurrentTool is SelectTool st)
                 {
                     st.UpdateRotation(_ctx, angle, false);

@@ -880,6 +880,8 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_ImgBar_NewTabLeft">New tab on the left</sys:String>
     <sys:String x:Key="L_Ctx_StickImage">Stick Image</sys:String>
     <sys:String x:Key="L_Ctx_CloseOtherTabs">Close Other Tabs</sys:String>
+    <sys:String x:Key="L_Menu_Tab_MoveToNewWindow">Move tab to new window</sys:String>
+    <sys:String x:Key="L_Menu_Tab_NewTabRight">Create new tab on the right</sys:String>
     <sys:String x:Key="L_Ctx_DeleteFile">Delete File</sys:String>
 
     <sys:String x:Key="L_Text_Bold">Bold</sys:String>
