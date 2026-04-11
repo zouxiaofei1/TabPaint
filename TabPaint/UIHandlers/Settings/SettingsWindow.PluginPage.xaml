@@ -202,6 +202,30 @@
                     </Grid>
                 </Border>
 
+                <!-- PSD Plugin (Magick.NET) -->
+                <Border Style="{StaticResource PluginCardStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0" Grid.Column="0">
+                            <TextBlock Text="{DynamicResource L_Settings_Plugins_PSD_Title}" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{DynamicResource L_Settings_Plugins_PSD_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="12" Margin="0,4,0,8" TextWrapping="Wrap"/>
+                            <TextBlock x:Name="TxtStatusPSD" Text="Checking..." FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="0" Grid.Column="1" VerticalAlignment="Center">
+                            <Button x:Name="BtnInstallPSD" Content="{DynamicResource L_Settings_Plugins_InstallReal}" Click="InstallPSD_Click" Style="{StaticResource Win11PrimaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
+                            <Button x:Name="BtnUninstallPSD" Content="{DynamicResource L_Settings_Plugins_Uninstall}" Click="UninstallPSD_Click" Style="{StaticResource Win11SecondaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
+                        </StackPanel>
+                        <controls:TaskProgressFloat x:Name="FloatPSD" IsDraggable="False" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,8,0,0"/>
+                    </Grid>
+                </Border>
+
                 <Grid Margin="0,5,0,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="220"/>

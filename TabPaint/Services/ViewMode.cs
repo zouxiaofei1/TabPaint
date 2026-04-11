@@ -158,8 +158,8 @@ namespace TabPaint
                     ThemeManager.ApplyTheme(settings.ThemeMode);
                 }
                 CanvasResizeOverlay.Visibility = Visibility.Visible;
-                RootWindow.MinHeight = 345;
-                RootWindow.MinWidth = 430;
+                RootWindow.MinHeight = 305;
+                RootWindow.MinWidth = 380;
                 _router.CurrentTool.SetCursor(_ctx);
                 System.Windows.Input.Mouse.OverrideCursor = null; ScrollContainer.Cursor = Cursors.Arrow;
                 CanvasWrapper.Cursor = null;

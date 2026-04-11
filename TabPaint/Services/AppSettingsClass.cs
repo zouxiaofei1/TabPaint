@@ -424,6 +424,25 @@ namespace TabPaint
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+        private int _maxRecentFiles = 10;
+        [JsonPropertyName("max_recent_files")]
+        public int MaxRecentFiles
+        {
+            get => _maxRecentFiles;
+            set
+            {
+                if (_maxRecentFiles != value)
+                {
+                    _maxRecentFiles = value;
+                    OnPropertyChanged();
+                    if (RecentFiles != null && RecentFiles.Count > _maxRecentFiles)
+                    {
+                        RecentFiles = RecentFiles.Take(_maxRecentFiles).ToList();
+                    }
+                }
+            }
+        }
+
         private List<string> _recentFiles = new List<string>();
 
         [JsonPropertyName("recent_files")]
@@ -882,7 +901,7 @@ namespace TabPaint
         }
 
         private bool _useNewStyle = false;
-        [JsonPropertyName("use_new_style")]
+        [JsonIgnore]
         public bool UseNewStyle
         {
             get => _useNewStyle;

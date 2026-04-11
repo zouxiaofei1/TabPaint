@@ -11,6 +11,7 @@ using System.Windows.Threading;
 using XamlAnimatedGif; // 添加这一行
 using SkiaSharp;
 using Svg.Skia;
+using TabPaint.Services;
 //
 //图片加载,包括icc,ico,svg等高级格式
 //以及加载动画
@@ -52,6 +53,81 @@ namespace TabPaint
         public static bool IsWebpFileOrStream(string? filePath, Stream stream)
         {
             return IsWebpPath(filePath) || IsWebpStream(stream);
+        }
+
+        public static bool IsPsdPath(string? filePath)
+        {
+            return string.Equals(System.IO.Path.GetExtension(filePath), ".psd", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static BitmapSource DecodePsd(Stream stream, int? targetMaxWidth = null, int? targetMaxHeight = null)
+        {
+            if (!PsdPluginHelper.IsPsdPluginAvailable()) return null;
+
+            try
+            {
+                stream.Position = 0;
+
+                Type magickImageType = PsdPluginHelper.GetMagickImageType()!;
+                Type magickFormatType = PsdPluginHelper.GetMagickFormatType()!;
+                Type pixelMappingType = PsdPluginHelper.GetPixelMappingType()!;
+
+                using dynamic image = Activator.CreateInstance(magickImageType, new object[] { stream })!;
+
+                // PSD 第一帧通常是合并后的预览图
+                image.Format = Enum.Parse(magickFormatType, "Bgra");
+
+                if (targetMaxWidth.HasValue || targetMaxHeight.HasValue)
+                {
+                    int currentWidth = (int)image.Width;
+                    int currentHeight = (int)image.Height;
+                    double scale = 1.0;
+
+                    if (targetMaxWidth.HasValue && currentWidth > targetMaxWidth.Value)
+                        scale = Math.Min(scale, (double)targetMaxWidth.Value / currentWidth);
+                    if (targetMaxHeight.HasValue && currentHeight > targetMaxHeight.Value)
+                        scale = Math.Min(scale, (double)targetMaxHeight.Value / currentHeight);
+
+                    if (scale < 1.0)
+                    {
+                        uint newWidth = (uint)Math.Max(1, (int)(currentWidth * scale));
+                        uint newHeight = (uint)Math.Max(1, (int)(currentHeight * scale));
+                        image.Resize(newWidth, newHeight);
+                    }
+                }
+
+                dynamic pixels = image.GetPixelsUnsafe();
+                byte[] data = pixels.ToByteArray(Enum.Parse(pixelMappingType, "BGRA"));
+
+                int finalWidth = (int)image.Width;
+                int finalHeight = (int)image.Height;
+                var wb = new WriteableBitmap(finalWidth, finalHeight, 96, 96, PixelFormats.Bgra32, null);
+                wb.WritePixels(new Int32Rect(0, 0, finalWidth, finalHeight), data, finalWidth * 4, 0);
+                wb.Freeze();
+                return wb;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"PSD Decode Error: {ex.Message}");
+                return null;
+            }
+        }
+
+        internal static (int Width, int Height)? GetPsdDimensions(Stream stream)
+        {
+            if (!PsdPluginHelper.IsPsdPluginAvailable()) return null;
+
+            try
+            {
+                stream.Position = 0;
+                Type infoType = PsdPluginHelper.GetMagickImageInfoType()!;
+                dynamic info = Activator.CreateInstance(infoType, new object[] { stream })!;
+                return ((int)info.Width, (int)info.Height);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         public static BitmapSource DecodeWebpWithSkia(Stream stream, int? targetMaxWidth = null, int? targetMaxHeight = null)

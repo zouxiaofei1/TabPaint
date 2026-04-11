@@ -64,6 +64,13 @@ namespace TabPaint
             MainImageBar?.ClosePopupAndReset();
         }
 
+        private void BackgroundMouseDown_Handler(object sender, RoutedEventArgs e)
+        {
+            if (e is MouseButtonEventArgs mouseArgs)
+            {
+                Border_MouseLeftButtonDown(sender, mouseArgs);
+            }
+        }
 
         private void Border_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {

@@ -382,14 +382,15 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                <TextBlock Text="{DynamicResource L_Settings_Advanced_UseNewStyle_Title}"/>
-                <TextBlock Text="{DynamicResource L_Settings_Advanced_UseNewStyle_Desc}" 
+                <TextBlock Text="{DynamicResource L_Settings_Advanced_MaxRecentFiles_Title}"/>
+                <TextBlock Text="{DynamicResource L_Settings_Advanced_MaxRecentFiles_Desc}" 
                            Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
             </StackPanel>
 
-            <CheckBox Grid.Column="2" Style="{StaticResource FluentCheckBoxStyle}" 
-                      IsChecked="{Binding Path=Current.UseNewStyle, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
-                      VerticalAlignment="Center"/>
+            <TextBox Grid.Column="2" Width="80" Height="28" VerticalContentAlignment="Center"
+                     LostFocus="MaxRecentFilesTextBox_LostFocus"
+                     PreviewTextInput="NumberValidationTextBox"
+                     Text="{Binding Path=Current.MaxRecentFiles, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"/>
         </Grid>
 
         <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>

@@ -268,6 +268,12 @@ namespace TabPaint
                 return DecodeWebpWithSkia(stream, targetMaxWidth: AppConsts.PreviewDecodeWidth);
             }
 
+            if (IsPsdPath(filePath))
+            {
+                stream.Position = 0;
+                return DecodePsd(stream, targetMaxWidth: AppConsts.PreviewDecodeWidth);
+            }
+
             try
             {
                 // 使用 BitmapCacheOption.OnLoad 确保流关闭后数据依然可用
@@ -319,6 +325,12 @@ namespace TabPaint
             {
                 stream.Position = 0;
                 return DecodeWebpWithSkia(stream);
+            }
+
+            if (IsPsdPath(filePath))
+            {
+                stream.Position = 0;
+                return DecodePsd(stream);
             }
 
             if (SettingsManager.Instance.Current.EnableIccColorCorrection)
@@ -394,6 +406,12 @@ namespace TabPaint
                     {
                         var webpSize = GetWebpDimensionsWithSkia(stream);
                         if (webpSize != null) return webpSize;
+                    }
+
+                    if (IsPsdPath(filePath))
+                    {
+                        var psdSize = GetPsdDimensions(stream);
+                        if (psdSize != null) return psdSize;
                     }
 
                     string ext = System.IO.Path.GetExtension(filePath)?.ToLower();

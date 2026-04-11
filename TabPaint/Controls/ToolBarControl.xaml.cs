@@ -28,6 +28,8 @@ namespace TabPaint.Controls
         public static readonly RoutedEvent ColorOneClickEvent = RegisterEvent("ColorOneClick");
         public static readonly RoutedEvent ColorTwoClickEvent = RegisterEvent("ColorTwoClick");
         public static readonly RoutedEvent ColorButtonClickEvent = RegisterEvent("ColorButtonClick");
+        public static readonly RoutedEvent BackgroundMouseDownEvent = RegisterEvent("BackgroundMouseDown");
+
         public event RoutedEventHandler PenClick { add => AddHandler(PenClickEvent, value); remove => RemoveHandler(PenClickEvent, value); }
         public event RoutedEventHandler PickColorClick { add => AddHandler(PickColorClickEvent, value); remove => RemoveHandler(PickColorClickEvent, value); }
         public event RoutedEventHandler EraserClick { add => AddHandler(EraserClickEvent, value); remove => RemoveHandler(EraserClickEvent, value); }
@@ -49,6 +51,8 @@ namespace TabPaint.Controls
         public event RoutedEventHandler ColorOneClick { add => AddHandler(ColorOneClickEvent, value); remove => RemoveHandler(ColorOneClickEvent, value); }
         public event RoutedEventHandler ColorTwoClick { add => AddHandler(ColorTwoClickEvent, value); remove => RemoveHandler(ColorTwoClickEvent, value); }
         public event RoutedEventHandler ColorButtonClick { add => AddHandler(ColorButtonClickEvent, value); remove => RemoveHandler(ColorButtonClickEvent, value); }
+        public event RoutedEventHandler BackgroundMouseDown { add => AddHandler(BackgroundMouseDownEvent, value); remove => RemoveHandler(BackgroundMouseDownEvent, value); }
+
         public static readonly RoutedEvent BrushMainClickEvent = RegisterEvent("BrushMainClick");
         public event RoutedEventHandler BrushMainClick { add => AddHandler(BrushMainClickEvent, value); remove => RemoveHandler(BrushMainClickEvent, value); }
         private bool _isSelectMenuLoaded = false;
@@ -353,6 +357,19 @@ namespace TabPaint.Controls
         {
             RaiseEvent(new RoutedEventArgs(ColorButtonClickEvent, sender));
         }
+
+        private void OnBackgroundMouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (e.OriginalSource is Border || e.OriginalSource is DockPanel || e.OriginalSource is StackPanel)
+            {
+                var args = new System.Windows.Input.MouseButtonEventArgs(e.MouseDevice, e.Timestamp, e.ChangedButton)
+                {
+                    RoutedEvent = BackgroundMouseDownEvent
+                };
+                RaiseEvent(args);
+            }
+        }
+
         private void OnToolBarSizeChanged(object sender, SizeChangedEventArgs e)
         {
             double collapseThreshold = 580;

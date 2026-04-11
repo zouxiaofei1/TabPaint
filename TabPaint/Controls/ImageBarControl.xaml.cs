@@ -258,10 +258,19 @@ namespace TabPaint.Controls
         public static readonly RoutedEvent SaveAllDoubleClickEvent =
     EventManager.RegisterRoutedEvent("SaveAllDoubleClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(ImageBarControl));
 
+        public static readonly RoutedEvent BackgroundMouseDownEvent =
+            EventManager.RegisterRoutedEvent("BackgroundMouseDown", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(ImageBarControl));
+
         public event RoutedEventHandler SaveAllDoubleClick
         {
             add { AddHandler(SaveAllDoubleClickEvent, value); }
             remove { RemoveHandler(SaveAllDoubleClickEvent, value); }
+        }
+
+        public event RoutedEventHandler BackgroundMouseDown
+        {
+            add { AddHandler(BackgroundMouseDownEvent, value); }
+            remove { RemoveHandler(BackgroundMouseDownEvent, value); }
         }
 
         private void Internal_OnSaveAllDoubleClick(object sender, MouseButtonEventArgs e)
@@ -412,8 +421,6 @@ namespace TabPaint.Controls
         }
         private void Internal_OnBackgroundMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.ClickCount != 2) return;
-
             var dep = e.OriginalSource as DependencyObject;
             if (dep == null) return;
             if (HasDataContext<FileTabItem>(dep)) return;
@@ -422,8 +429,20 @@ namespace TabPaint.Controls
             if (FindAncestor<Thumb>(dep) != null) return;
             if (FindAncestor<ScrollBar>(dep) != null) return;
 
-            IsCompactMode = !IsCompactMode;
-            e.Handled = true;
+            if (e.ClickCount == 2)
+            {
+                IsCompactMode = !IsCompactMode;
+                e.Handled = true;
+            }
+            else if (e.ClickCount == 1)
+            {
+                //a.s("  else if (e.ClickCount == 1)");
+                var args = new MouseButtonEventArgs(e.MouseDevice, e.Timestamp, e.ChangedButton)
+                {
+                    RoutedEvent = BackgroundMouseDownEvent
+                };
+                RaiseEvent(args);
+            }
         }
 
         private static bool HasDataContext<T>(DependencyObject d)

@@ -21,14 +21,17 @@ namespace TabPaint.Pages
         private CancellationTokenSource _ctsInpaint;
         private CancellationTokenSource _ctsOcrRuntime;
         private CancellationTokenSource _ctsZXing;
+        private CancellationTokenSource _ctsPSD;
         private ScrollViewer? _pluginScrollViewer;
         private int _ocrRuntimeStatusRequestId;
         private int _zxingStatusRequestId;
+        private int _psdStatusRequestId;
         private int _rmbgInstallRequestId;
         private int _srInstallRequestId;
         private int _inpaintInstallRequestId;
         private int _ocrRuntimeInstallRequestId;
         private int _zxingInstallRequestId;
+        private int _psdInstallRequestId;
         private int _installAllRequestId;
         private readonly PythonRuntimeManager _pythonRuntimeManager = new PythonRuntimeManager();
 
@@ -46,6 +49,7 @@ namespace TabPaint.Pages
             FloatInpaint.CancelRequested += (s, e) => _ctsInpaint?.Cancel();
             FloatOcrRuntime.CancelRequested += (s, e) => _ctsOcrRuntime?.Cancel();
             FloatZXing.CancelRequested += (s, e) => _ctsZXing?.Cancel();
+            FloatPSD.CancelRequested += (s, e) => _ctsPSD?.Cancel();
         }
 
         private void InitializeComboBoxes()
@@ -100,12 +104,14 @@ namespace TabPaint.Pages
             Interlocked.Increment(ref _inpaintInstallRequestId);
             Interlocked.Increment(ref _ocrRuntimeInstallRequestId);
             Interlocked.Increment(ref _zxingInstallRequestId);
+            Interlocked.Increment(ref _psdInstallRequestId);
             Interlocked.Increment(ref _installAllRequestId);
             _ctsRMBG?.Cancel();
             _ctsSR?.Cancel();
             _ctsInpaint?.Cancel();
             _ctsOcrRuntime?.Cancel();
             _ctsZXing?.Cancel();
+            _ctsPSD?.Cancel();
         }
 
         private async void PluginPage_Loaded(object sender, RoutedEventArgs e)
@@ -130,6 +136,7 @@ namespace TabPaint.Pages
 
             await UpdateOcrRuntimeStatusAsync();
             UpdateZXingStatus();
+            UpdatePSDStatus();
             UpdateInstallAllQuickActionState();
         }
 
@@ -145,11 +152,12 @@ namespace TabPaint.Pages
             if (AiService.Instance.IsModelReady(AiService.AiTaskType.Inpainting)) installedCount++;
             if (PythonRuntimeManager.IsRuntimeInstalled()) installedCount++;
             if (TabPaint.Services.QrCodeDecoder.IsZXingAvailable()) installedCount++;
+            if (TabPaint.Services.PsdPluginHelper.IsPsdPluginAvailable()) installedCount++;
 
             installAllButton.Content = string.Format(
                 LocalizationManager.GetString("L_Settings_Plugins_InstallAllWithProgress"),
                 installedCount);
-            installAllButton.Visibility = installedCount >= 5 ? Visibility.Collapsed : Visibility.Visible;
+            installAllButton.Visibility = installedCount >= 6 ? Visibility.Collapsed : Visibility.Visible;
         }
 
         private void UpdateZXingStatus()
@@ -972,6 +980,187 @@ namespace TabPaint.Pages
             }
 
             return null;
+        }
+
+        private void UpdatePSDStatus()
+        {
+            int requestId = Interlocked.Increment(ref _psdStatusRequestId);
+            bool installed = TabPaint.Services.PsdPluginHelper.IsPsdPluginAvailable();
+            if (installed)
+            {
+                TxtStatusPSD.Text = LocalizationManager.GetString("L_Settings_Plugins_Status_Installed");
+                TxtStatusPSD.Foreground = (System.Windows.Media.Brush)FindResource("SystemAccentBrush");
+                BtnInstallPSD.Visibility = Visibility.Collapsed;
+                BtnInstallPSD.IsEnabled = true;
+                BtnUninstallPSD.Visibility = Visibility.Visible;
+
+                try
+                {
+                    string dllPath = Path.Combine(AppConsts.PluginsDir, AppConsts.Magick_DllName);
+                    if (File.Exists(dllPath))
+                    {
+                        long sizeBytes = new FileInfo(dllPath).Length;
+                        string sizeText = FormatSize(sizeBytes);
+                        TxtStatusPSD.Text = string.Format(LocalizationManager.GetString("L_Settings_Plugins_Status_InstalledWithSize"), sizeText);
+                    }
+                }
+                catch { }
+            }
+            else
+            {
+                TxtStatusPSD.Text = LocalizationManager.GetString("L_Settings_Plugins_Status_NotInstalled");
+                TxtStatusPSD.Foreground = (System.Windows.Media.Brush)FindResource("TextTertiaryBrush");
+                BtnInstallPSD.Visibility = Visibility.Visible;
+                BtnInstallPSD.IsEnabled = true;
+                BtnUninstallPSD.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private async void InstallPSD_Click(object sender, RoutedEventArgs e)
+        {
+            _ctsPSD?.Cancel();
+            _ctsPSD = new CancellationTokenSource();
+            int requestId = Interlocked.Increment(ref _psdInstallRequestId);
+            await DownloadAndExtractPSDAsync(requestId, _ctsPSD.Token);
+        }
+
+        private async Task DownloadAndExtractPSDAsync(int requestId, CancellationToken token)
+        {
+            BtnInstallPSD.IsEnabled = false;
+            TxtStatusPSD.Text = LocalizationManager.GetString("L_Settings_Plugins_Status_Downloading");
+
+            try
+            {
+                if (!Directory.Exists(AppConsts.PluginsDir)) Directory.CreateDirectory(AppConsts.PluginsDir);
+
+                string nupkgPath = Path.Combine(AppConsts.PluginsDir, "magick.nupkg");
+                string dllPath = Path.Combine(AppConsts.PluginsDir, AppConsts.Magick_DllName);
+
+                using (var client = new System.Net.Http.HttpClient())
+                {
+                    var progressReporter = new Progress<AiDownloadStatus>(status =>
+                    {
+                        Dispatcher.Invoke(() =>
+                        {
+                            FloatPSD.UpdateProgress(status.Percentage,
+                                LocalizationManager.GetString("L_Settings_Plugins_PSD_Title"),
+                                FormatSize((long)status.BytesReceived),
+                                status.TotalBytes > 0 ? FormatSize(status.TotalBytes) : "");
+                        });
+                    });
+
+                    string downloadUrl = AppConsts.Magick_DownloadUrl;
+                    string lang = CultureInfo.CurrentUICulture.Name;
+                    if (lang == "zh-CN" || lang == "zh-TW" || lang == "zh-HK")
+                    {
+                        downloadUrl = AppConsts.Magick_DownloadUrl_Mirror;
+                    }
+
+                    using (var response = await client.GetAsync(downloadUrl, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, token))
+                    {
+                        response.EnsureSuccessStatusCode();
+                        var totalBytes = response.Content.Headers.ContentLength ?? -1L;
+                        using (var contentStream = await response.Content.ReadAsStreamAsync(token))
+                        using (var fileStream = new FileStream(nupkgPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                        {
+                            var totalRead = 0L;
+                            var buffer = new byte[8192];
+                            var isMoreToRead = true;
+                            do
+                            {
+                                token.ThrowIfCancellationRequested();
+                                var read = await contentStream.ReadAsync(buffer, 0, buffer.Length, token);
+                                if (read == 0) isMoreToRead = false;
+                                else
+                                {
+                                    await fileStream.WriteAsync(buffer, 0, read, token);
+                                    totalRead += read;
+                                    ((IProgress<AiDownloadStatus>)progressReporter).Report(new AiDownloadStatus
+                                    {
+                                        BytesReceived = totalRead,
+                                        TotalBytes = totalBytes,
+                                        Percentage = totalBytes > 0 ? (double)totalRead / totalBytes * 100 : 0
+                                    });
+                                }
+                            } while (isMoreToRead);
+                        }
+                    }
+                }
+
+                await Task.Run(() =>
+                {
+                    using (var archive = System.IO.Compression.ZipFile.OpenRead(nupkgPath))
+                    {
+                        var entry = archive.Entries.FirstOrDefault(e => e.FullName.Equals("lib/net8.0/" + AppConsts.Magick_DllName, StringComparison.OrdinalIgnoreCase))
+                                 ?? archive.Entries.FirstOrDefault(e => e.FullName.Equals("lib/net6.0/" + AppConsts.Magick_DllName, StringComparison.OrdinalIgnoreCase))
+                                 ?? archive.Entries.FirstOrDefault(e => e.FullName.Equals("lib/netstandard2.1/" + AppConsts.Magick_DllName, StringComparison.OrdinalIgnoreCase))
+                                 ?? archive.Entries.FirstOrDefault(e => e.FullName.Equals("lib/netstandard2.0/" + AppConsts.Magick_DllName, StringComparison.OrdinalIgnoreCase));
+
+                        if (entry != null)
+                        {
+                            if (File.Exists(dllPath)) File.Delete(dllPath);
+                            entry.ExtractToFile(dllPath);
+                        }
+                        else
+                        {
+                            throw new Exception("Could not find " + AppConsts.Magick_DllName + " in package");
+                        }
+                    }
+                    if (File.Exists(nupkgPath)) File.Delete(nupkgPath);
+                }, token);
+
+                FloatPSD.Finish();
+            }
+            catch (OperationCanceledException)
+            {
+                if (requestId != Volatile.Read(ref _psdInstallRequestId) || !IsLoaded) return;
+                FloatPSD.Finish();
+                TxtStatusPSD.Text = LocalizationManager.GetString("L_Settings_Plugins_Status_NotInstalled");
+                BtnInstallPSD.IsEnabled = true;
+            }
+            catch (Exception ex)
+            {
+                if (requestId != Volatile.Read(ref _psdInstallRequestId) || !IsLoaded) return;
+                FloatPSD.Finish();
+                TxtStatusPSD.Text = "Error: " + ex.Message;
+                BtnInstallPSD.IsEnabled = true;
+            }
+            finally
+            {
+                if (requestId == Volatile.Read(ref _psdInstallRequestId) && IsLoaded)
+                {
+                    TabPaint.Services.PsdPluginHelper.ResetAvailability();
+                    await UpdateAllStatusesAsync();
+                }
+            }
+        }
+
+        private void UninstallPSD_Click(object sender, RoutedEventArgs e)
+        {
+            var result = FluentMessageBox.Show(
+                LocalizationManager.GetString("L_Settings_Plugins_Uninstall_Confirm"),
+                LocalizationManager.GetString("L_Settings_Plugins_Uninstall"),
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question,
+                Window.GetWindow(this));
+
+            if (result != MessageBoxResult.Yes) return;
+
+            try
+            {
+                TabPaint.Services.PsdPluginHelper.ResetAvailability();
+
+                string dllPath = Path.Combine(AppConsts.PluginsDir, AppConsts.Magick_DllName);
+                if (File.Exists(dllPath))
+                    File.Delete(dllPath);
+
+                UpdatePSDStatus();
+                UpdateInstallAllQuickActionState();
+            }
+            catch (Exception ex)
+            {
+                FluentMessageBox.Show("Uninstall failed: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error, Window.GetWindow(this));
+            }
         }
     }
 }

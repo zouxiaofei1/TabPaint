@@ -132,7 +132,7 @@ namespace TabPaint
             list.Insert(0, filePath);
 
             // 限制数量
-            if (list.Count > AppConsts.MaxRecentFiles) list = list.Take(AppConsts.MaxRecentFiles).ToList();
+            if (list.Count > Current.MaxRecentFiles) list = list.Take(Current.MaxRecentFiles).ToList();
 
             Current.RecentFiles = list;
         }
@@ -208,6 +208,7 @@ namespace TabPaint
                     writer.Write(Current.DefaultBlankCanvasHeight);
                     writer.Write((int)Current.RmbgModel);
                     writer.Write(Current.UseWin10StyleOnWin11);
+                    writer.Write(Current.MaxRecentFiles);
 
                     // RecentFiles
                     var recentFiles = Current.RecentFiles ?? new List<string>();
@@ -326,6 +327,10 @@ namespace TabPaint
                     if (dataVersion >= 21)
                     {
                         settings.UseWin10StyleOnWin11 = reader.ReadBoolean();
+                    }
+                    if (dataVersion >= 22)
+                    {
+                        settings.MaxRecentFiles = reader.ReadInt32();
                     }
                     // RecentFiles
                     int recentCount = reader.ReadInt32();

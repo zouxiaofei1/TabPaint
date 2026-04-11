@@ -8,7 +8,7 @@
         xmlns:gif="https://github.com/XamlAnimatedGif/XamlAnimatedGif"
         Title="TabPaint"
         Height="700" Width="850"
-        MinHeight="345" MinWidth="430"
+        MinHeight="305" MinWidth="380"
         Top="100" Left="100"
         SizeToContent="Manual"
         Background="Transparent"

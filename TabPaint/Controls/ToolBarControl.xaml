@@ -15,8 +15,8 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Border Height="50" Background="{DynamicResource GlassBackgroundMediumBrush}" AllowDrop="True" ClipToBounds="False" SizeChanged="OnToolBarSizeChanged">
-        <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,7,1,0" >
+    <Border Height="50" Background="{DynamicResource GlassBackgroundMediumBrush}" AllowDrop="True" ClipToBounds="False" SizeChanged="OnToolBarSizeChanged" MouseLeftButtonDown="OnBackgroundMouseDown">
+        <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,7,1,0" MouseLeftButtonDown="OnBackgroundMouseDown">
             <StackPanel x:Name="ExpandedToolsPanel" Orientation="Horizontal" Margin="0,0,0,7" >
                 <Grid Margin="6,0,1,0">
                     <Border x:Name="SelectSplitButtonBorder" 

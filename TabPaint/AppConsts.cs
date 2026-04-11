@@ -120,6 +120,12 @@ namespace TabPaint
         public const string ZXing_DownloadUrl = "https://www.nuget.org/api/v2/package/ZXing.Net/0.16.9";
         public const string ZXing_DownloadUrl_Mirror = "https://repo.huaweicloud.com/repository/nuget/v3/zxing.net/0.16.9/zxing.net.0.16.9.nupkg";
 
+        // --- PSD 读取插件 (Magick.NET) ---
+        public const string Magick_Version = "14.11.1";
+        public const string Magick_DllName = "Magick.NET-Q8-AnyCPU.dll";
+        public const string Magick_DownloadUrl = "https://www.nuget.org/api/v2/package/Magick.NET-Q8-AnyCPU/14.11.1";
+        public const string Magick_DownloadUrl_Mirror = "https://repo.huaweicloud.com/repository/nuget/v3/magick.net-q8-anycpu/14.11.1/magick.net-q8-anycpu.14.11.1.nupkg";
+
         // --- 绘图工具参数 ---
         public const double DefaultPenThickness = 5.0;
         public const double DefaultPenOpacity = 1.0;
@@ -285,7 +291,6 @@ namespace TabPaint
         public const int DWMWA_BORDER_COLOR = 34;
 
         // --- 应用逻辑与限制 ---
-        public const int MaxRecentFiles = 10;
         public const string VirtualFilePrefix = "::TABPAINT_NEW::";
         public const string AppUniqueId = "TabPaint_App_Mutex_UUID_91823091";
         public const long ModeSwitchCooldownTicks = 200 * 10000;
@@ -341,7 +346,7 @@ namespace TabPaint
 
         // --- 服务与性能配置 ---
         public const int MaxDiskConcurrency = 4;
-        public const int AppSettingsBinaryVersion = 21;
+        public const int AppSettingsBinaryVersion = 22;
 
         public static bool IsSupportedImage(string path)
         {
@@ -354,7 +359,7 @@ namespace TabPaint
             return false;
         }
         // --- 文件过滤器与扩展名 ---
-        public const string ImageFilterFormat = "{0}|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp;*.avif;*.ico;*.heic;*.jfif;*.exif;*.jpe;*.jxl;*.heif;*.hif;*.dib;*.wdp;*.wmp;*.jxr;*.svg|{1} (*.png)|*.png|{2} (*.jpg;*.jpeg)|*.jpg;*.jpeg|{3} (*.webp)|*.webp|{4} (*.bmp)|*.bmp|{5} (*.gif)|*.gif|{6} (*.tif;*.tiff)|*.tif;*.tiff|{7} (*.ico)|*.ico";
-        public static readonly string[] ImageExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".avif", ".ico", ".tiff", ".heic", ".tif", ".jfif", ".exif", ".jpe", ".jxl", ".heif", ".hif", ".dib", ".wdp", ".wmp", ".jxr", ".svg" };
+        public const string ImageFilterFormat = "{0}|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp;*.avif;*.ico;*.heic;*.jfif;*.exif;*.jpe;*.jxl;*.heif;*.hif;*.dib;*.wdp;*.wmp;*.jxr;*.svg;*.psd|{1} (*.png)|*.png|{2} (*.jpg;*.jpeg)|*.jpg;*.jpeg|{3} (*.webp)|*.webp|{4} (*.bmp)|*.bmp|{5} (*.gif)|*.gif|{6} (*.tif;*.tiff)|*.tif;*.tiff|{7} (*.ico)|*.ico|PSD (*.psd)|*.psd";
+        public static readonly string[] ImageExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".avif", ".ico", ".tiff", ".heic", ".tif", ".jfif", ".exif", ".jpe", ".jxl", ".heif", ".hif", ".dib", ".wdp", ".wmp", ".jxr", ".svg", ".psd" };
     }
 }

@@ -1303,6 +1303,11 @@ namespace TabPaint
         {
             base.OnRenderSizeChanged(sizeInfo);
             UpdateRulerPositions();
+
+            if (sizeInfo.HeightChanged)
+            {
+                SettingsManager.Instance.Current.UseNewStyle = sizeInfo.NewSize.Height < 420;
+            }
         }
         private void OnScrollContainerMouseUp(object sender, MouseButtonEventArgs e)
         {

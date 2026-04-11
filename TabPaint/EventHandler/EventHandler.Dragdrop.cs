@@ -5,6 +5,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -19,6 +20,10 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private bool IsSettingsWindowActive()
+        {
+            return OwnedWindows.OfType<SettingsWindow>().Any(w => w.IsActive);
+        }
         private double GetDynamicImageBarThreshold()
         {
             if (MainImageBar == null || !MainImageBar.IsVisible)
@@ -36,6 +41,14 @@ namespace TabPaint
         }
         private void OnGlobalDragOver(object sender, DragEventArgs e)
         {
+            if (IsSettingsWindowActive())
+            {
+                HideDragOverlay();
+                e.Effects = DragDropEffects.None;
+                e.Handled = true;
+                return;
+            }
+
             if (MainWindow.IsInternalTextDragging)
             {
                 HideDragOverlay();
@@ -218,6 +231,12 @@ namespace TabPaint
         private async void OnGlobalDrop(object sender, DragEventArgs e)
         {
             HideDragOverlay();
+
+            if (IsSettingsWindowActive())
+            {
+                e.Handled = true;
+                return;
+            }
 
             if (MainWindow.IsInternalTextDragging)
             {

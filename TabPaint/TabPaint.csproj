@@ -75,7 +75,7 @@
    <!-- 启动必备 -->
     <PackageReference Include="WriteableBitmapEx" Version="1.6.9" />
 	<PackageReference Include="System.Drawing.Common" Version="9.0.10" />
-	<PackageReference Include="SkiaSharp" Version="3.119.1"/>
+	<PackageReference Include="SkiaSharp" Version="3.119.1" />
 	
 	<!-- 可选 -->
     <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.20.0" />

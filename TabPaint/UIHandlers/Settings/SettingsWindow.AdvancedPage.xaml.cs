@@ -333,6 +333,25 @@ namespace TabPaint.Pages
             }
         }
 
+        private void MaxRecentFilesTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is TextBox textBox)
+            {
+                if (int.TryParse(textBox.Text, out int value))
+                {
+                    if (value < 0) value = 0;
+                    if (value > 100) value = 100;
+                    textBox.Text = value.ToString();
+                }
+                else
+                {
+                    textBox.Text = "10";
+                }
+                var binding = textBox.GetBindingExpression(TextBox.TextProperty);
+                binding?.UpdateSource();
+            }
+        }
+
         private void UndoMemoryTextBox_GotFocus(object sender, KeyboardFocusChangedEventArgs e)
         {
             UndoMemoryBorder.BorderBrush = (Brush)FindResource("SystemAccentBrush");

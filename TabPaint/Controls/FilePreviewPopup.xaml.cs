@@ -113,12 +113,12 @@ namespace TabPaint.Controls
             PopupPreviewImageBase.Source = null;
             CheckerboardBorder.Background = Brushes.Transparent;
 
-            // 如果是最近文件列表，可能没有缩略图，先显示 Loading 或文件路径
-            PopupDimensionsText.Text = "Loading...";
             PopupFileSizeText.Text = "";
 
             if (File.Exists(_currentFilePath))
             {
+                PopupDimensionsText.Text = Application.Current.TryFindResource("L_Loading") as string ?? "Loading...";
+
                 try
                 {
                     var fi = new FileInfo(_currentFilePath);
@@ -131,17 +131,21 @@ namespace TabPaint.Controls
                     }
                 }
                 catch { }
-            }
 
-            var cached = _highResPreviewCache.Get(_currentFilePath);
-            if (cached != null)
-            {
-                PopupPreviewImage.Source = cached;
-                UpdateCheckerboardVisibility(cached);
+                var cached = _highResPreviewCache.Get(_currentFilePath);
+                if (cached != null)
+                {
+                    PopupPreviewImage.Source = cached;
+                    UpdateCheckerboardVisibility(cached);
+                }
+                else
+                {
+                    _highResTimer.Start();
+                }
             }
             else
             {
-                _highResTimer.Start();
+                PopupDimensionsText.Text = Application.Current.TryFindResource("L_Toast_FileNotFound") as string ?? "File not found";
             }
 
             if (!LargePreviewPopup.IsOpen) LargePreviewPopup.IsOpen = true;

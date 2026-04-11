@@ -22,7 +22,7 @@
     <sys:String x:Key="L_Settings_Plugins_InstallReal">Install</sys:String>
     <sys:String x:Key="L_Settings_Plugins_ModelSelection">Select Model</sys:String>
     <sys:String x:Key="L_Settings_Plugins_InstallAll">Install All</sys:String>
-    <sys:String x:Key="L_Settings_Plugins_InstallAllWithProgress">One-click download {0}/4</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_InstallAllWithProgress">One-click download {0}/6</sys:String>
     <sys:String x:Key="L_Settings_Plugins_InstallingAll">Installing...</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall">Uninstall</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">Are you sure you want to uninstall this AI model?</sys:String>
@@ -80,8 +80,8 @@
     <sys:String x:Key="L_Settings_General_MouseWheel_Option_Switch">Switch image</sys:String>
     <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Title">Always show tab close button</sys:String>
     <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Desc">Always display the close button on image tabs.</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_UseNewStyle_Title">Use New Style (Preview)</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_UseNewStyle_Desc">Try out the new UI layout and interaction logic.</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_MaxRecentFiles_Title">Recent files list entry count</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_MaxRecentFiles_Desc">Set the maximum number of items to keep in the recent files list.</sys:String>
     <sys:String x:Key="L_Menu_File_RecycleBin">File Recycle Bin</sys:String>
 
     <sys:String x:Key="L_Settings_Advanced_Undo_Header">Undo / Redo</sys:String>

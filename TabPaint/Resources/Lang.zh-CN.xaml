@@ -47,7 +47,7 @@
     <sys:String x:Key="L_Settings_Plugins_InstallReal">安装</sys:String>
     <sys:String x:Key="L_Settings_Plugins_ModelSelection">选择模型</sys:String>
     <sys:String x:Key="L_Settings_Plugins_InstallAll">一键下载</sys:String>
-    <sys:String x:Key="L_Settings_Plugins_InstallAllWithProgress">一键下载{0}/5</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_InstallAllWithProgress">一键下载{0}/6</sys:String>
     <sys:String x:Key="L_Settings_Plugins_InstallingAll">下载中...</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall">卸载</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">确定要卸载此 AI 模型吗？</sys:String>
@@ -225,8 +225,8 @@
     <sys:String x:Key="L_Settings_ResetShortcuts">恢复默认快捷键</sys:String>
     <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Title">始终显示标签关闭按钮</sys:String>
     <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Desc">在图片标签上始终显示关闭按钮</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_UseNewStyle_Title">使用新版样式 (Preview)</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_UseNewStyle_Desc">尝试启用新版 UI 布局和交互逻辑</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_MaxRecentFiles_Title">最近打开列表记录条目数</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_MaxRecentFiles_Desc">设置最近打开文件列表中保留的最大条目数量。</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Undo_Header">撤销重做</sys:String>
     <sys:String x:Key="L_Settings_MaxGlobalUndoSteps">全局撤销总量</sys:String>
     <sys:String x:Key="L_Settings_MaxGlobalUndoSteps_Desc">所有标签页共保留的最大撤销次数</sys:String>
