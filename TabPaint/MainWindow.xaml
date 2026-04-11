@@ -205,7 +205,14 @@
                           MaximizeRestoreClick="MaximizeRestore_Click"
                           CloseClick="Close_Click"
                           TitleBarMouseDown="Border_MouseLeftButtonDown"
-                          ModeSwitchClick="OnTitleBarModeSwitch" >
+                          ModeSwitchClick="OnTitleBarModeSwitch"
+                          NewTabClick="OnNewTabClick"
+                          DiscardImageClick="OnDiscardImageClick"
+                          DiscardAllClick="OnDiscardAllClick"
+                          UndoClick="OnUndoClick"
+                          RedoClick="OnRedoClick"
+                          SaveClick="OnSaveClick"
+                          SettingsClick="OnSettingsClick">
                         <controls:TitleBarControl.CacheMode>
                             <BitmapCache EnableClearType="True" SnapsToDevicePixels="True"/>
                         </controls:TitleBarControl.CacheMode>
@@ -213,15 +220,40 @@
                     
                     
                     <!-- 2. 菜单栏 -->
-                    <ContentControl x:Name="MenuBarHolder" DockPanel.Dock="Top" Grid.Row="1"
-                          Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}">
+                    <ContentControl x:Name="MenuBarHolder" DockPanel.Dock="Top" Grid.Row="1">
+                        <ContentControl.Style>
+                            <Style TargetType="ContentControl">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsViewMode, ElementName=RootWindow}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Current.UseNewStyle, Source={x:Static local:SettingsManager.Instance}}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ContentControl.Style>
                         <ContentControl.CacheMode>
                             <BitmapCache EnableClearType="True"/>
                         </ContentControl.CacheMode>
                     </ContentControl>
                     <!-- 分割线 -->
-                    <Rectangle DockPanel.Dock="Top" Height="1" Fill="{DynamicResource BorderLightBrush}" SnapsToDevicePixels="True"     Grid.Row="2"    
-                               Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
+                    <Rectangle DockPanel.Dock="Top" Height="1" Fill="{DynamicResource BorderLightBrush}" SnapsToDevicePixels="True" Grid.Row="2">
+                        <Rectangle.Style>
+                            <Style TargetType="Rectangle">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsViewMode, ElementName=RootWindow}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Current.UseNewStyle, Source={x:Static local:SettingsManager.Instance}}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Rectangle.Style>
+                    </Rectangle>
 
                     <!-- 3. 工具栏 -->
                     <ContentControl x:Name="ToolBarHolder" DockPanel.Dock="Top" Grid.Row="3"

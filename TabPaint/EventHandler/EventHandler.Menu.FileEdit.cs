@@ -27,7 +27,7 @@ namespace TabPaint
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
 
-        private void OnNewWindowClick(object sender, RoutedEventArgs e)
+        public void OnNewWindowClick(object sender, RoutedEventArgs e)
         {
             try
             {
@@ -39,7 +39,7 @@ namespace TabPaint
                 ShowToast(string.Format(LocalizationManager.GetString("L_Common_Error"), ex.Message), ex);
             }
         }
-        private async void OnRecentFileClick(object sender, string filePath)
+        public async void OnRecentFileClick(object sender, string filePath)
         {
             if (File.Exists(filePath))
             {
@@ -57,13 +57,13 @@ namespace TabPaint
             }
             else ShowToast(string.Format(LocalizationManager.GetString("L_Toast_FileNotFound_Format"), filePath));
         }
-        private void OnSaveClick(object sender, RoutedEventArgs e)
+        public void OnSaveClick(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(_currentFilePath) || IsVirtualPath(_currentFilePath)) OnSaveAsClick(sender, e);
             else SaveBitmap(_currentFilePath, allowIcoOptionsDialog: false);
         }
 
-        private void OnSaveAsClick(object sender, RoutedEventArgs e)
+        public void OnSaveAsClick(object sender, RoutedEventArgs e)
         {
             string defaultName = _currentTabItem?.DisplayName ?? "image";
             if (!defaultName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
@@ -115,7 +115,7 @@ namespace TabPaint
             }
         }
 
-        private async void OnSaveAsPdfClick(object sender, RoutedEventArgs e)
+        public async void OnSaveAsPdfClick(object sender, RoutedEventArgs e)
         {
             if (FileTabs.Count == 0) return;
 
@@ -187,7 +187,7 @@ namespace TabPaint
             }
         }
 
-        private Stream GetImageStreamForTab(FileTabItem tab)
+        public Stream GetImageStreamForTab(FileTabItem tab)
         {
             // 核心逻辑：如果是当前正在编辑的标签，且有未提交的改动，从内存位图获取
             if (tab == _currentTabItem && _bitmap != null)
@@ -218,7 +218,7 @@ namespace TabPaint
             return null;
         }
 
-        private void OnCopyClick(object sender, RoutedEventArgs e)
+        public void OnCopyClick(object sender, RoutedEventArgs e)
         {
             if (_router.CurrentTool != _tools.Select)
                 _router.SetTool(_tools.Select);
@@ -227,7 +227,7 @@ namespace TabPaint
                 selectTool.CopySelection(_ctx);
         }
 
-        private void OnCutClick(object sender, RoutedEventArgs e)
+        public void OnCutClick(object sender, RoutedEventArgs e)
         {
             if (_router.CurrentTool != _tools.Select)
                 _router.SetTool(_tools.Select);
@@ -236,7 +236,7 @@ namespace TabPaint
                 selectTool.CutSelection(_ctx, true);
         }
 
-        private void OnPasteClick(object sender, RoutedEventArgs e)
+        public void OnPasteClick(object sender, RoutedEventArgs e)
         {
             if (_router.CurrentTool != _tools.Select)
                 _router.SetTool(_tools.Select);
@@ -244,7 +244,7 @@ namespace TabPaint
             if (_router.CurrentTool is SelectTool selectTool)
                 selectTool.PasteSelection(_ctx, false);
         }
-        private async void OnOpenWorkspaceClick(object sender, RoutedEventArgs e)
+        public async void OnOpenWorkspaceClick(object sender, RoutedEventArgs e)
         {
             var dlg = new Microsoft.Win32.OpenFileDialog
             {
@@ -262,7 +262,7 @@ namespace TabPaint
             }
         }
 
-        private async void OnOpenClick(object sender, RoutedEventArgs e)
+        public async void OnOpenClick(object sender, RoutedEventArgs e)
         {
             var dlg = new Microsoft.Win32.OpenFileDialog
             {
@@ -279,7 +279,7 @@ namespace TabPaint
             }
         }
 
-        private void OnPrintClick(object sender, RoutedEventArgs e)
+        public void OnPrintClick(object sender, RoutedEventArgs e)
         {
             if (BackgroundImage.Source == null) return;
 
@@ -341,7 +341,7 @@ namespace TabPaint
             }
         }
 
-        private FixedDocument? CreateSinglePagePrintDocument(ImageSource source, double pageWidth, double pageHeight)
+        public FixedDocument? CreateSinglePagePrintDocument(ImageSource source, double pageWidth, double pageHeight)
         {
             if (source == null || pageWidth <= 0 || pageHeight <= 0)
                 return null;

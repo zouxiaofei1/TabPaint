@@ -80,6 +80,8 @@
     <sys:String x:Key="L_Settings_General_MouseWheel_Option_Switch">Switch image</sys:String>
     <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Title">Always show tab close button</sys:String>
     <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Desc">Always display the close button on image tabs.</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_UseNewStyle_Title">Use New Style (Preview)</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_UseNewStyle_Desc">Try out the new UI layout and interaction logic.</sys:String>
     <sys:String x:Key="L_Menu_File_RecycleBin">File Recycle Bin</sys:String>
 
     <sys:String x:Key="L_Settings_Advanced_Undo_Header">Undo / Redo</sys:String>

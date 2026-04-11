@@ -1,0 +1,14 @@
+<svg width="80" height="48" viewBox="0 0 80 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="1" y="1" width="46" height="46" rx="6" fill="None" stroke="#D5D5D5" stroke-width="1.5"/>
+  <text 
+    x="29%" 
+    y="48%" 
+    dominant-baseline="central" 
+    text-anchor="middle" 
+    font-family="Segoe UI, Apple SD Gothic Neo, sans-serif" 
+    font-size="16" 
+    font-weight="500" 
+    fill="#242424">
+    Alt
+  </text>
+</svg>

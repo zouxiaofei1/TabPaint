@@ -84,7 +84,46 @@ namespace TabPaint.Controls
         public System.Windows.Shapes.Path IconRedo => RedoIcon;
         public MenuBarControl()
         {
-            InitializeComponent();
+            InitializeComponent();// ── TitleBarControl 路由事件绑定 ──
+                                  // 文件菜单
+          //  AddHandler(TitleBarControl.NewClickEvent, new RoutedEventHandler((s, e) => OnNewFileClick(s, e)));
+           // AddHandler(TitleBarControl.OpenClickEvent, new RoutedEventHandler((s, e) => OnOpenFileClick(s, e)));
+            AddHandler(TitleBarControl.OpenWorkspaceClickEvent, new RoutedEventHandler((s, e) => OnOpenWorkspaceClick(s, e)));
+            AddHandler(TitleBarControl.NewWindowClickEvent, new RoutedEventHandler((s, e) => OnNewWindowClick(s, e)));
+            AddHandler(TitleBarControl.SaveClickEvent, new RoutedEventHandler((s, e) => OnSaveClick(s, e)));
+            AddHandler(TitleBarControl.SaveAsClickEvent, new RoutedEventHandler((s, e) => OnSaveAsClick(s, e)));
+            AddHandler(TitleBarControl.SaveAsPdfClickEvent, new RoutedEventHandler((s, e) => OnSaveAsPdfClick(s, e)));
+            AddHandler(TitleBarControl.PrintClickEvent, new RoutedEventHandler((s, e) => OnPrintClick(s, e)));
+            AddHandler(TitleBarControl.ExitClickEvent, new RoutedEventHandler((s, e) => OnExitClick(s, e)));
+            AddHandler(TitleBarControl.SettingsClickEvent, new RoutedEventHandler((s, e) => OnSettingsClick(s, e)));
+
+            // 编辑菜单
+            AddHandler(TitleBarControl.CopyClickEvent, new RoutedEventHandler((s, e) => OnCopyClick(s, e)));
+            AddHandler(TitleBarControl.CutClickEvent, new RoutedEventHandler((s, e) => OnCutClick(s, e)));
+            AddHandler(TitleBarControl.PasteClickEvent, new RoutedEventHandler((s, e) => OnPasteClick(s, e)));
+
+            // 效果菜单
+            AddHandler(TitleBarControl.BCEClickEvent, new RoutedEventHandler((s, e) => OnBCEClick(s, e)));
+            AddHandler(TitleBarControl.TTSClickEvent, new RoutedEventHandler((s, e) => OnTTSClick(s, e)));
+            AddHandler(TitleBarControl.AutoLevelsClickEvent, new RoutedEventHandler((s, e) => OnAutoLevelsClick(s, e)));
+            AddHandler(TitleBarControl.SepiaClickEvent, new RoutedEventHandler((s, e) => OnSepiaClick(s, e)));
+            AddHandler(TitleBarControl.OilPaintingClickEvent, new RoutedEventHandler((s, e) => OnOilPaintingClick(s, e)));
+            AddHandler(TitleBarControl.VignetteClickEvent, new RoutedEventHandler((s, e) => OnVignetteClick(s, e)));
+            AddHandler(TitleBarControl.GlowClickEvent, new RoutedEventHandler((s, e) => OnGlowClick(s, e)));
+            AddHandler(TitleBarControl.BlackWhiteClickEvent, new RoutedEventHandler((s, e) => OnBlackWhiteClick(s, e)));
+            AddHandler(TitleBarControl.InvertClickEvent, new RoutedEventHandler((s, e) => OnInvertClick(s, e)));
+            AddHandler(TitleBarControl.SharpenClickEvent, new RoutedEventHandler((s, e) => OnSharpenClick(s, e)));
+            AddHandler(TitleBarControl.BrownClickEvent, new RoutedEventHandler((s, e) => OnBrownClick(s, e)));
+            AddHandler(TitleBarControl.MosaicClickEvent, new RoutedEventHandler((s, e) => OnMosaicClick(s, e)));
+            AddHandler(TitleBarControl.GaussianBlurClickEvent, new RoutedEventHandler((s, e) => OnGaussianBlurClick(s, e)));
+            AddHandler(TitleBarControl.RedEyeClickEvent, new RoutedEventHandler((s, e) => OnRedEyeClick(s, e)));
+            AddHandler(TitleBarControl.SketchClickEvent, new RoutedEventHandler((s, e) => OnSketchClick(s, e)));
+            AddHandler(TitleBarControl.EdgeClickEvent, new RoutedEventHandler((s, e) => OnEdgeClick(s, e)));
+            AddHandler(TitleBarControl.ResizeCanvasClickEvent, new RoutedEventHandler((s, e) => OnResizeCanvasClick(s, e)));
+            AddHandler(TitleBarControl.WatermarkClickEvent, new RoutedEventHandler((s, e) => OnWatermarkClick(s, e)));
+
+            // 最近文件
+           // TitleBar.RecentFileClick += (s, path) => OnRecentFileClick(path);
         }
         private void OnNewClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(NewClickEvent));
         private void OnOpenClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(OpenClickEvent));
@@ -339,6 +378,14 @@ namespace TabPaint.Controls
                         Style = (Style)FindResource("SubMenuItemStyle")
                     };
                     item.Click += OnRecentFileItemClick;
+                    item.MouseEnter += (s, ev) =>
+                    {
+                        FilePreview.ShowPreview(file, item, System.Windows.Controls.Primitives.PlacementMode.Right);
+                    };
+                    item.MouseLeave += (s, ev) =>
+                    {
+                        FilePreview.ClosePreview();
+                    };
                     RecentFilesMenuItem.Items.Add(item);
                 }
                 RecentFilesMenuItem.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });

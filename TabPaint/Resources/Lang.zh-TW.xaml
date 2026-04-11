@@ -220,6 +220,8 @@
     <sys:String x:Key="L_Settings_ResetShortcuts">恢復預設快捷鍵</sys:String>
     <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Title">始終顯示分頁關閉按鈕</sys:String>
     <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Desc">在圖片分頁上始終顯示關閉按鈕</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_UseNewStyle_Title">使用新版樣式 (Preview)</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_UseNewStyle_Desc">嘗試啟用新版 UI 佈局和互動邏輯</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Undo_Header">復原重做</sys:String>
     <sys:String x:Key="L_Settings_MaxGlobalUndoSteps">全域復原總量</sys:String>
     <sys:String x:Key="L_Settings_MaxGlobalUndoSteps_Desc">所有分頁共保留的最大復原次數</sys:String>

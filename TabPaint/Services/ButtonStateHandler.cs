@@ -380,9 +380,17 @@ namespace TabPaint
 
         public void SetUndoRedoButtonState()
         {
-            if (MainMenu == null || _undo == null) return;
-            UpdateBrushAndButton(MainMenu.BtnUndo, MainMenu.IconUndo, _undo.CanUndo);
-            UpdateBrushAndButton(MainMenu.BtnRedo, MainMenu.IconRedo, _undo.CanRedo);
+            if (_undo == null) return;
+            if (MainMenu != null)
+            {
+                UpdateBrushAndButton(MainMenu.BtnUndo, MainMenu.IconUndo, _undo.CanUndo);
+                UpdateBrushAndButton(MainMenu.BtnRedo, MainMenu.IconRedo, _undo.CanRedo);
+            }
+            if (AppTitleBar != null)
+            {
+                UpdateBrushAndButton(AppTitleBar.BtnUndo, AppTitleBar.IconUndo, _undo.CanUndo);
+                UpdateBrushAndButton(AppTitleBar.BtnRedo, AppTitleBar.IconRedo, _undo.CanRedo);
+            }
         }
 
         public void SetCropButtonState()

@@ -77,6 +77,8 @@
     <sys:String x:Key="L_Settings_General_MouseWheel_Option_Switch">画像を切り替え</sys:String>
     <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Title">常にタブの閉じるボタンを表示</sys:String>
     <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Desc">画像タブの閉じるボタンを常に表示します。</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_UseNewStyle_Title">新版スタイルを使用 (Preview)</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_UseNewStyle_Desc">新しい UI レイアウトとインタラクション ロジックを有効にしてみます</sys:String>
     <sys:String x:Key="L_Menu_File_RecycleBin">ファイルごみ箱</sys:String>
 
     <sys:String x:Key="L_Settings_Advanced_Undo_Header">元に戻す / やり直し</sys:String>

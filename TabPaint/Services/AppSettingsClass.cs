@@ -881,6 +881,21 @@ namespace TabPaint
             }
         }
 
+        private bool _useNewStyle = false;
+        [JsonPropertyName("use_new_style")]
+        public bool UseNewStyle
+        {
+            get => _useNewStyle;
+            set
+            {
+                if (_useNewStyle != value)
+                {
+                    _useNewStyle = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         [JsonIgnore]
         public bool DevTools_UseWin10StyleOnWin11
         {
