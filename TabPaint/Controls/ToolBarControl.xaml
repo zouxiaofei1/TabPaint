@@ -222,7 +222,7 @@
             </Grid>
             <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="2,4,2,11"/>
 
-            <Button services:ShortcutService.BaseToolTip="L_ToolBar_CustomColor" 
+            <Button x:Name="CustomColorButton" services:ShortcutService.BaseToolTip="L_ToolBar_CustomColor" 
         Click="OnCustomColorClick_Forward" 
         Margin="5,0,2,7" 
         Padding="0" 

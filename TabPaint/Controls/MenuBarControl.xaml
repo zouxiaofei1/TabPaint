@@ -77,6 +77,7 @@
             </StackPanel>
 
                 <Button DockPanel.Dock="Right" Margin="0,5,10,5" Padding="2" 
+                        AutomationProperties.AutomationId="SettingsBtn"
                         services:ShortcutService.BaseToolTip="L_Menu_QA_Settings" 
                         Click="OnSettingsClick" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Path Data="{DynamicResource Settings_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="18" Height="18"/>

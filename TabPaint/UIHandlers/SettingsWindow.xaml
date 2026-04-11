@@ -213,7 +213,7 @@
                                     <ColumnDefinition Width="40"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <Path Data="{DynamicResource Paint_Mode_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                <Path Data="{DynamicResource Paint_Mode_Image}"   AutomationProperties.AutomationId="TxtPaint" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                 <TextBlock Grid.Column="1" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,0,0,0" Text="{DynamicResource L_Settings_Nav_Paint}" VerticalAlignment="Center" x:Name="TxtPaint"/>
                             </Grid>
                         </ListBoxItem>
