@@ -126,6 +126,12 @@ namespace TabPaint
         public const string Magick_DownloadUrl = "https://www.nuget.org/api/v2/package/Magick.NET-Q8-AnyCPU/14.11.1";
         public const string Magick_DownloadUrl_Mirror = "https://repo.huaweicloud.com/repository/nuget/v3/magick.net-q8-anycpu/14.11.1/magick.net-q8-anycpu.14.11.1.nupkg";
 
+        public const string MagickCore_DllName = "Magick.NET.Core.dll";
+        public const string MagickCore_DownloadUrl = "https://www.nuget.org/api/v2/package/Magick.NET.Core/14.11.1";
+        public const string MagickCore_DownloadUrl_Mirror = "https://repo.huaweicloud.com/repository/nuget/v3/magick.net.core/14.11.1/magick.net.core.14.11.1.nupkg";
+
+        public const string MagickNative_DllName = "Magick.Native-Q8-x64.dll";
+
         // --- 绘图工具参数 ---
         public const double DefaultPenThickness = 5.0;
         public const double DefaultPenOpacity = 1.0;
@@ -346,7 +352,7 @@ namespace TabPaint
 
         // --- 服务与性能配置 ---
         public const int MaxDiskConcurrency = 4;
-        public const int AppSettingsBinaryVersion = 22;
+        public const int AppSettingsBinaryVersion = 23;
 
         public static bool IsSupportedImage(string path)
         {

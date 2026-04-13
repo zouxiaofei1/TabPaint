@@ -251,7 +251,23 @@ namespace TabPaint
 
             var settingsTask = Task.Run(() => SettingsManager.Instance);
 
-           
+            // 清理待删除的插件文件
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    if (Directory.Exists(AppConsts.PluginsDir))
+                    {
+                        var deleteFiles = Directory.GetFiles(AppConsts.PluginsDir, "*.delete");
+                        foreach (var file in deleteFiles)
+                        {
+                            try { File.Delete(file); } catch { }
+                        }
+                    }
+                }
+                catch { }
+            });
+
             try
             { // 启用分级 JIT 编译优化
                 using var __perfProfileOpt = StartupPerformanceTracer.Measure("App.OnStartup.ProfileOptimization");

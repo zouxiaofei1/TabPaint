@@ -419,6 +419,21 @@ namespace TabPaint
             }
         }
 
+        private List<string> _pinnedSettingsTags = new List<string>();
+        [JsonPropertyName("pinned_settings_tags")]
+        public List<string> PinnedSettingsTags
+        {
+            get => _pinnedSettingsTags ??= new List<string>();
+            set
+            {
+                if (_pinnedSettingsTags != value)
+                {
+                    _pinnedSettingsTags = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {

@@ -35,6 +35,8 @@
     <sys:String x:Key="L_Settings_Plugins_Model_Inpaint_Desc">用於物體移除和圖片修復的 AI 模型。</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_OCR_Title">AI OCR 文字辨識</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_OCR_Desc">用於擷取圖片文字的 OCR 執行階段元件。</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_PSD_Title">PSD 支援</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_PSD_Desc">用於讀取 PSD 圖層資料的外掛模組。</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_NotInstalled">未安裝</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_Installed">已安裝</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_InstalledWithSize">已安裝（{0}）</sys:String>
@@ -48,6 +50,9 @@
     <sys:String x:Key="L_Settings_Plugins_Uninstall">解除安裝</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">確定要解除安裝此 AI 模型嗎？</sys:String>
     <sys:String x:Key="L_Settings_Plugins_OCR_Uninstall_Confirm">確定要解除安裝 OCR 執行階段嗎？</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_PSD_Title">PSD 外掛模組</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_PSD_Uninstall_Confirm">確定要解除安裝 PSD 外掛模組嗎？</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Uninstall_NeedRestart">外掛檔案目前正在被使用，已標記為下次啟動時刪除。請重啟程式以完成解除安裝。</sys:String>
     <sys:String x:Key="L_Settings_Plugins_RmbgModel_Title">背景移除模型</sys:String>
     <sys:String x:Key="L_Settings_Plugins_RmbgModel_Desc">切換模型後將自動重新載入</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Rmbg20_LowEndWarning">RMBG 2.0 對顯存和算力要求較高，低配硬體可能導致運行緩慢或程式崩潰。</sys:String>

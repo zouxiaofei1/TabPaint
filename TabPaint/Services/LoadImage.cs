@@ -399,7 +399,7 @@ namespace TabPaint
             return Task.Run(() =>
             {
                 try
-                {
+               {
                     stream.Position = 0;
 
                     if (IsWebpFileOrStream(filePath, stream))

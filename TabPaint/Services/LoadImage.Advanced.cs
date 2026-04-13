@@ -1,17 +1,18 @@
-﻿using System;
+﻿using SkiaSharp;
+using Svg.Skia;
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
-using XamlAnimatedGif; // 添加这一行
-using SkiaSharp;
-using Svg.Skia;
 using TabPaint.Services;
+using XamlAnimatedGif; // 添加这一行
 //
 //图片加载,包括icc,ico,svg等高级格式
 //以及加载动画
@@ -62,70 +63,219 @@ namespace TabPaint
 
         public static BitmapSource DecodePsd(Stream stream, int? targetMaxWidth = null, int? targetMaxHeight = null)
         {
-            if (!PsdPluginHelper.IsPsdPluginAvailable()) return null;
-
+            if (!PsdPluginHelper.IsPsdPluginAvailable())
+            {
+                Logger.Error("PSD Plugin: DecodePsd called but plugin is not available.");
+                return null;
+            }
             try
             {
                 stream.Position = 0;
-
                 Type magickImageType = PsdPluginHelper.GetMagickImageType()!;
-                Type magickFormatType = PsdPluginHelper.GetMagickFormatType()!;
-                Type pixelMappingType = PsdPluginHelper.GetPixelMappingType()!;
-
+                Assembly magickAssembly = PsdPluginHelper.GetAssembly()!;
+                // ★ 创建 MagickImage 实例
                 using dynamic image = Activator.CreateInstance(magickImageType, new object[] { stream })!;
-
-                // PSD 第一帧通常是合并后的预览图
-                image.Format = Enum.Parse(magickFormatType, "Bgra");
-
+                int currentWidth = (int)image.Width;
+                int currentHeight = (int)image.Height;
+                Logger.Info($"PSD Plugin: Image loaded, size={currentWidth}x{currentHeight}");
+                // ★ 缩放（如果需要）
                 if (targetMaxWidth.HasValue || targetMaxHeight.HasValue)
                 {
-                    int currentWidth = (int)image.Width;
-                    int currentHeight = (int)image.Height;
                     double scale = 1.0;
-
                     if (targetMaxWidth.HasValue && currentWidth > targetMaxWidth.Value)
                         scale = Math.Min(scale, (double)targetMaxWidth.Value / currentWidth);
                     if (targetMaxHeight.HasValue && currentHeight > targetMaxHeight.Value)
                         scale = Math.Min(scale, (double)targetMaxHeight.Value / currentHeight);
-
                     if (scale < 1.0)
                     {
                         uint newWidth = (uint)Math.Max(1, (int)(currentWidth * scale));
                         uint newHeight = (uint)Math.Max(1, (int)(currentHeight * scale));
                         image.Resize(newWidth, newHeight);
+                        currentWidth = (int)image.Width;
+                        currentHeight = (int)image.Height;
                     }
                 }
-
-                dynamic pixels = image.GetPixelsUnsafe();
-                byte[] data = pixels.ToByteArray(Enum.Parse(pixelMappingType, "BGRA"));
-
-                int finalWidth = (int)image.Width;
-                int finalHeight = (int)image.Height;
-                var wb = new WriteableBitmap(finalWidth, finalHeight, 96, 96, PixelFormats.Bgra32, null);
-                wb.WritePixels(new Int32Rect(0, 0, finalWidth, finalHeight), data, finalWidth * 4, 0);
-                wb.Freeze();
-                return wb;
+                // ★ 方法1：使用 ToByteArray + MagickFormat.Png 转为 PNG 再解码
+                //    这种方式最安全，兼容所有版本
+                BitmapSource result = DecodePsdViaPng(image, currentWidth, currentHeight);
+                if (result != null) return result;
+                // ★ 方法2（备用）：直接读取像素
+                return DecodePsdViaPixels(image, magickAssembly, currentWidth, currentHeight);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"PSD Decode Error: {ex.Message}");
+                Logger.Error("PSD Plugin: DecodePsd Exception", ex);
                 return null;
             }
+        }
+        /// <summary>
+        /// 通过 PNG 中转解码——最安全的方式
+        /// </summary>
+        private static BitmapSource DecodePsdViaPng(dynamic image, int width, int height)
+        {
+            try
+            {
+                // image.Format = MagickFormat.Png32;  (带 Alpha 的 PNG)
+                // 用反射设置 Format
+                Assembly asm = PsdPluginHelper.GetAssembly()!;
+                // 搜索 MagickFormat 枚举（可能在 Core 或主程序集中）
+                Type formatType = FindType(asm, "ImageMagick.MagickFormat");
+                if (formatType != null)
+                {
+                    // 尝试使用 Png32（32位PNG，保留Alpha）
+                    object png32Value = null;
+                    try { png32Value = Enum.Parse(formatType, "Png32"); } catch { }
+                    if (png32Value == null)
+                        try { png32Value = Enum.Parse(formatType, "Png"); } catch { }
+                    if (png32Value != null)
+                    {
+                        // 设置输出格式
+                        var formatProp = ((object)image).GetType().GetProperty("Format");
+                        formatProp?.SetValue(image, png32Value);
+                    }
+                }
+                // 转为 byte[]
+                byte[] pngBytes = image.ToByteArray();
+                if (pngBytes != null && pngBytes.Length > 0)
+                {
+                    using var ms = new MemoryStream(pngBytes);
+                    var bitmapImage = new BitmapImage();
+                    bitmapImage.BeginInit();
+                    bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmapImage.StreamSource = ms;
+                    bitmapImage.EndInit();
+                    bitmapImage.Freeze();
+                    Logger.Info($"PSD Plugin: Decoded via PNG, {bitmapImage.PixelWidth}x{bitmapImage.PixelHeight}");
+                    return bitmapImage;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("PSD Plugin: PNG method failed", ex);
+            }
+            return null;
+        }
+        /// <summary>
+        /// 直接读取像素数据——备用方式
+        /// </summary>
+        private static BitmapSource DecodePsdViaPixels(dynamic image, Assembly asm, int width, int height)
+        {
+            try
+            {
+                // ★ 尝试各种获取像素的方式
+                // 方式 A：GetPixelsUnsafe().ToByteArray("BGRA") — 字符串参数
+                try
+                {
+                    dynamic pixels = image.GetPixelsUnsafe();
+                    // 先尝试字符串参数（新版本 API）
+                    byte[] data = null;
+                    try
+                    {
+                        data = pixels.ToByteArray("BGRA");
+                    }
+                    catch
+                    {
+                        // 尝试枚举参数（旧版本）
+                        Type mappingType = FindType(asm, "ImageMagick.PixelMapping");
+                        if (mappingType != null)
+                        {
+                            object bgraMapping = Enum.Parse(mappingType, "BGRA");
+                            data = pixels.ToByteArray(bgraMapping);
+                        }
+                    }
+                    if (data != null && data.Length > 0)
+                    {
+                        var wb = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
+                        wb.WritePixels(new Int32Rect(0, 0, width, height), data, width * 4, 0);
+                        wb.Freeze();
+                        Logger.Info($"PSD Plugin: Decoded via pixels, {width}x{height}");
+                        return wb;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error("PSD Plugin: Pixel method A failed", ex);
+                }
+                // 方式 B：GetPixels().GetArea() 
+                try
+                {
+                    dynamic pixels2 = image.GetPixels();
+                    // GetArea returns ushort[] in some versions
+                    var area = pixels2.GetArea(0, 0, (uint)width, (uint)height);
+                    if (area is byte[] byteArea)
+                    {
+                        var wb = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
+                        wb.WritePixels(new Int32Rect(0, 0, width, height), byteArea, width * 4, 0);
+                        wb.Freeze();
+                        return wb;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error("PSD Plugin: Pixel method B failed", ex);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("PSD Plugin: All pixel methods failed", ex);
+            }
+            return null;
+        }
+        /// <summary>
+        /// 在已加载的所有 Magick 相关程序集中查找类型
+        /// </summary>
+        private static Type FindType(Assembly primaryAssembly, string fullTypeName)
+        {
+            // 1. 先从主程序集找
+            var t = primaryAssembly?.GetType(fullTypeName);
+            if (t != null) return t;
+            // 2. 从 Core 程序集找
+            string corePath = System.IO.Path.Combine(AppConsts.PluginsDir, "Magick.NET.Core.dll");
+            if (File.Exists(corePath))
+            {
+                try
+                {
+                    var coreAsm = Assembly.LoadFrom(corePath);
+                    t = coreAsm?.GetType(fullTypeName);
+                    if (t != null) return t;
+                }
+                catch { }
+            }
+            // 3. 从所有已加载的程序集中搜索
+            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                if (asm.FullName?.Contains("Magick") == true)
+                {
+                    t = asm.GetType(fullTypeName);
+                    if (t != null) return t;
+                }
+            }
+            return null;
         }
 
         internal static (int Width, int Height)? GetPsdDimensions(Stream stream)
         {
-            if (!PsdPluginHelper.IsPsdPluginAvailable()) return null;
+            if (!PsdPluginHelper.IsPsdPluginAvailable())
+            {
+                Logger.Error("PSD Plugin: GetPsdDimensions called but plugin is not available.");
+                return null;
+            }
 
             try
             {
                 stream.Position = 0;
                 Type infoType = PsdPluginHelper.GetMagickImageInfoType()!;
+                if (infoType == null)
+                {
+                    Logger.Error("PSD Plugin: GetMagickImageInfoType returned null.");
+                    return null;
+                }
                 dynamic info = Activator.CreateInstance(infoType, new object[] { stream })!;
                 return ((int)info.Width, (int)info.Height);
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.Error("PSD Plugin: GetPsdDimensions Exception", ex);
                 return null;
             }
         }

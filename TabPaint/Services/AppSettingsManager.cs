@@ -210,6 +210,11 @@ namespace TabPaint
                     writer.Write(Current.UseWin10StyleOnWin11);
                     writer.Write(Current.MaxRecentFiles);
 
+                    // PinnedSettingsTags
+                    var pinnedTags = Current.PinnedSettingsTags ?? new List<string>();
+                    writer.Write(pinnedTags.Count);
+                    foreach (var tag in pinnedTags) writer.Write(tag ?? "");
+
                     // RecentFiles
                     var recentFiles = Current.RecentFiles ?? new List<string>();
                     writer.Write(recentFiles.Count);
@@ -331,6 +336,13 @@ namespace TabPaint
                     if (dataVersion >= 22)
                     {
                         settings.MaxRecentFiles = reader.ReadInt32();
+                    }
+                    if (dataVersion >= 23)
+                    {
+                        int pinnedCount = reader.ReadInt32();
+                        var pinnedTags = new List<string>(pinnedCount);
+                        for (int i = 0; i < pinnedCount; i++) pinnedTags.Add(reader.ReadString());
+                        settings.PinnedSettingsTags = pinnedTags;
                     }
                     // RecentFiles
                     int recentCount = reader.ReadInt32();

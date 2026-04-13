@@ -38,6 +38,7 @@ namespace TabPaint.Pages
         public PluginPage()
         {
             InitializeComponent();
+            this.Tag = "Plugins";
             this.Loaded += PluginPage_Loaded;
             this.Unloaded += PluginPage_Unloaded;
             InitializeComboBoxes();
@@ -95,6 +96,37 @@ namespace TabPaint.Pages
             TxtRmbgLowEndWarning.Visibility = (isRmbg20 && isLowEnd) ? Visibility.Visible : Visibility.Collapsed;
         }
 
+        private void Grid_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+        {
+            UpdatePinState();
+        }
+
+        private void UpdatePinState()
+        {
+            var win = Window.GetWindow(this) as SettingsWindow;
+            if (win != null)
+            {
+                bool isPinned = win.IsPagePinned("Plugins");
+                BtnPinTop.IsChecked = isPinned;
+                TxtPin.Text = isPinned ? LocalizationManager.GetString("L_Settings_UnpinPage") : LocalizationManager.GetString("L_Settings_PinPage");
+                BtnPinTop.ToolTip = TxtPin.Text;
+
+                string pinData = isPinned
+                    ? "M2,5.27L3.28,4L20,20.72L18.73,22L12.8,16.07V22H11.2V16H6V14L8,12V11.27L2,5.27M16,12L18,14V16H16.17L12.8,12.63V4H14V2H7V4H8V11.17L6.11,9.28L7.27,8.12L16,16.85V12H16Z"
+                    : "M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12M8.8,14L10,12.8V4H14V12.8L15.2,14H8.8Z";
+
+                PinIcon.Data = Geometry.Parse(pinData);
+                PinIconTop.Data = Geometry.Parse(pinData);
+            }
+        }
+
+        private void MenuPin_Click(object sender, RoutedEventArgs e)
+        {
+            var win = Window.GetWindow(this) as SettingsWindow;
+            win?.TogglePinPage("Plugins");
+            UpdatePinState();
+        }
+
         private void PluginPage_Unloaded(object sender, RoutedEventArgs e)
         {
             Interlocked.Increment(ref _ocrRuntimeStatusRequestId);
@@ -117,6 +149,7 @@ namespace TabPaint.Pages
         private async void PluginPage_Loaded(object sender, RoutedEventArgs e)
         {
             _pluginScrollViewer = FindName("PluginScrollViewer") as ScrollViewer;
+            UpdatePinState();
             await UpdateAllStatusesAsync();
         }
 
@@ -152,7 +185,7 @@ namespace TabPaint.Pages
             if (AiService.Instance.IsModelReady(AiService.AiTaskType.Inpainting)) installedCount++;
             if (PythonRuntimeManager.IsRuntimeInstalled()) installedCount++;
             if (TabPaint.Services.QrCodeDecoder.IsZXingAvailable()) installedCount++;
-            if (TabPaint.Services.PsdPluginHelper.IsPsdPluginAvailable()) installedCount++;
+            if (TabPaint.Services.PsdPluginHelper.IsPsdPluginInstalled()) installedCount++;
 
             installAllButton.Content = string.Format(
                 LocalizationManager.GetString("L_Settings_Plugins_InstallAllWithProgress"),
@@ -985,7 +1018,7 @@ namespace TabPaint.Pages
         private void UpdatePSDStatus()
         {
             int requestId = Interlocked.Increment(ref _psdStatusRequestId);
-            bool installed = TabPaint.Services.PsdPluginHelper.IsPsdPluginAvailable();
+            bool installed = TabPaint.Services.PsdPluginHelper.IsPsdPluginInstalled();
             if (installed)
             {
                 TxtStatusPSD.Text = LocalizationManager.GetString("L_Settings_Plugins_Status_Installed");
@@ -996,11 +1029,17 @@ namespace TabPaint.Pages
 
                 try
                 {
-                    string dllPath = Path.Combine(AppConsts.PluginsDir, AppConsts.Magick_DllName);
-                    if (File.Exists(dllPath))
+                    long totalBytes = 0;
+                    string[] dllNames = { AppConsts.Magick_DllName, AppConsts.MagickCore_DllName, AppConsts.MagickNative_DllName };
+                    foreach (var name in dllNames)
                     {
-                        long sizeBytes = new FileInfo(dllPath).Length;
-                        string sizeText = FormatSize(sizeBytes);
+                        string p = Path.Combine(AppConsts.PluginsDir, name);
+                        if (File.Exists(p)) totalBytes += new FileInfo(p).Length;
+                    }
+
+                    if (totalBytes > 0)
+                    {
+                        string sizeText = FormatSize(totalBytes);
                         TxtStatusPSD.Text = string.Format(LocalizationManager.GetString("L_Settings_Plugins_Status_InstalledWithSize"), sizeText);
                     }
                 }
@@ -1033,80 +1072,98 @@ namespace TabPaint.Pages
             {
                 if (!Directory.Exists(AppConsts.PluginsDir)) Directory.CreateDirectory(AppConsts.PluginsDir);
 
-                string nupkgPath = Path.Combine(AppConsts.PluginsDir, "magick.nupkg");
-                string dllPath = Path.Combine(AppConsts.PluginsDir, AppConsts.Magick_DllName);
-
-                using (var client = new System.Net.Http.HttpClient())
+                async Task DownloadPkg(string url, string mirrorUrl, string savePath, string title)
                 {
-                    var progressReporter = new Progress<AiDownloadStatus>(status =>
+                    using (var client = new System.Net.Http.HttpClient())
                     {
-                        Dispatcher.Invoke(() =>
+                        var progressReporter = new Progress<AiDownloadStatus>(status =>
                         {
-                            FloatPSD.UpdateProgress(status.Percentage,
-                                LocalizationManager.GetString("L_Settings_Plugins_PSD_Title"),
-                                FormatSize((long)status.BytesReceived),
-                                status.TotalBytes > 0 ? FormatSize(status.TotalBytes) : "");
-                        });
-                    });
-
-                    string downloadUrl = AppConsts.Magick_DownloadUrl;
-                    string lang = CultureInfo.CurrentUICulture.Name;
-                    if (lang == "zh-CN" || lang == "zh-TW" || lang == "zh-HK")
-                    {
-                        downloadUrl = AppConsts.Magick_DownloadUrl_Mirror;
-                    }
-
-                    using (var response = await client.GetAsync(downloadUrl, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, token))
-                    {
-                        response.EnsureSuccessStatusCode();
-                        var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-                        using (var contentStream = await response.Content.ReadAsStreamAsync(token))
-                        using (var fileStream = new FileStream(nupkgPath, FileMode.Create, FileAccess.Write, FileShare.None))
-                        {
-                            var totalRead = 0L;
-                            var buffer = new byte[8192];
-                            var isMoreToRead = true;
-                            do
+                            Dispatcher.Invoke(() =>
                             {
-                                token.ThrowIfCancellationRequested();
-                                var read = await contentStream.ReadAsync(buffer, 0, buffer.Length, token);
-                                if (read == 0) isMoreToRead = false;
-                                else
+                                FloatPSD.UpdateProgress(status.Percentage, title,
+                                    FormatSize((long)status.BytesReceived),
+                                    status.TotalBytes > 0 ? FormatSize(status.TotalBytes) : "");
+                            });
+                        });
+
+                        string dUrl = (CultureInfo.CurrentUICulture.Name.StartsWith("zh")) ? mirrorUrl : url;
+                        using (var response = await client.GetAsync(dUrl, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, token))
+                        {
+                            response.EnsureSuccessStatusCode();
+                            var totalBytes = response.Content.Headers.ContentLength ?? -1L;
+                            using (var contentStream = await response.Content.ReadAsStreamAsync(token))
+                            using (var fileStream = new FileStream(savePath, FileMode.Create, FileAccess.Write, FileShare.None))
+                            {
+                                var totalRead = 0L;
+                                var buffer = new byte[8192];
+                                var isMoreToRead = true;
+                                do
                                 {
-                                    await fileStream.WriteAsync(buffer, 0, read, token);
-                                    totalRead += read;
-                                    ((IProgress<AiDownloadStatus>)progressReporter).Report(new AiDownloadStatus
+                                    token.ThrowIfCancellationRequested();
+                                    var read = await contentStream.ReadAsync(buffer, 0, buffer.Length, token);
+                                    if (read == 0) isMoreToRead = false;
+                                    else
                                     {
-                                        BytesReceived = totalRead,
-                                        TotalBytes = totalBytes,
-                                        Percentage = totalBytes > 0 ? (double)totalRead / totalBytes * 100 : 0
-                                    });
-                                }
-                            } while (isMoreToRead);
+                                        await fileStream.WriteAsync(buffer, 0, read, token);
+                                        totalRead += read;
+                                        ((IProgress<AiDownloadStatus>)progressReporter).Report(new AiDownloadStatus
+                                        {
+                                            BytesReceived = totalRead,
+                                            TotalBytes = totalBytes,
+                                            Percentage = totalBytes > 0 ? (double)totalRead / totalBytes * 100 : 0
+                                        });
+                                    }
+                                } while (isMoreToRead);
+                            }
                         }
                     }
                 }
 
+                string pkgMain = Path.Combine(AppConsts.PluginsDir, "magick_main.nupkg");
+                string pkgCore = Path.Combine(AppConsts.PluginsDir, "magick_core.nupkg");
+                string baseTitle = LocalizationManager.GetString("L_Settings_Plugins_PSD_Title");
+
+                await DownloadPkg(AppConsts.Magick_DownloadUrl, AppConsts.Magick_DownloadUrl_Mirror, pkgMain, baseTitle + " (1/2)");
+                await DownloadPkg(AppConsts.MagickCore_DownloadUrl, AppConsts.MagickCore_DownloadUrl_Mirror, pkgCore, baseTitle + " (2/2)");
+
                 await Task.Run(() =>
                 {
-                    using (var archive = System.IO.Compression.ZipFile.OpenRead(nupkgPath))
+                    // Extract Main & Native
+                    using (var archive = ZipFile.OpenRead(pkgMain))
                     {
-                        var entry = archive.Entries.FirstOrDefault(e => e.FullName.Equals("lib/net8.0/" + AppConsts.Magick_DllName, StringComparison.OrdinalIgnoreCase))
-                                 ?? archive.Entries.FirstOrDefault(e => e.FullName.Equals("lib/net6.0/" + AppConsts.Magick_DllName, StringComparison.OrdinalIgnoreCase))
-                                 ?? archive.Entries.FirstOrDefault(e => e.FullName.Equals("lib/netstandard2.1/" + AppConsts.Magick_DllName, StringComparison.OrdinalIgnoreCase))
-                                 ?? archive.Entries.FirstOrDefault(e => e.FullName.Equals("lib/netstandard2.0/" + AppConsts.Magick_DllName, StringComparison.OrdinalIgnoreCase));
-
+                        var entry = archive.Entries.FirstOrDefault(e => e.FullName.EndsWith("/" + AppConsts.Magick_DllName, StringComparison.OrdinalIgnoreCase))
+                                 ?? archive.Entries.FirstOrDefault(e => e.FullName.Contains(AppConsts.Magick_DllName));
                         if (entry != null)
                         {
-                            if (File.Exists(dllPath)) File.Delete(dllPath);
-                            entry.ExtractToFile(dllPath);
+                            string target = Path.Combine(AppConsts.PluginsDir, AppConsts.Magick_DllName);
+                            if (File.Exists(target)) File.Delete(target);
+                            entry.ExtractToFile(target);
                         }
-                        else
+
+                        var nativeEntry = archive.Entries.FirstOrDefault(e => e.FullName.Contains(AppConsts.MagickNative_DllName, StringComparison.OrdinalIgnoreCase));
+                        if (nativeEntry != null)
                         {
-                            throw new Exception("Could not find " + AppConsts.Magick_DllName + " in package");
+                            string target = Path.Combine(AppConsts.PluginsDir, AppConsts.MagickNative_DllName);
+                            if (File.Exists(target)) File.Delete(target);
+                            nativeEntry.ExtractToFile(target);
                         }
                     }
-                    if (File.Exists(nupkgPath)) File.Delete(nupkgPath);
+
+                    // Extract Core
+                    using (var archive = ZipFile.OpenRead(pkgCore))
+                    {
+                        var entry = archive.Entries.FirstOrDefault(e => e.FullName.EndsWith("/" + AppConsts.MagickCore_DllName, StringComparison.OrdinalIgnoreCase))
+                                 ?? archive.Entries.FirstOrDefault(e => e.FullName.Contains(AppConsts.MagickCore_DllName));
+                        if (entry != null)
+                        {
+                            string target = Path.Combine(AppConsts.PluginsDir, AppConsts.MagickCore_DllName);
+                            if (File.Exists(target)) File.Delete(target);
+                            entry.ExtractToFile(target);
+                        }
+                    }
+
+                    if (File.Exists(pkgMain)) File.Delete(pkgMain);
+                    if (File.Exists(pkgCore)) File.Delete(pkgCore);
                 }, token);
 
                 FloatPSD.Finish();
@@ -1138,7 +1195,7 @@ namespace TabPaint.Pages
         private void UninstallPSD_Click(object sender, RoutedEventArgs e)
         {
             var result = FluentMessageBox.Show(
-                LocalizationManager.GetString("L_Settings_Plugins_Uninstall_Confirm"),
+                LocalizationManager.GetString("L_Settings_Plugins_PSD_Uninstall_Confirm"),
                 LocalizationManager.GetString("L_Settings_Plugins_Uninstall"),
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question,
@@ -1150,9 +1207,34 @@ namespace TabPaint.Pages
             {
                 TabPaint.Services.PsdPluginHelper.ResetAvailability();
 
-                string dllPath = Path.Combine(AppConsts.PluginsDir, AppConsts.Magick_DllName);
-                if (File.Exists(dllPath))
-                    File.Delete(dllPath);
+                string[] files = { AppConsts.Magick_DllName, AppConsts.MagickCore_DllName, AppConsts.MagickNative_DllName };
+                bool needRestart = false;
+
+                foreach (var f in files)
+                {
+                    string p = Path.Combine(AppConsts.PluginsDir, f);
+                    if (File.Exists(p))
+                    {
+                        try { File.Delete(p); }
+                        catch (IOException)
+                        {
+                            string del = p + ".delete";
+                            if (File.Exists(del)) File.Delete(del);
+                            File.Move(p, del);
+                            needRestart = true;
+                        }
+                    }
+                }
+
+                if (needRestart)
+                {
+                    FluentMessageBox.Show(
+                        LocalizationManager.GetString("L_Settings_Plugins_Uninstall_NeedRestart"),
+                        LocalizationManager.GetString("L_Settings_Title"),
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information,
+                        Window.GetWindow(this));
+                }
 
                 UpdatePSDStatus();
                 UpdateInstallAllQuickActionState();

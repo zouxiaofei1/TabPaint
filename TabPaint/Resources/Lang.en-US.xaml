@@ -14,6 +14,8 @@
     <sys:String x:Key="L_Settings_Plugins_ZXing_Desc">Identify QR codes or barcodes in images.</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_OCR_Title">AI OCR</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_OCR_Desc">Runtime component for extracting text from images.</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_PSD_Title">PSD Plugin</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_PSD_Desc">Based on Magick.NET, supports opening and previewing Photoshop (.psd) files.</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_NotInstalled">Not Installed</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_Installed">Installed</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_InstalledWithSize">Installed ({0})</sys:String>
@@ -28,6 +30,8 @@
     <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">Are you sure you want to uninstall this AI model?</sys:String>
     <sys:String x:Key="L_Settings_Plugins_OCR_Uninstall_Confirm">Are you sure you want to uninstall the OCR runtime?</sys:String>
     <sys:String x:Key="L_Settings_Plugins_QrCode_Uninstall_Confirm">Are you sure you want to uninstall the QR Code Recognition plugin?</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_PSD_Uninstall_Confirm">Are you sure you want to uninstall the PSD plugin?</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Uninstall_NeedRestart">The component file is currently in use and has been marked for uninstallation. Please restart the program to complete the removal.</sys:String>
     <sys:String x:Key="L_Settings_Plugins_RmbgModel_Title">Background Removal Model</sys:String>
     <sys:String x:Key="L_Settings_Plugins_RmbgModel_Desc">Model will be reloaded automatically after change</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Rmbg20_LowEndWarning">RMBG 2.0 requires high VRAM/GPU power. Low-end hardware may be slow or crash.</sys:String>
@@ -38,6 +42,8 @@
     <sys:String x:Key="L_Settings_Plugins_ModelDir_Migrating_Left">{0}/{1}</sys:String>
     <sys:String x:Key="L_Settings_Plugins_ModelDir_MigrateFailed">Model migration failed: {0}</sys:String>
     <sys:String x:Key="L_Settings_Nav_Plugins">Plugins</sys:String>
+    <sys:String x:Key="L_Settings_PinPage">Pin this page</sys:String>
+    <sys:String x:Key="L_Settings_UnpinPage">Unpin this page</sys:String>
     <sys:String x:Key="L_ImgBar_NewImage">New Image</sys:String>
     <sys:String x:Key="L_CreateNewWorkSpate">Create New WorkSpace</sys:String>
     <sys:String x:Key="L_Toast_NewWindowFromSelectionFailed">Failed to create new window from selection:</sys:String>

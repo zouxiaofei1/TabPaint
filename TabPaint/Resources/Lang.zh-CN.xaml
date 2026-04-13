@@ -18,6 +18,8 @@
     <sys:String x:Key="L_Settings_Toast_ShellIntegration_EnableFailed">启用系统右键菜单失败：{0}</sys:String>
     <sys:String x:Key="L_Settings_Toast_ShellIntegration_DisableFailed">移除系统右键菜单失败：{0}</sys:String>
     <sys:String x:Key="L_Settings_Nav_Plugins">插件</sys:String>
+    <sys:String x:Key="L_Settings_PinPage">固定此页面</sys:String>
+    <sys:String x:Key="L_Settings_UnpinPage">取消固定此页面</sys:String>
     <sys:String x:Key="L_ImgBar_NewImage">新图片</sys:String>
     <sys:String x:Key="L_CreateNewWorkSpate">选择图片以建立新工作区</sys:String>
     <sys:String x:Key="L_Toast_NewWindowFromSelectionFailed">从选区创建新窗口失败:</sys:String>
@@ -39,6 +41,8 @@
     <sys:String x:Key="L_Settings_Plugins_ZXing_Desc">识别图像中的二维码或条形码内容</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_OCR_Title">AI OCR 文字识别</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_OCR_Desc">用于提取图片文字的 OCR 运行时组件。</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_PSD_Title">PSD 读取插件</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_PSD_Desc">基于 Magick.NET，支持直接打开和预览 Photoshop (.psd) 文件。</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_NotInstalled">未安装</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_Installed">已安装</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_InstalledWithSize">已安装（{0}）</sys:String>
@@ -53,6 +57,8 @@
     <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">确定要卸载此 AI 模型吗？</sys:String>
     <sys:String x:Key="L_Settings_Plugins_OCR_Uninstall_Confirm">确定要卸载 OCR 运行时吗？</sys:String>
     <sys:String x:Key="L_Settings_Plugins_QrCode_Uninstall_Confirm">确定要卸载二维码识别插件吗？</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_PSD_Uninstall_Confirm">确定要卸载 PSD 读取插件吗？</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Uninstall_NeedRestart">该组件文件目前正在使用中，已标记为卸载，请重启程序以彻底删除。</sys:String>
     <sys:String x:Key="L_Settings_Plugins_RmbgModel_Title">背景移除模型</sys:String>
     <sys:String x:Key="L_Settings_Plugins_RmbgModel_Desc">切换模型后将自动重新加载</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Rmbg20_LowEndWarning">RMBG 2.0在此配置上运行可能过慢或导致程序崩溃。</sys:String>

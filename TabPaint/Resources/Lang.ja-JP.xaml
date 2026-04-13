@@ -11,6 +11,8 @@
     <sys:String x:Key="L_Settings_Plugins_Model_Inpaint_Desc">オブジェクトの削除とインペイントのための AI モデル。</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_OCR_Title">AI OCR</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_OCR_Desc">画像からテキストを抽出するためのランタイムコンポーネント。</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_PSD_Title">PSD サポート</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_PSD_Desc">PSD レイヤーデータを読み取るためのプラグイン。</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_NotInstalled">未インストール</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_Installed">インストール済み</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_InstalledWithSize">インストール済み ({0})</sys:String>
@@ -24,6 +26,9 @@
     <sys:String x:Key="L_Settings_Plugins_Uninstall">アンインストール</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">この AI モデルをアンインストールしてもよろしいですか？</sys:String>
     <sys:String x:Key="L_Settings_Plugins_OCR_Uninstall_Confirm">OCR ランタイムをアンインストールしてもよろしいですか？</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_PSD_Title">PSD プラグイン</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_PSD_Uninstall_Confirm">PSD プラグインをアンインストールしてもよろしいですか？</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Uninstall_NeedRestart">プラグインファイルは現在使用中です。次回の起動時に削除されるようマークされました。アンインストールを完了するには、プログラムを再起動してください。</sys:String>
     <sys:String x:Key="L_Settings_Plugins_RmbgModel_Title">背景削除モデル</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Rmbg20_LowEndWarning">警告：RMBG 2.0は高いVRAM/GPU性能を必要とします。低スペックの環境では動作が遅くなったり、クラッシュしたりする可能性があります。</sys:String>
 

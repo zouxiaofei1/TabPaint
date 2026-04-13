@@ -521,8 +521,34 @@ namespace TabPaint
             return null;
         }
 
+        public void TogglePinPage(string tag)
+        {
+            if (string.IsNullOrWhiteSpace(tag)) return;
+            var settings = SettingsManager.Instance.Current;
+            if (settings == null) return;
+
+            if (settings.PinnedSettingsTags.Contains(tag))
+            {
+                settings.PinnedSettingsTags.Remove(tag);
+            }
+            else
+            {
+                settings.PinnedSettingsTags.Add(tag);
+            }
+
+            SettingsManager.Instance.Save();
+            UpdateSpecialNavItemsVisibility(tag); // tag 是当前正在操作的页，可能需要重新评估显示
+        }
+
+        public bool IsPagePinned(string tag)
+        {
+            return SettingsManager.Instance.Current?.PinnedSettingsTags.Contains(tag) ?? false;
+        }
+
         private void UpdateSpecialNavItemsVisibility(string tag)
         {
+            var pinnedTags = SettingsManager.Instance.Current?.PinnedSettingsTags ?? new List<string>();
+
             var pluginsItem = FindNavItemByTag("Plugins");
             var devToolsItem = FindNavItemByTag("DevTools");
             var systemReportItem = FindNavItemByTag("SystemReport");
@@ -532,28 +558,28 @@ namespace TabPaint
             {
                 AnimateSpecialNavItemVisibility(
                     pluginsItem,
-                    string.Equals(tag, "Plugins", StringComparison.Ordinal));
+                    string.Equals(tag, "Plugins", StringComparison.Ordinal) || pinnedTags.Contains("Plugins"));
             }
 
             if (devToolsItem != null)
             {
                 AnimateSpecialNavItemVisibility(
                     devToolsItem,
-                    string.Equals(tag, "DevTools", StringComparison.Ordinal));
+                    string.Equals(tag, "DevTools", StringComparison.Ordinal) || pinnedTags.Contains("DevTools"));
             }
 
             if (systemReportItem != null)
             {
                 AnimateSpecialNavItemVisibility(
                     systemReportItem,
-                    string.Equals(tag, "SystemReport", StringComparison.Ordinal));
+                    string.Equals(tag, "SystemReport", StringComparison.Ordinal) || pinnedTags.Contains("SystemReport"));
             }
 
             if (agreementItem != null)
             {
                 AnimateSpecialNavItemVisibility(
                     agreementItem,
-                    string.Equals(tag, "Agreement", StringComparison.Ordinal));
+                    string.Equals(tag, "Agreement", StringComparison.Ordinal) || pinnedTags.Contains("Agreement"));
             }
         }
 
