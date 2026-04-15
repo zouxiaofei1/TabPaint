@@ -211,5 +211,40 @@ namespace TabPaint
                 ScrollContainer.ScrollToVerticalOffset(ScrollContainer.VerticalOffset + scrollAmount);
             }
         }
+
+        private void OnManipulationStarting(object sender, ManipulationStartingEventArgs e)
+        {
+            e.ManipulationContainer = ScrollContainer;
+            e.Mode = ManipulationModes.Scale | ManipulationModes.Translate;
+            e.Handled = true;
+        }
+
+        private void OnManipulationDelta(object sender, ManipulationDeltaEventArgs e)
+        {
+            if (e.Manipulators.Count() >= 2)
+            {
+                _hasUserManuallyZoomed = true;
+
+                // 1. 处理缩放
+                double scaleFactor = (e.DeltaManipulation.Scale.X + e.DeltaManipulation.Scale.Y) / 2;
+                if (Math.Abs(scaleFactor - 1.0) > 0.0001)
+                {
+                    double currentScale = zoomscale;
+                    double targetScale = currentScale * scaleFactor;
+                    Point center = e.ManipulationOrigin;
+
+                    SetZoom(targetScale, center, isIntermediate: true);
+                }
+
+                // 2. 处理平移
+                if (Math.Abs(e.DeltaManipulation.Translation.X) > 0.1 || Math.Abs(e.DeltaManipulation.Translation.Y) > 0.1)
+                {
+                    ScrollContainer.ScrollToHorizontalOffset(ScrollContainer.HorizontalOffset - e.DeltaManipulation.Translation.X);
+                    ScrollContainer.ScrollToVerticalOffset(ScrollContainer.VerticalOffset - e.DeltaManipulation.Translation.Y);
+                }
+
+                e.Handled = true;
+            }
+        }
     }
 }

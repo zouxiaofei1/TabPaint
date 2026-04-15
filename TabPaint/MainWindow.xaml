@@ -342,7 +342,8 @@
                                   PreviewMouseWheel="OnMouseWheelZoom" Background="Transparent" 
                                   PreviewMouseDown="OnScrollContainerMouseDown" PreviewMouseMove="OnScrollContainerMouseMove"  
                                   PreviewMouseUp="OnScrollContainerMouseUp" MouseDoubleClick="OnScrollContainerDoubleClick" 
-                                  AllowDrop="True" ScrollChanged="ScrollContainer_ScrollChanged" >
+                                  AllowDrop="True" ScrollChanged="ScrollContainer_ScrollChanged" 
+                                  IsManipulationEnabled="True" ManipulationStarting="OnManipulationStarting" ManipulationDelta="OnManipulationDelta">
 
                                 <Grid HorizontalAlignment="Center" VerticalAlignment="Center" ClipToBounds="False">
                                     <Grid.Resources>

@@ -1140,7 +1140,10 @@ namespace TabPaint.Pages
                             entry.ExtractToFile(target);
                         }
 
-                        var nativeEntry = archive.Entries.FirstOrDefault(e => e.FullName.Contains(AppConsts.MagickNative_DllName, StringComparison.OrdinalIgnoreCase));
+                        var nativeEntry = archive.Entries.FirstOrDefault(e =>
+                e.FullName.Contains("runtimes/win-x64/native/", StringComparison.OrdinalIgnoreCase)
+                && e.FullName.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)
+                && !e.FullName.EndsWith(".dll.so", StringComparison.OrdinalIgnoreCase));
                         if (nativeEntry != null)
                         {
                             string target = Path.Combine(AppConsts.PluginsDir, AppConsts.MagickNative_DllName);

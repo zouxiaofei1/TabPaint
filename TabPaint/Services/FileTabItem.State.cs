@@ -32,6 +32,19 @@ namespace TabPaint
                     OnPropertyChanged(nameof(DisplayName));
                 }
             }
+
+            private string _customName;
+            public string CustomName
+            {
+                get => _customName;
+                set
+                {
+                    _customName = value;
+                    OnPropertyChanged(nameof(CustomName));
+                    OnPropertyChanged(nameof(FileName));
+                    OnPropertyChanged(nameof(DisplayName));
+                }
+            }
             private int _untitledNumber;
             public int UntitledNumber
             {
@@ -49,6 +62,8 @@ namespace TabPaint
             {
                 get
                 {
+                    if (!string.IsNullOrEmpty(CustomName)) return CustomName;
+
                     // 1. 优先检查是否是虚拟路径
                     if (!string.IsNullOrEmpty(FilePath) && FilePath.StartsWith(MainWindow.VirtualFilePrefix))
                     {
@@ -73,6 +88,12 @@ namespace TabPaint
             {
                 get
                 {
+                    if (!string.IsNullOrEmpty(CustomName))
+                    {
+                        try { return System.IO.Path.GetFileNameWithoutExtension(CustomName); }
+                        catch { return CustomName; }
+                    }
+
                     // 1. 优先检查是否是虚拟路径
                     if (IsNew || (!string.IsNullOrEmpty(FilePath) && FilePath.StartsWith(MainWindow.VirtualFilePrefix)))
                     {

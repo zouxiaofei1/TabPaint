@@ -74,6 +74,7 @@ SetZoom(targetScale, slient: true);
             MainImageBar.PreviewSliderValueChanged += PreviewSlider_ValueChanged;
             MainImageBar.SliderPreviewMouseWheel += Slider_PreviewMouseWheel;
             MainImageBar.BackgroundMouseDown += BackgroundMouseDown_Handler;
+            MainImageBar.TabRenameClick += OnTabRenameClick;
             MainImageBar.TabCopyClick += OnTabCopyClick;
             MainImageBar.TabCutClick += OnTabCutClick;
             MainImageBar.TabPasteClick += OnTabPasteClick;

@@ -749,6 +749,9 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Toast_SavedCount_Format">已保存 {0} 张图片。</sys:String>
     <sys:String x:Key="L_Toast_CleanedCount_Format">已清理 {0} 张未编辑图片</sys:String>
     <sys:String x:Key="L_Toast_CleanupFailed_Prefix">清理失败: {0}</sys:String>
+    <sys:String x:Key="L_Toast_FileExists">文件已存在</sys:String>
+    <sys:String x:Key="L_Toast_RenameSuccess">重命名成功</sys:String>
+    <sys:String x:Key="L_Toast_RenameFailed">重命名失败: </sys:String>
     <sys:String x:Key="L_Toast_OpenFolderFailed_Prefix">无法打开文件夹: {0}</sys:String>
     <sys:String x:Key="L_Toast_PrepareDragFailed_Prefix">准备拖拽文件失败: {0}</sys:String>
     <sys:String x:Key="L_Toast_DragStartFailed_Prefix">启动拖拽失败: {0}</sys:String>
@@ -872,6 +875,7 @@ SOFTWARE.</sys:String>
 
     <sys:String x:Key="L_ImgBar_ClearUnedited">关闭所有未编辑的图片</sys:String>
     <sys:String x:Key="L_ImgBar_NewTabLeft">在左侧新建</sys:String>
+    <sys:String x:Key="L_Ctx_Rename">重命名</sys:String>
     <sys:String x:Key="L_Ctx_StickImage">贴图</sys:String>
     <sys:String x:Key="L_Ctx_DeleteFile">删除文件</sys:String>
 

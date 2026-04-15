@@ -201,6 +201,7 @@ namespace TabPaint.Controls
         private void Internal_OnFileTabCloseClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(FileTabCloseClickEvent, e.OriginalSource));
 
         // 右键菜单转发
+        public event RoutedEventHandler TabRenameClick;
         public event RoutedEventHandler TabCopyClick;
         public event RoutedEventHandler TabCutClick;
         public event RoutedEventHandler TabPasteClick;
@@ -211,6 +212,7 @@ namespace TabPaint.Controls
         public event RoutedEventHandler TabNewTabRightClick;
         public event RoutedEventHandler TabFileDeleteClick;
 
+        private void Internal_OnTabRenameClick(object sender, RoutedEventArgs e) => TabRenameClick?.Invoke(sender, e);
         private void Internal_OnTabCopyClick(object sender, RoutedEventArgs e) => TabCopyClick?.Invoke(sender, e);
         private void Internal_OnTabCutClick(object sender, RoutedEventArgs e) => TabCutClick?.Invoke(sender, e);
         private void Internal_OnTabPasteClick(object sender, RoutedEventArgs e) => TabPasteClick?.Invoke(sender, e);

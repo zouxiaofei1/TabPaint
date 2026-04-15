@@ -770,6 +770,9 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Toast_SavedCount_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Saved {0} images.</sys:String>
     <sys:String x:Key="L_Toast_CleanedCount_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Cleaned up {0} unedited images</sys:String>
     <sys:String x:Key="L_Toast_CleanupFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Cleanup failed: {0}</sys:String>
+    <sys:String x:Key="L_Toast_FileExists">File already exists</sys:String>
+    <sys:String x:Key="L_Toast_RenameSuccess">Rename successful</sys:String>
+    <sys:String x:Key="L_Toast_RenameFailed">Rename failed: </sys:String>
     <sys:String x:Key="L_Toast_OpenFolderFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Cannot open folder: {0}</sys:String>
     <sys:String x:Key="L_Toast_PrepareDragFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Prepare drag file error: {0}</sys:String>
     <sys:String x:Key="L_Toast_DragStartFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Drag start failed: {0}</sys:String>
@@ -891,6 +894,7 @@ SOFTWARE.</sys:String>
 
     <sys:String x:Key="L_ImgBar_ClearUnedited">Close all unedited images</sys:String>
     <sys:String x:Key="L_ImgBar_NewTabLeft">New tab on the left</sys:String>
+    <sys:String x:Key="L_Ctx_Rename">Rename</sys:String>
     <sys:String x:Key="L_Ctx_StickImage">Stick Image</sys:String>
     <sys:String x:Key="L_Ctx_CloseOtherTabs">Close Other Tabs</sys:String>
     <sys:String x:Key="L_Menu_Tab_MoveToNewWindow">Move tab to new window</sys:String>

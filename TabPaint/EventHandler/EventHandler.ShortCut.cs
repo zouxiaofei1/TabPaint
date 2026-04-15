@@ -71,6 +71,15 @@ namespace TabPaint
                 return true;
             }
             if (IsShortcut("View.FullScreen", e)) { MaximizeWindowHandler(); e.Handled = true; return true; }
+            if (e.Key == Key.F2 && Keyboard.Modifiers == ModifierKeys.None)
+            {
+                if (_currentTabItem != null)
+                {
+                    _ = RenameTabWithDialog(_currentTabItem);
+                    e.Handled = true;
+                    return true;
+                }
+            }
             return false;
         }
 

@@ -156,6 +156,7 @@ namespace TabPaint
         private bool _isDraggingAlpha = false;
         private bool _isDraggingHue = false;
         private bool _isUpdatingInputs = false;
+        private bool _isHex8Mode = true;
 
         private double _currentHue = 0;
         private double _currentSat = 1;
@@ -365,7 +366,7 @@ namespace TabPaint
             return includeAlpha ? Color.FromArgb((byte)_currentAlpha, c.R, c.G, c.B) : c;
         }
 
-        private void UpdateUI()
+        private void UpdateUI(bool updateHex = true)
         {
             if (_isUpdatingInputs) return;
             _isUpdatingInputs = true;
@@ -376,7 +377,11 @@ namespace TabPaint
                 SelectedColor = c;
 
                 if (NewColorRect != null) NewColorRect.Fill = new SolidColorBrush(c);
-                if (HexInput != null) HexInput.Text = $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}";
+                if (updateHex && HexInput != null)
+                {
+                    string hex = _isHex8Mode ? $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}" : $"#{c.R:X2}{c.G:X2}{c.B:X2}";
+                    if (HexInput.Text != hex) HexInput.Text = hex;
+                }
                 if (SpectrumLayerGroup != null) SpectrumLayerGroup.Opacity = _currentAlpha / 255.0;
 
                 if (_isCompact)
@@ -389,18 +394,26 @@ namespace TabPaint
 
                 if (Input1 != null && Input2 != null && Input3 != null && InputAlpha != null)
                 {
-                    InputAlpha.Text = ((int)_currentAlpha).ToString();
+                    string aStr = ((int)_currentAlpha).ToString();
+                    if (InputAlpha.Text != aStr) InputAlpha.Text = aStr;
+
                     if (_currentMode == ColorMode.RGB)
                     {
-                        Input1.Text = c.R.ToString();
-                        Input2.Text = c.G.ToString();
-                        Input3.Text = c.B.ToString();
+                        string rStr = c.R.ToString();
+                        string gStr = c.G.ToString();
+                        string bStr = c.B.ToString();
+                        if (Input1.Text != rStr) Input1.Text = rStr;
+                        if (Input2.Text != gStr) Input2.Text = gStr;
+                        if (Input3.Text != bStr) Input3.Text = bStr;
                     }
                     else
                     {
-                        Input1.Text = Math.Round(_currentHue).ToString();
-                        Input2.Text = Math.Round(_currentSat * 100).ToString();
-                        Input3.Text = Math.Round(_currentVal * 100).ToString();
+                        string hStr = Math.Round(_currentHue).ToString();
+                        string sStr = Math.Round(_currentSat * 100).ToString();
+                        string vStr = Math.Round(_currentVal * 100).ToString();
+                        if (Input1.Text != hStr) Input1.Text = hStr;
+                        if (Input2.Text != sStr) Input2.Text = sStr;
+                        if (Input3.Text != vStr) Input3.Text = vStr;
                     }
                 }
 
@@ -723,40 +736,24 @@ namespace TabPaint
         private void HexInput_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (HexInput == null || NewColorRect == null || _isUpdatingInputs) return;
-            string hex = HexInput.Text.Trim('#');
-            if (hex.Length == 6)
+
+            string hex = HexInput.Text.Trim().TrimStart('#');
+            if (hex.Length != 6 && hex.Length != 8) return;
+
+            try
             {
-                try
-                {
-                    _currentAlpha = 255;
-                    byte r = Convert.ToByte(hex.Substring(0, 2), 16);
-                    byte g = Convert.ToByte(hex.Substring(2, 2), 16);
-                    byte b = Convert.ToByte(hex.Substring(4, 2), 16);
-                    SetColorFromRgb(r, g, b);
-                    var c = GetRgbFromHsv(true);
-                    NewColorRect.Fill = new SolidColorBrush(c);
-                    SelectedColor = c;
-                    if (InputAlpha != null) InputAlpha.Text = "255";
-                }
-                catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
+                Color c = (Color)ColorConverter.ConvertFromString("#" + hex);
+                _currentAlpha = c.A;
+                SetColorFromRgb(c.R, c.G, c.B);
+                UpdateUI(false);
             }
-            else if (hex.Length == 8)
-            {
-                try
-                {
-                    byte a = Convert.ToByte(hex.Substring(0, 2), 16);
-                    byte r = Convert.ToByte(hex.Substring(2, 2), 16);
-                    byte g = Convert.ToByte(hex.Substring(4, 2), 16);
-                    byte b = Convert.ToByte(hex.Substring(6, 2), 16);
-                    _currentAlpha = a;
-                    SetColorFromRgb(r, g, b);
-                    var c = GetRgbFromHsv(true);
-                    NewColorRect.Fill = new SolidColorBrush(c);
-                    SelectedColor = c;
-                    if (InputAlpha != null) InputAlpha.Text = a.ToString();
-                }
-                catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
-            }
+            catch (Exception ex) { Debug.WriteLine(ex); }
+        }
+
+        private void HexLabel_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            _isHex8Mode = !_isHex8Mode;
+            UpdateUI();
         }
 
         private void NumericInput_TextChanged(object sender, TextChangedEventArgs e)
@@ -770,10 +767,7 @@ namespace TabPaint
                 _currentAlpha = Math.Clamp(vAlpha, 0, 255);
                 if (_currentMode == ColorMode.RGB)
                 {
-                    byte r = (byte)Math.Clamp(v1, 0, 255);
-                    byte g = (byte)Math.Clamp(v2, 0, 255);
-                    byte b = (byte)Math.Clamp(v3, 0, 255);
-                    SetColorFromRgb(r, g, b);
+                    SetColorFromRgb((byte)Math.Clamp(v1, 0, 255), (byte)Math.Clamp(v2, 0, 255), (byte)Math.Clamp(v3, 0, 255));
                 }
                 else
                 {
@@ -782,26 +776,7 @@ namespace TabPaint
                     _currentVal = Math.Clamp(v3, 0, 100) / 100.0;
                     UpdateHueColorVisual();
                 }
-                var c = GetRgbFromHsv(true);
-                SelectedColor = c;
-                if (NewColorRect != null) NewColorRect.Fill = new SolidColorBrush(c);
-                _isUpdatingInputs = true;
-                if (HexInput != null) HexInput.Text = $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}";
-                if (AlphaSliderGrid != null && AlphaSliderGrid.ActualHeight > 0 && AlphaCursor != null)
-                    Canvas.SetTop(AlphaCursor, (1 - (_currentAlpha / 255.0)) * AlphaSliderGrid.ActualHeight);
-                if (SpectrumBaseColor != null && SpectrumBaseColor.ActualWidth > 0 && CursorContainer != null)
-                {
-                    double w = SpectrumBaseColor.ActualWidth;
-                    double h = SpectrumBaseColor.ActualHeight;
-                    Canvas.SetLeft(CursorContainer, _currentSat * w);
-                    Canvas.SetTop(CursorContainer, (1 - _currentVal) * h);
-                }
-                if (HueSliderGrid != null && HueSliderGrid.ActualHeight > 0 && HueCursor != null)
-                {
-                    double hGrid = HueSliderGrid.ActualHeight;
-                    Canvas.SetTop(HueCursor, (1 - (_currentHue / 360.0)) * hGrid);
-                }
-                _isUpdatingInputs = false;
+                UpdateUI(true);
             }
         }
 

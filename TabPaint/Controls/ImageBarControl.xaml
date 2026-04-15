@@ -248,6 +248,12 @@
                                                         <Path Data="{DynamicResource Open_Folder_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Ctx_Rename}" 
+                                                          Click="Internal_OnTabRenameClick" Tag="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <Path Data="{DynamicResource Rename_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
                                                 <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Ctx_StickImage}" 
           Click="Internal_OnTabStickImageClick" Tag="{Binding}">
                                                     <MenuItem.Icon>

@@ -551,6 +551,144 @@ namespace TabPaint
             }
         }
       
+        private async void OnTabRenameClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem item && item.Tag is FileTabItem tab)
+            {
+                await RenameTabWithDialog(tab);
+            }
+        }
+
+        private async Task RenameTabWithDialog(FileTabItem tab)
+        {
+            if (tab == null) return;
+
+            string oldPath = tab.FilePath;
+            bool isVirtual = IsVirtualPath(oldPath);
+            string oldFileName = tab.FileName;
+            string pureName = oldFileName;
+            string suffix = "";
+
+            if (!isVirtual && !string.IsNullOrEmpty(oldPath))
+            {
+                try
+                {
+                    pureName = Path.GetFileNameWithoutExtension(oldPath);
+                    suffix = Path.GetExtension(oldPath);
+                }
+                catch { }
+            }
+
+            string title = LocalizationManager.GetString("L_Ctx_Rename") ?? "Rename";
+
+            // 准备支持的扩展名列表，将当前的排在第一位
+            var supportedExtensions = new List<string> { ".png", ".jpg", ".jpeg", ".bmp", ".webp", ".ico", ".tif", ".tiff" };
+            if (!string.IsNullOrEmpty(suffix) && !supportedExtensions.Contains(suffix.ToLower()))
+            {
+                supportedExtensions.Insert(0, suffix.ToLower());
+            }
+            else if (!string.IsNullOrEmpty(suffix))
+            {
+                supportedExtensions.Remove(suffix.ToLower());
+                supportedExtensions.Insert(0, suffix.ToLower());
+            }
+
+            var (confirmed, newPureName, newSuffix) = UIHandlers.FluentInputDialog.ShowWithSuffix(title, title, pureName, this, supportedExtensions.ToArray());
+
+            if (confirmed && !string.IsNullOrWhiteSpace(newPureName))
+            {
+                bool nameChanged = newPureName != pureName;
+                bool suffixChanged = !string.IsNullOrEmpty(newSuffix) && newSuffix != suffix;
+
+                if (!nameChanged && !suffixChanged) return;
+
+                if (isVirtual)
+                {
+                    tab.CustomName = newPureName;
+                    UpdateWindowTitle();
+                }
+                else
+                {
+                    // 物理重命名逻辑
+                    try
+                    {
+                        string directory = Path.GetDirectoryName(oldPath);
+                        string finalSuffix = suffixChanged ? newSuffix : suffix;
+                        string newFileName = newPureName + finalSuffix;
+                        string newPath = Path.Combine(directory, newFileName);
+
+                        if (File.Exists(newPath))
+                        {
+                            ShowToast(LocalizationManager.GetString("L_Toast_FileExists") ?? "文件已存在");
+                            return;
+                        }
+
+                        if (suffixChanged)
+                        {
+                            // 格式转换逻辑
+                            BitmapSource bmp = null;
+                            if (tab == _currentTabItem) bmp = GetCurrentCanvasSnapshotSafe();
+                            else if (!string.IsNullOrEmpty(tab.BackupPath) && File.Exists(tab.BackupPath)) bmp = LoadBitmapFromFile(tab.BackupPath);
+                            else bmp = LoadBitmapFromFile(oldPath);
+
+                            if (bmp != null)
+                            {
+                                using (var fs = new FileStream(newPath, FileMode.Create))
+                                {
+                                    BitmapEncoder encoder;
+                                    string ext = finalSuffix.ToLower();
+                                    if (ext == ".jpg" || ext == ".jpeg")
+                                    {
+                                        bmp = ConvertToWhiteBackground(bmp);
+                                        encoder = new JpegBitmapEncoder { QualityLevel = 90 };
+                                    }
+                                    else if (ext == ".bmp") encoder = new BmpBitmapEncoder();
+                                    else if (ext == ".webp") encoder = new PngBitmapEncoder(); // WPF原生不支持写WebP，这里暂且用PNG或提示
+                                    else if (ext == ".tif" || ext == ".tiff") encoder = new TiffBitmapEncoder();
+                                    else encoder = new PngBitmapEncoder();
+
+                                    encoder.Frames.Add(BitmapFrame.Create(bmp));
+                                    encoder.Save(fs);
+                                }
+                                File.Delete(oldPath);
+                            }
+                            else
+                            {
+                                throw new Exception("无法加载图像进行格式转换");
+                            }
+                        }
+                        else
+                        {
+                            // 仅重命名
+                            File.Move(oldPath, newPath);
+                        }
+
+                        // 更新标签路径
+                        tab.FilePath = newPath;
+                        tab.CustomName = null; // 重命名物理文件后，清除自定义名称，让它根据路径显示
+
+                        // 同步主窗口的文件列表
+                        int idx = _imageFiles.IndexOf(oldPath);
+                        if (idx != -1)
+                        {
+                            _imageFiles[idx] = newPath;
+                            if (tab == _currentTabItem)
+                            {
+                                _currentImageIndex = idx;
+                            }
+                        }
+
+                        UpdateWindowTitle();
+                        ShowToast(LocalizationManager.GetString("L_Toast_RenameSuccess") ?? "重命名成功");
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowToast((LocalizationManager.GetString("L_Toast_RenameFailed") ?? "重命名失败: ") + ex.Message, ex);
+                    }
+                }
+            }
+        }
+
         private void OnTabDeleteClick(object sender, RoutedEventArgs e)
         {
             if (sender is MenuItem item && item.Tag is FileTabItem tab)

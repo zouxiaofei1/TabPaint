@@ -325,7 +325,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBox x:Name="HexInput" Style="{StaticResource FluentTextBox}" Text="#FFFF0000" TextChanged="HexInput_TextChanged"/>
-                        <TextBlock Text="{DynamicResource L_ColorPicker_Hex}" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="10"/>
+                        <TextBlock Text="{DynamicResource L_ColorPicker_Hex}" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="10" MouseLeftButtonDown="HexLabel_MouseDown" Cursor="Hand" ToolTip="Toggle Hex 6/8"/>
                     </Grid>
                     <Separator Background="{DynamicResource BorderLightBrush}" Margin="0,0,0,10"/>
                     <Grid Margin="0,0,0,8">

@@ -317,7 +317,7 @@
             <Border Grid.Column="1" Background="Transparent" ClipToBounds="True">
                 <Grid>
                     <ScrollViewer Style="{StaticResource FluentScrollViewer}" Padding="0" Margin="0" 
-                                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" PanningMode="None">
+                                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" PanningMode="VerticalOnly">
                         <ContentControl x:Name="MainContent" Margin="0"/>
                     </ScrollViewer>
                     <StackPanel VerticalAlignment="Top" HorizontalAlignment="Right" 
