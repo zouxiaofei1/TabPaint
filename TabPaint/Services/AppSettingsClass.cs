@@ -1023,6 +1023,21 @@ namespace TabPaint
             }
         }
 
+        private int _svgDecodeSize = 2048;
+        [JsonPropertyName("svg_decode_size")]
+        public int SvgDecodeSize
+        {
+            get => _svgDecodeSize;
+            set
+            {
+                if (_svgDecodeSize != value)
+                {
+                    _svgDecodeSize = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private DateTime _lastBenchmarkDate = DateTime.MinValue;
         [JsonPropertyName("last_benchmark_date")]
         public DateTime LastBenchmarkDate

@@ -502,19 +502,18 @@ namespace TabPaint
                 // 2. 如果 SVG 没有定义尺寸，给个默认值
                 if (srcWidth <= 0) srcWidth = AppConsts.FallbackImageWidth;
                 if (srcHeight <= 0) srcHeight = AppConsts.FallbackImageHeight;
-                float minSide = AppConsts.SvgMinSide;
-                float scaleToMin = 1.0f;
-                if (srcWidth < minSide || srcHeight < minSide)
+
+                // 3. 根据设置的解码大小进行缩放
+                int targetSize = SettingsManager.Instance.Current.SvgDecodeSize;
+                float scale = 1.0f;
+                if (srcWidth > 0 && srcHeight > 0)
                 {
-                    // 找出需要放大多少倍才能让最小边达到 512
-                    float scaleW = minSide / srcWidth;
-                    float scaleH = minSide / srcHeight;
-                    scaleToMin = Math.Max(scaleW, scaleH);
+                    scale = Math.Min((float)targetSize / srcWidth, (float)targetSize / srcHeight);
                 }
 
-                // 应用最小缩放
-                int width = (int)(srcWidth * scaleToMin);
-                int height = (int)(srcHeight * scaleToMin);
+                int width = (int)Math.Max(1, srcWidth * scale);
+                int height = (int)Math.Max(1, srcHeight * scale);
+
                 const int maxSize = (int)AppConsts.MaxCanvasSize;
                 if (width > maxSize || height > maxSize)
                 {

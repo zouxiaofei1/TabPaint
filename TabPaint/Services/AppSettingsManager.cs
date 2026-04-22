@@ -209,6 +209,7 @@ namespace TabPaint
                     writer.Write((int)Current.RmbgModel);
                     writer.Write(Current.UseWin10StyleOnWin11);
                     writer.Write(Current.MaxRecentFiles);
+                    writer.Write(Current.SvgDecodeSize);
 
                     // PinnedSettingsTags
                     var pinnedTags = Current.PinnedSettingsTags ?? new List<string>();
@@ -336,6 +337,10 @@ namespace TabPaint
                     if (dataVersion >= 22)
                     {
                         settings.MaxRecentFiles = reader.ReadInt32();
+                    }
+                    if (dataVersion >= 24)
+                    {
+                        settings.SvgDecodeSize = reader.ReadInt32();
                     }
                     if (dataVersion >= 23)
                     {

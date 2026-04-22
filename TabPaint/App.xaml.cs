@@ -288,7 +288,17 @@ namespace TabPaint
 
             if (!isFirstInstance)//0.3ms
             {
-                SingleInstance.SendArgsToFirstInstance(e.Args);
+                if (e.Args != null && e.Args.Length > 0)
+                {
+                    foreach (var arg in e.Args)
+                    {
+                        SingleInstance.SendArgsToFirstInstance(new string[] { arg });
+                    }
+                }
+                else
+                {
+                    SingleInstance.SendArgsToFirstInstance(new string[] { "" });
+                }
                 Environment.Exit(0);
                 return;
             } 
@@ -305,6 +315,14 @@ namespace TabPaint
                         {
                             window.Show();
                         }
+                    }
+
+                    if (string.IsNullOrEmpty(filePath))
+                    {
+                        var newWindow = new MainWindow("", fileExists: false, loadSession: false);
+                        newWindow.Show();
+                        RestoreWindow(newWindow);
+                        return;
                     }
 
                     var (existingWindow, existingTab) = TabPaint.MainWindow.FindWindowHostingFile(filePath);
@@ -361,13 +379,24 @@ namespace TabPaint
   
             string filePath = "";//<0.1ms
             bool fileExists = false;
+            List<string> extraFiles = new List<string>();
+
             if (e.Args is { Length: > 0 })
             {
-                string inputPath = e.Args[0];
-                if (System.IO.File.Exists(inputPath) || System.IO.Directory.Exists(inputPath))
+                foreach (var arg in e.Args)
                 {
-                    filePath = inputPath;
-                    fileExists = true;
+                    if (System.IO.File.Exists(arg) || System.IO.Directory.Exists(arg))
+                    {
+                        if (string.IsNullOrEmpty(filePath))
+                        {
+                            filePath = arg;
+                            fileExists = true;
+                        }
+                        else
+                        {
+                            extraFiles.Add(arg);
+                        }
+                    }
                 }
             }
           
@@ -399,7 +428,7 @@ namespace TabPaint
             using (StartupPerformanceTracer.Measure("App.base.OnStartup")) base.OnStartup(e);//<0.1ms
             using (StartupPerformanceTracer.Measure("App.MainWindow.Ctor"))
             {
-                _mainWindow = new MainWindow(filePath, fileExists);//240ms
+                _mainWindow = new MainWindow(filePath, fileExists, extraFiles: extraFiles);//240ms
             }
             StartupPerformanceTracer.Point("App.MainWindow.Created");
             using (StartupPerformanceTracer.Measure("App.MainWindow.Show")) _mainWindow.Show();//340ms

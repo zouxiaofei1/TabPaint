@@ -70,7 +70,7 @@ namespace TabPaint
                             using (var reader = new StreamReader(server))
                             {
                                 string filePath = await reader.ReadLineAsync();
-                                if (!string.IsNullOrEmpty(filePath))  onFileReceived?.Invoke(filePath);
+                                onFileReceived?.Invoke(filePath ?? string.Empty);
                             }
                         }
                     }

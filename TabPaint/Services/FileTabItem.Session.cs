@@ -869,7 +869,7 @@ namespace TabPaint
             }
             SetUndoRedoButtonState();
         }
-        enum TabInsertPosition
+        private enum TabInsertPosition
         {
             AfterCurrent,
             AtEnd,

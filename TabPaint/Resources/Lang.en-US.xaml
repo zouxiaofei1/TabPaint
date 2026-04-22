@@ -212,6 +212,8 @@
     <sys:String x:Key="L_Settings_Advanced_Resampling_Desc">Used when saving or resizing images</sys:String>
     <sys:String x:Key="L_Settings_Advanced_NewCanvasSize_Title">New Canvas Size</sys:String>
     <sys:String x:Key="L_Settings_Advanced_NewCanvasSize_Desc">Set the default width and height for new blank canvases</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_SvgDecodeSize_Title">SVG Maximum Decode Size</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_SvgDecodeSize_Desc">Set the long-side pixel size for SVG decoding</sys:String>
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Title">Pixelation threshold</sys:String>
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Desc">Linear interpolation / nearest-neighbor switch zoom level</sys:String>
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_ViewMode">View mode</sys:String>

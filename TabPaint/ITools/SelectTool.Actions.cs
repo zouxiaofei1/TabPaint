@@ -263,7 +263,7 @@ namespace TabPaint
                 var px = ctx.ToPixel(viewPos);
                 bool isShift = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
 
-                if (_selectionData != null && !isShift)
+                if (_selectionData != null)
                 {
                     // 判定点击位置是句柄还是框内
                     _currentAnchor = HitTestHandle(px, _selectionRect);
@@ -295,7 +295,7 @@ namespace TabPaint
                         ctx.ViewElement.CaptureMouse();
                         return;
                     }
-                    else if (IsPointInSelection(px))
+                    else if (IsPointInSelection(px) && !isShift)
                     {
                         if (_transformStep == 0) _originalRect = _selectionRect;
                         _transformStep++;
@@ -468,16 +468,28 @@ namespace TabPaint
                             break;
                     }
 
-                    if (isShiftDown && (_startH != 0))
+                    if (isShiftDown && (_startH != 0) && (_startW != 0))
                     {
                         double aspectRatio = (double)_startW / _startH;
 
-                        if (_currentAnchor == ResizeAnchor.TopLeft || _currentAnchor == ResizeAnchor.TopRight ||
-                            _currentAnchor == ResizeAnchor.BottomLeft || _currentAnchor == ResizeAnchor.BottomRight)
+                        switch (_currentAnchor)
                         {
-                            // 取变化幅度较大的一边作为主导
-                            if (Math.Abs(proposedW / _startW) > Math.Abs(proposedH / _startH)) proposedH = proposedW / aspectRatio;
-                            else proposedW = proposedH * aspectRatio;
+                            case ResizeAnchor.TopLeft:
+                            case ResizeAnchor.TopRight:
+                            case ResizeAnchor.BottomLeft:
+                            case ResizeAnchor.BottomRight:
+                                // 取变化幅度较大的一边作为主导
+                                if (Math.Abs(proposedW / _startW) > Math.Abs(proposedH / _startH)) proposedH = proposedW / aspectRatio;
+                                else proposedW = proposedH * aspectRatio;
+                                break;
+                            case ResizeAnchor.LeftMiddle:
+                            case ResizeAnchor.RightMiddle:
+                                proposedH = proposedW / aspectRatio;
+                                break;
+                            case ResizeAnchor.TopMiddle:
+                            case ResizeAnchor.BottomMiddle:
+                                proposedW = proposedH * aspectRatio;
+                                break;
                         }
                     }
 

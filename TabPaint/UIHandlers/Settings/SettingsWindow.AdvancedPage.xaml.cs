@@ -352,6 +352,25 @@ namespace TabPaint.Pages
             }
         }
 
+        private void SvgDecodeSizeTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is TextBox textBox)
+            {
+                if (int.TryParse(textBox.Text, out int value))
+                {
+                    if (value < 128) value = 128;
+                    if (value > 16384) value = 16384;
+                    textBox.Text = value.ToString();
+                }
+                else
+                {
+                    textBox.Text = "2048";
+                }
+                var binding = textBox.GetBindingExpression(TextBox.TextProperty);
+                binding?.UpdateSource();
+            }
+        }
+
         private void UndoMemoryTextBox_GotFocus(object sender, KeyboardFocusChangedEventArgs e)
         {
             UndoMemoryBorder.BorderBrush = (Brush)FindResource("SystemAccentBrush");

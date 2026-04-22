@@ -210,6 +210,8 @@
     <sys:String x:Key="L_Settings_Advanced_Resampling_Desc">用于图片保存或调整大小时</sys:String>
     <sys:String x:Key="L_Settings_Advanced_NewCanvasSize_Title">新建画布大小</sys:String>
     <sys:String x:Key="L_Settings_Advanced_NewCanvasSize_Desc">设置新建空白画布时的默认宽度和高度</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_SvgDecodeSize_Title">SVG 解码最大尺寸</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_SvgDecodeSize_Desc">SVG 解码时长边像素大小</sys:String>
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Title">像素化阈值设置</sys:String>
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Desc">当缩放倍率超过此值时，画面从线性插值切换为邻近插值</sys:String>
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_ViewMode">看图模式</sys:String>

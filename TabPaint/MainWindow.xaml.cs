@@ -155,9 +155,11 @@ namespace TabPaint
             return false;
         }
 
-        public MainWindow(string path, bool? fileExists = null, FileTabItem? initialTab = null, bool loadSession = true)
+        private IEnumerable<string>? _extraFiles;
+        public MainWindow(string path, bool? fileExists = null, FileTabItem? initialTab = null, bool loadSession = true, IEnumerable<string>? extraFiles = null)
         {
             using var __perfCtor = StartupPerformanceTracer.Measure("MainWindow.Ctor");
+            _extraFiles = extraFiles;
             if (!MicaAcrylicManager.IsWin11())
             {
                 this.AllowsTransparency = true;
@@ -281,6 +283,11 @@ namespace TabPaint
                 {
                     OpenImageAndTabs(_currentFilePath, true);
                 }
+            }
+
+            if (_extraFiles != null && _extraFiles.Any())
+            {
+                _ = OpenFilesAsNewTabs(_extraFiles.ToArray());
             }
             else
             {//无路径启动
