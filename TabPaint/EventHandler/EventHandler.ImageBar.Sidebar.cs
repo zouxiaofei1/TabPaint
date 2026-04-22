@@ -152,7 +152,7 @@ namespace TabPaint
                 }
                 else
                 {
-                    if (_currentTabItem != null) _currentImageIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
+                    if (_currentTabItem != null) _currentImageIndex = _imageFiles.FindIndex(f => string.Equals(f, _currentTabItem.FilePath, StringComparison.OrdinalIgnoreCase));
                 }
             }
 
@@ -246,7 +246,7 @@ namespace TabPaint
                     // A. 对于新建的文件：直接移除
                     if (tab == originalCurrentTab) currentTabAffected = true;
 
-                    if (_imageFiles.Contains(tab.FilePath))
+                    if (_imageFiles.Any(f => string.Equals(f, tab.FilePath, StringComparison.OrdinalIgnoreCase)))
                     {
                         _imageFiles.Remove(tab.FilePath);
                         ImageFilesCount = _imageFiles.Count;
@@ -294,10 +294,10 @@ namespace TabPaint
             else ResetDirtyTracker();
             GC.Collect();
             UpdateImageBarSliderState();
-            if (File.Exists(_workingPath)) await SwitchWorkspaceToNewFile(_workingPath);
-            if (!string.IsNullOrEmpty(_workingPath) && Directory.Exists(_workingPath))
+            if (File.Exists(WorkingPath)) await SwitchWorkspaceToNewFile(WorkingPath);
+            if (!string.IsNullOrEmpty(WorkingPath) && Directory.Exists(WorkingPath))
             {
-                _workingPath = FindFirstImageInDirectory(_workingPath); await SwitchWorkspaceToNewFile(_workingPath);
+                WorkingPath = FindFirstImageInDirectory(WorkingPath); await SwitchWorkspaceToNewFile(WorkingPath);
             }
         }
 

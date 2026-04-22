@@ -51,7 +51,7 @@ namespace TabPaint
 
                 if (!nobackup) TriggerBackgroundBackup();
 
-                if (IsVirtualPath(filePath) && !_imageFiles.Contains(filePath))
+                if (IsVirtualPath(filePath) && !_imageFiles.Any(f => string.Equals(f, filePath, StringComparison.OrdinalIgnoreCase)))
                 {
                     _imageFiles.Add(filePath);
                     ImageFilesCount = _imageFiles.Count;
@@ -60,7 +60,7 @@ namespace TabPaint
                 {
                     SettingsManager.Instance.AddRecentFile(filePath);
                 }
-                int newIndex = _imageFiles.IndexOf(filePath);
+                int newIndex = _imageFiles.FindIndex(f => string.Equals(f, filePath, StringComparison.OrdinalIgnoreCase));
                 _currentImageIndex = newIndex;
                 await RefreshTabPageAsync(_currentImageIndex, refresh);
 
@@ -248,7 +248,7 @@ namespace TabPaint
 
                 _imageFiles = combinedFiles;
                 ImageFilesCount = _imageFiles.Count;
-                _currentImageIndex = _imageFiles.IndexOf(filePath);
+                _currentImageIndex = _imageFiles.FindIndex(f => string.Equals(f, filePath, StringComparison.OrdinalIgnoreCase));
 
             }
             catch (Exception ex)

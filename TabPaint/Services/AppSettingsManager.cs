@@ -210,6 +210,7 @@ namespace TabPaint
                     writer.Write(Current.UseWin10StyleOnWin11);
                     writer.Write(Current.MaxRecentFiles);
                     writer.Write(Current.SvgDecodeSize);
+                    writer.Write(Current.EnablePdfSavePage);
 
                     // PinnedSettingsTags
                     var pinnedTags = Current.PinnedSettingsTags ?? new List<string>();
@@ -341,6 +342,10 @@ namespace TabPaint
                     if (dataVersion >= 24)
                     {
                         settings.SvgDecodeSize = reader.ReadInt32();
+                    }
+                    if (dataVersion >= 25)
+                    {
+                        settings.EnablePdfSavePage = reader.ReadBoolean();
                     }
                     if (dataVersion >= 23)
                     {

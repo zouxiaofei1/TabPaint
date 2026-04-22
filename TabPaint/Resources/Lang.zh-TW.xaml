@@ -215,6 +215,8 @@
     <sys:String x:Key="L_Settings_Advanced_SkipResetConfirm_Desc">清空所有分頁或重設工作區時跳過二次確認視窗</sys:String>
     <sys:String x:Key="L_Settings_Advanced_DiscardAllOnExit_Title">重啟後放棄所有變更</sys:String>
     <sys:String x:Key="L_Settings_Advanced_DiscardAllOnExit_Desc">關閉程式時自動放棄所有變更</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_EnablePdfSavePage_Title">啟用 PDF 儲存預覽頁面</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_EnablePdfSavePage_Desc">儲存為 PDF 前顯示頁面排序與設定</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Maintenance_Header">系統維護</sys:String>
     <sys:String x:Key="L_Settings_Advanced_CollectReport_Title">收集報告</sys:String>
     <sys:String x:Key="L_Settings_Advanced_CollectReport_Desc">收集系統資訊、程序資訊與當日記錄</sys:String>
@@ -976,5 +978,11 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_QrCode_Error_NotFound">辨識失敗：未能在圖像中找到有效的二維碼或條碼。</sys:String>
     <sys:String x:Key="L_QrCode_Error_Internal">辨識出錯(內部): {0}</sys:String>
     <sys:String x:Key="L_QrCode_Error_General">辨識出錯: {0}</sys:String>
+
+    <!-- PDF 匯出 -->
+    <sys:String x:Key="L_PdfExport_Title">匯出為 PDF</sys:String>
+    <sys:String x:Key="L_PdfExport_ShowList">顯示頁面列表</sys:String>
+    <sys:String x:Key="L_PdfExport_PreviewHint">預覽所有頁面...</sys:String>
+    <sys:String x:Key="L_PdfExport_Page">頁</sys:String>
 
 </ResourceDictionary>

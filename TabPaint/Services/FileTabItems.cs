@@ -22,7 +22,7 @@ namespace TabPaint
 
             int start = Math.Max(0, centerIndex - PageSize);
             int end = Math.Min(_imageFiles.Count - 1, centerIndex + PageSize);
-            var viewportPaths = new HashSet<string>();
+            var viewportPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             string? centerPath = (centerIndex >= 0 && centerIndex < _imageFiles.Count) ? _imageFiles[centerIndex] : null;
 
@@ -46,7 +46,7 @@ namespace TabPaint
                 if (_explicitlyClosedFiles.Contains(path) && path != centerPath) continue;
                 if (path == centerPath && _explicitlyClosedFiles.Contains(path)) _explicitlyClosedFiles.Remove(path);
 
-                var existingTab = FileTabs.FirstOrDefault(t => t.FilePath == path);
+                var existingTab = FileTabs.FirstOrDefault(t => string.Equals(t.FilePath, path, StringComparison.OrdinalIgnoreCase));
 
                 if (existingTab == null)
                 {
@@ -58,7 +58,7 @@ namespace TabPaint
                     for (int j = 0; j < FileTabs.Count; j++)
                     {
                         var t = FileTabs[j];
-                        int tIndex = _imageFiles.IndexOf(t.FilePath);
+                        int tIndex = _imageFiles.FindIndex(f => string.Equals(f, t.FilePath, StringComparison.OrdinalIgnoreCase));
 
                         // 如果 tIndex == -1 (说明这个 Tab 可能刚被删了? 或者异常)，把它往后放
                         if (tIndex == -1 || tIndex > i)
@@ -84,7 +84,7 @@ namespace TabPaint
             }
 
             // 计算当前选中图片在 FileTabs 中的索引
-            var currentTab = FileTabs.FirstOrDefault(t => t.FilePath == _imageFiles[centerIndex]);
+            var currentTab = FileTabs.FirstOrDefault(t => string.Equals(t.FilePath, _imageFiles[centerIndex], StringComparison.OrdinalIgnoreCase));
             if (currentTab == null) return;
 
             int selectedIndex = FileTabs.IndexOf(currentTab);
@@ -203,10 +203,14 @@ namespace TabPaint
 
             // 2. 从集合中移除
             FileTabs.Remove(item);
-            if (!string.IsNullOrEmpty(pathToRemove) && _imageFiles.Contains(pathToRemove))
+            if (!string.IsNullOrEmpty(pathToRemove))
             {
-                _imageFiles.Remove(pathToRemove);
-                ImageFilesCount = _imageFiles.Count;
+                int idx = _imageFiles.FindIndex(f => string.Equals(f, pathToRemove, StringComparison.OrdinalIgnoreCase));
+                if (idx >= 0)
+                {
+                    _imageFiles.RemoveAt(idx);
+                    ImageFilesCount = _imageFiles.Count;
+                }
             }
             if (!string.IsNullOrEmpty(item.BackupPath) && !isMoving)
             {
@@ -230,7 +234,7 @@ namespace TabPaint
             }
             else
             {
-                if (_currentTabItem != null) _currentImageIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
+                if (_currentTabItem != null) _currentImageIndex = _imageFiles.FindIndex(f => string.Equals(f, _currentTabItem.FilePath, StringComparison.OrdinalIgnoreCase));
             }
             
             UpdateImageBarSliderState();

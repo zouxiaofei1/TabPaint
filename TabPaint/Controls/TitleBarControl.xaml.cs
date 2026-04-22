@@ -133,6 +133,19 @@ namespace TabPaint.Controls
             "HelpClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(TitleBarControl));
         public event RoutedEventHandler HelpClick { add => AddHandler(HelpClickEvent, value); remove => RemoveHandler(HelpClickEvent, value); }
 
+        public static readonly RoutedEvent TitleBarRightClickEvent = EventManager.RegisterRoutedEvent(
+            "TitleBarRightClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(TitleBarControl));
+        public event RoutedEventHandler TitleBarRightClick { add => AddHandler(TitleBarRightClickEvent, value); remove => RemoveHandler(TitleBarRightClickEvent, value); }
+
+        public static readonly DependencyProperty WorkingDirectoryProperty =
+            DependencyProperty.Register("WorkingDirectory", typeof(string), typeof(TitleBarControl), new PropertyMetadata(string.Empty));
+
+        public string WorkingDirectory
+        {
+            get { return (string)GetValue(WorkingDirectoryProperty); }
+            set { SetValue(WorkingDirectoryProperty, value); }
+        }
+
         // ── 最近文件 ──
         public event EventHandler<string> RecentFileClick;
         public event RoutedEventHandler LogoMiddleClick;
@@ -334,6 +347,12 @@ namespace TabPaint.Controls
                 (e.OriginalSource is FrameworkElement fe && fe.TemplatedParent is Button)) return;
             if (e.OriginalSource == AppIcon || e.Source == AppIcon) return;
             TitleBarMouseDown?.Invoke(this, e);
+        }
+
+        private void OnTitleTextBlockRightClick(object sender, MouseButtonEventArgs e)
+        {
+            RaiseEvent(new RoutedEventArgs(TitleBarRightClickEvent));
+            e.Handled = true;
         }
 
         private void OnModeSwitchClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(ModeSwitchClickEvent));

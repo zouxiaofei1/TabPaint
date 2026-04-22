@@ -212,7 +212,9 @@
                           UndoClick="OnUndoClick"
                           RedoClick="OnRedoClick"
                           SaveClick="OnSaveClick"
-                          SettingsClick="OnSettingsClick">
+                          SettingsClick="OnSettingsClick"
+                          WorkingDirectory="{Binding WorkingPathDisplay, ElementName=RootWindow}"
+                          TitleBarRightClick="OnTitleBarRightClick">
                         <controls:TitleBarControl.CacheMode>
                             <BitmapCache EnableClearType="True" SnapsToDevicePixels="True"/>
                         </controls:TitleBarControl.CacheMode>

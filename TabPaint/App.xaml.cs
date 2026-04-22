@@ -338,11 +338,11 @@ namespace TabPaint
                     {
                         EnsureWindowVisible(targetWindow);
                         RestoreWindow(targetWindow);
-                        var tab = targetWindow.FileTabs.FirstOrDefault(t => t.FilePath == filePath);
+                        var tab = targetWindow.FileTabs.FirstOrDefault(t => string.Equals(t.FilePath, filePath, StringComparison.OrdinalIgnoreCase));
 
                         if (tab == null)
                         {
-                            int indexInList = targetWindow._imageFiles.IndexOf(filePath);
+                            int indexInList = targetWindow._imageFiles.FindIndex(f => string.Equals(f, filePath, StringComparison.OrdinalIgnoreCase));
                             if (indexInList >= 0)
                             {
                                 var newTab = new FileTabItem(filePath)

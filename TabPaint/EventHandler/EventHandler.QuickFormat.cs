@@ -51,7 +51,7 @@ namespace TabPaint
 
                 // 更新 UI 和数据结构
                 _currentTabItem.FilePath = newPath;
-                int index = _imageFiles.IndexOf(oldPath);
+                int index = _imageFiles.FindIndex(f => string.Equals(f, oldPath, StringComparison.OrdinalIgnoreCase));
                 if (index >= 0)
                 {
                     _imageFiles[index] = newPath;

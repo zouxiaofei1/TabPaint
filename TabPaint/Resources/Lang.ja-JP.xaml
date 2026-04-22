@@ -220,6 +220,8 @@
     <sys:String x:Key="L_Settings_Advanced_SkipResetConfirm_Desc">タブをクリアする際の2段階確認をスキップします</sys:String>
     <sys:String x:Key="L_Settings_Advanced_DiscardAllOnExit_Title">終了時にすべての変更を破棄</sys:String>
     <sys:String x:Key="L_Settings_Advanced_DiscardAllOnExit_Desc">アプリを閉じる際に自動的に「すべて破棄」を実行します</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_EnablePdfSavePage_Title">PDF保存プレビューページを有効にする</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_EnablePdfSavePage_Desc">PDFとして保存する前に、ページの順序や設定を表示します</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Maintenance_Header">メンテナンス</sys:String>
     <sys:String x:Key="L_Settings_Advanced_CollectReport_Title">レポートを収集</sys:String>
     <sys:String x:Key="L_Settings_Advanced_CollectReport_Desc">システム情報、プロセス情報、および本日のログを収集します。</sys:String>
@@ -989,5 +991,11 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_QrCode_Error_NotFound">認識に失敗しました：画像内に有効なQRコードまたはバーコードが見つかりませんでした。</sys:String>
     <sys:String x:Key="L_QrCode_Error_Internal">認識エラー(内部): {0}</sys:String>
     <sys:String x:Key="L_QrCode_Error_General">認識エラー: {0}</sys:String>
+
+    <!-- PDF 書き出し -->
+    <sys:String x:Key="L_PdfExport_Title">PDFとして書き出し</sys:String>
+    <sys:String x:Key="L_PdfExport_ShowList">ページリストを表示</sys:String>
+    <sys:String x:Key="L_PdfExport_PreviewHint">すべてのページをプレビュー中...</sys:String>
+    <sys:String x:Key="L_PdfExport_Page">ページ</sys:String>
 
 </ResourceDictionary>

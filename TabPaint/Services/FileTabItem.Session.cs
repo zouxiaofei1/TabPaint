@@ -586,7 +586,7 @@ namespace TabPaint
 
             foreach (var offscreen in _offScreenBackupInfos.Values)
             {
-                if (!finalTabsToSave.Any(t => t.OriginalPath == offscreen.OriginalPath))
+                if (!finalTabsToSave.Any(t => string.Equals(t.OriginalPath, offscreen.OriginalPath, StringComparison.OrdinalIgnoreCase)))
                 {
                     finalTabsToSave.Add(offscreen);
                 }
@@ -763,6 +763,21 @@ namespace TabPaint
                 {
                     if (FileTabs.Any(t => t.Id == info.Id)) continue;
 
+                    // 路径去重：检查是否已经由命令行参数或其他逻辑打开了相同路径的文件
+                    var existingTab = FileTabs.FirstOrDefault(t => string.Equals(t.FilePath, info.OriginalPath, StringComparison.OrdinalIgnoreCase));
+                    if (existingTab != null)
+                    {
+                        // 如果已存在，则合并会话状态（如备份路径、脏状态等）
+                        if (!isCleanDisk && hasBackup)
+                        {
+                            existingTab.Id = info.Id;
+                            existingTab.BackupPath = info.BackupPath;
+                            existingTab.IsDirty = info.IsDirty;
+                            existingTab.UntitledNumber = info.UntitledNumber;
+                        }
+                        continue;
+                    }
+
                     FileTabItem tab;
                     if (isCleanDisk)
                     {
@@ -806,11 +821,11 @@ namespace TabPaint
 
                     FileTabs.Add(tab);
 
-                    if (!_imageFiles.Contains(info.OriginalPath))
+                    if (!_imageFiles.Any(f => string.Equals(f, info.OriginalPath, StringComparison.OrdinalIgnoreCase)))
                     {
                         _imageFiles.Add(info.OriginalPath);
-                        ImageFilesCount = _imageFiles.Count;
                     }
+                    ImageFilesCount = _imageFiles.Count;
 
                     tabsToLoadThumbnails.Add(tab);
                 }
@@ -895,7 +910,7 @@ namespace TabPaint
 
             if (_currentTabItem != null)
             {
-                int currentListIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
+                int currentListIndex = _imageFiles.FindIndex(f => string.Equals(f, _currentTabItem.FilePath, StringComparison.OrdinalIgnoreCase));
                 if (currentListIndex >= 0) listInsertIndex = currentListIndex + 1;
             }
 
@@ -965,7 +980,7 @@ namespace TabPaint
 
             _currentFilePath = tab.FilePath;
             _currentFileName = tab.FileName;
-            _currentImageIndex = _imageFiles.IndexOf(tab.FilePath);
+            _currentImageIndex = _imageFiles.FindIndex(f => string.Equals(f, tab.FilePath, StringComparison.OrdinalIgnoreCase));
 
             await OpenImageAndTabs(tab.FilePath, nobackup: true);
 
@@ -1038,7 +1053,7 @@ namespace TabPaint
                             encoder.Save(fs);
                         }
 
-                        int index = _imageFiles.IndexOf(oldPath);
+                        int index = _imageFiles.FindIndex(f => string.Equals(f, oldPath, StringComparison.OrdinalIgnoreCase));
                         if (index >= 0) _imageFiles[index] = realPath;
                         else _imageFiles.Add(realPath);
 
@@ -1197,7 +1212,7 @@ namespace TabPaint
                                             IsDirty = false,
                                         };
                                         FileTabs.Add(tab);
-                                        if (!_imageFiles.Contains(info.OriginalPath))
+                                        if (!_imageFiles.Any(f => string.Equals(f, info.OriginalPath, StringComparison.OrdinalIgnoreCase)))
                                         {
                                             _imageFiles.Add(info.OriginalPath);
                                             ImageFilesCount = _imageFiles.Count;
@@ -1232,7 +1247,7 @@ namespace TabPaint
                                         UntitledNumber = info.UntitledNumber
                                     };
                                     FileTabs.Add(tab);
-                                    if (!_imageFiles.Contains(info.OriginalPath))
+                                    if (!_imageFiles.Any(f => string.Equals(f, info.OriginalPath, StringComparison.OrdinalIgnoreCase)))
                                     {
                                         _imageFiles.Add(info.OriginalPath);
                                         ImageFilesCount = _imageFiles.Count;

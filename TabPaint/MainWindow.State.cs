@@ -380,7 +380,43 @@ namespace TabPaint
         public bool MicaEnabled = false;
         private bool _isLoadingImage = true;//是否正在加载图像,false时不能画图
         private bool _programClosed = false;
-        private string _workingPath;
+        private string _workingPath = string.Empty;
+        public string WorkingPath
+        {
+            get => _workingPath;
+            set
+            {
+                if (_workingPath != value)
+                {
+                    _workingPath = value;
+                    OnPropertyChanged(nameof(WorkingPath));
+                    OnPropertyChanged(nameof(WorkingPathDisplay));
+                }
+            }
+        }
+
+        public string WorkingPathDisplay
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_workingPath)) 
+                    return LocalizationManager.GetString("L_TitleBar_NoWorkingDir") ?? "(无)";
+                
+                try
+                {
+                    if (Directory.Exists(_workingPath))
+                    {
+                        return _workingPath;
+                    }
+                    else if (File.Exists(_workingPath))
+                    {
+                        return System.IO.Path.GetDirectoryName(_workingPath) ?? _workingPath;
+                    }
+                }
+                catch { }
+                return _workingPath;
+            }
+        }
         public const string InternalClipboardFormat = AppConsts.InternalClipboardFormat;
         public bool _firstFittoWindowdone = false;
         public int PerformanceScore;

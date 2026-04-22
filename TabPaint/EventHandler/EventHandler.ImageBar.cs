@@ -489,7 +489,7 @@ namespace TabPaint
                                 if (targetUIIndex > 0)
                                 {
                                     var prevTab = FileTabs[targetUIIndex - 1];
-                                    fileInsertIdx = _imageFiles.IndexOf(prevTab.FilePath) + 1;
+                                    fileInsertIdx = _imageFiles.FindIndex(f => string.Equals(f, prevTab.FilePath, StringComparison.OrdinalIgnoreCase)) + 1;
                                 }
                                 if (fileInsertIdx < 0) fileInsertIdx = _imageFiles.Count;
                                 _imageFiles.Insert(fileInsertIdx, sourceTab.FilePath);
@@ -533,7 +533,7 @@ namespace TabPaint
                             if (finalInsertIdx + i > 0)
                             {
                                 var prevTab = FileTabs[finalInsertIdx + i - 1];
-                                fileInsertIdx = _imageFiles.IndexOf(prevTab.FilePath) + 1;
+                                fileInsertIdx = _imageFiles.FindIndex(f => string.Equals(f, prevTab.FilePath, StringComparison.OrdinalIgnoreCase)) + 1;
                             }
                             if (fileInsertIdx < 0) fileInsertIdx = _imageFiles.Count;
                             _imageFiles.Insert(fileInsertIdx, t.FilePath);
@@ -541,7 +541,7 @@ namespace TabPaint
                     }
 
                     ImageFilesCount = _imageFiles.Count;
-                    if (_currentTabItem != null) _currentImageIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
+                    if (_currentTabItem != null) _currentImageIndex = _imageFiles.FindIndex(f => string.Equals(f, _currentTabItem.FilePath, StringComparison.OrdinalIgnoreCase));
                     UpdateWindowTitle();
                     UpdateImageBarSliderState();
                 }
@@ -668,7 +668,7 @@ namespace TabPaint
                         tab.CustomName = null; // 重命名物理文件后，清除自定义名称，让它根据路径显示
 
                         // 同步主窗口的文件列表
-                        int idx = _imageFiles.IndexOf(oldPath);
+                        int idx = _imageFiles.FindIndex(f => string.Equals(f, oldPath, StringComparison.OrdinalIgnoreCase));
                         if (idx != -1)
                         {
                             _imageFiles[idx] = newPath;

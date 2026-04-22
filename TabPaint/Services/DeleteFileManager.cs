@@ -86,7 +86,7 @@ namespace TabPaint
                 FileTabs.Add(tabToRestore);
 
             // 恢复到路径列表
-            if (!_imageFiles.Contains(tabToRestore.FilePath))
+            if (!_imageFiles.Any(f => string.Equals(f, tabToRestore.FilePath, StringComparison.OrdinalIgnoreCase)))
             {
                 if (_lastDeletedTabIndex < _imageFiles.Count)
                     _imageFiles.Insert(_lastDeletedTabIndex, tabToRestore.FilePath);

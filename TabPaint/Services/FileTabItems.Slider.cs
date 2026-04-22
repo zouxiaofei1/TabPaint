@@ -84,7 +84,7 @@ namespace TabPaint
                     if (FileTabs.Count > 0 && !_isSyncingSlider)
                     {
                         var firstTab = FileTabs[0];
-                        int firstTabGlobalIndex = _imageFiles.IndexOf(firstTab.FilePath);
+                        int firstTabGlobalIndex = _imageFiles.FindIndex(f => string.Equals(f, firstTab.FilePath, StringComparison.OrdinalIgnoreCase));
 
                         if (firstTabGlobalIndex >= 0)
                         {
@@ -182,7 +182,7 @@ namespace TabPaint
                     double visibleItemsCount = viewportWidth / itemWidth;
 
                     var firstTab = FileTabs[0];
-                    int firstTabGlobalIndex = _imageFiles.IndexOf(firstTab.FilePath);
+                    int firstTabGlobalIndex = _imageFiles.FindIndex(f => string.Equals(f, firstTab.FilePath, StringComparison.OrdinalIgnoreCase));
 
                     if (firstTabGlobalIndex >= 0)
                     {
@@ -217,7 +217,7 @@ namespace TabPaint
         FileTabs.Count < _imageFiles.Count)
             {
                 var lastTab = FileTabs.Last();
-                int lastFileIndex = _imageFiles.IndexOf(lastTab.FilePath);
+                int lastFileIndex = _imageFiles.FindIndex(f => string.Equals(f, lastTab.FilePath, StringComparison.OrdinalIgnoreCase));
 
                 if (lastFileIndex >= 0 && lastFileIndex < _imageFiles.Count - 1)
                 {
@@ -239,7 +239,7 @@ namespace TabPaint
             if (firstLocalIndex < 3 && FileTabs.Count > 0)
             {
                 var firstTab = FileTabs[0];
-                int firstFileIndex = _imageFiles.IndexOf(firstTab.FilePath);
+                int firstFileIndex = _imageFiles.FindIndex(f => string.Equals(f, firstTab.FilePath, StringComparison.OrdinalIgnoreCase));
 
                 if (firstFileIndex > 0)
                 {

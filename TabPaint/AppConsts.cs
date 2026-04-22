@@ -11,7 +11,7 @@ namespace TabPaint
     public static class AppConsts
     {
         // --- 版本信息 ---
-        public const string ProgramVersion = "v0.9.7.2";
+        public const string ProgramVersion = "v0.9.7.3";
 
         // --- Win32 消息常量 ---
         public const int WM_NCHITTEST = 0x0084;
@@ -352,7 +352,7 @@ namespace TabPaint
 
         // --- 服务与性能配置 ---
         public const int MaxDiskConcurrency = 4;
-        public const int AppSettingsBinaryVersion = 24;
+        public const int AppSettingsBinaryVersion = 25;
 
         public static bool IsSupportedImage(string path)
         {

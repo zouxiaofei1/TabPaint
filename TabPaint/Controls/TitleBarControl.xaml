@@ -184,6 +184,8 @@
                        Style="{StaticResource TitleTextStyle}"
                        TextTrimming="CharacterEllipsis" 
                        TextWrapping="NoWrap"
+                       ToolTip="{Binding WorkingDirectory, RelativeSource={RelativeSource AncestorType=local:TitleBarControl}}"
+                       MouseRightButtonUp="OnTitleTextBlockRightClick"
                        Margin="10,0,10,0"/>
 
             <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">

@@ -96,18 +96,18 @@ namespace TabPaint
                     if (_currentTabItem.IsNew)
                     {
                         _currentTabItem.IsNew = false;
-                        if (!_imageFiles.Contains(newPath))
+                        if (!_imageFiles.Any(f => string.Equals(f, newPath, StringComparison.OrdinalIgnoreCase)))
                         {
                             _imageFiles.Add(newPath);
                             ImageFilesCount = _imageFiles.Count;
                         }
                     }
-                    else if (!_imageFiles.Contains(newPath))
+                    else if (!_imageFiles.Any(f => string.Equals(f, newPath, StringComparison.OrdinalIgnoreCase)))
                     {
                         _imageFiles.Add(newPath);
                         ImageFilesCount = _imageFiles.Count;
                     }
-                    _currentImageIndex = _imageFiles.IndexOf(newPath);
+                    _currentImageIndex = _imageFiles.FindIndex(f => string.Equals(f, newPath, StringComparison.OrdinalIgnoreCase));
                 }
 
                 _isFileSaved = true;
@@ -122,6 +122,14 @@ namespace TabPaint
             // 确定导出列表：如果有选中的标签页则只存选中的，否则存全部
             var exportList = FileTabs.Where(t => t.IsMultiSelected).ToList();
             if (exportList.Count == 0) exportList = FileTabs.ToList();
+
+            if (SettingsManager.Instance.Current.EnablePdfSavePage)
+            {
+                var exportWin = new TabPaint.Windows.PdfExportWindow(exportList, this);
+                exportWin.Owner = this;
+                exportWin.ShowDialog();
+                if (!exportWin.IsConfirmed) return;
+            }
 
             var saveDialog = new Microsoft.Win32.SaveFileDialog
             {

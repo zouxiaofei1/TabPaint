@@ -388,6 +388,24 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <TextBlock Text="{DynamicResource L_Settings_Advanced_EnablePdfSavePage_Title}"/>
+                <TextBlock Text="{DynamicResource L_Settings_Advanced_EnablePdfSavePage_Desc}" 
+                           Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <CheckBox Grid.Column="2" Style="{StaticResource FluentCheckBoxStyle}" 
+                      IsChecked="{Binding Path=Current.EnablePdfSavePage, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                      VerticalAlignment="Center"/>
+        </Grid>
+
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" VerticalAlignment="Center">
                 <TextBlock Text="{DynamicResource L_Settings_Advanced_AlwaysShowTabClose_Title}"/>
                 <TextBlock Text="{DynamicResource L_Settings_Advanced_AlwaysShowTabClose_Desc}" 
                            Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>

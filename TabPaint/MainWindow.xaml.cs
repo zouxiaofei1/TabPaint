@@ -166,7 +166,7 @@ namespace TabPaint
             }
             
             _shouldLoadSession = loadSession;
-            _workingPath = path;
+            WorkingPath = path;
             _currentFilePath = path;  
             if (fileExists.HasValue) _currentFileExists = fileExists.Value;//<0.1ms
             else CheckFilePathAvailibility(_currentFilePath);
@@ -225,6 +225,10 @@ namespace TabPaint
             QuickFormatPopup.FormatSelected += OnQuickFormatSelected;
         }
 
+        private void OnTitleBarRightClick(object sender, RoutedEventArgs e)
+        {
+            WorkingPath = string.Empty;
+        }
 
         private async void MainWindow_ContentRendered(object sender, EventArgs e)
         {
@@ -577,7 +581,7 @@ namespace TabPaint
 
             if (_currentTabItem != null && !_currentTabItem.IsNew)
             {
-                int currentIndexInFiles = _imageFiles.IndexOf(_currentTabItem.FilePath);
+                int currentIndexInFiles = _imageFiles.FindIndex(f => string.Equals(f, _currentTabItem.FilePath, StringComparison.OrdinalIgnoreCase));
                 if (currentIndexInFiles >= 0) insertIndex = currentIndexInFiles + 1;
 
                 int currentIndexInTabs = FileTabs.IndexOf(_currentTabItem);
@@ -598,7 +602,7 @@ namespace TabPaint
                         existingWindow.FocusAndSelectTab(existingTab);
                         continue;
                     }
-                    if (_imageFiles.Contains(file))
+                    if (_imageFiles.Any(f => string.Equals(f, file, StringComparison.OrdinalIgnoreCase)))
                     {
                         var tab = FileTabs.FirstOrDefault(t => string.Equals(t.FilePath, file, StringComparison.OrdinalIgnoreCase));
                         if (tab != null) firstNewTab = tab;
@@ -721,7 +725,7 @@ namespace TabPaint
 
             if (_currentTabItem != null && !_currentTabItem.IsNew)
             {
-                int currentIndexInFiles = _imageFiles.IndexOf(_currentTabItem.FilePath);
+                int currentIndexInFiles = _imageFiles.FindIndex(f => string.Equals(f, _currentTabItem.FilePath, StringComparison.OrdinalIgnoreCase));
                 if (currentIndexInFiles >= 0) insertIndex = currentIndexInFiles + 1;
                 int currentIndexInTabs = FileTabs.IndexOf(_currentTabItem);
                 if (currentIndexInTabs >= 0) uiInsertIndex = currentIndexInTabs + 1;
@@ -740,7 +744,7 @@ namespace TabPaint
                     continue;
                 }
 
-                if (_imageFiles.Contains(file)) continue;
+                if (_imageFiles.Any(f => string.Equals(f, file, StringComparison.OrdinalIgnoreCase))) continue;
                 _imageFiles.Insert(insertIndex + addedCount, file);
 
                 var newTab = new FileTabItem(file);

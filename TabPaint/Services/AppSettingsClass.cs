@@ -638,6 +638,22 @@ namespace TabPaint
                 }
             }
         }
+
+        private bool _enablePdfSavePage = true; // 默认开启
+
+        [JsonPropertyName("enable_pdf_save_page")]
+        public bool EnablePdfSavePage
+        {
+            get => _enablePdfSavePage;
+            set
+            {
+                if (_enablePdfSavePage != value)
+                {
+                    _enablePdfSavePage = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
         private bool _autoPopupOnClipboardImage = false; // 默认不弹出
 
         [JsonPropertyName("auto_popup_on_clipboard_image")]

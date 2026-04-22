@@ -223,6 +223,8 @@
     <sys:String x:Key="L_Settings_Advanced_SkipResetConfirm_Desc">Skip the second confirmation when clearing tabs</sys:String>
     <sys:String x:Key="L_Settings_Advanced_DiscardAllOnExit_Title">Discard all changes on restart</sys:String>
     <sys:String x:Key="L_Settings_Advanced_DiscardAllOnExit_Desc">Automatically run “Discard All” when closing the app</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_EnablePdfSavePage_Title">Enable PDF Save Preview Page</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_EnablePdfSavePage_Desc">Show page ordering and settings before saving as PDF</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Maintenance_Header">Maintenance</sys:String>
     <sys:String x:Key="L_Settings_Advanced_CollectReport_Title">Collect Report</sys:String>
     <sys:String x:Key="L_Settings_Advanced_CollectReport_Desc">Collect system info, process info, and today's logs.</sys:String>
@@ -886,6 +888,7 @@ SOFTWARE.</sys:String>
 
     <sys:String x:Key="L_Menu_Recent_None" xmlns:sys="clr-namespace:System;assembly=mscorlib">(No recent files)</sys:String>
     <sys:String x:Key="L_Menu_Recent_Clear" xmlns:sys="clr-namespace:System;assembly=mscorlib">Clear Recent Files List</sys:String>
+    <sys:String x:Key="L_TitleBar_NoWorkingDir">(None)</sys:String>
     <sys:String x:Key="L_Stick_Close" xmlns:sys="clr-namespace:System;assembly=mscorlib">Close</sys:String>
     <sys:String x:Key="L_Stick_TopMost" xmlns:sys="clr-namespace:System;assembly=mscorlib">Always on Top</sys:String>
     <sys:String x:Key="L_Stick_Opacity" xmlns:sys="clr-namespace:System;assembly=mscorlib">Opacity</sys:String>
@@ -1008,6 +1011,12 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_QrCode_Error_NotFound">Recognition failed: No valid QR code or barcode found in the image.</sys:String>
     <sys:String x:Key="L_QrCode_Error_Internal">Recognition error (internal): {0}</sys:String>
     <sys:String x:Key="L_QrCode_Error_General">Recognition error: {0}</sys:String>
+
+    <!-- PDF Export -->
+    <sys:String x:Key="L_PdfExport_Title">Export to PDF</sys:String>
+    <sys:String x:Key="L_PdfExport_ShowList">Show Page List</sys:String>
+    <sys:String x:Key="L_PdfExport_PreviewHint">Previewing all pages...</sys:String>
+    <sys:String x:Key="L_PdfExport_Page">Page</sys:String>
 
 </ResourceDictionary>
 

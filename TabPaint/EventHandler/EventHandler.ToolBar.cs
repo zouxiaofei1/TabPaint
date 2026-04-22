@@ -56,7 +56,7 @@ namespace TabPaint
                 _undo?.ClearUndo();
                 _undo?.ClearRedo();
                 ResetDirtyTracker();
-               _currentFilePath =  _workingPath = filePath;
+               _currentFilePath = WorkingPath = filePath;
                 CheckFilePathAvailibility(filePath);
                 await OpenImageAndTabs(filePath, refresh: true, lazyload: false, forceFolderScan: true); LoadSessionForCurrentWorkspace(filePath);
             }

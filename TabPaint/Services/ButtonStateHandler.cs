@@ -215,7 +215,7 @@ namespace TabPaint
             {
                 if (currentIndex < 0 && _currentTabItem != null && !string.IsNullOrEmpty(_currentTabItem.FilePath))
                 {
-                    currentIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
+                    currentIndex = _imageFiles.FindIndex(f => string.Equals(f, _currentTabItem.FilePath, StringComparison.OrdinalIgnoreCase));
                 }
 
                 if (currentIndex >= 0)

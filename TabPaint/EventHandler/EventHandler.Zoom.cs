@@ -66,7 +66,7 @@ namespace TabPaint
                 _canvasResizer.UpdateUI();
                 if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
                 if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx);
-
+                if (_tools.Shape is ShapeTool sh) sh.RefreshPreview(_ctx);
 
                 UpdateRulerPositions(); UpdateSelectionToolBarPosition();
                 if (IsViewMode && _startupFinished && !slient) ShowToast(newScale.ToString("P0"));
@@ -143,6 +143,8 @@ namespace TabPaint
             if (!IsViewMode) UpdateSelectionScalingMode();
             if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
             if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx);
+            if (_tools.Shape is ShapeTool sh) sh.RefreshPreview(_ctx);
+
             UpdateSelectionToolBarPosition();
             UpdateRulerPositions();
 

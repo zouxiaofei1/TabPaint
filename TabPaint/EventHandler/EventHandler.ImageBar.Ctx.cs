@@ -157,7 +157,7 @@ namespace TabPaint
                     // 尝试在 _imageFiles 里找到对应位置
                     if (!string.IsNullOrEmpty(targetTab.FilePath))
                     {
-                        int fileIndex = _imageFiles.IndexOf(targetTab.FilePath);
+                        int fileIndex = _imageFiles.FindIndex(f => string.Equals(f, targetTab.FilePath, StringComparison.OrdinalIgnoreCase));
                         if (fileIndex >= 0) insertIndex = fileIndex + 1;
                     }
                 }
@@ -188,7 +188,7 @@ namespace TabPaint
                         }
 
                         // 2. 检查是否已存在
-                        if (!_imageFiles.Contains(file))
+                        if (!_imageFiles.Any(f => string.Equals(f, file, StringComparison.OrdinalIgnoreCase)))
                         {
                             // 1. 不存在：插入新 Tab
                             _imageFiles.Insert(insertIndex + addedCount, file);
