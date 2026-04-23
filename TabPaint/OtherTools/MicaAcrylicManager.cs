@@ -101,16 +101,8 @@ namespace TabPaint
             }
             else
             {
-                if (IsWin11() && forceWin10Style)
-                {
-                    DisableMica(hwnd, window);
-                }
-
-                // 如果是主窗口且是 Win10，我们保持 AllowsTransparency 逻辑
-                if (window is MainWindow)
-                {
-                    window.Background = Brushes.Transparent;
-                }
+                if (IsWin11() && forceWin10Style)   DisableMica(hwnd, window);
+                if (window is MainWindow)  window.Background = Brushes.Transparent;
                 ApplyFallbackBackground(window);
             }
         }
@@ -131,11 +123,7 @@ namespace TabPaint
         {
             bool isDark = ThemeManager.CurrentAppliedTheme == AppTheme.Dark;
             Brush sampledBrush = DesktopBackdropSampler.CreateBackdropBrushForWindow(window, isDark);
-
-            // 壁纸采样失败时回退为静态渐变，确保稳定可用。
             Brush backgroundBrush = sampledBrush ?? CreateGradientFallback(isDark);
-
-            // 如果是 MainWindow，我们应用背景到 WindowRootBorder 以支持透明阴影
             if (window is MainWindow mw)
             {
                 var border = mw.FindName("WindowRootBorder") as Border;
@@ -151,7 +139,6 @@ namespace TabPaint
 
             if (sampledBrush == null)
             {
-                // 叠加噪点纹理（在 MainWindow 中，LayoutRoot 是更好的选择）
                 Grid rootGrid = null;
                 if (window is MainWindow mw2) rootGrid = mw2.FindName("LayoutRoot") as Grid;
                 if (rootGrid == null && window.Content is Grid g) rootGrid = g;

@@ -64,7 +64,6 @@
                                                                Minimum="0"
                                                                Value="{Binding HorizontalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"
                                                                Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"/>
-                                                    <!-- 修复右下角白色方块：手动添加一个背景一致的 Border -->
                                                     <Border Grid.Column="1" Grid.Row="1" 
                                                             Background="{TemplateBinding Background}"/>
                                                 </Grid>

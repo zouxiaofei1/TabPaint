@@ -169,30 +169,19 @@ namespace TabPaint
                 var rect = new Int32Rect((int)x, (int)y, (int)w, (int)h);
 
                 bool isProMode = SettingsManager.Instance.Current.IsProfessionalMode;
-
-                // 实时更新文本框自身的旋转中心 (修复输入时由于大小变化导致的错位)
                 if (Math.Abs(_rotationAngle) > 0.01)
                 {
                     _richTextBox.RenderTransformOrigin = new Point(0, 0);
                     _richTextBox.RenderTransform = new RotateTransform(_rotationAngle, w / 2.0, h / 2.0);
                 }
-                else
-                {
-                    _richTextBox.RenderTransform = null;
-                }
-
-                // 如果有旋转角度，给整个 overlay 应用旋转变换
+                else  _richTextBox.RenderTransform = null;
                 if (isProMode && Math.Abs(_rotationAngle) > 0.01)
                 {
                     double cx = rect.X + rect.Width / 2.0;
                     double cy = rect.Y + rect.Height / 2.0;
                     overlay.RenderTransform = new RotateTransform(_rotationAngle, cx * mw.zoomscale, cy * mw.zoomscale);
                 }
-                else
-                {
-                    overlay.RenderTransform = null;
-                }
-
+                else  overlay.RenderTransform = null;
                 var outlineBlack = new System.Windows.Shapes.Rectangle  // 黑色虚线框
                 {
                     Stroke = Brushes.Black,
@@ -634,7 +623,7 @@ namespace TabPaint
                     if (lag > 0)
                     {
                         lag -= 1;
-                        _dragging = false; // 【关键修复2】必须重置拖拽状态，否则会卡在创建模式
+                        _dragging = false; 
                         return;
                     }
 
@@ -642,8 +631,6 @@ namespace TabPaint
                     _richTextBox = CreateRichTextBox(ctx, _startPos.X, _startPos.Y);
                     _richTextBox.Width = AppConsts.DefaultTextBoxWidth;
                     _richTextBox.MinHeight = AppConsts.MinTextBoxHeight;
-
-                    // 调用统一的事件绑定
                     SetupRichTextBoxEvents(ctx, _richTextBox);
                     ctx.EditorOverlay.Visibility = Visibility.Visible;
                     ctx.EditorOverlay.IsHitTestVisible = true;
@@ -677,7 +664,6 @@ namespace TabPaint
                     }
                 };
                 rtb.TextChanged += (s, e) => { AutoFitContent(rtb); };
-                // 【关键修复1】必须在这里挂载 EditorOverlay 的拦截事件，否则新创建的框无法被拖动！
                 ctx.EditorOverlay.PreviewMouseUp -= Overlay_PreviewMouseUp;
                 ctx.EditorOverlay.PreviewMouseUp += Overlay_PreviewMouseUp;
                 ctx.EditorOverlay.PreviewMouseMove -= Overlay_PreviewMouseMove;
@@ -935,7 +921,6 @@ namespace TabPaint
 
                 if (ctx.EditorOverlay.Children.Contains(_richTextBox))
                     ctx.EditorOverlay.Children.Remove(_richTextBox);
-                // 【关键修复4】必须在清理时注销事件，防止残留导致下次操作出错
                 ctx.EditorOverlay.PreviewMouseUp -= Overlay_PreviewMouseUp;
                 ctx.EditorOverlay.PreviewMouseMove -= Overlay_PreviewMouseMove;
                 ctx.EditorOverlay.PreviewMouseDown -= Overlay_PreviewMouseDown;

@@ -469,7 +469,7 @@ namespace TabPaint.Controls
 
         private void Internal_OnFileTabPreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
-            FilePreview.ClosePreview();
+            FilePreview.ClosePreviewImmediately();
         }
     }
 }

@@ -100,13 +100,9 @@ namespace TabPaint.Windows
         private void AddSize(int size)
         {
             if (SizeItems.Any(x => x.Size == size)) return;
-
-            // 直接调用我们后面写的静态方法
             var preview = CreateIcoPreview(_sourceImage, size);
 
             var item = new IcoSizeItem { Size = size, Image = preview };
-
-            // 排序：大的在前
             int insertIndex = 0;
             while (insertIndex < SizeItems.Count && SizeItems[insertIndex].Size > size)
                 insertIndex++;

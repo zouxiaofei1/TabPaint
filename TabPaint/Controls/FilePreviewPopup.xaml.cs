@@ -76,6 +76,13 @@ namespace TabPaint.Controls
             _closeTimer.Start();
         }
 
+        public void ClosePreviewImmediately()
+        {
+            _hoverTimer.Stop();
+            _closeTimer.Stop();
+            ClosePopupAndReset();
+        }
+
         private void CloseTimer_Tick(object sender, EventArgs e)
         {
             _closeTimer.Stop();

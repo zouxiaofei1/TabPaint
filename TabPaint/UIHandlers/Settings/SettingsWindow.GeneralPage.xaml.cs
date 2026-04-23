@@ -143,13 +143,9 @@ namespace TabPaint.Pages
             int nextIndex = -1;
             int itemsCount = items.Count;
 
-            // 计算每行个数
-            // RadioButton Width=40, Margin=0,0,6,5. 总宽度约为 46
-            // 我们通过 WrapPanel 的实际宽度来计算
             double panelWidth = AccentColorItemsControl.ActualWidth;
             if (double.IsNaN(panelWidth) || panelWidth <= 0)
             {
-                // 如果还未渲染，回退到固定估算值 (40 + 6 = 46)
                 panelWidth = 200; // GeneralPage 默认宽度大概在 400 左右，Grid 列宽 200+*
             }
             int itemsPerRow = (int)Math.Max(1, Math.Floor(panelWidth / 46));

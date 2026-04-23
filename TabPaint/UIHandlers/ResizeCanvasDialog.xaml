@@ -140,9 +140,19 @@
                     <StackPanel Orientation="Horizontal">
                         <Path Data="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z" 
                               Fill="{DynamicResource TextTertiaryBrush}" Width="14" Height="14" Stretch="Uniform" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="InfoTextBlock" FontSize="12" 
-                                   Foreground="{DynamicResource TextTertiaryBrush}" TextWrapping="Wrap"
-                                   Text="{DynamicResource L_ResizeCanvas_OriginSize}" VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock x:Name="InfoPrefixTextBlock" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center"/>
+                            <Grid VerticalAlignment="Center">
+                                <TextBlock x:Name="InfoScaleValueText" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" 
+                                           Cursor="Hand" MouseDown="InfoScaleValueText_MouseDown" VerticalAlignment="Center"/>
+                                <TextBox x:Name="ScaleEditTextBox" FontSize="11" Width="45" Height="20" Visibility="Collapsed"
+                                         Padding="2,0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                                         KeyDown="ScaleEditTextBox_KeyDown" LostFocus="ScaleEditTextBox_LostFocus"
+                                         TextChanged="ScaleEditTextBox_TextChanged"
+                                         PreviewTextInput="NumberValidationTextBox"/>
+                            </Grid>
+                            <TextBlock x:Name="InfoSuffixTextBlock" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                        </StackPanel>
                     </StackPanel>
                 </Border> 
             </Grid>

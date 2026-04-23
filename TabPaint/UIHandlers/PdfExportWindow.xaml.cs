@@ -1,54 +1,222 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using Microsoft.Win32;
 using TabPaint.Services;
 
 namespace TabPaint.Windows
 {
+    public class PdfPageItem : INotifyPropertyChanged
+    {
+        public string PageTitle { get; set; }
+        public string PageInfo { get; set; }
+
+        private string _pageNumberText;
+        public string PageNumberText
+        {
+            get => _pageNumberText;
+            set
+            {
+                _pageNumberText = value;
+                OnPropertyChanged(nameof(PageNumberText));
+            }
+        }
+
+        private bool _isDragOver;
+        public bool IsDragOver
+        {
+            get => _isDragOver;
+            set
+            {
+                _isDragOver = value;
+                OnPropertyChanged(nameof(IsDragOver));
+            }
+        }
+
+        private bool _canDelete = true;
+        public bool CanDelete
+        {
+            get => _canDelete;
+            set
+            {
+                _canDelete = value;
+                OnPropertyChanged(nameof(CanDelete));
+            }
+        }
+
+        private ImageSource _previewImage;
+        public ImageSource PreviewImage
+        {
+            get => _previewImage;
+            set
+            {
+                _previewImage = value;
+                OnPropertyChanged(nameof(PreviewImage));
+            }
+        }
+
+        private ImageSource _fullImage;
+        public ImageSource FullImage
+        {
+            get
+            {
+                if (_fullImage == null)
+                {
+                    _ = LoadFullImageAsync();
+                    return PreviewImage;
+                }
+                return _fullImage;
+            }
+            set
+            {
+                _fullImage = value;
+                OnPropertyChanged(nameof(FullImage));
+            }
+        }
+
+        private bool _isLoadingFull = false;
+        public MainWindow.FileTabItem TabItem { get; set; }
+        public MainWindow MainWindow { get; set; }
+
+        public async Task LoadFullImageAsync()
+        {
+            if (_isLoadingFull || _fullImage != null || MainWindow == null || TabItem == null) return;
+            _isLoadingFull = true;
+
+            try
+            {
+                var bitmap = await Task.Run(() =>
+                {
+                    using (var stream = MainWindow.GetImageStreamForTab(TabItem))
+                    {
+                        if (stream == null) return null;
+                        var bmp = new BitmapImage();
+                        bmp.BeginInit();
+                        bmp.StreamSource = stream;
+                        bmp.CacheOption = BitmapCacheOption.OnLoad;
+                        bmp.EndInit();
+                        bmp.Freeze();
+                        return bmp as ImageSource;
+                    }
+                });
+
+                if (bitmap != null)
+                {
+                    FullImage = bitmap;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Lazy load full image error: {ex.Message}");
+            }
+            finally
+            {
+                _isLoadingFull = false;
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    }
+
     public partial class PdfExportWindow : Window
     {
-        public ObservableCollection<PdfPageViewModel> Pages { get; set; } = new ObservableCollection<PdfPageViewModel>();
-        public bool IsConfirmed { get; private set; }
-        public string SavePath => PathTextBox.Text;
+        public ObservableCollection<PdfPageItem> PageItems { get; set; } = new ObservableCollection<PdfPageItem>();
+        public bool IsConfirmed { get; private set; } = false;
+        private MainWindow _mainWindow;
 
-        private Point _dragStartPoint;
-
-        public PdfExportWindow(List<FileTabItem> items)
+        public PdfExportWindow(List<MainWindow.FileTabItem> tabs, MainWindow mainWindow)
         {
             InitializeComponent();
-            DataContext = this;
+            _mainWindow = mainWindow;
+            this.SupportFocusHighlight();
+            
+            PageListBox.ItemsSource = PageItems;
+            PreviewListBox.ItemsSource = PageItems;
 
-            // Load pages
+            string initialPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+                "Combined_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".pdf");
+            SavePathTextBox.Text = initialPath;
+
             int index = 1;
-            foreach (var item in items)
+            bool canDelete = tabs.Count > 1;
+            foreach (var tab in tabs)
             {
-                Pages.Add(new PdfPageViewModel
+                var item = new PdfPageItem
                 {
-                    SourceItem = item,
-                    PageTitle = item.FileName ?? (string)Application.Current.TryFindResource("L_Untitled"),
-                    PageNumber = index++,
-                    PreviewImage = item.PreviewImage, // Assuming PreviewImage exists
-                    FullImage = item.ImageSource,     // Assuming ImageSource exists
-                    PageInfo = $"{item.Width} x {item.Height} px"
-                });
+                    PageTitle = tab.DisplayName,
+                    TabItem = tab,
+                    MainWindow = mainWindow,
+                    PageNumberText = $"{LocalizationManager.GetString("L_PdfExport_Page") ?? "Page"} {index}",
+                    CanDelete = canDelete,
+                    PageInfo = $"{tab.PixelWidth} x {tab.PixelHeight}"
+                };
+
+                // 只快速加载缩略图作为初始预览
+                try
+                {
+                    using (var stream = mainWindow.GetImageStreamForTab(tab))
+                    {
+                        if (stream != null)
+                        {
+                            var bitmap = new BitmapImage();
+                            bitmap.BeginInit();
+                            bitmap.StreamSource = stream;
+                            bitmap.DecodePixelWidth = 120; // 限制缩略图宽度以节省显存
+                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                            bitmap.EndInit();
+                            bitmap.Freeze();
+                            item.PreviewImage = bitmap;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    item.PageInfo = "Error loading image";
+                    System.Diagnostics.Debug.WriteLine($"PDF Preview load error: {ex.Message}");
+                }
+
+                PageItems.Add(item);
+                index++;
             }
 
-            PageListBox.ItemsSource = Pages;
-            PreviewItemsControl.ItemsSource = Pages;
+            this.Loaded += PdfExportWindow_Loaded;
+        }
 
-            // Default save path
-            string defaultName = items.FirstOrDefault()?.FileName ?? "Document";
-            string defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), 
-                                              Path.GetFileNameWithoutExtension(defaultName) + ".pdf");
-            PathTextBox.Text = defaultPath;
+        private void PdfExportWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            bool isDark = ThemeManager.CurrentAppliedTheme == AppTheme.Dark;
+            ThemeManager.SetWindowImmersiveDarkMode(this, isDark);
+
+            // 启动入场动画
+            if (this.Resources["WindowEntranceAnimation"] is System.Windows.Media.Animation.Storyboard storyboard)
+            {
+                storyboard.Begin();
+            }
+        }
+
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+            MicaAcrylicManager.ApplyEffect(this);
+            if (!MicaAcrylicManager.IsWin11())
+            {
+                var bgBrush = Application.Current.TryFindResource("WindowBackgroundBrush") as Brush
+                              ?? Application.Current.TryFindResource("ControlBackgroundBrush") as Brush;
+                RootBorder.Background = bgBrush ?? Brushes.White;
+            }
+            else
+            {
+                RootBorder.Background = Brushes.Transparent;
+            }
         }
 
         private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
@@ -56,61 +224,67 @@ namespace TabPaint.Windows
             if (e.ChangedButton == MouseButton.Left) DragMove();
         }
 
-        private void OnCloseClick(object sender, RoutedEventArgs e) => Close();
-
-        private void OnCancelClick(object sender, RoutedEventArgs e) => Close();
+        private void OnCloseClick(object sender, RoutedEventArgs e) { IsConfirmed = false; Close(); }
+        private void OnCancelClick(object sender, RoutedEventArgs e) { IsConfirmed = false; Close(); }
 
         private void OnBrowseClick(object sender, RoutedEventArgs e)
         {
-            var sfd = new SaveFileDialog
+            var dlg = new Microsoft.Win32.SaveFileDialog
             {
                 Filter = "PDF Files (*.pdf)|*.pdf",
-                FileName = Path.GetFileName(PathTextBox.Text),
-                InitialDirectory = Path.GetDirectoryName(PathTextBox.Text)
+                FileName = Path.GetFileName(SavePathTextBox.Text),
+                DefaultExt = ".pdf"
             };
 
-            if (sfd.ShowDialog() == true)
+            if (dlg.ShowDialog() == true)
             {
-                PathTextBox.Text = sfd.FileName;
+                SavePathTextBox.Text = dlg.FileName;
             }
-        }
-
-        private void OnSaveClick(object sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(PathTextBox.Text))
-            {
-                MessageBox.Show("Please select a save path.");
-                return;
-            }
-
-            if (Pages.Count == 0)
-            {
-                MessageBox.Show("No pages to export.");
-                return;
-            }
-
-            IsConfirmed = true;
-            Close();
         }
 
         private void OnDeletePageClick(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn && btn.Tag is PdfPageViewModel vm)
+            if (PageItems.Count <= 1) return;
+
+            if (sender is Button btn && btn.DataContext is PdfPageItem item)
             {
-                Pages.Remove(vm);
-                UpdatePageNumbers();
+                PageItems.Remove(item);
+                UpdatePageItemsState();
             }
         }
 
-        private void UpdatePageNumbers()
+        private void UpdatePageItemsState()
         {
-            for (int i = 0; i < Pages.Count; i++)
+            string pageText = LocalizationManager.GetString("L_PdfExport_Page") ?? "Page";
+            bool canDelete = PageItems.Count > 1;
+            for (int i = 0; i < PageItems.Count; i++)
             {
-                Pages[i].PageNumber = i + 1;
+                PageItems[i].PageNumberText = $"{pageText} {i + 1}";
+                PageItems[i].CanDelete = canDelete;
             }
         }
 
-        #region Drag and Drop Reordering
+        private void UpdatePageNumbers() => UpdatePageItemsState();
+
+        #region Drag and Drop
+
+        private Point _dragStartPoint;
+
+        private void Item_DragOver(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent("PdfPageItem"))
+            {
+                if (sender is FrameworkElement fe && fe.DataContext is PdfPageItem item)
+                {
+                    item.IsDragOver = true;
+                }
+            }
+        }
+
+        private void Item_DragLeave(object sender, DragEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.DataContext is PdfPageItem item) item.IsDragOver = false;
+        }
 
         private void ListBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
@@ -121,90 +295,73 @@ namespace TabPaint.Windows
         {
             if (e.LeftButton == MouseButtonState.Pressed)
             {
-                Point position = e.GetPosition(null);
-                if (Math.Abs(position.X - _dragStartPoint.X) > SystemParameters.MinimumHorizontalDragDistance ||
-                    Math.Abs(position.Y - _dragStartPoint.Y) > SystemParameters.MinimumVerticalDragDistance)
+                Point mousePos = e.GetPosition(null);
+                Vector diff = _dragStartPoint - mousePos;
+
+                if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                    Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
                 {
                     ListBox listBox = sender as ListBox;
-                    ListBoxItem listBoxItem = FindVisualParent<ListBoxItem>(e.OriginalSource as DependencyObject);
+                    ListBoxItem listBoxItem = FindAnchestor<ListBoxItem>((DependencyObject)e.OriginalSource);
 
-                    if (listBoxItem != null)
-                    {
-                        PdfPageViewModel data = (PdfPageViewModel)listBox.ItemContainerGenerator.ItemFromContainer(listBoxItem);
-                        DataObject dragData = new DataObject("PdfPageViewModel", data);
-                        DragDrop.DoDragDrop(listBoxItem, dragData, DragDropEffects.Move);
-                    }
+                    if (listBoxItem == null) return;
+
+                    PdfPageItem item = (PdfPageItem)listBox.ItemContainerGenerator.ItemFromContainer(listBoxItem);
+
+                    DataObject dragData = new DataObject("PdfPageItem", item);
+                    DragDrop.DoDragDrop(listBoxItem, dragData, DragDropEffects.Move);
                 }
             }
         }
 
         private void ListBox_Drop(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent("PdfPageViewModel"))
+            if (e.Data.GetDataPresent("PdfPageItem"))
             {
-                PdfPageViewModel droppedData = e.Data.GetData("PdfPageViewModel") as PdfPageViewModel;
-                PdfPageViewModel targetData = null;
+                PdfPageItem droppedData = e.Data.GetData("PdfPageItem") as PdfPageItem;
+                PdfPageItem target = ((FrameworkElement)e.OriginalSource).DataContext as PdfPageItem;
 
-                ListBox listBox = sender as ListBox;
-                ListBoxItem listBoxItem = FindVisualParent<ListBoxItem>(e.OriginalSource as DependencyObject);
+                // Reset all drag over states
+                foreach (var item in PageItems) item.IsDragOver = false;
 
-                if (listBoxItem != null)
+                if (droppedData != null && target != null && droppedData != target)
                 {
-                    targetData = (PdfPageViewModel)listBox.ItemContainerGenerator.ItemFromContainer(listBoxItem);
-                }
+                    int oldIndex = PageItems.IndexOf(droppedData);
+                    int newIndex = PageItems.IndexOf(target);
 
-                if (droppedData != null && targetData != null && droppedData != targetData)
-                {
-                    int oldIndex = Pages.IndexOf(droppedData);
-                    int newIndex = Pages.IndexOf(targetData);
-
-                    Pages.Move(oldIndex, newIndex);
-                    UpdatePageNumbers();
+                    if (oldIndex != -1 && newIndex != -1)
+                    {
+                        PageItems.Move(oldIndex, newIndex);
+                        UpdatePageNumbers();
+                    }
                 }
             }
         }
 
-        private static T FindVisualParent<T>(DependencyObject child) where T : DependencyObject
+        private static T FindAnchestor<T>(DependencyObject current) where T : DependencyObject
         {
-            DependencyObject parentObject = VisualTreeHelper.GetParent(child);
-            if (parentObject == null) return null;
-            if (parentObject is T parent) return parent;
-            return FindVisualParent<T>(parentObject);
+            do
+            {
+                if (current is T) return (T)current;
+                current = VisualTreeHelper.GetParent(current);
+            }
+            while (current != null);
+            return null;
         }
 
         #endregion
-    }
 
-    public class PdfPageViewModel : DependencyObject
-    {
-        public FileTabItem SourceItem { get; set; }
-        public string PageTitle { get; set; }
-        public ImageSource PreviewImage { get; set; }
-        public ImageSource FullImage { get; set; }
-        public string PageInfo { get; set; }
-
-        public int PageNumber
+        private async void OnSaveClick(object sender, RoutedEventArgs e)
         {
-            get { return (int)GetValue(PageNumberProperty); }
-            set { SetValue(PageNumberProperty, value); }
-        }
-        public static readonly DependencyProperty PageNumberProperty =
-            DependencyProperty.Register("PageNumber", typeof(int), typeof(PdfPageViewModel), new PropertyMetadata(0, OnPageNumberChanged));
+            string targetPath = SavePathTextBox.Text;
+            if (string.IsNullOrEmpty(targetPath)) return;
 
-        private static void OnPageNumberChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            if (d is PdfPageViewModel vm)
-            {
-                vm.OnPropertyChanged(nameof(PageNumberText));
-            }
-        }
+            if (PageItems.Count == 0) return;
 
-        public string PageNumberText => $"{Application.Current.TryFindResource("L_PdfExport_Page")} {PageNumber}";
-
-        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
-        protected virtual void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
+            IsConfirmed = true;
+            var items = PageItems.Select(p => p.TabItem).ToList();
+            await _mainWindow.ExportTabsToPdfAsync(items, targetPath);
+            this.Close();
         }
     }
 }

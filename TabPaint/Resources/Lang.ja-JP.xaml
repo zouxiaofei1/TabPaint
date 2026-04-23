@@ -64,10 +64,10 @@
     <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Title">同じフォルダー内の画像を自動読み込み</sys:String>
     <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Desc">同じディレクトリ内の他の画像を自動的にスキャンして読み込みます</sys:String>
     <sys:String x:Key="L_Settings_General_StartInViewMode_Title">閲覧モードで起動</sys:String>
-    <sys:String x:Key="L_Settings_General_StartInViewMode_Desc">起動時にツールバーを非表示にする（画像ビューアーとして使用する場合に便利）</sys:String>
+    <sys:String x:Key="L_Settings_General_StartInViewMode_Desc">起動時にツールバーを非表示にする</sys:String>
     <sys:String x:Key="L_Settings_General_ShellIntegration_Title">システムのコンテキストメニューに追加</sys:String>
     <sys:String x:Key="L_Settings_General_ShellIntegration_Desc">画像のコンテキストメニューに「TabPaint で開く」を追加します</sys:String>
-    <sys:String x:Key="L_Settings_General_AiImage_Header">AI 画像生成 (Text-to-Image)</sys:String>
+    <sys:String x:Key="L_Settings_General_AiImage_Header">AI 画像生成</sys:String>
     <sys:String x:Key="L_Settings_General_AiImage_ApiBaseUrl_Title">API ベース URL</sys:String>
     <sys:String x:Key="L_Settings_General_AiImage_ApiBaseUrl_Desc">OpenAI 互換のエンドポイント</sys:String>
     <sys:String x:Key="L_Settings_General_AiImage_ApiKey_Title">API キー</sys:String>
@@ -83,7 +83,7 @@
     <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Title">常にタブの閉じるボタンを表示</sys:String>
     <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Desc">画像タブの閉じるボタンを常に表示します。</sys:String>
     <sys:String x:Key="L_Settings_Advanced_MaxRecentFiles_Title">最近使ったファイルの履歴数</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_MaxRecentFiles_Desc">最近使ったファイルのリストに保持する最大項目数を設定します。</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_MaxRecentFiles_Desc">リストに保持する最大項目数を設定します。</sys:String>
     <sys:String x:Key="L_Menu_File_RecycleBin">ファイルごみ箱</sys:String>
 
     <sys:String x:Key="L_Settings_Advanced_Undo_Header">元に戻す / やり直し</sys:String>
@@ -117,7 +117,7 @@
     <sys:String x:Key="L_Settings_Paint_Title">ペイント</sys:String>
     <sys:String x:Key="L_Settings_Paint_Habits_Header">編集</sys:String>
     <sys:String x:Key="L_Settings_Paint_AutoPopupClipboard_Title">クリップボードに画像があれば自動でポップアップ</sys:String>
-    <sys:String x:Key="L_Settings_Paint_AutoPopupClipboard_Desc">クリップボード監視で新しい画像を検知したときにウィンドウをアクティブにします</sys:String>
+    <sys:String x:Key="L_Settings_Paint_AutoPopupClipboard_Desc">監視で新しい画像を検知したときにウィンドウをアクティブにします</sys:String>
     <sys:String x:Key="L_Settings_Paint_SelectionClear_Title">選択範囲削除時の背景</sys:String>
     <sys:String x:Key="L_Settings_Paint_SelectionClear_Desc">選択範囲を削除する際の塗りつぶしモード</sys:String>
     <sys:String x:Key="L_Settings_Paint_SelectionClear_Transparent">透明</sys:String>
@@ -129,8 +129,8 @@
     <sys:String x:Key="L_Settings_Paint_OcrResultAction_DirectCopy">クリップボードに直接コピー</sys:String>
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Title">Deleteキーでのファイル削除を許可</sys:String>
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Desc">Deleteキーを押して現在のファイルを削除できるようにします</sys:String>
-    <sys:String x:Key="L_Settings_Paint_ProfessionalMode_Title">プロモード (共通)</sys:String>
-    <sys:String x:Key="L_Settings_Paint_ProfessionalMode_Desc">テキスト、図形、および選択範囲の高度な編集機能を有効にします (Altキーで切り替え)</sys:String>
+    <sys:String x:Key="L_Settings_Paint_ProfessionalMode_Title">プロモード </sys:String>
+    <sys:String x:Key="L_Settings_Paint_ProfessionalMode_Desc">図形、および選択範囲の高度な編集機能を有効にします </sys:String>
     <sys:String x:Key="L_Settings_Paint_BirdEye_Title">閲覧モードで全体図 (ナビゲーター) を表示</sys:String>
     <sys:String x:Key="L_Settings_Paint_BirdEye_Desc">右クリックメニューから非表示にした場合、ここで再表示できます。</sys:String>
 
@@ -208,7 +208,7 @@
     <sys:String x:Key="L_Settings_Advanced_Resampling_Title">再サンプリング</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Resampling_Desc">画像の保存やサイズ変更時に使用されます</sys:String>
     <sys:String x:Key="L_Settings_Advanced_NewCanvasSize_Title">新規キャンバスのサイズ</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_NewCanvasSize_Desc">新規作成時のデフォルトの幅と高さを設定します</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_NewCanvasSize_Desc">デフォルトの幅と高さを設定します</sys:String>
     <sys:String x:Key="L_Settings_Advanced_SvgDecodeSize_Title">SVG デコード最大サイズ</sys:String>
     <sys:String x:Key="L_Settings_Advanced_SvgDecodeSize_Desc">SVG デコード時の長辺ピクセルサイズを設定します</sys:String>
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Title">ピクセル化のしきい値</sys:String>
@@ -230,7 +230,7 @@
     <sys:String x:Key="L_Settings_Advanced_CollectReport_Regenerate">再生成</sys:String>
     <sys:String x:Key="L_Settings_Advanced_CollectReport_Tip">内容は編集可能です。共有する前に、必要に応じて機密情報を削除してください。</sys:String>
     <sys:String x:Key="L_Settings_Advanced_FactoryReset_Button">すべてのキャッシュと設定をクリア</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_FactoryReset">工場出荷時設定にリセット</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_FactoryReset">リセット</sys:String>
     <sys:String x:Key="L_Settings_ResetShortcuts">ショートカットをデフォルトに戻す</sys:String>
 
     <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Auto">自動</sys:String>
@@ -240,7 +240,7 @@
     <sys:String x:Key="L_Settings_Shortcuts_File_Print">印刷</sys:String>
     <sys:String x:Key="L_Settings_DevTools_Title">開発者ツール</sys:String>
     <sys:String x:Key="L_Settings_DevTools_UseWin10StyleOnWin11_Title">Windows 11でWindows 10スタイルを使用する</sys:String>
-    <sys:String x:Key="L_Settings_DevTools_UseWin10StyleOnWin11_Desc">Mica/Acrylic効果を無効にし、デスクトップ背景のサンプリングとノイズオーバーレイ（Win10の視覚体験）を使用します。</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_UseWin10StyleOnWin11_Desc">Windows 11でWindows 10スタイルを使用する</sys:String>
  
     <!-- Common Strings -->
     <sys:String x:Key="L_Common_OpenLogFolder">フォルダーを開く</sys:String>
@@ -994,8 +994,13 @@ SOFTWARE.</sys:String>
 
     <!-- PDF 書き出し -->
     <sys:String x:Key="L_PdfExport_Title">PDFとして書き出し</sys:String>
+    <sys:String x:Key="pdf_title">PDFの書き出し</sys:String>
+    <sys:String x:Key="l_saving">保存中...</sys:String>
+    <sys:String x:Key="L_Toast_SavingPDF_Title">PDFを書き出し中...</sys:String>
     <sys:String x:Key="L_PdfExport_ShowList">ページリストを表示</sys:String>
     <sys:String x:Key="L_PdfExport_PreviewHint">すべてのページをプレビュー中...</sys:String>
+    <sys:String x:Key="L_PdfExport_SavePath">保存パス</sys:String>
+    <sys:String x:Key="L_PdfExport_Browse">参照...</sys:String>
     <sys:String x:Key="L_PdfExport_Page">ページ</sys:String>
 
 </ResourceDictionary>

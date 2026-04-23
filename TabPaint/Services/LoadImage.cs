@@ -725,7 +725,7 @@ namespace TabPaint
         private void UpdateUIForImage(ImageSource source, string filePath, bool isPreview)
         {
             if (isPreview)
-                RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.Linear);
+                RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.HighQuality);
 
             BackgroundImage.Source = source;
             _currentFileName = IsVirtualPath(filePath)

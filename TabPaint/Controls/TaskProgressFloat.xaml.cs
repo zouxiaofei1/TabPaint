@@ -36,6 +36,7 @@ namespace TabPaint.Controls
                 catch { }
             }
         }
+        private double _lastPercentage = -1;
         public void UpdateProgress(AiDownloadStatus status, string taskName = null)
         {
             var bottomGrid = this.FindName("BottomInfoGrid") as FrameworkElement;
@@ -48,12 +49,23 @@ namespace TabPaint.Controls
                 this.BeginAnimation(OpacityProperty, fadeIn);
             }
             double p = Math.Max(0, Math.Min(100, status.Percentage));
+            if (Math.Abs(p - _lastPercentage) < 0.01) return;
+            _lastPercentage = p;
+
             var percentageText = this.FindName("PercentageText") as TextBlock;
             if (percentageText != null) percentageText.Text = $"{p:F1}%";
 
             double totalWidth = this.ActualWidth > 0 ? this.ActualWidth - 26 : 274;
             var progressBarFill = this.FindName("ProgressBarFill") as FrameworkElement;
-            if (progressBarFill != null) progressBarFill.Width = (p / 100.0) * totalWidth;
+            if (progressBarFill != null)
+            {
+                double targetWidth = (p / 100.0) * totalWidth;
+                var anim = new DoubleAnimation(targetWidth, TimeSpan.FromMilliseconds(450))
+                {
+                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseInOut }
+                };
+                progressBarFill.BeginAnimation(FrameworkElement.WidthProperty, anim);
+            }
 
             if (!string.IsNullOrEmpty(taskName))
             {
@@ -61,7 +73,6 @@ namespace TabPaint.Controls
                 if (taskNameText != null) taskNameText.Text = taskName;
             }
 
-            
             string currentSize = FormatFileSize(status.BytesReceived);// 更新大小信息
             string totalSize = status.TotalBytes > 0 ? FormatFileSize(status.TotalBytes) : "Unknown";
             var sizeInfoText = this.FindName("SizeInfoText") as TextBlock;
@@ -89,12 +100,23 @@ namespace TabPaint.Controls
             }
 
             double p = Math.Max(0, Math.Min(100, percentage));
+            if (Math.Abs(p - _lastPercentage) < 0.01) return;
+            _lastPercentage = p;
+
             var percentageText = this.FindName("PercentageText") as TextBlock;
             if (percentageText != null) percentageText.Text = $"{p:F1}%";
 
             double totalWidth = this.ActualWidth > 0 ? this.ActualWidth - 26 : 274;
             var progressBarFill = this.FindName("ProgressBarFill") as FrameworkElement;
-            if (progressBarFill != null) progressBarFill.Width = (p / 100.0) * totalWidth;
+            if (progressBarFill != null)
+            {
+                double targetWidth = (p / 100.0) * totalWidth;
+                var anim = new DoubleAnimation(targetWidth, TimeSpan.FromMilliseconds(450))
+                {
+                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseInOut }
+                };
+                progressBarFill.BeginAnimation(FrameworkElement.WidthProperty, anim);
+            }
 
             if (!string.IsNullOrEmpty(taskName))
             {

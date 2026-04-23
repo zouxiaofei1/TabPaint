@@ -1014,8 +1014,13 @@ SOFTWARE.</sys:String>
 
     <!-- PDF Export -->
     <sys:String x:Key="L_PdfExport_Title">Export to PDF</sys:String>
+    <sys:String x:Key="pdf_title">PDF Export</sys:String>
+    <sys:String x:Key="l_saving">Saving...</sys:String>
+    <sys:String x:Key="L_Toast_SavingPDF_Title">Exporting PDF...</sys:String>
     <sys:String x:Key="L_PdfExport_ShowList">Show Page List</sys:String>
     <sys:String x:Key="L_PdfExport_PreviewHint">Previewing all pages...</sys:String>
+    <sys:String x:Key="L_PdfExport_SavePath">Save Path</sys:String>
+    <sys:String x:Key="L_PdfExport_Browse">Browse...</sys:String>
     <sys:String x:Key="L_PdfExport_Page">Page</sys:String>
 
 </ResourceDictionary>

@@ -206,7 +206,7 @@ namespace TabPaint
         public const double StatusBarThresholdSelection = 650.0;
         public const double StatusBarThresholdImage = 500.0;
 
-        // --- AI 修复参数 ---
+        // --- AI参数 ---
         public const int AiInpaintSize = 512;
         public const int AiInferenceSizeDefault = 1024;
         public const int AiSrTileOverlap = 16;

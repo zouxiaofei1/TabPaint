@@ -89,13 +89,8 @@ namespace TabPaint
 
             double targetLeft = logicalPos.X + offset;
             double targetTop = logicalPos.Y + offset;
-
-            // 边界检测：防止超出屏幕右侧和下侧
             if (targetLeft + magWidth > this.ActualWidth) targetLeft = logicalPos.X - magWidth - offset;
-            // 下方预留更多空间给数值卡片
             if (targetTop + magHeight + 65 > this.ActualHeight) targetTop = logicalPos.Y - magHeight - offset - 65;
-
-            // 3. 【关键修改】直接设置位置，移除动画
             if (_magnifierTransform != null)
             {
                 // 必须先断开之前的任何动画锁定（如果有的话），否则直接赋值无效

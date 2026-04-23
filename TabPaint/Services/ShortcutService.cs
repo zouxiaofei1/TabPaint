@@ -105,8 +105,6 @@ namespace TabPaint.Services
             object baseContent = GetBaseToolTip(element);
 
             if (string.IsNullOrEmpty(key)) return;
-
-            // 如果是 MenuItem，我们优先绑定 InputGestureText
             if (element is MenuItem menuItem)
             {
                 var gestureBinding = new MultiBinding

@@ -172,8 +172,6 @@ namespace TabPaint
             {
                 ShowToast(string.Format(LocalizationManager.GetString("L_Toast_PrepareDragFailed_Prefix"), ex.Message),ex);
             }
-
-            // 如果上面失败了，且原路径是真实存在的，作为兜底返回原路径
             if (!IsVirtualPath(tab.FilePath) && File.Exists(tab.FilePath))
             {
                 return tab.FilePath;
@@ -223,7 +221,6 @@ namespace TabPaint
                                 // 优先存入内存快照，用于跨窗口瞬间传递
                                 tab.MemorySnapshot = bmp;
 
-                                // 后台异步备份到磁盘作为兜底
                                 if (string.IsNullOrEmpty(tab.BackupPath))
                                 {
                                     string cacheFileName = $"{tab.Id}.png";
@@ -311,12 +308,6 @@ namespace TabPaint
                     for (int i = 1; i < tabs.Count; i++)
                     {
                         var tab = tabs[i];
-                        // 简单的跨窗口迁移：让新窗口打开这些路径，或者更复杂的对象传递
-                        // 由于 MainWindow 构造函数限制，这里我们采用逐个迁移的方式，
-                        // 但为了避免打开多个窗口，我们需要一个能向现有窗口添加 Tab 的方法。
-                        // 考虑到实现的复杂度，目前先保持 Explorer 批量拖拽的实现，
-                        // 内部多选迁移逻辑如果需要完美支持，可能需要重构 MainWindow。
-                        // 暂且只对第一个标签进行窗口迁移，或者循环迁移（会开多个窗，不理想）。
                     }
                 }
             }

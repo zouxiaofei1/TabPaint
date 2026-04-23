@@ -438,8 +438,6 @@ namespace TabPaint
                         return _selectionAlphaMap[index] > 10;
                     }
                 }
-
-                // 5. 兜底：如果 Geometry 存在，用它判断
                 if (_selectionGeometry != null)
                     return _selectionGeometry.FillContains(px);
 

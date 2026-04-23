@@ -94,13 +94,10 @@ namespace TabPaint.Services
                         list.Add(Enum.Parse(barcodeFormatType, "DATA_MATRIX"));
                         list.Add(Enum.Parse(barcodeFormatType, "AZTEC"));
                         list.Add(Enum.Parse(barcodeFormatType, "PDF_417"));
-
-                        // ✅ 关键修复：用反射设置 PossibleFormats，而非 dynamic 赋值
                         PropertyInfo? possibleFormatsProp = decodingOptionsType.GetProperty("PossibleFormats");
                         possibleFormatsProp?.SetValue(options, formatList);
                     }
 
-                    // ✅ 同样用反射设置 Options 属性
                     PropertyInfo? optionsProp = readerType.GetProperty("Options");
                     optionsProp?.SetValue(reader, options);
                 }

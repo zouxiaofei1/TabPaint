@@ -46,7 +46,6 @@ public partial class PenTool : ToolBase
 
         int[] localSatBuffer = _satBufferInt;
 
-        // ★ 关键：用 GCHandle 固定快照数组，获取裸指针，避免 fixed + lambda 冲突
         var snapHandle = System.Runtime.InteropServices.GCHandle.Alloc(
             _blurSourceSnapshot, System.Runtime.InteropServices.GCHandleType.Pinned);
         try

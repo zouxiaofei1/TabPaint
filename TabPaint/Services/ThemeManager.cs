@@ -27,7 +27,6 @@ namespace TabPaint
         {
             try
             {
-                // 确保不重复订阅（虽然 SystemEvents 允许多播，但在这种场景下我们防一手）
                 SystemEvents.UserPreferenceChanged -= SystemEvents_UserPreferenceChanged;
                 SystemEvents.UserPreferenceChanged += SystemEvents_UserPreferenceChanged;
             }
@@ -69,7 +68,6 @@ namespace TabPaint
             var mergedDicts = Application.Current.Resources.MergedDictionaries;
             ResourceDictionary oldDict = null;
             
-            // 快速查找现有主题字典
             for (int i = 0; i < mergedDicts.Count; i++)
             {
                 var d = mergedDicts[i];

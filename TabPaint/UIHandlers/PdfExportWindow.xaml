@@ -3,6 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:TabPaint"
+                xmlns:pages="clr-namespace:TabPaint.Pages" 
         mc:Ignorable="d"
         Title="{DynamicResource L_PdfExport_Title}" Height="600" Width="900"
         MinHeight="400" MinWidth="600"
@@ -19,34 +21,78 @@
                 <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BoolToVis"/>
-            <Style x:Key="Win11TextBoxStyle" TargetType="TextBox">
-                <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
-                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
-                <Setter Property="CaretBrush" Value="{DynamicResource TextPrimaryBrush}"/>
-                <Setter Property="SelectionBrush" Value="{DynamicResource AccentBrush}"/>
-                <Setter Property="Padding" Value="8,4"/>
-                <Setter Property="Template">
+
+            <!-- 入场动画 -->
+            <Storyboard x:Key="WindowEntranceAnimation">
+                <DoubleAnimation Storyboard.TargetName="MainContentGrid" 
+                                 Storyboard.TargetProperty="Opacity" 
+                                 From="0" To="1" Duration="0:0:0.1">
+                    <DoubleAnimation.EasingFunction>
+                        <CubicEase EasingMode="EaseOut"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetName="MainContentTransform" 
+                                 Storyboard.TargetProperty="Y" 
+                                 From="30" To="0" Duration="0:0:0.1">
+                    <DoubleAnimation.EasingFunction>
+                        <CubicEase EasingMode="EaseOut"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+            </Storyboard>
+
+            <!-- 预览区域背景渐变 -->
+            <LinearGradientBrush x:Key="PreviewAreaBackgroundBrush" StartPoint="0.5,0" EndPoint="0.5,1">
+                <GradientStop Color="{DynamicResource SystemAccentColor}" Offset="0" />
+                <GradientStop Color="Transparent" Offset="0.5" />
+            </LinearGradientBrush>
+
+            <!-- 纸张阴影效果 -->
+            <Style x:Key="PaperBorderStyle" TargetType="Border">
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="CornerRadius" Value="2"/>
+                <Setter Property="Margin" Value="0,0,0,30"/>
+                <Setter Property="Effect">
                     <Setter.Value>
-                        <ControlTemplate TargetType="TextBox">
-                            <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
-                                <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="true">
-                                    <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource BorderHoverBrush}"/>
-                                </Trigger>
-                                <Trigger Property="IsFocused" Value="true">
-                                    <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
-                                    <Setter TargetName="border" Property="BorderThickness" Value="1"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
+                        <DropShadowEffect x:Name="PaperShadow" BlurRadius="25" ShadowDepth="8" Opacity="0.15" Color="Black"/>
                     </Setter.Value>
                 </Setter>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Trigger.EnterActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.Opacity)" To="0.25" Duration="0:0:0.1"/>
+                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.BlurRadius)" To="40" Duration="0:0:0.1"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.EnterActions>
+                        <Trigger.ExitActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.Opacity)" To="0.15" Duration="0:0:0.1"/>
+                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.BlurRadius)" To="25" Duration="0:0:0.1"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.ExitActions>
+                    </Trigger>
+                </Style.Triggers>
             </Style>
 
+            <!-- 按钮呼吸发光动画 -->
+            <Storyboard x:Key="ButtonGlowAnimation" RepeatBehavior="Forever">
+                <DoubleAnimation Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.Opacity)"
+                                 From="0.3" To="0.7" Duration="0:0:1.5" AutoReverse="True">
+                    <DoubleAnimation.EasingFunction>
+                        <SineEase EasingMode="EaseInOut"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.BlurRadius)"
+                                 From="10" To="20" Duration="0:0:1.5" AutoReverse="True">
+                    <DoubleAnimation.EasingFunction>
+                        <SineEase EasingMode="EaseInOut"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+            </Storyboard>
             <!-- ================= Fluent UI ScrollBar Style Start ================= -->
             <SolidColorBrush x:Key="ScrollBarTrackBackground" Color="Transparent"/>
             <SolidColorBrush x:Key="ScrollBarThumb" Color="#888888"/>
@@ -196,7 +242,7 @@
                 </Grid>
             </Border>
 
-            <!-- 2. Toolbar: Save Path -->
+            <!-- 2. Toolbar -->
             <Border Grid.Row="1" Padding="16,8">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -204,59 +250,112 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="{DynamicResource L_PdfExport_SavePath}" VerticalAlignment="Center" Margin="0,0,12,0" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                    <TextBox x:Name="PathTextBox" Grid.Column="1" Height="32" VerticalContentAlignment="Center" Padding="8,0" Style="{StaticResource Win11TextBoxStyle}"/>
-                    <Button Grid.Column="2" Content="{DynamicResource L_PdfExport_Browse}" Margin="12,0,0,0" Width="80" Height="32" Style="{StaticResource Win11SecondaryButtonStyle}" Click="OnBrowseClick"/>
+                    <TextBlock Text="{DynamicResource L_PdfExport_SavePath}" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox x:Name="SavePathTextBox" Grid.Column="1" VerticalAlignment="Center" Height="32" VerticalContentAlignment="Center"/>
+                    <Button Grid.Column="2" Content="{DynamicResource L_PdfExport_Browse}" Click="OnBrowseClick" 
+                            Style="{StaticResource Win11SecondaryButtonStyle}" Width="80" Height="32" Margin="8,0,0,0"/>
                 </Grid>
             </Border>
 
             <!-- 3. Content Area -->
-            <Grid Grid.Row="2" Margin="16,0,16,16">
+            <Grid Grid.Row="2" Margin="16,0,16,16" x:Name="MainContentGrid">
+                <Grid.RenderTransform>
+                    <TranslateTransform x:Name="MainContentTransform"/>
+                </Grid.RenderTransform>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition x:Name="ListColumn" Width="240"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Left: Page List -->
-                <Border Grid.Column="0" Style="{StaticResource FluentCardStyle}" Padding="0" Margin="0,0,12,0">
+                <Border Grid.Column="0" Style="{StaticResource FluentCardStyle}" Padding="0" Margin="0,0,12,0" 
+                        Background="{DynamicResource ControlBackgroundBrush}" BorderThickness="1" CornerRadius="8">
                     <ListBox x:Name="PageListBox" Background="Transparent" BorderThickness="0" Padding="4"
-                             AllowDrop="True"
-                             PreviewMouseLeftButtonDown="ListBox_PreviewMouseLeftButtonDown"
-                             MouseMove="ListBox_MouseMove"
-                             Drop="ListBox_Drop"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                             ScrollViewer.VerticalScrollBarVisibility="Auto">
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             AllowDrop="True" PreviewMouseLeftButtonDown="ListBox_PreviewMouseLeftButtonDown"
+                             MouseMove="ListBox_MouseMove" Drop="ListBox_Drop">
                         <ListBox.Resources>
                             <Style TargetType="{x:Type ScrollViewer}" BasedOn="{StaticResource FluentScrollViewerStyle}"/>
                         </ListBox.Resources>
                         <ListBox.ItemContainerStyle>
                             <Style TargetType="ListBoxItem" BasedOn="{StaticResource NavListBoxItemStyle}">
-                                <Setter Property="Padding" Value="8,6"/>
-                                <Setter Property="Margin" Value="0,1"/>
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="Margin" Value="0,2"/>
                                 <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border x:Name="OuterBorder" Padding="8,6" Background="{TemplateBinding Background}" CornerRadius="6" Margin="4,0">
+                                                <ContentPresenter />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="OuterBorder" Property="Background" Value="{DynamicResource SubtleHoverBrush}"/>
+                                                    <Trigger.EnterActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetName="OuterBorder" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.02" Duration="0:0:0.2"/>
+                                                                <DoubleAnimation Storyboard.TargetName="OuterBorder" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.02" Duration="0:0:0.2"/>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </Trigger.EnterActions>
+                                                    <Trigger.ExitActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetName="OuterBorder" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.0" Duration="0:0:0.2"/>
+                                                                <DoubleAnimation Storyboard.TargetName="OuterBorder" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.0" Duration="0:0:0.2"/>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </Trigger.ExitActions>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="OuterBorder" Property="Background" Value="{DynamicResource ListItemSelectedBackgroundBrush}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
                             </Style>
                         </ListBox.ItemContainerStyle>
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Grid Margin="4" x:Name="ItemGrid" Background="Transparent">
+                                <Grid Margin="0" Background="Transparent" DragOver="Item_DragOver" DragLeave="Item_DragLeave">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <Border Width="60" Height="40" Background="{DynamicResource CheckerboardBrush}" CornerRadius="4" Margin="0,0,12,0">
-                                        <Image Source="{Binding PreviewImage}" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                    
+                                    <!-- Drag Indicator Line -->
+                                    <Border Grid.ColumnSpan="3" VerticalAlignment="Top" Height="2" Background="{DynamicResource ThemeAccentBrush}" 
+                                            Margin="0,-4,0,0" SnapsToDevicePixels="True"
+                                            Visibility="{Binding IsDragOver, Converter={StaticResource BoolToVis}}"/>
+
+                                    <Border Width="60" Height="40" Background="{DynamicResource CheckerboardBrush}" CornerRadius="4" Margin="0,0,12,0"
+                                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                                        <Image Source="{Binding PreviewImage}" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality">
+                                            <Image.Clip>
+                                                <RectangleGeometry Rect="0,0,60,40" RadiusX="4" RadiusY="4"/>
+                                            </Image.Clip>
+                                        </Image>
                                     </Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding PageTitle}" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="Medium" TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding PageInfo}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="10"/>
+                                        <TextBlock Text="{Binding PageInfo}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="10" Opacity="0.8"/>
                                     </StackPanel>
-                                    <Button Grid.Column="2" Width="24" Height="24" VerticalAlignment="Center"
-                                            Style="{StaticResource Win11SecondaryButtonStyle}" Padding="0"
-                                            Click="OnDeletePageClick" Tag="{Binding}"
-                                            Visibility="{Binding IsMouseOver, ElementName=ItemGrid, Converter={StaticResource BoolToVis}}">
-                                        <Path Data="M0,0 L8,8 M8,0 L0,8" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.5" Stretch="Uniform" Width="8" Height="8"/>
-                                    </Button>
+                                    <Button Grid.Column="2" Content="&#xE711;" FontFamily="Segoe Fluent Icons" 
+                                            Style="{StaticResource WindowCloseButtonStyle}" Width="24" Height="24"
+                                            VerticalAlignment="Center" Click="OnDeletePageClick" ToolTip="Delete Page"
+                                            Visibility="{Binding CanDelete, Converter={StaticResource BoolToVis}}"
+                                            Opacity="0.6"/>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
@@ -264,38 +363,71 @@
                 </Border>
 
                 <!-- Right: Scrollable Preview -->
-                <Border Grid.Column="1" Style="{StaticResource FluentCardStyle}" Padding="0">
-                    <ScrollViewer x:Name="PreviewScrollViewer" Style="{StaticResource FluentScrollViewerStyle}" Padding="20">
-                        <ItemsControl x:Name="PreviewItemsControl">
-                            <ItemsControl.ItemTemplate>
+                <Border Grid.Column="1" Style="{StaticResource FluentCardStyle}" Padding="0" ClipToBounds="True">
+                    <Grid>
+                        <!-- 背景装饰层 -->
+                        <Border Opacity="0.05" Background="{StaticResource PreviewAreaBackgroundBrush}" VerticalAlignment="Top" Height="200"/>
+
+                        <ListBox x:Name="PreviewListBox" Background="Transparent" BorderThickness="0" Padding="40,20"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 VirtualizingStackPanel.IsVirtualizing="True"
+                                 VirtualizingStackPanel.VirtualizationMode="Recycling">
+                            <ListBox.Resources>
+                                <Style TargetType="ScrollViewer" BasedOn="{StaticResource FluentScrollViewerStyle}"/>
+                            </ListBox.Resources>
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Margin" Value="0"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListBoxItem">
+                                                <ContentPresenter />
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Margin="0,0,0,20" Background="White" CornerRadius="2">
-                                        <Border.Effect>
-                                            <DropShadowEffect BlurRadius="15" ShadowDepth="2" Opacity="0.2" Color="Black"/>
-                                        </Border.Effect>
+                                    <Border Style="{StaticResource PaperBorderStyle}">
                                         <Grid>
                                             <Image Source="{Binding FullImage}" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                            <Border HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="8" Background="#80000000" CornerRadius="4" Padding="6,2">
-                                                <TextBlock Text="{Binding PageNumberText}" Foreground="White" FontSize="10"/>
+                                            <!-- 页面标注装饰 -->
+                                            <Border HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="12" 
+                                                    Background="#AA000000" CornerRadius="6" Padding="8,4">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Path Data="M0,0 L8,0 L8,8 L0,8 Z" Fill="White" Width="8" Height="8" Margin="0,0,6,0" Opacity="0.5" Stretch="Uniform"/>
+                                                    <TextBlock Text="{Binding PageNumberText}" Foreground="White" FontSize="11" FontWeight="SemiBold"/>
+                                                </StackPanel>
                                             </Border>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
                 </Border>
             </Grid>
 
             <!-- 4. Bottom Buttons -->
             <Border Grid.Row="3" Padding="16,0,16,16">
                 <Grid>
-                    <TextBlock x:Name="StatusText" Text="{DynamicResource L_PdfExport_PreviewHint}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    <TextBlock x:Name="StatusText" Text="{DynamicResource L_PdfExport_PreviewHint}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" Opacity="0.7" FontSize="11"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="{DynamicResource L_Common_Cancel}" Width="100" Height="32" Margin="0,0,12,0"
+                        <Button Content="{DynamicResource L_Common_Cancel}" Width="100" Height="34" Margin="0,0,12,0"
                                 Style="{StaticResource Win11SecondaryButtonStyle}" Click="OnCancelClick"/>
-                        <Button x:Name="ConfirmBtn" Content="{DynamicResource L_Common_OK}" Width="100" Height="32"
-                                Style="{StaticResource Win11PrimaryButtonStyle}" Click="OnSaveClick"/>
+                        <Button Content="{DynamicResource L_Common_OK}" Width="120" Height="34"
+                                Style="{StaticResource Win11PrimaryButtonStyle}" Click="OnSaveClick">
+                            <Button.Effect>
+                                <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.3" Color="{DynamicResource SystemAccentColor}"/>
+                            </Button.Effect>
+                            <Button.Triggers>
+                                <EventTrigger RoutedEvent="Button.Loaded">
+                                    <BeginStoryboard Storyboard="{StaticResource ButtonGlowAnimation}"/>
+                                </EventTrigger>
+                            </Button.Triggers>
+                        </Button>
                     </StackPanel>
                 </Grid>
             </Border>

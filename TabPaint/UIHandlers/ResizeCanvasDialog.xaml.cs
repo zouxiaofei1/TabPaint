@@ -47,6 +47,7 @@ namespace TabPaint
             HeightSlider.Value = 0;
 
             _isUpdating = false;
+            UpdateInfoText();
 
             WidthTextBox.Focus();
             WidthTextBox.SelectAll();
@@ -92,32 +93,65 @@ namespace TabPaint
             // 检查是否触顶
             bool isLimitReached = (ImageWidth >= MaxPixelSize || ImageHeight >= MaxPixelSize);
 
+            // 重置状态
+            InfoPrefixTextBlock.Text = "";
+            InfoScaleValueText.Text = "";
+            InfoSuffixTextBlock.Text = "";
+            InfoScaleValueText.Visibility = Visibility.Visible;
+            if (ScaleEditTextBox.Visibility != Visibility.Visible)
+            {
+                ScaleEditTextBox.Visibility = Visibility.Collapsed;
+            }
+
+            var grayBrush = new SolidColorBrush(Color.FromRgb(136, 136, 136));
+            var redBrush = new SolidColorBrush(Color.FromRgb(200, 50, 50));
+
             if (isLimitReached)
             {
-                InfoTextBlock.Text = string.Format(
-            LocalizationManager.GetString("L_ResizeCanvas_LimitReached"),
-            MaxPixelSize);
-                InfoTextBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 50, 50)); // 红色警告
+                InfoPrefixTextBlock.Text = string.Format(
+                    LocalizationManager.GetString("L_ResizeCanvas_LimitReached"),
+                    MaxPixelSize);
+                InfoPrefixTextBlock.Foreground = redBrush;
+                InfoScaleValueText.Visibility = Visibility.Collapsed;
             }
             else
             {
+                InfoPrefixTextBlock.Foreground = grayBrush;
+                InfoScaleValueText.Foreground = grayBrush;
+                InfoSuffixTextBlock.Foreground = grayBrush;
+
                 if (IsCanvasResizeMode)
                 {
-                    // 原始: "画布模式：{ImageWidth} x {ImageHeight}"
-                    InfoTextBlock.Text = string.Format(
+                    InfoPrefixTextBlock.Text = string.Format(
                         LocalizationManager.GetString("L_Info_CanvasMode_Format"),
                         ImageWidth,
                         ImageHeight);
+                    InfoScaleValueText.Visibility = Visibility.Collapsed;
                 }
                 else
                 {
-                    InfoTextBlock.Text = string.Format(
-                        LocalizationManager.GetString("L_Info_ResampleMode_Format"),
-                        scale,
-                        _originalWidth,
-                        _originalHeight);
+                    string format = LocalizationManager.GetString("L_Info_ResampleMode_Format");
+                    string fullText = string.Format(format, scale, _originalWidth, _originalHeight);
+                    string scalePercentText = string.Format("{0:P0}", scale);
+
+                    int index = fullText.IndexOf(scalePercentText);
+                    if (index >= 0)
+                    {
+                        InfoPrefixTextBlock.Text = fullText.Substring(0, index);
+                        InfoScaleValueText.Text = scalePercentText;
+                        InfoSuffixTextBlock.Text = fullText.Substring(index + scalePercentText.Length);
+
+                        if (ScaleEditTextBox.Visibility != Visibility.Visible)
+                        {
+                            InfoScaleValueText.Visibility = Visibility.Visible;
+                        }
+                    }
+                    else
+                    {
+                        InfoPrefixTextBlock.Text = fullText;
+                        InfoScaleValueText.Visibility = Visibility.Collapsed;
+                    }
                 }
-                InfoTextBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(136, 136, 136)); // 恢复灰色 #888888
             }
         }
         private void OnWidthChanged(int newWidth, bool fromSlider)  // 统一处理宽度变更
@@ -237,8 +271,7 @@ namespace TabPaint
 
             IsCanvasResizeMode = ModeComboBox.SelectedIndex == 1;
 
-            if (IsCanvasResizeMode) InfoTextBlock.Text = LocalizationManager.GetString("L_ResizeCanvas_Desc_Canvas");
-            else InfoTextBlock.Text = LocalizationManager.GetString("L_ResizeCanvas_Desc_Resample");
+            UpdateInfoText();
 
             PreviewChanged?.Invoke(ImageWidth, ImageHeight, IsCanvasResizeMode);
         }
@@ -289,6 +322,76 @@ namespace TabPaint
         private void OnMaximizeRestoreClick(object sender, RoutedEventArgs e)
         {
 
+        }
+
+        private void InfoScaleValueText_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ClickCount != 2) return;
+            if (IsCanvasResizeMode) return;
+
+            double scale = (double)ImageWidth / _originalWidth;
+            ScaleEditTextBox.Text = Math.Round(scale * 100).ToString();
+
+            InfoScaleValueText.Visibility = Visibility.Collapsed;
+            ScaleEditTextBox.Visibility = Visibility.Visible;
+            ScaleEditTextBox.Focus();
+            ScaleEditTextBox.SelectAll();
+        }
+
+        private void ScaleEditTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                ApplyScaleFromTextBox();
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Escape)
+            {
+                CancelScaleEdit();
+                e.Handled = true;
+            }
+        }
+
+        private void ScaleEditTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            ApplyScaleFromTextBox();
+        }
+
+        private void ScaleEditTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (_isUpdating) return;
+            if (ScaleEditTextBox.Visibility != Visibility.Visible) return;
+
+            if (double.TryParse(ScaleEditTextBox.Text, out double percent) && percent > 0)
+            {
+                int newWidth = (int)Math.Round(_originalWidth * percent / 100.0);
+                if (newWidth < 1) newWidth = 1;
+                if (newWidth > MaxPixelSize) newWidth = MaxPixelSize;
+
+                OnWidthChanged(newWidth, false);
+            }
+        }
+
+        private void ApplyScaleFromTextBox()
+        {
+            if (ScaleEditTextBox.Visibility != Visibility.Visible) return;
+
+            if (double.TryParse(ScaleEditTextBox.Text, out double percent))
+            {
+                int newWidth = (int)Math.Round(_originalWidth * percent / 100.0);
+                if (newWidth < 1) newWidth = 1;
+                if (newWidth > MaxPixelSize) newWidth = MaxPixelSize;
+
+                OnWidthChanged(newWidth, false);
+            }
+
+            CancelScaleEdit();
+        }
+
+        private void CancelScaleEdit()
+        {
+            ScaleEditTextBox.Visibility = Visibility.Collapsed;
+            UpdateInfoText();
         }
     }
 }

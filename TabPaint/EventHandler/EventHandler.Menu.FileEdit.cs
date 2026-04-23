@@ -26,6 +26,7 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private TabPaint.Windows.PdfExportWindow _pdfExportWindow;
 
         public void OnNewWindowClick(object sender, RoutedEventArgs e)
         {
@@ -123,75 +124,113 @@ namespace TabPaint
             var exportList = FileTabs.Where(t => t.IsMultiSelected).ToList();
             if (exportList.Count == 0) exportList = FileTabs.ToList();
 
-            if (SettingsManager.Instance.Current.EnablePdfSavePage)
+            if (!SettingsManager.Instance.Current.EnablePdfSavePage)
             {
-                var exportWin = new TabPaint.Windows.PdfExportWindow(exportList, this);
-                exportWin.Owner = this;
-                exportWin.ShowDialog();
-                if (!exportWin.IsConfirmed) return;
+                // 直接另存为
+                string defaultName = (_currentTabItem?.DisplayName ?? "Combined") + ".pdf";
+                var dlg = new Microsoft.Win32.SaveFileDialog
+                {
+                    Filter = "PDF Files (*.pdf)|*.pdf",
+                    FileName = defaultName,
+                    DefaultExt = ".pdf"
+                };
+
+                if (dlg.ShowDialog() == true)
+                {
+                    await ExportTabsToPdfAsync(exportList, dlg.FileName);
+                }
+                return;
             }
 
-            var saveDialog = new Microsoft.Win32.SaveFileDialog
+            if (_pdfExportWindow != null && _pdfExportWindow.IsLoaded)
             {
-                Filter = "PDF Files (*.pdf)|*.pdf",
-                FileName = "Combined_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".pdf",
-                DefaultExt = ".pdf",
-                Title = LocalizationManager.GetString("L_Menu_File_SaveAsPDF")
-            };
+                _pdfExportWindow.Activate();
+                return;
+            }
 
-            if (saveDialog.ShowDialog() == true)
+            _pdfExportWindow = new TabPaint.Windows.PdfExportWindow(exportList, this);
+            _pdfExportWindow.Owner = this;
+            _pdfExportWindow.Closed += (s, ev) => _pdfExportWindow = null;
+            _pdfExportWindow.Show();
+        }
+
+        public async Task ExportTabsToPdfAsync(List<FileTabItem> items, string targetPath)
+        {
+            if (items == null || items.Count == 0 || string.IsNullOrEmpty(targetPath)) return;
+
+            TaskProgressPopup.SetIcon(AppConsts.PathTaskProgress);
+            TaskProgressPopup.UpdateProgress(0, LocalizationManager.GetString("L_Toast_SavingPDF_Title") ?? "Saving PDF...", "0%", "");
+
+            try
             {
-                string targetPath = saveDialog.FileName;
-                TaskProgressPopup.SetIcon(AppConsts.PathTaskProgress);
-                TaskProgressPopup.UpdateProgress(0, LocalizationManager.GetString("L_Toast_SavingPDF_Title") ?? "Saving PDF...", "0%", "");
-
-                try
+                // 计算权值（像素总数）
+                long totalPixels = 0;
+                var itemWeights = new List<long>();
+                foreach (var item in items)
                 {
-                    await Task.Run(() =>
+                    long w = (long)item.PixelWidth * item.PixelHeight;
+                    if (w <= 0) w = 1024 * 768; 
+                    itemWeights.Add(w);
+                    totalPixels += w;
+                }
+
+                await Task.Run(() =>
+                {
+                    using (var stream = new FileStream(targetPath, FileMode.Create))
+                    using (var document = SkiaSharp.SKDocument.CreatePdf(stream))
                     {
-                        using (var stream = new FileStream(targetPath, FileMode.Create))
-                        using (var document = SkiaSharp.SKDocument.CreatePdf(stream))
+                        int count = items.Count;
+                        long processedPixels = 0;
+
+                        for (int i = 0; i < count; i++)
                         {
-                            int count = exportList.Count;
-                            for (int i = 0; i < count; i++)
+                            var tab = items[i];
+
+                            using (var imgStream = GetImageStreamForTab(tab))
                             {
-                                var tab = exportList[i];
-                                this.Dispatcher.Invoke(() =>
+                                if (imgStream != null)
                                 {
-                                    TaskProgressPopup.UpdateProgress((double)i / count * 100, null, $"{i + 1} / {count}", tab.FileName);
-                                });
-
-                                using (var imgStream = GetImageStreamForTab(tab))
-                                {
-                                    if (imgStream == null) continue;
-
                                     using (var skData = SkiaSharp.SKData.Create(imgStream))
                                     using (var skBitmap = SkiaSharp.SKBitmap.Decode(skData))
                                     {
-                                        if (skBitmap == null) continue;
-
-                                        using (var canvas = document.BeginPage(skBitmap.Width, skBitmap.Height))
+                                        if (skBitmap != null)
                                         {
-                                            canvas.DrawBitmap(skBitmap, 0, 0);
-                                            document.EndPage();
+                                            using (var canvas = document.BeginPage(skBitmap.Width, skBitmap.Height))
+                                            {
+                                                canvas.DrawBitmap(skBitmap, 0, 0);
+                                                document.EndPage();
+                                            }
                                         }
                                     }
                                 }
                             }
-                            document.Close();
-                        }
-                    });
 
-                    ShowToast("L_Toast_SaveSuccess");
-                }
-                catch (Exception ex)
-                {
-                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_SaveFailed_Prefix"), ex.Message), ex);
-                }
-                finally
-                {
-                    TaskProgressPopup.Finish();
-                }
+                            processedPixels += itemWeights[i];
+                            this.Dispatcher.Invoke(() =>
+                            {
+                                double prg = totalPixels > 0 ? (double)processedPixels / totalPixels * 100 : (double)(i + 1) / count * 100;
+                                if (prg > 99.9 && i < count - 1) prg = 99.9;
+                                TaskProgressPopup.UpdateProgress(prg, null, $"{i + 1} / {count}", tab.DisplayName);
+                            });
+                        }
+                        document.Close();
+
+                        this.Dispatcher.Invoke(() =>
+                        {
+                            TaskProgressPopup.UpdateProgress(100, null, $"{count} / {count}", "");
+                        });
+                    }
+                });
+
+                ShowToast("L_Toast_SaveSuccess");
+            }
+            catch (Exception ex)
+            {
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_SaveFailed_Prefix"), ex.Message), ex);
+            }
+            finally
+            {
+                TaskProgressPopup.Finish();
             }
         }
 

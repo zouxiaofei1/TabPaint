@@ -377,11 +377,9 @@ namespace TabPaint.UIHandlers
                     }
 
                     var menu = new ContextMenu();
-                    var deleteItem = new MenuItem { Header = FindResource("L_Ctx_DeleteFile") };
+                    var deleteItem = new MenuItem { Style = (Style)FindResource("Win11MenuItemStyle"), Header = FindResource("L_Ctx_DeleteFile") };
                     deleteItem.Click += (s2, e2) =>
                     {
-                        if (MessageBox.Show("Delete page and all its images?", "Confirm", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-                        {
                             try
                             {
                                 Directory.Delete(Path.Combine(AppConsts.FavoriteDir, page), true);
@@ -391,7 +389,7 @@ namespace TabPaint.UIHandlers
                                 RefreshPageTabs();
                             }
                             catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
-                        }
+
                     };
                     menu.Items.Add(deleteItem);
                     btn.ContextMenu = menu;
@@ -420,7 +418,6 @@ namespace TabPaint.UIHandlers
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Favorite window is now a detachable panel. You can drag it to any MainWindow and it will remember its position. To close it, just click the star icon again or use the system close button.", "Info", MessageBoxButton.OK);
             this.Close();
         }
 

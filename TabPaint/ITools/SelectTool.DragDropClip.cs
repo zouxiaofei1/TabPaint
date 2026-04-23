@@ -220,8 +220,6 @@ namespace TabPaint
                             sourceBitmap = LoadImageFromFile(filePath);
                         }
                     }
-
-                    // ★ 优先级5：内部缓存兜底（没有内部标记但有缓存数据）
                     if (sourceBitmap == null && _clipboardData != null && _clipboardWidth > 0 && _clipboardHeight > 0)
                     {
                         sourceBitmap = BitmapSource.Create(

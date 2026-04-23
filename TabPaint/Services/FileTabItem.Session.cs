@@ -792,7 +792,6 @@ namespace TabPaint
                     }
                     else
                     {
-                        // 检查并修复未命名编号冲突
                         if (info.IsNew || IsVirtualPath(info.OriginalPath))
                         {
                             bool conflict = FileTabs.Any(t => (t.IsNew || IsVirtualPath(t.FilePath)) && t.UntitledNumber == info.UntitledNumber);
@@ -939,6 +938,12 @@ namespace TabPaint
             if (_currentTabItem == tab) return;
             if (tab == null) return;
 
+            if (_currentTabItem != null && _surface?.Bitmap != null)
+            {
+                _currentTabItem.PixelWidth = _surface.Bitmap.PixelWidth;
+                _currentTabItem.PixelHeight = _surface.Bitmap.PixelHeight;
+            }
+
             CancelRunningImageTasksSilently();
 
             if (_currentTabItem != null)
@@ -996,6 +1001,11 @@ namespace TabPaint
             _lastBackedUpVersion = tab.LastBackedUpVersion;
 
             _currentTabItem = tab;
+            if (_surface?.Bitmap != null)
+            {
+                _currentTabItem.PixelWidth = _surface.Bitmap.PixelWidth;
+                _currentTabItem.PixelHeight = _surface.Bitmap.PixelHeight;
+            }
             SetUndoRedoButtonState();
             UpdateWindowTitle();
 
@@ -1222,7 +1232,6 @@ namespace TabPaint
                                 }
                                 else if (!string.IsNullOrEmpty(info.BackupPath) && File.Exists(info.BackupPath))
                                 {
-                                    // 检查并修复未命名编号冲突
                                     if (info.IsNew || IsVirtualPath(info.OriginalPath))
                                     {
                                         bool conflict = FileTabs.Any(t => (t.IsNew || IsVirtualPath(t.FilePath)) && t.UntitledNumber == info.UntitledNumber);

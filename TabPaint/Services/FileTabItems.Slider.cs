@@ -327,7 +327,6 @@ namespace TabPaint
             if (index < 0) index = 0;
             if (index >= _imageFiles.Count) index = _imageFiles.Count - 1;
 
-            // 执行耗时操作，此时 _isSyncingSlider 锁应该只包裹这里
             if (_isSyncingSlider) return;
 
             _isSyncingSlider = true;
@@ -378,18 +377,14 @@ namespace TabPaint
             var slider = (Slider)sender;
             slider.CaptureMouse();
             UpdateSliderValueFromPoint(slider, e.GetPosition(slider));
-
-            // 标记事件已处理，防止其他控件响应
             e.Handled = true;
         }
 
         private void Slider_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            // 仅当我们通过点击轨道开始拖动时，才处理 MouseMove 事件
             if (_isDragging)
             {
                 var slider = (Slider)sender;
-                // 持续更新 Slider 的值
                 UpdateSliderValueFromPoint(slider, e.GetPosition(slider));
             }
         }

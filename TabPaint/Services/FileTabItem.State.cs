@@ -20,6 +20,9 @@ namespace TabPaint
     {
         public partial class FileTabItem : INotifyPropertyChanged
         {
+            public int PixelWidth { get; set; } = 0;
+            public int PixelHeight { get; set; } = 0;
+
             private string _filePath;
             public string FilePath
             {
@@ -77,8 +80,6 @@ namespace TabPaint
                         try { return System.IO.Path.GetFileName(FilePath); }
                         catch { return FilePath; }
                     }
-
-                    // 3. 兜底逻辑
                     string fallbackLabel = LocalizationManager.GetString("L_Untitled") ?? "未命名";
                     return IsNew ? $"{fallbackLabel} {UntitledNumber}" : fallbackLabel;
                 }
@@ -108,8 +109,6 @@ namespace TabPaint
                         try { return System.IO.Path.GetFileNameWithoutExtension(FilePath); }
                         catch { return FilePath; }
                     }
-
-                    // 3. 兜底
                     return IsNew ? $"未命名 {UntitledNumber}" : "未命名";
                 }
             }

@@ -502,26 +502,13 @@ namespace TabPaint
                     // 如果锚点在左侧，X 必须由 右边界 - 宽度 算出
                     if (_currentAnchor == ResizeAnchor.TopLeft ||
                         _currentAnchor == ResizeAnchor.LeftMiddle ||
-                        _currentAnchor == ResizeAnchor.BottomLeft)
-                    {
-                        finalX = fixedRight - proposedW;
-                    }
-                    else
-                    {
-                        finalX = _startX;
-                    }
-
+                        _currentAnchor == ResizeAnchor.BottomLeft)  finalX = fixedRight - proposedW;
+                    else   finalX = _startX;
                     // 如果锚点在上方，Y 必须由 下边界 - 高度 算出
                     if (_currentAnchor == ResizeAnchor.TopLeft ||
                         _currentAnchor == ResizeAnchor.TopMiddle ||
-                        _currentAnchor == ResizeAnchor.TopRight)
-                    {
-                        finalY = fixedBottom - proposedH;
-                    }
-                    else
-                    {
-                        finalY = _startY;
-                    }
+                        _currentAnchor == ResizeAnchor.TopRight)  finalY = fixedBottom - proposedH;
+                    else finalY = _startY;
 
                     if (inRotation)
                     {
@@ -530,11 +517,7 @@ namespace TabPaint
                         _preRotationRect.Height = (int)Math.Max(1, proposedH);
                         _preRotationRect.X = (int)finalX;
                         _preRotationRect.Y = (int)finalY;
-
-                        // 同步更新 _selectionRect 坐标
                         _selectionRect = _preRotationRect;
-
-                        // 重新旋转渲染
                         UpdateRotation(ctx, _rotationAngle, false);
                     }
                     else
@@ -717,7 +700,6 @@ namespace TabPaint
                     Geometry visibleRect = new RectangleGeometry(rect);
                     if (visibleW > 0 && visibleH > 0)
                     {
-                        // 确保 X 和 Y 也是合法的（虽然通常 offsetX 逻辑不会错，但为了保险）
                         double validX = Math.Max(0, visibleX);
                         double validY = Math.Max(0, visibleY);
 
@@ -833,13 +815,8 @@ namespace TabPaint
             {
                 if (_preRotationSelectionData == null || ctx == null) return;
                 _rotationAngle = angle;
-
-                // 强制限制角度在 [-180, 180] 范围内，避免 UI 滑块等引起的问题
                 while (_rotationAngle > 180) _rotationAngle -= 360;
                 while (_rotationAngle < -180) _rotationAngle += 360;
-
-                // 性能优化：矩形选区在预览阶段不重绘像素，仅使用 RenderTransform
-                // 注意：由于不应更改套索和魔棒逻辑，此处仅针对矩形选区进行预览优化
                 if (!commit && SelectionType == SelectionType.Rectangle)
                 {
                     UpdatePreviewTransform(ctx);
@@ -941,10 +918,7 @@ namespace TabPaint
 
             private void EnsureRotationBaked(ToolContext ctx)
             {
-                if (_preRotationSelectionData != null && Math.Abs(_rotationAngle) > 0.01)
-                {
-                    UpdateRotation(ctx, _rotationAngle, true);
-                }
+                if (_preRotationSelectionData != null && Math.Abs(_rotationAngle) > 0.01)  UpdateRotation(ctx, _rotationAngle, true);
             }
 
             public void UpdatePreviewTransform(ToolContext ctx)
@@ -1121,10 +1095,7 @@ namespace TabPaint
                             _originalRect = _selectionRect;
                             CreatePreviewFromSelectionData(ctx);
                         }
-                        else
-                        {
-                            Cleanup(ctx);
-                        }
+                        else  Cleanup(ctx);
                     }
                 }
                 else if (_draggingSelection)

@@ -198,7 +198,6 @@ namespace TabPaint
 
                 if (screenPos > maxVal) break;
 
-                // ★ 关键改动：跳过偏移区域内的刻度
                 if (screenPos >= offset - 20) // -20 给文字留一点余量
                 {
                     bool isMainTick = IsCloseToMultiple(currentVal, logicalStep);

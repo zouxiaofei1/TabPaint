@@ -981,8 +981,13 @@ SOFTWARE.</sys:String>
 
     <!-- PDF 匯出 -->
     <sys:String x:Key="L_PdfExport_Title">匯出為 PDF</sys:String>
+    <sys:String x:Key="pdf_title">PDF 匯出</sys:String>
+    <sys:String x:Key="l_saving">正在儲存...</sys:String>
+    <sys:String x:Key="L_Toast_SavingPDF_Title">正在匯出 PDF...</sys:String>
     <sys:String x:Key="L_PdfExport_ShowList">顯示頁面列表</sys:String>
     <sys:String x:Key="L_PdfExport_PreviewHint">預覽所有頁面...</sys:String>
+    <sys:String x:Key="L_PdfExport_SavePath">保存路徑</sys:String>
+    <sys:String x:Key="L_PdfExport_Browse">瀏覽...</sys:String>
     <sys:String x:Key="L_PdfExport_Page">頁</sys:String>
 
 </ResourceDictionary>

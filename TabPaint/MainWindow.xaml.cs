@@ -48,8 +48,6 @@ namespace TabPaint
                 if (w is MainWindow mw && mw.IsActive) return mw;
             }
             if (_lastFocusedInstance != null) return _lastFocusedInstance;
-
-            // 兜底：返回第一个找到的 MainWindow
             return Application.Current.Windows.OfType<MainWindow>().FirstOrDefault();
         }
         public static (MainWindow? Window, FileTabItem? Tab) FindWindowHostingFile(string filePath)
@@ -1276,6 +1274,14 @@ namespace TabPaint
         {
             if (BackgroundImage == null) return; // 防止空引用
 
+            // 加载时预览图使用插值显示，不显示马赛克（无视设置里的缩放阈值）
+            if (_isLoadingImage && BackgroundImage.Source != _bitmap)
+            {
+                if (RenderOptions.GetBitmapScalingMode(BackgroundImage) != BitmapScalingMode.HighQuality)
+                    RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.HighQuality);
+                return;
+            }
+
             var settings = TabPaint.SettingsManager.Instance.Current;
             double threshold = (IsViewMode ? settings.ViewInterpolationThreshold : settings.PaintInterpolationThreshold) / 100.0;
             if (zoomscale >= threshold)
@@ -1406,16 +1412,7 @@ namespace TabPaint
             {
                 if (rect.Width > 0 && rect.Height > 0)
                 {
-                    // 将原始坐标系的选区矩形转换为视觉坐标系（考虑旋转）
-                    // 我们需要得到在视觉上相对于“视觉左上角”的坐标
-                    
-                    // 获取视觉包围盒
                     var visualBounds = CanvasWrapper.LayoutTransform.TransformBounds(new Rect(rect.X, rect.Y, rect.Width, rect.Height));
-                    
-                    // 注意：标尺的 0 刻度现在已经通过 UpdateRulerPositions 修正到了视觉左上角
-                    // 所以这里的逻辑坐标也需要映射到视觉包围盒相对于图像视觉起始点的位置。
-                    
-                    // 计算整个图像的视觉包围盒
                     double w = BackgroundImage.Source.Width;
                     double h = BackgroundImage.Source.Height;
                     var imageVisualBounds = CanvasWrapper.LayoutTransform.TransformBounds(new Rect(0, 0, w, h));
@@ -1474,18 +1471,12 @@ namespace TabPaint
                 }
                 if (menuItem.Items.Count > 0)
                 {
-                    foreach (var subItem in menuItem.Items)
-                    {
-                        BindCanvasMenuEvents(subItem);
-                    }
+                    foreach (var subItem in menuItem.Items)   BindCanvasMenuEvents(subItem);
                 }
             }
             else if (item is TabPaint.Controls.DelayedMenuItem delayedItem)
             {
-                foreach (var subItem in delayedItem.Items)
-                {
-                    BindCanvasMenuEvents(subItem);
-                }
+                foreach (var subItem in delayedItem.Items)   BindCanvasMenuEvents(subItem);
             }
         }
         private void OnCanvasMenuClickDispatcher(object sender, RoutedEventArgs e){ }
@@ -1515,14 +1506,8 @@ namespace TabPaint
                 if (otherVisibleWindows == 0)
                 {
                     bool hasVisibleSticky = Application.Current.Windows.OfType<TabPaint.Windows.StickyWindow>().Any(w => w.IsVisible);
-                    if (hasVisibleSticky)
-                    {
-                        OnClosing();
-                    }
-                    else
-                    {
-                        App.GlobalExit();
-                    }
+                    if (hasVisibleSticky)  OnClosing();
+                    else  App.GlobalExit();
                 }
                 else
                 {
@@ -1539,14 +1524,8 @@ namespace TabPaint
             if (mainWindowCount == 0)
             {
                 bool hasVisibleSticky = Application.Current.Windows.OfType<TabPaint.Windows.StickyWindow>().Any(w => w.IsVisible);
-                if (hasVisibleSticky)
-                {
-                    this.Close();
-                }
-                else
-                {
-                    App.GlobalExit();
-                }
+                if (hasVisibleSticky)  this.Close();
+                else      App.GlobalExit();
             }
             else
                 this.Close();
@@ -1652,10 +1631,7 @@ namespace TabPaint
             {
                 SelectionRotatePopup.SetValue(0);
                 SelectionRotatePopup.Visibility = Visibility.Visible;
-                if (_router?.CurrentTool is SelectTool st)
-                {
-                    st.PrepareRotation(_ctx);
-                }
+                if (_router?.CurrentTool is SelectTool st)  st.PrepareRotation(_ctx);
             }
             else
             {
@@ -1670,10 +1646,7 @@ namespace TabPaint
             if (SelectionRotatePopup != null)
             {
                 double angle = SelectionRotatePopup.CurrentAngle;
-                if (_router?.CurrentTool is SelectTool st)
-                {
-                    st.UpdateRotation(_ctx, angle, false);
-                }
+                if (_router?.CurrentTool is SelectTool st)   st.UpdateRotation(_ctx, angle, false);
             }
         }
 
@@ -1689,15 +1662,8 @@ namespace TabPaint
             UpdateSelectionToolBarPosition(force: true);
             
             // 无论当前是什么工具，都尝试刷新可能存在的覆盖层
-            if (_router?.CurrentTool is TextTool textTool)
-            {
-                textTool.DrawTextboxOverlay(_ctx);
-            }
-            else if (_router?.CurrentTool is ShapeTool shapeTool)
-            {
-                shapeTool.RefreshPreview(_ctx);
-            }
-
+            if (_router?.CurrentTool is TextTool textTool) textTool.DrawTextboxOverlay(_ctx);
+            else if (_router?.CurrentTool is ShapeTool shapeTool) shapeTool.RefreshPreview(_ctx);
             SettingsManager.Instance.Save();
         }
 
@@ -1727,7 +1693,6 @@ namespace TabPaint
                 {
                     SelectionRotatePopup.SetValue(0);
                     SelectionRotatePopup.Visibility = Visibility.Visible;
-                    // 延迟到下一帧执行 PrepareRotation，确保预览图先渲染，避免选区闪烁
                     Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
                     {
                         if (_router?.CurrentTool is SelectTool st && st.HasActiveSelection)
@@ -1779,16 +1744,12 @@ namespace TabPaint
 
                     // 默认放在选区底部下方
                     double rTop = rootPosEnd.Y + 10;
-
-                    // 如果工具栏已经因为上方空间不足而移到了选区下方，则旋转面板顺延到工具栏下方
                     if (top >= rootPosEnd.Y)
                     {
                         rTop = top + toolbarHeight + 5;
                     }
 
                     double rLeft = selLeft + (selWidth - rotateWidth) / 2;
-
-                    // 底部边界检查：如果下方放不下，则翻转到上方
                     if (rTop + rotateHeight > this.ActualHeight - 20)
                     {
                         if (top < selTop) // 工具栏在上方
