@@ -745,6 +745,7 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Toast_FullScreen_On">进入全屏模式</sys:String>
     <sys:String x:Key="L_Toast_FullScreen_Off">退出全屏模式</sys:String>
     <sys:String x:Key="L_Toast_SaveFailed_Prefix">保存失败: {0}</sys:String>
+    <sys:String x:Key="L_Toast_FileIsProcessing">文件正在处理中，请稍候...</sys:String>
     <sys:String x:Key="L_Toast_FormatConverted_Format">已转换为 {0} 格式</sys:String>
     <sys:String x:Key="L_Toast_TransparencyLoss">透明度可能丢失</sys:String>
     <sys:String x:Key="L_Toast_FileNotFound_Format">找不到图片文件: {0}</sys:String>

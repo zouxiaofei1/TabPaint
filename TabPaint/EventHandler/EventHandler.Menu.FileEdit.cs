@@ -27,6 +27,7 @@ namespace TabPaint
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
         private TabPaint.Windows.PdfExportWindow _pdfExportWindow;
+        private static readonly HashSet<string> _activePdfExportPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         public void OnNewWindowClick(object sender, RoutedEventArgs e)
         {
@@ -158,6 +159,17 @@ namespace TabPaint
         {
             if (items == null || items.Count == 0 || string.IsNullOrEmpty(targetPath)) return;
 
+            string fullPath = Path.GetFullPath(targetPath);
+            lock (_activePdfExportPaths)
+            {
+                if (_activePdfExportPaths.Contains(fullPath))
+                {
+                    ShowToast(LocalizationManager.GetString("L_Toast_FileIsProcessing") ?? "File is being processed, please wait...");
+                    return;
+                }
+                _activePdfExportPaths.Add(fullPath);
+            }
+
             TaskProgressPopup.SetIcon(AppConsts.PathTaskProgress);
             TaskProgressPopup.UpdateProgress(0, LocalizationManager.GetString("L_Toast_SavingPDF_Title") ?? "Saving PDF...", "0%", "");
 
@@ -230,6 +242,10 @@ namespace TabPaint
             }
             finally
             {
+                lock (_activePdfExportPaths)
+                {
+                    _activePdfExportPaths.Remove(fullPath);
+                }
                 TaskProgressPopup.Finish();
             }
         }

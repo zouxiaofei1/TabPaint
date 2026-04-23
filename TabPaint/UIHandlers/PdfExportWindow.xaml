@@ -273,6 +273,8 @@
                     <ListBox x:Name="PageListBox" Background="Transparent" BorderThickness="0" Padding="4"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                              ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             VirtualizingStackPanel.IsVirtualizing="True"
+                             VirtualizingStackPanel.VirtualizationMode="Recycling"
                              AllowDrop="True" PreviewMouseLeftButtonDown="ListBox_PreviewMouseLeftButtonDown"
                              MouseMove="ListBox_MouseMove" Drop="ListBox_Drop">
                         <ListBox.Resources>
@@ -371,7 +373,9 @@
                         <ListBox x:Name="PreviewListBox" Background="Transparent" BorderThickness="0" Padding="40,20"
                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                  VirtualizingStackPanel.IsVirtualizing="True"
-                                 VirtualizingStackPanel.VirtualizationMode="Recycling">
+                                 VirtualizingStackPanel.VirtualizationMode="Recycling"
+                                 VirtualizingStackPanel.CacheLengthUnit="Item"
+                                 VirtualizingStackPanel.CacheLength="2,3">
                             <ListBox.Resources>
                                 <Style TargetType="ScrollViewer" BasedOn="{StaticResource FluentScrollViewerStyle}"/>
                             </ListBox.Resources>

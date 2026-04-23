@@ -55,7 +55,14 @@ namespace TabPaint.Windows
         private ImageSource _previewImage;
         public ImageSource PreviewImage
         {
-            get => _previewImage;
+            get
+            {
+                if (_previewImage == null)
+                {
+                    _ = LoadPreviewImageAsync();
+                }
+                return _previewImage;
+            }
             set
             {
                 _previewImage = value;
@@ -71,7 +78,7 @@ namespace TabPaint.Windows
                 if (_fullImage == null)
                 {
                     _ = LoadFullImageAsync();
-                    return PreviewImage;
+                    return PreviewImage; // 使用缩略图作为占位
                 }
                 return _fullImage;
             }
@@ -82,9 +89,52 @@ namespace TabPaint.Windows
             }
         }
 
+        private bool _isLoadingPreview = false;
         private bool _isLoadingFull = false;
         public MainWindow.FileTabItem TabItem { get; set; }
         public MainWindow MainWindow { get; set; }
+
+        public async Task LoadPreviewImageAsync()
+        {
+            if (_isLoadingPreview || _previewImage != null || MainWindow == null || TabItem == null) return;
+            _isLoadingPreview = true;
+
+            try
+            {
+                var bitmap = await Task.Run(() =>
+                {
+                    try
+                    {
+                        using (var stream = MainWindow.GetImageStreamForTab(TabItem))
+                        {
+                            if (stream == null) return null;
+                            var bmp = new BitmapImage();
+                            bmp.BeginInit();
+                            bmp.StreamSource = stream;
+                            bmp.DecodePixelWidth = 120; // 限制缩略图宽度以节省显存
+                            bmp.CacheOption = BitmapCacheOption.OnLoad;
+                            bmp.EndInit();
+                            bmp.Freeze();
+                            return bmp as ImageSource;
+                        }
+                    }
+                    catch { return null; }
+                });
+
+                if (bitmap != null)
+                {
+                    PreviewImage = bitmap;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Lazy load preview image error: {ex.Message}");
+            }
+            finally
+            {
+                _isLoadingPreview = false;
+            }
+        }
 
         public async Task LoadFullImageAsync()
         {
@@ -95,17 +145,21 @@ namespace TabPaint.Windows
             {
                 var bitmap = await Task.Run(() =>
                 {
-                    using (var stream = MainWindow.GetImageStreamForTab(TabItem))
+                    try
                     {
-                        if (stream == null) return null;
-                        var bmp = new BitmapImage();
-                        bmp.BeginInit();
-                        bmp.StreamSource = stream;
-                        bmp.CacheOption = BitmapCacheOption.OnLoad;
-                        bmp.EndInit();
-                        bmp.Freeze();
-                        return bmp as ImageSource;
+                        using (var stream = MainWindow.GetImageStreamForTab(TabItem))
+                        {
+                            if (stream == null) return null;
+                            var bmp = new BitmapImage();
+                            bmp.BeginInit();
+                            bmp.StreamSource = stream;
+                            bmp.CacheOption = BitmapCacheOption.OnLoad;
+                            bmp.EndInit();
+                            bmp.Freeze();
+                            return bmp as ImageSource;
+                        }
                     }
+                    catch { return null; }
                 });
 
                 if (bitmap != null)
@@ -131,6 +185,7 @@ namespace TabPaint.Windows
     {
         public ObservableCollection<PdfPageItem> PageItems { get; set; } = new ObservableCollection<PdfPageItem>();
         public bool IsConfirmed { get; private set; } = false;
+        private bool _isSaving = false;
         private MainWindow _mainWindow;
 
         public PdfExportWindow(List<MainWindow.FileTabItem> tabs, MainWindow mainWindow)
@@ -159,30 +214,6 @@ namespace TabPaint.Windows
                     CanDelete = canDelete,
                     PageInfo = $"{tab.PixelWidth} x {tab.PixelHeight}"
                 };
-
-                // 只快速加载缩略图作为初始预览
-                try
-                {
-                    using (var stream = mainWindow.GetImageStreamForTab(tab))
-                    {
-                        if (stream != null)
-                        {
-                            var bitmap = new BitmapImage();
-                            bitmap.BeginInit();
-                            bitmap.StreamSource = stream;
-                            bitmap.DecodePixelWidth = 120; // 限制缩略图宽度以节省显存
-                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                            bitmap.EndInit();
-                            bitmap.Freeze();
-                            item.PreviewImage = bitmap;
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    item.PageInfo = "Error loading image";
-                    System.Diagnostics.Debug.WriteLine($"PDF Preview load error: {ex.Message}");
-                }
 
                 PageItems.Add(item);
                 index++;
@@ -353,15 +384,29 @@ namespace TabPaint.Windows
 
         private async void OnSaveClick(object sender, RoutedEventArgs e)
         {
+            if (_isSaving) return;
+
             string targetPath = SavePathTextBox.Text;
             if (string.IsNullOrEmpty(targetPath)) return;
 
             if (PageItems.Count == 0) return;
 
+            _isSaving = true;
             IsConfirmed = true;
-            var items = PageItems.Select(p => p.TabItem).ToList();
-            await _mainWindow.ExportTabsToPdfAsync(items, targetPath);
-            this.Close();
+
+            // 立即隐藏窗口防止重复点击
+            this.Hide();
+
+            try
+            {
+                var items = PageItems.Select(p => p.TabItem).ToList();
+                await _mainWindow.ExportTabsToPdfAsync(items, targetPath);
+            }
+            finally
+            {
+                _isSaving = false;
+                this.Close();
+            }
         }
     }
 }
