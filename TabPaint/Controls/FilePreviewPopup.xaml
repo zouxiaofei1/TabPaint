@@ -47,7 +47,7 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <StackPanel Orientation="Horizontal" Grid.Column="0" VerticalAlignment="Center">
+                        <StackPanel x:Name="FileInfoPanel" Orientation="Horizontal" Grid.Column="0" VerticalAlignment="Center">
                             <Path Data="{DynamicResource Picture_Image}"
                                   Fill="{DynamicResource TextSecondaryBrush}" 
                                   Width="10" Height="10" Stretch="Uniform" Margin="0,0,4,0" Opacity="0.7"/>
@@ -64,6 +64,13 @@
                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                    HorizontalAlignment="Right"
                                    Margin="8,0,0,0"/>
+                        <TextBlock x:Name="FilterNameText" 
+                                   Grid.Column="0" Grid.ColumnSpan="2"
+                                   Visibility="Collapsed"
+                                   FontSize="11" 
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   HorizontalAlignment="Left"/>
                     </Grid>
                 </StackPanel>
             </Border>

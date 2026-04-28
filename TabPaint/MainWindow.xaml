@@ -655,6 +655,7 @@
                         <TextBlock x:Name="DragOverlaySubText" Text="{DynamicResource L_Main_Drag_ReleaseToConfirm}" Foreground="{DynamicResource BorderMediumBrush}" FontSize="16" Margin="0,10,0,0" TextAlignment="Center"/>
                     </StackPanel>
                 </Grid>
+                <controls:FilePreviewPopup x:Name="FilePreview" IsHitTestVisible="False" Panel.ZIndex="1000"/>
             </Grid>
         </Border>
     </Grid>

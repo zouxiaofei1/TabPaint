@@ -3,6 +3,9 @@
 //顶部菜单栏控件，包含文件、编辑、效果等菜单项，以及最近打开文件列表的维护。
 //
 //
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -15,6 +18,7 @@ namespace TabPaint.Controls
 {
     public partial class MenuBarControl : UserControl
     {
+        private CancellationTokenSource _previewCts;
         private bool _isFileMenuLoaded = false;
         private bool _isEditMenuLoaded = false;
         private bool _isEffectMenuLoaded = false;
@@ -157,13 +161,46 @@ namespace TabPaint.Controls
         public event EventHandler ClearRecentFilesClick;
 
         public event RoutedEventHandler NewTabClick;
-        private MenuItem CreateMenuItem(string headerResKey, string iconResKey, RoutedEventHandler clickHandler, string shortcutKey = null)
+
+        public void BindFilterPreview(MenuItem item, string filterTag)
+        {
+            item.MouseEnter += async (s, e) =>
+            {
+                _previewCts?.Cancel();
+                _previewCts = new CancellationTokenSource();
+                var token = _previewCts.Token;
+
+                try
+                {
+                    await Task.Delay(50, token); // 防抖
+                    var mw = MainWindow.GetCurrentInstance();
+                    if (mw == null) return;
+
+                    var preview = await mw.GetFilterPreviewAsync(filterTag, token);
+                    if (preview != null && !token.IsCancellationRequested)
+                    {
+                        FilePreview.ShowFilterPreview(preview, item.Header?.ToString() ?? "", item);
+                    }
+                }
+                catch (TaskCanceledException) { }
+                catch { }
+            };
+            item.MouseLeave += (s, e) =>
+            {
+                _previewCts?.Cancel();
+                FilePreview.ClosePreview();
+            };
+        }
+
+        private MenuItem CreateMenuItem(string headerResKey, string iconResKey, RoutedEventHandler clickHandler, string shortcutKey = null, string filterTag = null)
         {
             var item = new MenuItem
             {
                 Style = (Style)FindResource("Win11MenuItemStyle")
             };
             item.SetResourceReference(HeaderedItemsControl.HeaderProperty, headerResKey);
+
+            if (!string.IsNullOrEmpty(filterTag)) BindFilterPreview(item, filterTag);
 
             if (!string.IsNullOrEmpty(shortcutKey)) ShortcutService.SetShortcutKey(item, shortcutKey);
 
@@ -288,17 +325,17 @@ namespace TabPaint.Controls
             filterIcon.SetResourceReference(Path.DataProperty, "Filter_Image");
             filterIcon.SetResourceReference(Shape.FillProperty, "IconFillBrush");
             filterItem.Icon = filterIcon;
-            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Sepia", "Sepia_Image", OnSepiaClick)); // 填充滤镜子项
-            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Oil", "OilPaint_Image", OnOilPaintingClick));
-            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Vignette", "Vignette_Image", OnVignetteClick));
-            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Glow", "Glow_Image", OnGlowClick));
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Sepia", "Sepia_Image", OnSepiaClick, filterTag: "Sepia")); // 填充滤镜子项
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Oil", "OilPaint_Image", OnOilPaintingClick, filterTag: "OilPaint"));
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Vignette", "Vignette_Image", OnVignetteClick, filterTag: "Vignette"));
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Glow", "Glow_Image", OnGlowClick, filterTag: "Glow"));
 
             filterItem.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
 
-            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_BW", "Black_And_White_Image", OnBlackWhiteClick, "Effect.Grayscale"));
-            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Invert", "Invert_Color_Image", OnInvertClick, "Effect.Invert"));
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_BW", "Black_And_White_Image", OnBlackWhiteClick, "Effect.Grayscale", filterTag: "Gray"));
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Invert", "Invert_Color_Image", OnInvertClick, "Effect.Invert", filterTag: "Invert"));
 
-            var sharpenItem = CreateMenuItem("L_Menu_Effect_Sharpen", null, OnSharpenClick);
+            var sharpenItem = CreateMenuItem("L_Menu_Effect_Sharpen", null, OnSharpenClick, filterTag: "Sharpen");
             var shPath = new Path
             {
                 Data = Geometry.Parse("M12,2L1,21H23M12,6L19.53,19H4.47"),
@@ -310,9 +347,9 @@ namespace TabPaint.Controls
             sharpenItem.Icon = shPath;
             filterItem.Items.Add(sharpenItem);
 
-            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Brown", "Sepia_Image", OnBrownClick));
-            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Mosaic", "Mosaic_Image", OnMosaicClick));
-            var blurItem = CreateMenuItem("L_Menu_Effect_GaussianBlur", null, OnGaussianBlurClick);
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Brown", "Sepia_Image", OnBrownClick, filterTag: "Brown"));
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Mosaic", "Mosaic_Image", OnMosaicClick, filterTag: "Mosaic"));
+            var blurItem = CreateMenuItem("L_Menu_Effect_GaussianBlur", null, OnGaussianBlurClick, filterTag: "Blur");
             var blurPath = new Path
             {
                 Data = Geometry.Parse("M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8Z"),
@@ -325,9 +362,9 @@ namespace TabPaint.Controls
             filterItem.Items.Add(blurItem);
 
             filterItem.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
-            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_RedEye", "Eye_Image", OnRedEyeClick));
-            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Sketch", "Crayon_Image", OnSketchClick));
-            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Edge", "FitToWindow_Image", OnEdgeClick));
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_RedEye", "Eye_Image", OnRedEyeClick, filterTag: "RedEye"));
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Sketch", "Crayon_Image", OnSketchClick, filterTag: "Pencil"));
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Edge", "FitToWindow_Image", OnEdgeClick, filterTag: "Edge"));
 
             menuItem.Items.Add(filterItem);
             menuItem.Items.Add(CreateMenuItem("L_Menu_Effect_Resize", "Resize_Image", OnResizeCanvasClick, "Effect.Resize"));

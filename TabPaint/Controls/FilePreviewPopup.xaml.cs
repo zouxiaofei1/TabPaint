@@ -70,6 +70,34 @@ namespace TabPaint.Controls
             }
         }
 
+        public void ShowFilterPreview(BitmapSource preview, string filterName, FrameworkElement target, PlacementMode placement = PlacementMode.Right)
+        {
+            if (preview == null) return;
+
+            _closeTimer.Stop();
+            _hoverTimer.Stop();
+            _highResTimer.Stop();
+            _previewCts?.Cancel();
+
+            _currentHoveredElement = target;
+            _currentFilePath = null;
+            LargePreviewPopup.PlacementTarget = target;
+            LargePreviewPopup.Placement = placement;
+
+            PopupPreviewImage.Source = preview;
+            PopupPreviewImageBase.Source = null;
+            UpdateCheckerboardVisibility(preview);
+
+            FileInfoPanel.Visibility = Visibility.Collapsed;
+            PopupFileSizeText.Visibility = Visibility.Collapsed;
+            FilterNameText.Text = filterName;
+            FilterNameText.Visibility = Visibility.Visible;
+
+            if (!LargePreviewPopup.IsOpen) LargePreviewPopup.IsOpen = true;
+
+            RepositionPopup();
+        }
+
         public void ClosePreview()
         {
             _hoverTimer.Stop();
@@ -120,6 +148,9 @@ namespace TabPaint.Controls
             PopupPreviewImageBase.Source = null;
             CheckerboardBorder.Background = Brushes.Transparent;
 
+            FileInfoPanel.Visibility = Visibility.Visible;
+            PopupFileSizeText.Visibility = Visibility.Visible;
+            FilterNameText.Visibility = Visibility.Collapsed;
             PopupFileSizeText.Text = "";
 
             if (File.Exists(_currentFilePath))
@@ -156,7 +187,12 @@ namespace TabPaint.Controls
             }
 
             if (!LargePreviewPopup.IsOpen) LargePreviewPopup.IsOpen = true;
-            
+
+            RepositionPopup();
+        }
+
+        private void RepositionPopup()
+        {
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 try
@@ -224,6 +260,10 @@ namespace TabPaint.Controls
             PopupPreviewImage.Source = null;
             PopupPreviewImageBase.Source = null;
             CheckerboardBorder.Background = Brushes.Transparent;
+
+            FileInfoPanel.Visibility = Visibility.Visible;
+            FilterNameText.Visibility = Visibility.Collapsed;
+            PopupFileSizeText.Visibility = Visibility.Visible;
         }
 
         private (int Width, int Height) GetImageDimensionsFast(string filePath)

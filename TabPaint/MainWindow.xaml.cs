@@ -11,6 +11,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -1446,6 +1447,7 @@ namespace TabPaint
                 RulerLeft.SelectionEnd = -1;
             }
         }
+        private static readonly string[] _filterTags = { "Sepia", "OilPaint", "Vignette", "Glow", "Gray", "Invert", "Sharpen", "Brown", "Mosaic", "Blur", "RedEye", "Pencil", "Edge" };
         private void BindCanvasMenuEvents(object item)
         {
             if (item is MenuItem menuItem)
@@ -1453,25 +1455,40 @@ namespace TabPaint
                 menuItem.Click -= OnCanvasMenuClickDispatcher;
                 if (menuItem.Tag != null)
                 {
-                    switch (menuItem.Tag.ToString())
+                    string tag = menuItem.Tag.ToString();
+                    if (tag.StartsWith("Filter_"))
                     {
-                        case "Copy": menuItem.Click += OnCopyClick; break;
-                        case "Cut": menuItem.Click += OnCutClick; break;
-                        case "Paste": menuItem.Click += OnPasteClick; break;
-                        case "RemoveBackground": menuItem.Click += OnRemoveBackgroundClick; break;
-                        case "ChromaKey": menuItem.Click += OnChromaKeyClick; break;
-                        case "Ocr": menuItem.Click += OnOcrClick; break;
-                        case "ScreenColorPicker": menuItem.Click += OnScreenColorPickerClick; break;
-                        case "CopyColorCode": menuItem.Click += OnCopyColorCodeClick; break;
-                        case "AutoCrop": menuItem.Click += OnAutoCropClick; break;
-                        case "AddBorder": menuItem.Click += OnAddBorderClick; break;
-                        case "AiUpscale": menuItem.Click += OnAiUpscaleClick; break;
-                        case "AiOcr": menuItem.Click += OnAiOcrClick; break;
+                        string filterType = tag.Replace("Filter_", "");
+                        BindFilterPreview(menuItem, filterType);
+                        menuItem.Click += (s, e) => ApplyFilterByTag(filterType);
+                    }
+                    else if (_filterTags.Contains(tag))
+                    {
+                        BindFilterPreview(menuItem, tag);
+                        menuItem.Click += (s, e) => ApplyFilterByTag(tag);
+                    }
+                    else
+                    {
+                        switch (tag)
+                        {
+                            case "Copy": menuItem.Click += OnCopyClick; break;
+                            case "Cut": menuItem.Click += OnCutClick; break;
+                            case "Paste": menuItem.Click += OnPasteClick; break;
+                            case "RemoveBackground": menuItem.Click += OnRemoveBackgroundClick; break;
+                            case "ChromaKey": menuItem.Click += OnChromaKeyClick; break;
+                            case "Ocr": menuItem.Click += OnOcrClick; break;
+                            case "ScreenColorPicker": menuItem.Click += OnScreenColorPickerClick; break;
+                            case "CopyColorCode": menuItem.Click += OnCopyColorCodeClick; break;
+                            case "AutoCrop": menuItem.Click += OnAutoCropClick; break;
+                            case "AddBorder": menuItem.Click += OnAddBorderClick; break;
+                            case "AiUpscale": menuItem.Click += OnAiUpscaleClick; break;
+                            case "AiOcr": menuItem.Click += OnAiOcrClick; break;
+                        }
                     }
                 }
                 if (menuItem.Items.Count > 0)
                 {
-                    foreach (var subItem in menuItem.Items)   BindCanvasMenuEvents(subItem);
+                    foreach (var subItem in menuItem.Items) BindCanvasMenuEvents(subItem);
                 }
             }
             else if (item is TabPaint.Controls.DelayedMenuItem delayedItem)
@@ -1541,6 +1558,55 @@ namespace TabPaint
             MaximizeWindowHandler();
         }
         public bool IsTransferringSelection { get; private set; } = false;
+
+        private CancellationTokenSource? _previewCts;
+        private void BindFilterPreview(MenuItem item, string filterType)
+        {
+            item.MouseEnter += async (s, e) =>
+            {
+                _previewCts?.Cancel();
+                _previewCts = new CancellationTokenSource();
+                var token = _previewCts.Token;
+
+                try
+                {
+                    await Task.Delay(200, token);
+                    var preview = await GetFilterPreviewAsync(filterType, token);
+                    if (!token.IsCancellationRequested && preview != null)
+                    {
+                        FilePreview.ShowFilterPreview(preview, item.Header?.ToString() ?? "", item);
+                    }
+                }
+                catch (TaskCanceledException) { }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Preview failed: {ex.Message}"); }
+            };
+
+            item.MouseLeave += (s, e) =>
+            {
+                _previewCts?.Cancel();
+                FilePreview.ClosePreview();
+            };
+        }
+
+        private void ApplyFilterByTag(string filterType)
+        {
+            switch (filterType)
+            {
+                case "Sepia": OnSepiaClick(null, null); break;
+                case "OilPaint": OnOilPaintingClick(null, null); break;
+                case "Vignette": OnVignetteClick(null, null); break;
+                case "Glow": OnGlowClick(null, null); break;
+                case "Gray": OnConvertToBlackAndWhiteClick(null, null); break;
+                case "Invert": OnInvertColorsClick(null, null); break;
+                case "Sharpen": OnSharpenClick(null, null); break;
+                case "Brown": OnBrownClick(null, null); break;
+                case "Mosaic": OnMosaicClick(null, null); break;
+                case "Blur": OnGaussianBlurClick(null, null); break;
+                case "RedEye": OnRedEyeClick(null, null); break;
+                case "Pencil": OnSketchClick(null, null); break;
+                case "Edge": OnEdgeClick(null, null); break;
+            }
+        }
 
         // 暂存传输的选区数据
         private byte[] _transferSelectionData;
