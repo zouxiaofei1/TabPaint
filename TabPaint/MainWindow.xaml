@@ -200,8 +200,9 @@
                     </Grid.RowDefinitions>
                     <!-- 1. 自定义标题栏 -->
                     <controls:TitleBarControl x:Name="AppTitleBar"  Grid.Row="0"
-                          DockPanel.Dock="Top" 
-                          MinimizeClick="Minimize_Click"
+                           IsNewStyle="{Binding IsNewStyle, ElementName=RootWindow}"
+                           DockPanel.Dock="Top" 
+                           MinimizeClick="Minimize_Click"
                           MaximizeRestoreClick="MaximizeRestore_Click"
                           CloseClick="Close_Click"
                           TitleBarMouseDown="Border_MouseLeftButtonDown"
@@ -230,7 +231,7 @@
                                     <DataTrigger Binding="{Binding IsViewMode, ElementName=RootWindow}" Value="True">
                                         <Setter Property="Visibility" Value="Collapsed"/>
                                     </DataTrigger>
-                                    <DataTrigger Binding="{Binding Current.UseNewStyle, Source={x:Static local:SettingsManager.Instance}}" Value="True">
+                                    <DataTrigger Binding="{Binding IsNewStyle, ElementName=RootWindow}" Value="True">
                                         <Setter Property="Visibility" Value="Collapsed"/>
                                     </DataTrigger>
                                 </Style.Triggers>
@@ -249,7 +250,7 @@
                                     <DataTrigger Binding="{Binding IsViewMode, ElementName=RootWindow}" Value="True">
                                         <Setter Property="Visibility" Value="Collapsed"/>
                                     </DataTrigger>
-                                    <DataTrigger Binding="{Binding Current.UseNewStyle, Source={x:Static local:SettingsManager.Instance}}" Value="True">
+                                    <DataTrigger Binding="{Binding IsNewStyle, ElementName=RootWindow}" Value="True">
                                         <Setter Property="Visibility" Value="Collapsed"/>
                                     </DataTrigger>
                                 </Style.Triggers>
@@ -322,8 +323,8 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
 
-                            <local:Ruler x:Name="RulerTop" Grid.Row="0" Grid.Column="1" Height="20" Orientation="Horizontal" Style="{StaticResource RulerVisibilityStyle}"/>
-                            <local:Ruler x:Name="RulerLeft" Grid.Row="1" Grid.Column="0" Width="20" Orientation="Vertical" Style="{StaticResource RulerVisibilityStyle}"/>
+                            <local:Ruler x:Name="RulerTop" Grid.Row="0" Grid.Column="1" Height="20" Orientation="Horizontal" Style="{StaticResource RulerVisibilityStyle}" PreviewMouseMove="OnRulerMouseMove"/>
+                            <local:Ruler x:Name="RulerLeft" Grid.Row="1" Grid.Column="0" Width="20" Orientation="Vertical" Style="{StaticResource RulerVisibilityStyle}" PreviewMouseMove="OnRulerMouseMove"/>
                             
                             <Border Grid.Row="0" Grid.Column="0" Background="{DynamicResource GlassBackgroundMediumBrush}" ClipToBounds="True">
                                 <Border.Style>

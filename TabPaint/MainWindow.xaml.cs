@@ -42,6 +42,14 @@ namespace TabPaint
             remove { RemoveHandler(FavoriteClickEvent, value); }
         }
 
+        public bool IsNewStyle
+        {
+            get => (bool)GetValue(IsNewStyleProperty);
+            set => SetValue(IsNewStyleProperty, value);
+        }
+        public static readonly DependencyProperty IsNewStyleProperty =
+            DependencyProperty.Register(nameof(IsNewStyle), typeof(bool), typeof(MainWindow), new PropertyMetadata(false));
+
         public static MainWindow GetCurrentInstance()
         {
             foreach (Window w in Application.Current.Windows)
@@ -1298,6 +1306,15 @@ namespace TabPaint
         {
             DwmBorderHelper.UpdateWindowBorder(this);
         }
+        private void OnRulerMouseMove(object sender, MouseEventArgs e)
+        {
+            if (SettingsManager.Instance.Current.ShowRulers)
+            {
+                Point pos = e.GetPosition(ScrollContainer);
+                RulerTop.MouseMarker = pos.X;
+                RulerLeft.MouseMarker = pos.Y;
+            }
+        }
         private void OnScrollContainerMouseMove(object sender, MouseEventArgs e)
         {
             if (_isPanning)
@@ -1324,7 +1341,7 @@ namespace TabPaint
 
             if (sizeInfo.HeightChanged)
             {
-                SettingsManager.Instance.Current.UseNewStyle = sizeInfo.NewSize.Height < 420;
+                IsNewStyle = sizeInfo.NewSize.Height < 420;
             }
         }
         private void OnScrollContainerMouseUp(object sender, MouseButtonEventArgs e)

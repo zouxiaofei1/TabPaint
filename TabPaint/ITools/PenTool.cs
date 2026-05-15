@@ -24,6 +24,8 @@ public partial class PenTool : ToolBase
     private SolidColorBrush _cachedFillBrush;
     private Color _lastColor;
     private double _lastOpacity = -1;
+    private WriteableBitmap _mosaicPreviewBitmap;
+    private ImageBrush _mosaicPreviewBrush;
 
     private bool _drawing = false;
     private Point _lastPixel;
@@ -125,6 +127,9 @@ public partial class PenTool : ToolBase
             _squareGeometry = null;
         }
 
+        _mosaicPreviewBitmap = null;
+        _mosaicPreviewBrush = null;
+
         // 恢复系统光标
         if (ctx.ViewElement != null)
         {
@@ -206,8 +211,8 @@ public partial class PenTool : ToolBase
         _cursorTransform.Y = viewPos.Y - halfSize;
 
         bool isSquare = ctx.PenStyle == BrushStyle.Square ||
-                        ctx.PenStyle == BrushStyle.Eraser ||
-                        ctx.PenStyle == BrushStyle.Mosaic;
+                        ctx.PenStyle == BrushStyle.Eraser;// ||  ctx.PenStyle == BrushStyle.Mosaic
+      
 
         if (isSquare)
         {
@@ -249,7 +254,11 @@ public partial class PenTool : ToolBase
                 _brushCursor.Stroke = Brushes.Cyan;
                 _brushCursor.StrokeThickness = AppConsts.PenDefaultStrokeThickness;
             }
-
+            else if (ctx.PenStyle == BrushStyle.Mosaic)
+            {
+                UpdateMosaicCursorPreview(ctx, size, viewPos);
+                return;
+            }
             else
             {
             double globalOpacity = ctx.PenOpacity;
@@ -276,6 +285,98 @@ public partial class PenTool : ToolBase
             }
             else  _brushCursor.Stroke = null;
         }// t.Toggle(slient: true);
+    }
+    private unsafe void UpdateMosaicCursorPreview(ToolContext ctx, double size, Point viewPos)
+    {
+        int score = ctx.ParentWindow.PerformanceScore;
+
+        if (score > 6)
+        {
+            var bmp = ctx.Bitmap;
+            if (bmp == null) return;
+
+            double halfSize = size / 2.0;
+            int pixelSize = (int)Math.Ceiling(size);
+            if (pixelSize < 1) pixelSize = 1;
+            int viewRadius = Math.Max(1, (int)(size / 2.0));
+            int viewRadiusSq = viewRadius * viewRadius;
+
+            Point pixelPos = ctx.ToPixel(viewPos);
+
+            double scaleX = bmp.PixelWidth / Math.Max(1.0, ctx.ViewElement.ActualWidth);
+            double scaleY = bmp.PixelHeight / Math.Max(1.0, ctx.ViewElement.ActualHeight);
+
+            int bmpW = bmp.PixelWidth;
+            int bmpH = bmp.PixelHeight;
+
+            int blockSize = Math.Max(4, (int)(ctx.PenThickness / 4.0));
+
+            if (_mosaicPreviewBitmap == null || _mosaicPreviewBitmap.PixelWidth != pixelSize || _mosaicPreviewBitmap.PixelHeight != pixelSize)
+            {
+                _mosaicPreviewBitmap = new WriteableBitmap(pixelSize, pixelSize, 96, 96, PixelFormats.Bgra32, null);
+                if (_mosaicPreviewBrush == null)
+                    _mosaicPreviewBrush = new ImageBrush();
+                _mosaicPreviewBrush.ImageSource = _mosaicPreviewBitmap;
+            }
+
+            _mosaicPreviewBitmap.Lock();
+            bmp.Lock();
+
+            byte* destPtr = (byte*)_mosaicPreviewBitmap.BackBuffer;
+            int destStride = _mosaicPreviewBitmap.BackBufferStride;
+            byte* srcPtr = (byte*)bmp.BackBuffer;
+            int srcStride = bmp.BackBufferStride;
+
+            for (int y = 0; y < pixelSize; y++)
+            {
+                byte* destRow = destPtr + y * destStride;
+                for (int x = 0; x < pixelSize; x++)
+                {
+                    double dx = x - halfSize + 0.5;
+                    double dy = y - halfSize + 0.5;
+
+                    if (dx * dx + dy * dy <= viewRadiusSq)
+                    {
+                        int sx = (int)(pixelPos.X + dx * scaleX);
+                        int sy = (int)(pixelPos.Y + dy * scaleY);
+
+                        int bx = (sx / blockSize) * blockSize;
+                        int by = (sy / blockSize) * blockSize;
+                        bx = Math.Clamp(bx, 0, bmpW - 1);
+                        by = Math.Clamp(by, 0, bmpH - 1);
+
+                        byte* srcPixel = srcPtr + (long)by * srcStride + bx * 4;
+                        byte* destPixel = destRow + x * 4;
+                        destPixel[0] = srcPixel[0];
+                        destPixel[1] = srcPixel[1];
+                        destPixel[2] = srcPixel[2];
+                        destPixel[3] = 255;
+                    }
+                    else
+                    {
+                        byte* destPixel = destRow + x * 4;
+                        destPixel[0] = 0;
+                        destPixel[1] = 0;
+                        destPixel[2] = 0;
+                        destPixel[3] = 0;
+                    }
+                }
+            }
+
+            bmp.Unlock();
+            _mosaicPreviewBitmap.AddDirtyRect(new Int32Rect(0, 0, pixelSize, pixelSize));
+            _mosaicPreviewBitmap.Unlock();
+
+            _brushCursor.Fill = _mosaicPreviewBrush;
+            _brushCursor.Stroke = Brushes.White;
+            _brushCursor.StrokeThickness = 1.0;
+        }
+        else
+        {
+            _brushCursor.Fill = Brushes.Black;
+            _brushCursor.Stroke = Brushes.White;
+            _brushCursor.StrokeThickness = 1.0;
+        }
     }
     public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f)
     {

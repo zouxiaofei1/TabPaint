@@ -26,7 +26,7 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
-       
+
         private void UpdateGlobalToolSettingsKey()
         {
             _isUpdatingToolSettings = true;
@@ -54,15 +54,15 @@ namespace TabPaint
                     }
                 }
                 else if (_router.CurrentTool is GradientTool) key = "Gradient";
-                else if (_router.CurrentTool is ShapeTool)  key = "Shape";
-  
-                if (ThicknessSlider != null)  ThicknessSlider.IsEnabled = !isPencil;
+                else if (_router.CurrentTool is ShapeTool) key = "Shape";
+
+                if (ThicknessSlider != null) ThicknessSlider.IsEnabled = !isPencil;
                 this.CurrentToolKey = key;
 
                 _ctx.PenThickness = this.PenThickness;
                 _ctx.PenOpacity = this.PenOpacity;
             }
-            finally   { _isUpdatingToolSettings = false;}  
+            finally { _isUpdatingToolSettings = false; }
         }
 
         public void UpdateCurrentColor(Color color, bool secondColor = false) // 更新前景色按钮颜色
@@ -94,7 +94,7 @@ namespace TabPaint
             if (_isProcessingMaximizeWindow) return; // 如果正在冷却中，直接跳过
             _isProcessingMaximizeWindow = true;
             ExecuteMaximizeLogic();
-           await Task.Delay(500);
+            await Task.Delay(500);
             _isProcessingMaximizeWindow = false;
         }
 
@@ -125,12 +125,12 @@ namespace TabPaint
 
         public void AutoUpdateMaximizeIcon()
         {
-            if(_maximized)SetRestoreIcon(); 
+            if (_maximized) SetRestoreIcon();
             else SetMaximizeIcon();
         }
         private async void SetBrushStyle(BrushStyle style)
         {//设置画笔样式，大部分画笔都是pen工具
-            if (style == BrushStyle.AiEraser)  if (!await EnsureAiModelReadyAsync(AiService.AiTaskType.Inpainting)) return;
+            if (style == BrushStyle.AiEraser) if (!await EnsureAiModelReadyAsync(AiService.AiTaskType.Inpainting)) return;
             if (style == BrushStyle.Gradient)
             {
                 _router.SetTool(_tools.Gradient);
@@ -169,7 +169,7 @@ namespace TabPaint
             ThicknessPreview.Width = size;
             ThicknessPreview.Height = size;
 
-            if (_ctx.PenStyle == BrushStyle.Square|| _ctx.PenStyle == BrushStyle.Eraser)
+            if (_ctx.PenStyle == BrushStyle.Square || _ctx.PenStyle == BrushStyle.Eraser)
             {
                 // 方形：圆角为 0
                 ThicknessPreview.RadiusX = 0;
@@ -207,11 +207,12 @@ namespace TabPaint
             int total = _imageFiles.Count;
             int currentIndex = overrideIndex ?? _currentImageIndex;
 
-            if (_currentTabItem != null && _currentTabItem.IsNew && overrideIndex == null)
-            {
-                // 如果是新文件且没有覆盖索引，不显示计数
-            }
-            else if (total > 0)
+            //if (_currentTabItem != null && _currentTabItem.IsNew && overrideIndex == null)
+            //{
+            //    // 如果是新文件且没有覆盖索引，不显示计数
+            //}
+            //else 
+            if (total > 0)
             {
                 if (currentIndex < 0 && _currentTabItem != null && !string.IsNullOrEmpty(_currentTabItem.FilePath))
                 {
@@ -246,7 +247,7 @@ namespace TabPaint
                     TextMenu.FontFamilyBox.ItemsSource = sortedFonts;
                     TextMenu.FontFamilyBox.DisplayMemberPath = "DisplayName";
                     TextMenu.FontFamilyBox.SelectedValuePath = "FontFamily";
-                    
+
                     var defaultFont = FontService.GetDefaultFont(sortedFonts);
                     TextMenu.FontFamilyBox.SelectedItem = defaultFont;
 
@@ -270,7 +271,7 @@ namespace TabPaint
             TextMenu.FontSizeBox.Text = tb.FontSize.ToString(CultureInfo.InvariantCulture);
             TextMenu.BoldBtn.IsChecked = tb.FontWeight == FontWeights.Bold;
             TextMenu.ItalicBtn.IsChecked = tb.FontStyle == FontStyles.Italic;
-           // UnderlineBtn.IsChecked = tb.TextDecorations == TextDecorations.Underline;
+            // UnderlineBtn.IsChecked = tb.TextDecorations == TextDecorations.Underline;
         }
         private bool HasTextDecoration(RichTextBox tb, TextDecorationCollection target)
         {
@@ -317,7 +318,7 @@ namespace TabPaint
             MainToolBar.ColorBtn2.Tag = useSecondColor ? "True" : "False";
         }
 
-  
+
         private void AutoSetFloatBarVisibility()
         {
             var mw = MainWindow.GetCurrentInstance();
@@ -564,7 +565,7 @@ namespace TabPaint
             {
                 encoder = new TiffBitmapEncoder();
             }
-            else   encoder = new PngBitmapEncoder(); // 默认 PNG
+            else encoder = new PngBitmapEncoder(); // 默认 PNG
 
             encoder.Frames.Add(BitmapFrame.Create(saveSource));
 
@@ -636,9 +637,9 @@ namespace TabPaint
                 string.Format(LocalizationManager.GetString("L_Msg_SaveError_Content"), message),
                 LocalizationManager.GetString("L_Msg_SaveError_Title"),
                 MessageBoxButton.YesNo);
-            if (result == MessageBoxResult.Yes)   OnSaveAsClick(null, null)    ;
+            if (result == MessageBoxResult.Yes) OnSaveAsClick(null, null);
         }
-        private void UpdateSliderBarValue(double newScale,bool needsetzoom=true)
+        private void UpdateSliderBarValue(double newScale, bool needsetzoom = true)
         {
             if (MyStatusBar != null)
             {
@@ -646,8 +647,8 @@ namespace TabPaint
                 MyStatusBar.ZoomComboBox.Text = newScale.ToString("P0");
             }
             ZoomLevel = newScale.ToString("P0");
-           // a.s("setzoom");
-           SetZoom(newScale, slient: true);
+            // a.s("setzoom");
+            SetZoom(newScale, slient: true);
         }
     }
 }

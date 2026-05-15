@@ -192,6 +192,32 @@ SetZoom(targetScale, slient: true);
             AppTitleBar.MinimizeClick += OnTitleBarMinimizeClick;
             AppTitleBar.MaximizeRestoreClick += OnTitleBarMaximizeRestoreClick;
 
+            // ── 补充缺失的 AppTitleBar 事件订阅（新版折叠布局时生效） ──
+            AppTitleBar.SaveAsPdfClick += OnSaveAsPdfClick;
+            AppTitleBar.PrintClick += OnPrintClick;
+            AppTitleBar.NewWindowClick += OnNewWindowClick;
+            AppTitleBar.CopyClick += OnCopyClick;
+            AppTitleBar.CutClick += OnCutClick;
+            AppTitleBar.PasteClick += OnPasteClick;
+            AppTitleBar.BCEClick += OnBrightnessContrastExposureClick;
+            AppTitleBar.TTSClick += OnColorTempTintSaturationClick;
+            AppTitleBar.AutoLevelsClick += OnAutoLevelsClick;
+            AppTitleBar.SepiaClick += OnSepiaClick;
+            AppTitleBar.OilPaintingClick += OnOilPaintingClick;
+            AppTitleBar.VignetteClick += OnVignetteClick;
+            AppTitleBar.GlowClick += OnGlowClick;
+            AppTitleBar.BlackWhiteClick += OnConvertToBlackAndWhiteClick;
+            AppTitleBar.InvertClick += OnInvertColorsClick;
+            AppTitleBar.SharpenClick += OnSharpenClick;
+            AppTitleBar.BrownClick += OnBrownClick;
+            AppTitleBar.MosaicClick += OnMosaicClick;
+            AppTitleBar.GaussianBlurClick += OnGaussianBlurClick;
+            AppTitleBar.RedEyeClick += OnRedEyeClick;
+            AppTitleBar.SketchClick += OnSketchClick;
+            AppTitleBar.EdgeClick += OnEdgeClick;
+            AppTitleBar.ResizeCanvasClick += OnResizeCanvasClick;
+            AppTitleBar.WatermarkClick += OnWatermarkClick;
+
             StatusBarHolder.Content = MyStatusBar;
             ApplyStatusCommandBarExpandedState(SettingsManager.Instance.Current.IsStatusCommandBarExpanded, adjustWindowHeight: false);
 

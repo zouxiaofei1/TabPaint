@@ -164,6 +164,8 @@
     <sys:String x:Key="L_Settings_Shortcuts_RotateRight">Rotate right</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_VFlip">Flip vertical</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_HFlip">Flip horizontal</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_ZoomIn">Zoom In</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_ZoomOut">Zoom Out</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Group_BasicTools">Basic tools</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Tool_Select">Select</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Tool_Pen">Pencil</sys:String>

@@ -159,6 +159,8 @@
     <sys:String x:Key="L_Settings_Shortcuts_RotateRight">向右旋转</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_VFlip">垂直翻转</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_HFlip">水平翻转</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_ZoomIn">放大</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_ZoomOut">缩小</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Group_BasicTools">基础绘图工具</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Tool_Select">选择工具</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Tool_Pen">铅笔</sys:String>

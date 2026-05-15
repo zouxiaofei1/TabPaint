@@ -31,6 +31,7 @@ namespace TabPaint
         // 防抖动计时器
         private DispatcherTimer _updateTimer;
         private bool _isUpdatingFromTextBox = false;
+        public bool? Result { get; private set; }
         public AdjustColorWindow(WriteableBitmap fullBitmap, int initialTabIndex = 0)
         {
             InitializeComponent();
@@ -423,7 +424,7 @@ namespace TabPaint
                 _originalFullBitmap.AddDirtyRect(new Int32Rect(0, 0, _originalFullBitmap.PixelWidth, _originalFullBitmap.PixelHeight));
                 _originalFullBitmap.Unlock();
 
-                this.SetDialogResultSafe(true);
+                this.Result = true;
             }
             finally
             {
@@ -434,7 +435,7 @@ namespace TabPaint
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
-            this.SetDialogResultSafe(false);
+            this.Result = false;
             Close();
         }
 
@@ -445,7 +446,7 @@ namespace TabPaint
 
         private void OnCloseClick(object sender, RoutedEventArgs e)
         {
-            this.SetDialogResultSafe(false);
+            this.Result = false;
             Close();
         }
     }

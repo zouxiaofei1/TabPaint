@@ -220,7 +220,6 @@ namespace TabPaint
             _targetBitmap.WritePixels(new Int32Rect(0, 0, w, h), data, stride, 0);
             FinalBitmap = _targetBitmap;
             CurrentSettings = GetCurrentSettings();
-            this.SetDialogResultSafe(true);
             Close();
         }
 
@@ -245,7 +244,6 @@ namespace TabPaint
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
-            this.SetDialogResultSafe(false);
             Close();
         }
 
@@ -476,7 +474,6 @@ namespace TabPaint
 
         private void OnCloseClick(object sender, RoutedEventArgs e)
         {
-            this.SetDialogResultSafe(false);
             Close();
         }
 

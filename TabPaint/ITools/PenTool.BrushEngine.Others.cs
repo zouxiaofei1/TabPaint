@@ -258,79 +258,40 @@ public partial class PenTool : ToolBase
         float segDy = (float)(p2.Y - p1.Y);
         float segLenSq = segDx * segDx + segDy * segDy;
         float invSegLenSq = segLenSq > 0 ? 1.0f / segLenSq : 0;
-        int gridXStart = (aabbLeft / blockSize) * blockSize;
-        int gridYStart = (aabbTop / blockSize) * blockSize;
 
-        // 使用 Parallel 优化块循环
-        Parallel.For(0, (aabbBottom - gridYStart + blockSize - 1) / blockSize, ctx.ParentWindow.CreatePerformanceParallelOptions(), (i) =>
+        Parallel.For(aabbTop, aabbBottom, ctx.ParentWindow.CreatePerformanceParallelOptions(), (y) =>
         {
-            int by = gridYStart + i * blockSize;
-            for (int bx = gridXStart; bx < aabbRight; bx += blockSize)
+            byte* rowPtr = basePtr + (long)y * stride;
+            int rowIdx = y * w;
+            float dyVal = (float)(y - p1.Y);
+            int by = (y / blockSize) * blockSize;
+
+            for (int x = aabbLeft; x < aabbRight; x++)
             {
-                float blockCenterX = bx + blockSize * 0.5f;
-                float blockCenterY = by + blockSize * 0.5f;
+                int pixelIndex = rowIdx + x;
+                if (_currentStrokeMask[pixelIndex] >= 255) continue;
+
                 float t = 0;
                 if (segLenSq > 0)
                 {
-                    t = Math.Clamp(((blockCenterX - (float)p1.X) * segDx + (blockCenterY - (float)p1.Y) * segDy) * invSegLenSq, 0, 1);
+                    t = Math.Clamp(((x - (float)p1.X) * segDx + dyVal * segDy) * invSegLenSq, 0, 1);
                 }
                 float closestX = (float)p1.X + t * segDx;
                 float closestY = (float)p1.Y + t * segDy;
-                float dcx = blockCenterX - closestX;
-                float dcy = blockCenterY - closestY;
-                float centerDistSq = dcx * dcx + dcy * dcy;
+                float ddx = x - closestX;
+                float ddy = y - closestY;
 
-                float blockHalfDiag = blockSize * 0.7071f;
-                float thresholdOuter = radius + blockHalfDiag;
-                if (centerDistSq > thresholdOuter * thresholdOuter) continue;
-
-                float thresholdInner = Math.Max(0, radius - blockHalfDiag);
-                bool isFullyInside = centerDistSq <= thresholdInner * thresholdInner;
-
-                int sampleX = Math.Clamp(bx, 0, w - 1);
-                int sampleY = Math.Clamp(by, 0, h - 1);
-                byte* srcPixel = basePtr + (long)sampleY * stride + sampleX * 4;
-                byte mB = srcPixel[0], mG = srcPixel[1], mR = srcPixel[2];
-
-                int fillStartX = Math.Max(bx, aabbLeft);
-                int fillEndX = Math.Min(bx + blockSize, aabbRight);
-                int fillStartY = Math.Max(by, aabbTop);
-                int fillEndY = Math.Min(by + blockSize, aabbBottom);
-
-                for (int y = fillStartY; y < fillEndY; y++)
+                if (ddx * ddx + ddy * ddy <= radiusSq)
                 {
-                    byte* rowPtr = basePtr + (long)y * stride;
-                    int rowIdx = y * w;
-                    float dyVal = (float)(y - p1.Y);
+                    int bx = (x / blockSize) * blockSize;
+                    int sampleX = Math.Clamp(bx, 0, w - 1);
+                    int sampleY = Math.Clamp(by, 0, h - 1);
+                    byte* srcPixel = basePtr + (long)sampleY * stride + sampleX * 4;
+                    byte mB = srcPixel[0], mG = srcPixel[1], mR = srcPixel[2];
 
-                    for (int x = fillStartX; x < fillEndX; x++)
-                    {
-                        int pixelIndex = rowIdx + x;
-                        if (_currentStrokeMask[pixelIndex] >= 255) continue;
-
-                        if (isFullyInside)
-                        {
-                            _currentStrokeMask[pixelIndex] = 255;
-                            byte* destPixel = rowPtr + x * 4;
-                            destPixel[0] = mB; destPixel[1] = mG; destPixel[2] = mR;
-                            continue;
-                        }
-
-                        float pt = 0;
-                        if (segLenSq > 0)
-                        {
-                            pt = Math.Clamp(((x - (float)p1.X) * segDx + dyVal * segDy) * invSegLenSq, 0, 1);
-                        }
-                        float pdx = x - ((float)p1.X + pt * segDx);
-                        float pdy = y - ((float)p1.Y + pt * segDy);
-
-                        if (pdx * pdx + pdy * pdy <= radiusSq)
-                        {
-                            _currentStrokeMask[pixelIndex] = 255;
-                            byte* destPixel = rowPtr + x * 4;
-                            destPixel[0] = mB; destPixel[1] = mG; destPixel[2] = mR;
-                        }
-                    }
+                    _currentStrokeMask[pixelIndex] = 255;
+                    byte* destPixel = rowPtr + x * 4;
+                    destPixel[0] = mB; destPixel[1] = mG; destPixel[2] = mR;
                 }
             }
         });

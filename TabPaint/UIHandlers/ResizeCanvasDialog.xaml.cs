@@ -15,6 +15,7 @@ namespace TabPaint
         public int ImageWidth { get; private set; }
         public int ImageHeight { get; private set; }
         public bool IsCanvasResizeMode { get; private set; } // True=Canvas, False=Resample
+        public bool IsConfirmed { get; private set; }
 
         // 原始尺寸
         private readonly int _originalWidth;
@@ -294,14 +295,14 @@ namespace TabPaint
 
             if (ImageWidth > 0 && ImageHeight > 0)
             {
-                this.SetDialogResultSafe(true);
-
+                IsConfirmed = true;
             }
             else
             {
                 FluentMessageBox.Show(
-          LocalizationManager.GetString("L_ResizeCanvas_Error_InvalidSize"),
+          string.Format(LocalizationManager.GetString("L_ResizeCanvas_Error_InvalidSize")),
           LocalizationManager.GetString("L_Common_Error"));
+                return;
             }
             this.Close();
 
@@ -309,14 +310,12 @@ namespace TabPaint
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            this.SetDialogResultSafe(false);
-            this.Close();
+            Close();
         }
 
         private void OnCloseClick(object sender, RoutedEventArgs e)
         {
-            this.SetDialogResultSafe(false);
-            this.Close();
+            Close();
         }
 
         private void OnMaximizeRestoreClick(object sender, RoutedEventArgs e)

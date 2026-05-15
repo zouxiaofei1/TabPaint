@@ -19,18 +19,23 @@ namespace TabPaint
     {
         private void OnMosaicClick(object sender, RoutedEventArgs e)
         {
-            var dialog = new FilterStrengthWindow(LocalizationManager.GetString("L_Menu_Effect_Mosaic"), 10, 2, 100);
-            dialog.Owner = this;
-            dialog.ShowOwnerModal(this);
-            if (dialog.IsConfirmed)  ApplyFilter(FilterType.Mosaic, dialog.ResultValue);
+            var dialog = new FilterStrengthWindow(LocalizationManager.GetString("L_Menu_Effect_Mosaic"), 10, 2, 100)
+            { Owner = this };
+            dialog.Closed += (s, args) =>
+            {
+                if (dialog.IsConfirmed) ApplyFilter(FilterType.Mosaic, dialog.ResultValue);
+            };
+            dialog.Show();
         }
         private void OnGaussianBlurClick(object sender, RoutedEventArgs e)
         {
-            var dialog = new FilterStrengthWindow(LocalizationManager.GetString("L_Menu_Effect_GaussianBlur"), 5, 1, 50);
-            dialog.Owner = this;
-            dialog.ShowOwnerModal(this);
-            if (dialog.IsConfirmed)   ApplyFilter(FilterType.GaussianBlur, dialog.ResultValue);
-
+            var dialog = new FilterStrengthWindow(LocalizationManager.GetString("L_Menu_Effect_GaussianBlur"), 5, 1, 50)
+            { Owner = this };
+            dialog.Closed += (s, args) =>
+            {
+                if (dialog.IsConfirmed) ApplyFilter(FilterType.GaussianBlur, dialog.ResultValue);
+            };
+            dialog.Show();
         }
         private void OnRedEyeClick(object sender, RoutedEventArgs e) => ApplyFilter(FilterType.RedEye);
         private void OnSketchClick(object sender, RoutedEventArgs e) => ApplyFilter(FilterType.Sketch);
@@ -154,25 +159,39 @@ namespace TabPaint
 
      
 
+        private AdjustColorWindow _adjustColorWindow;
+
         private void OpenAdjustColorWindowSafe(int initialTabIndex)
         {
             if (_surface.Bitmap == null) return;
-            _router.CleanUpSelectionandShape();
 
+            if (_adjustColorWindow != null && _adjustColorWindow.IsLoaded)
+            {
+                _adjustColorWindow.Activate();
+                return;
+            }
+
+            _router.CleanUpSelectionandShape();
             var oldBitmapState = _surface.Bitmap.Clone();
 
-            var dialog = new AdjustColorWindow(_surface.Bitmap, initialTabIndex)
+            _adjustColorWindow = new AdjustColorWindow(_surface.Bitmap, initialTabIndex)
             {
                 Owner = this
             };
 
-            if (dialog.ShowOwnerModal(this) == true)
+            _adjustColorWindow.Closed += (s, e) =>
             {
-                _undo.PushExplicitImageUndo(oldBitmapState);
-                NotifyCanvasChanged();
-                CheckDirtyState();
-                SetUndoRedoButtonState();
-            }
+                if (_adjustColorWindow.Result == true)
+                {
+                    _undo.PushExplicitImageUndo(oldBitmapState);
+                    NotifyCanvasChanged();
+                    CheckDirtyState();
+                    SetUndoRedoButtonState();
+                }
+                _adjustColorWindow = null;
+            };
+
+            _adjustColorWindow.Show();
         }
 
         private void OnBrightnessContrastExposureClick(object sender, RoutedEventArgs e)
@@ -204,7 +223,7 @@ namespace TabPaint
 
             var oldScalingMode = RenderOptions.GetBitmapScalingMode(BackgroundImage);
             _canvasResizer.SetHandleVisibility(false);
-            var dialog = new ResizeCanvasDialog(originalW, originalH);
+            var dialog = new ResizeCanvasDialog(originalW, originalH) { Owner = this };
 
             dialog.PreviewChanged += (w, h, isCanvasMode) =>
             {
@@ -226,31 +245,31 @@ namespace TabPaint
                 }
             };
 
-            if (dialog.ShowOwnerModal(this) == true)
+            dialog.Closed += async (s, args) =>
             {
-                int targetWidth = dialog.ImageWidth;
-                int targetHeight = dialog.ImageHeight;
-                bool isCanvasMode = dialog.IsCanvasResizeMode;
-                bool keepRatio = dialog.IsAspectRatioLocked;
-                double scaleX = (double)targetWidth / originalW;
-                double scaleY = (double)targetHeight / originalH;
-
                 ClearResizePreview(oldScalingMode);
 
-                if (isCanvasMode) ResizeCanvasDimensions(targetWidth, targetHeight);
-                else ResizeCanvas(targetWidth, targetHeight);
-
-                CheckDirtyState();
-                if (_canvasResizer != null) _canvasResizer.UpdateUI();
-                if (dialog.ApplyToAll)
+                if (dialog.IsConfirmed)
                 {
-                    await BatchResizeImages(targetWidth, targetHeight, scaleX, scaleY, isCanvasMode, keepRatio);
+                    int targetWidth = dialog.ImageWidth;
+                    int targetHeight = dialog.ImageHeight;
+                    bool isCanvasMode = dialog.IsCanvasResizeMode;
+                    bool keepRatio = dialog.IsAspectRatioLocked;
+                    double scaleX = (double)targetWidth / originalW;
+                    double scaleY = (double)targetHeight / originalH;
+
+                    if (isCanvasMode) ResizeCanvasDimensions(targetWidth, targetHeight);
+                    else ResizeCanvas(targetWidth, targetHeight);
+
+                    CheckDirtyState();
+                    if (_canvasResizer != null) _canvasResizer.UpdateUI();
+                    if (dialog.ApplyToAll)
+                    {
+                        await BatchResizeImages(targetWidth, targetHeight, scaleX, scaleY, isCanvasMode, keepRatio);
+                    }
                 }
-            }
-            else
-            {
-                ClearResizePreview(oldScalingMode);
-            }
+            };
+            dialog.Show();
         }
 
         private void ClearResizePreview(BitmapScalingMode originalScalingMode)
@@ -264,7 +283,7 @@ namespace TabPaint
 
   
 
-        private async void OnWatermarkClick(object sender, RoutedEventArgs e)
+        private void OnWatermarkClick(object sender, RoutedEventArgs e)
         {
             var oldBitmap = _surface.Bitmap;
             var undoRect = new Int32Rect(0, 0, oldBitmap.PixelWidth, oldBitmap.PixelHeight);
@@ -272,21 +291,24 @@ namespace TabPaint
             byte[] undoPixels = new byte[undoRect.Height * oldBitmap.BackBufferStride];
             oldBitmap.CopyPixels(undoRect, undoPixels, oldBitmap.BackBufferStride, 0);
             var dlg = new WatermarkWindow(_surface.Bitmap, WatermarkPreviewLayer) { Owner = this };
-            bool? dialogResult = WindowHelper.ShowOwnerModal(dlg, this);
 
-            if (dialogResult == true)
+            dlg.Closed += async (s, args) =>
             {
-                var newBitmap = _surface.Bitmap;
-                var redoPixels = new byte[undoRect.Height * newBitmap.BackBufferStride];
-                newBitmap.CopyPixels(undoRect, redoPixels, newBitmap.BackBufferStride, 0);
+                if (dlg.CurrentSettings != null)
+                {
+                    var newBitmap = _surface.Bitmap;
+                    var redoPixels = new byte[undoRect.Height * newBitmap.BackBufferStride];
+                    newBitmap.CopyPixels(undoRect, redoPixels, newBitmap.BackBufferStride, 0);
 
-                _undo.PushTransformAction(undoRect, undoPixels, undoRect, redoPixels);
-                NotifyCanvasChanged();
-                SetUndoRedoButtonState();
+                    _undo.PushTransformAction(undoRect, undoPixels, undoRect, redoPixels);
+                    NotifyCanvasChanged();
+                    SetUndoRedoButtonState();
 
-                if (dlg.ApplyToAll) await ApplyWatermarkToAllTabs(dlg.CurrentSettings);
-            }
-            else { NotifyCanvasChanged(); }
+                    if (dlg.ApplyToAll) await ApplyWatermarkToAllTabs(dlg.CurrentSettings);
+                }
+                else { NotifyCanvasChanged(); }
+            };
+            dlg.Show();
         }
 
 

@@ -150,6 +150,14 @@ namespace TabPaint.Controls
             set { SetValue(WorkingDirectoryProperty, value); }
         }
 
+        public bool IsNewStyle
+        {
+            get => (bool)GetValue(IsNewStyleProperty);
+            set => SetValue(IsNewStyleProperty, value);
+        }
+        public static readonly DependencyProperty IsNewStyleProperty =
+            DependencyProperty.Register(nameof(IsNewStyle), typeof(bool), typeof(TitleBarControl), new PropertyMetadata(false));
+
         // ── 最近文件 ──
         public event EventHandler<string> RecentFileClick;
         public event RoutedEventHandler LogoMiddleClick;
@@ -177,7 +185,7 @@ namespace TabPaint.Controls
 
         private void UpdateResponsiveLayout()
         {
-            if (!SettingsManager.Instance.Current.UseNewStyle) return;
+            if (!IsNewStyle) return;
 
             var window = Window.GetWindow(this);
             double w = window?.ActualWidth ?? this.ActualWidth;

@@ -70,6 +70,8 @@ namespace TabPaint
                 e.Handled = true;
                 return true;
             }
+            if (IsShortcut("View.ZoomIn", e)) { ZoomIn_Click(null, null); e.Handled = true; return true; }
+            if (IsShortcut("View.ZoomOut", e)) { ZoomOut_Click(null, null); e.Handled = true; return true; }
             if (IsShortcut("View.FullScreen", e)) { MaximizeWindowHandler(); e.Handled = true; return true; }
             if (e.Key == Key.F2 && Keyboard.Modifiers == ModifierKeys.None)
             {
