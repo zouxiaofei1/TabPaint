@@ -21,7 +21,7 @@
                    Margin="0,5,0,10" 
                    Foreground="{DynamicResource TextPrimaryBrush}"/>
 
-        <Grid Margin="0,5">
+        <Grid x:Name="ViewMouseWheelSetting" Margin="0,5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="220"/>
                 <ColumnDefinition Width="200"/>
@@ -54,7 +54,7 @@
                    Foreground="{DynamicResource TextPrimaryBrush}"/>
 
         <!-- 黑暗背景 -->
-        <Grid Margin="0,5">
+        <Grid x:Name="ViewDarkBgSetting" Margin="0,5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
@@ -74,7 +74,7 @@
         </Grid>
 
         <!-- 透明网格 -->
-        <Grid Margin="0,5">
+        <Grid x:Name="ViewTransparentGridSetting" Margin="0,5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>

@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Reflection;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
@@ -13,8 +17,8 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using System.Net.Http;
-using System.Collections.Generic;
+using TabPaint.Controls;
+using static TabPaint.MainWindow;
 
 //设置窗口
 
@@ -30,12 +34,14 @@ namespace TabPaint
         private bool MicaEnabled = false;
         private DispatcherTimer _updateToastTimer; private DispatcherTimer _conflictToastTimer;
         private string _latestVersionUrl = ""; // 用于存储点击跳转的地址
-        public static readonly RoutedCommand OpenSearchCommand = new RoutedCommand();
         private List<SearchItem> _searchItems;
-        private DispatcherTimer _searchFocusTimer;
+        private bool _searchItemsBuilt;
+        private static readonly string SearchCachePath = Path.Combine(AppConsts.CacheDir, "SettingsSearchCache.json");
+        private static readonly int SearchCacheVersion = 2;
         public SettingsWindow()
         {
             InitializeComponent();
+            SettingsSearchBar.SearchItemSelected += OnSearchBarItemSelected;
             this.DataContext = this;
 
             this.SupportFocusHighlight();
@@ -49,8 +55,10 @@ namespace TabPaint
             {
                 CheckUpdateOnLoad(); // <--- 调用自动检查
                 UpdateSpecialNavItemsVisibility("General");
-                    if (MainContent.Content == null)
-                { 
+                EnsureSearchItemsBuilt();
+                SettingsSearchBar.SearchItems = _searchItems;
+                if (MainContent.Content == null)
+                {
                     if (NavListBox.Items.Count > 0)
                     {
                         NavListBox.SelectedIndex = 0;
@@ -80,12 +88,6 @@ namespace TabPaint
             _conflictToastTimer.Interval = TimeSpan.FromSeconds(2.5);
             _conflictToastTimer.Tick += (s, args) => HideConflictToast();
 
-            _searchFocusTimer = new DispatcherTimer();
-            _searchFocusTimer.Interval = TimeSpan.FromMilliseconds(150);
-            _searchFocusTimer.Tick += SearchFocusTimer_Tick;
-
-            _searchItems = BuildSearchItems();
-            UpdatePlaceholderVisibility();
         }
         public void ShowConflictToast(string featureName)
         {
@@ -170,7 +172,7 @@ namespace TabPaint
         {
             if (!string.IsNullOrEmpty(_latestVersionUrl))
             {
-                try {  Process.Start(new ProcessStartInfo(_latestVersionUrl) { UseShellExecute = true });}catch { }
+                try { Process.Start(new ProcessStartInfo(_latestVersionUrl) { UseShellExecute = true }); } catch { }
             }
             HideUpdateToast();
         }
@@ -188,7 +190,7 @@ namespace TabPaint
         {
             await CheckForUpdatesAsync(isManual: true);
         }
-        
+
         private async Task CheckForUpdatesAsync(bool isManual)
         {
             try
@@ -273,10 +275,10 @@ namespace TabPaint
 
                 trans.BeginAnimation(TranslateTransform.XProperty, slideOut);
             }
-            else  element.Visibility = Visibility.Collapsed;
+            else element.Visibility = Visibility.Collapsed;
         }
-        
-       
+
+
         private bool IsNewerVersion(string currentRaw, string latestRaw)
         {
             try
@@ -286,12 +288,12 @@ namespace TabPaint
 
                 return latest > current;
             }
-            catch {  return false; }
+            catch { return false; }
         }
         private void SettingsWindow_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            if (e.NewSize.Width < 750 && _isNavExpanded)   SetSidebarState(false);
-            else if (e.NewSize.Width >= 750 && !_isNavExpanded)  SetSidebarState(true);
+            if (e.NewSize.Width < 750 && _isNavExpanded) SetSidebarState(false);
+            else if (e.NewSize.Width >= 750 && !_isNavExpanded) SetSidebarState(true);
         }
         private void SetSidebarState(bool expand)
         {
@@ -324,7 +326,7 @@ namespace TabPaint
         {
             base.OnSourceInitialized(e);
             var hwnd = new WindowInteropHelper(this).Handle;
-            if (hwnd == IntPtr.Zero)return;
+            if (hwnd == IntPtr.Zero) return;
             bool isDark = ThemeManager.CurrentAppliedTheme == AppTheme.Dark;
             ThemeManager.SetWindowImmersiveDarkMode(this, isDark);
 
@@ -339,129 +341,26 @@ namespace TabPaint
         {
         }
 
-        #region Search Logic
-
-        private void OpenSearchCommand_Executed(object sender, ExecutedRoutedEventArgs e)
-        {
-            SearchBox?.Focus();
-            if (!string.IsNullOrEmpty(SearchBox?.Text))
-            {
-                SearchBox.SelectAll();
-            }
-        }
-
-        private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            UpdatePlaceholderVisibility();
-            UpdateSearchResults();
-        }
-
-        private void SearchBox_GotFocus(object sender, RoutedEventArgs e)
-        {
-            UpdatePlaceholderVisibility();
-            if (!string.IsNullOrEmpty(SearchBox.Text))
-            {
-                UpdateSearchResults();
-            }
-        }
-
-        private void SearchBox_LostFocus(object sender, RoutedEventArgs e)
-        {
-            UpdatePlaceholderVisibility();
-            _searchFocusTimer.Start();
-        }
-
-        private void SearchFocusTimer_Tick(object sender, EventArgs e)
-        {
-            _searchFocusTimer.Stop();
-            SearchPopup.IsOpen = false;
-        }
-
-        private void SearchBox_PreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Escape)
-            {
-                if (SearchPopup.IsOpen)
-                {
-                    SearchPopup.IsOpen = false;
-                   
-                }
-              //  FluentMessageBox.Show("2");
-                Keyboard.ClearFocus();
-                this.Focus(); 
-                e.Handled = true;
-            }
-            else if (e.Key == Key.Enter)
-            {
-                if (SearchPopup.IsOpen && SearchResultList.Items.Count > 0)
-                {
-                    if (SearchResultList.SelectedItem is SearchItem item)
-                    {
-                        NavigateToSearchItem(item);
-                    }
-                    else
-                    {
-                        SearchResultList.SelectedIndex = 0;
-                        if (SearchResultList.SelectedItem is SearchItem first)
-                            NavigateToSearchItem(first);
-                    }
-                    e.Handled = true;
-                }
-            }
-            else if (e.Key == Key.Down)
-            {
-                if (SearchPopup.IsOpen && SearchResultList.Items.Count > 0)
-                {
-                    int idx = SearchResultList.SelectedIndex;
-                    if (idx < SearchResultList.Items.Count - 1)
-                    {
-                        SearchResultList.SelectedIndex = idx + 1;
-                        if (SearchResultList.SelectedItem != null)
-                            SearchResultList.ScrollIntoView(SearchResultList.SelectedItem);
-                    }
-                    e.Handled = true;
-                }
-            }
-            else if (e.Key == Key.Up)
-            {
-                if (SearchPopup.IsOpen && SearchResultList.Items.Count > 0)
-                {
-                    int idx = SearchResultList.SelectedIndex;
-                    if (idx > 0)
-                    {
-                        SearchResultList.SelectedIndex = idx - 1;
-                        if (SearchResultList.SelectedItem != null)
-                            SearchResultList.ScrollIntoView(SearchResultList.SelectedItem);
-                    }
-                    e.Handled = true;
-                }
-            }
-        }
-
-        private void UpdatePlaceholderVisibility()
-        {
-            if (SearchBox == null) return;
-            var template = SearchBox.Template;
-            if (template == null) return;
-            var grid = template.FindName("PlaceholderGrid", SearchBox) as UIElement;
-            if (grid != null)
-                grid.Visibility = string.IsNullOrEmpty(SearchBox.Text) ? Visibility.Visible : Visibility.Collapsed;
-        }
+        private static ResourceDictionary _cachedEnResources;
 
         private static string GetEnglishString(string key)
         {
             try
             {
-                var enResources = new ResourceDictionary
+                if (_cachedEnResources == null)
                 {
-                    Source = new Uri("pack://application:,,,/Resources/Lang.en-US.xaml", UriKind.Absolute)
-                };
-                if (enResources.Contains(key))
-                    return enResources[key] as string ?? key;
+                    _cachedEnResources = new ResourceDictionary
+                    {
+                        Source = new Uri("pack://application:,,,/Resources/Lang.en-US.xaml", UriKind.Absolute)
+                    };
+                }
+                if (_cachedEnResources.Contains(key))
+                    return _cachedEnResources[key] as string ?? key;
             }
             catch { }
             return key;
         }
+
 
         private List<SearchItem> BuildSearchItems()
         {
@@ -531,6 +430,79 @@ namespace TabPaint
             return items;
         }
 
+        private void EnsureSearchItemsBuilt()
+        {
+            if (_searchItemsBuilt) return;
+            _searchItems = LoadCachedSearchItems();
+            if (_searchItems == null)
+            {
+                _searchItems = BuildSearchItems();
+                SaveSearchCache(_searchItems);
+            }
+            _searchItemsBuilt = true;
+        }
+
+        private List<SearchItem> LoadCachedSearchItems()
+        {
+            try
+            {
+                if (!File.Exists(SearchCachePath)) return null;
+                string json = File.ReadAllText(SearchCachePath);
+                var data = JsonSerializer.Deserialize<SearchItemCacheData>(json);
+                if (data == null || data.Version != SearchCacheVersion) return null;
+                string currentVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "";
+                if (data.AppVersion != currentVersion) return null;
+                return data.Items.Select(dto => new SearchItem(
+                    dto.Tag, dto.ParentTag, dto.DisplayName, dto.EnglishName,
+                    dto.IconKey)).ToList();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private void SaveSearchCache(List<SearchItem> items)
+        {
+            try
+            {
+                string dir = Path.GetDirectoryName(SearchCachePath);
+                if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+                var data = new SearchItemCacheData
+                {
+                    Version = SearchCacheVersion,
+                    AppVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "",
+                    Items = items.Select(i => new SearchItemDto
+                    {
+                        Tag = i.Tag,
+                        ParentTag = i.ParentTag,
+                        DisplayName = i.DisplayName,
+                        EnglishName = i.EnglishName,
+                        IconKey = i.IconKey
+                    }).ToList()
+                };
+                string json = JsonSerializer.Serialize(data);
+                File.WriteAllText(SearchCachePath, json);
+            }
+            catch { }
+        }
+
+        private class SearchItemCacheData
+        {
+            public int Version { get; set; }
+            public string AppVersion { get; set; }
+            public List<SearchItemDto> Items { get; set; }
+        }
+
+        private class SearchItemDto
+        {
+            public string Tag { get; set; }
+            public string ParentTag { get; set; }
+            public string DisplayName { get; set; }
+            public string EnglishName { get; set; }
+            public string IconKey { get; set; }
+            }
+
         private void AddSettingsToSearch(List<SearchItem> items, string parentTag, string iconKey,
             params (string Key, string SubTag)[] settings)
         {
@@ -542,52 +514,32 @@ namespace TabPaint
             }
         }
 
-        private void UpdateSearchResults()
+        private void OnSearchBarItemSelected(object sender, RoutedEventArgs e)
         {
-            string query = SearchBox.Text?.Trim() ?? "";
-            if (string.IsNullOrEmpty(query))
+            if (e.OriginalSource is SearchItem item)
             {
-                SearchPopup.IsOpen = false;
-                return;
-            }
+                string navTag = item.ParentTag ?? item.Tag;
+                bool success = NavigateToTag(navTag);
+                if (success)
+                {
+                    HighlightNavItem(navTag);
+                }
 
-            var results = FuzzyMatcher.Match(_searchItems, query, maxResults: 6);
-
-            const double minScore = 0.15;
-            var filtered = results
-                .Where(r => r.Score >= minScore)
-                .Select(r => r.Item)
-                .ToList();
-
-            SearchResultList.ItemsSource = filtered;
-            SearchResultList.SelectedIndex = -1;
-            SearchPopup.IsOpen = filtered.Count > 0;
-        }
-
-        private void SearchResultList_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-        }
-
-        private void SearchResultList_PreviewMouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            var listBox = sender as ListBox;
-            if (listBox?.SelectedItem is SearchItem item)
-            {
-                NavigateToSearchItem(item);
-            }
-        }
-
-        private void NavigateToSearchItem(SearchItem item)
-        {
-            SearchPopup.IsOpen = false;
-            SearchBox.Text = "";
-            Keyboard.ClearFocus();
-
-            string navTag = item.ParentTag ?? item.Tag;
-            bool success = NavigateToTag(navTag);
-            if (success)
-            {
-                HighlightNavItem(navTag);
+                if (!string.IsNullOrEmpty(item.Tag))
+                {
+                    string targetName = item.Tag + "Setting";
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        var page = MainContent.Content as UserControl;
+                        if (page == null) return;
+                        var target = page.FindName(targetName) as FrameworkElement;
+                        if (target != null)
+                        {
+                            target.BringIntoView();
+                            FlashElement(target);
+                        }
+                    }), DispatcherPriority.Loaded);
+                }
             }
         }
 
@@ -596,7 +548,7 @@ namespace TabPaint
             var navItem = FindNavItemByTag(tag);
             if (navItem == null) return;
 
-            var accentBrush = TryFindResource("ThemeAccentBrush") as SolidColorBrush;
+            var accentBrush = TryFindResource("SystemAccentPressedBrush") as SolidColorBrush;
             if (accentBrush == null) return;
 
             var animBrush = new SolidColorBrush(accentBrush.Color);
@@ -616,7 +568,28 @@ namespace TabPaint
             animBrush.BeginAnimation(SolidColorBrush.ColorProperty, colorAnim);
         }
 
-        #endregion
+        private void FlashElement(FrameworkElement target)
+        {
+            var accentBrush = TryFindResource("SystemAccentPressedBrush") as SolidColorBrush;
+            if (accentBrush == null) return;
+
+            var originalBg = target.GetValue(Panel.BackgroundProperty);
+            var flashBrush = new SolidColorBrush(accentBrush.Color) { Opacity = 0.3 };
+            target.SetValue(Panel.BackgroundProperty, flashBrush);
+
+            var colorAnim = new ColorAnimation
+            {
+                To = Colors.Transparent,
+                Duration = TimeSpan.FromMilliseconds(1500),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            colorAnim.Completed += (_, __) =>
+            {
+                target.SetValue(Panel.BackgroundProperty, originalBg);
+            };
+
+            flashBrush.BeginAnimation(SolidColorBrush.ColorProperty, colorAnim);
+        }
 
         #region Navigation & Window Logic
 
@@ -648,7 +621,7 @@ namespace TabPaint
             if (source == null || source.SelectedIndex == -1) return;
 
             _isInternalChange = true;
-            if (source == NavListBox)  BottomListBox.SelectedIndex = -1; // 处理两个 ListBox 的互斥选中逻辑
+            if (source == NavListBox) BottomListBox.SelectedIndex = -1; // 处理两个 ListBox 的互斥选中逻辑
             else NavListBox.SelectedIndex = -1;
             string tag = "";
             if (source.SelectedItem is ListBoxItem item && item.Tag != null) tag = item.Tag.ToString();
@@ -693,7 +666,7 @@ namespace TabPaint
                     default:
                         break;
                 }
-                if (page != null)  _pages[tag] = page;
+                if (page != null) _pages[tag] = page;
             }
             else page = _pages[tag];
             if (page != null)
@@ -705,10 +678,10 @@ namespace TabPaint
         private void AnimatePageTransition(UserControl newPage)
         {
             var oldPage = MainContent.Content as UIElement;
-            
+
             // 如果目标页面已经是当前页面，跳过动画
             if (oldPage == newPage) return;
-            
+
             // 新页面初始状态：透明，向右偏移30，轻微放大1.05
             newPage.Opacity = 0;
             var newPageTransform = new TranslateTransform(30, 0);
@@ -717,24 +690,24 @@ namespace TabPaint
             {
                 Children = new TransformCollection { newPageTransform, newPageScale }
             };
-            
+
             // 先显示新页面
             MainContent.Content = newPage;
-            
+
             const int durationMs = 70;
             var duration = TimeSpan.FromMilliseconds(durationMs);
             var easeOut = new CubicEase { EasingMode = EasingMode.EaseOut };
-            
+
             // 新页面进入动画：从右侧滑入，淡入，缩放
             var fadeIn = new DoubleAnimation(1, duration) { EasingFunction = easeOut };
             var slideIn = new DoubleAnimation(0, duration) { EasingFunction = easeOut };
             var scaleIn = new DoubleAnimation(1, duration) { EasingFunction = easeOut };
-            
+
             newPage.BeginAnimation(UIElement.OpacityProperty, fadeIn);
             newPageTransform.BeginAnimation(TranslateTransform.XProperty, slideIn);
             newPageScale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleIn);
             newPageScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleIn);
-            
+
             // 旧页面退出动画：左移，淡出，缩小
             if (oldPage != null)
             {
@@ -744,14 +717,14 @@ namespace TabPaint
                     oldTransform = new TranslateTransform(0, 0);
                     oldPage.RenderTransform = oldTransform;
                 }
-                
+
                 var fadeOut = new DoubleAnimation(0, duration);
                 var slideOut = new DoubleAnimation(-30, duration);
                 var scaleOut = new DoubleAnimation(0.95, duration);
-                
+
                 oldPage.BeginAnimation(UIElement.OpacityProperty, fadeOut);
                 oldTransform.BeginAnimation(TranslateTransform.XProperty, slideOut);
-                
+
                 var oldScale = oldPage.RenderTransform as ScaleTransform;
                 if (oldScale == null)
                 {
@@ -970,339 +943,5 @@ namespace TabPaint
             }
         }
         #endregion
-    }
-    public class SearchItem
-    {
-        public string Tag { get; }
-        public string ParentTag { get; }
-        public string DisplayName { get; }
-        public string EnglishName { get; }
-        public List<string> SearchTerms { get; }
-        public List<string> PinyinTerms { get; }
-        public string IconKey { get; }
-        public Geometry IconPath { get; }
-
-        public SearchItem(string tag, string displayName, string iconKey)
-            : this(tag, tag, displayName, null, iconKey) { }
-
-        public SearchItem(string tag, string parentTag, string displayName, string englishName, string iconKey)
-        {
-            Tag = tag;
-            ParentTag = parentTag ?? tag;
-            DisplayName = displayName;
-            EnglishName = englishName;
-            SearchTerms = new List<string> { displayName };
-            if (!string.IsNullOrEmpty(englishName) &&
-                !string.Equals(displayName, englishName, StringComparison.OrdinalIgnoreCase))
-            {
-                SearchTerms.Add(englishName);
-            }
-
-            PinyinTerms = new List<string>();
-            if (!string.IsNullOrEmpty(displayName))
-            {
-                string initials = SimplePinyin.GetInitials(displayName);
-                if (!string.IsNullOrEmpty(initials)) PinyinTerms.Add(initials);
-
-                string full = SimplePinyin.GetPinyin(displayName);
-                if (!string.IsNullOrEmpty(full) && full != initials) PinyinTerms.Add(full);
-            }
-
-            IconKey = iconKey;
-            IconPath = Application.Current?.TryFindResource(iconKey) as Geometry;
-        }
-    }
-    public class GridLengthAnimation : AnimationTimeline
-    {
-        public override Type TargetPropertyType => typeof(GridLength);
-        protected override Freezable CreateInstanceCore() => new GridLengthAnimation();
-
-        public GridLength From { get; set; }
-        public GridLength To { get; set; }
-        public IEasingFunction EasingFunction { get; set; }
-
-        public override object GetCurrentValue(object defaultOriginValue, object defaultDestinationValue, AnimationClock animationClock)
-        {
-            double fromVal = From.Value;
-            double toVal = To.Value;
-
-            if (fromVal > toVal)
-                return new GridLength((1 - animationClock.CurrentProgress.Value) * (fromVal - toVal) + toVal, GridUnitType.Pixel);
-            else
-                return new GridLength(animationClock.CurrentProgress.Value * (toVal - fromVal) + fromVal, GridUnitType.Pixel);
-        }
-    }
-
-    public class FuzzyMatcher
-    {
-        public static List<(SearchItem Item, double Score)> Match(
-            IEnumerable<SearchItem> candidates, string query, int maxResults = 8)
-        {
-            if (string.IsNullOrWhiteSpace(query))
-                return new List<(SearchItem, double)>();
-
-            query = query.Trim();
-            string queryLower = query.ToLowerInvariant();
-
-            var scored = new List<(SearchItem Item, double Score)>();
-
-            foreach (var item in candidates)
-            {
-                double bestScore = 0;
-
-                foreach (var term in item.SearchTerms)
-                {
-                    if (string.IsNullOrEmpty(term)) continue;
-                    string termLower = term.ToLowerInvariant();
-
-                    double score = CalculateScore(queryLower, termLower);
-                    if (score > bestScore)
-                        bestScore = score;
-                }
-
-                if (item.PinyinTerms != null)
-                {
-                    foreach (var py in item.PinyinTerms)
-                    {
-                        if (string.IsNullOrEmpty(py)) continue;
-                        double score = CalculateScore(queryLower, py.ToLowerInvariant());
-                        score *= 0.85;
-                        if (score > bestScore)
-                            bestScore = score;
-                    }
-                }
-
-                if (bestScore > 0)
-                    scored.Add((item, bestScore));
-            }
-
-            return scored
-                .OrderByDescending(x => x.Score)
-                .Take(maxResults)
-                .ToList();
-        }
-
-        private static double CalculateScore(string query, string target)
-        {
-            if (query == target)
-                return 1.0;
-
-            if (target.StartsWith(query))
-                return 0.95;
-
-            if (target.Contains(query))
-            {
-                int idx = target.IndexOf(query);
-                double positionBonus = 1.0 - (double)idx / target.Length * 0.3;
-                return 0.85 * positionBonus;
-            }
-
-            double acronymScore = AcronymMatchScore(query, target);
-            if (acronymScore > 0)
-                return 0.75 * acronymScore;
-
-            double subseqScore = SubsequenceScore(query, target);
-            if (subseqScore > 0)
-                return 0.6 * subseqScore;
-
-            double editScore = EditDistanceScore(query, target);
-            if (editScore > 0)
-                return 0.4 * editScore;
-
-            return 0;
-        }
-
-        private static double AcronymMatchScore(string query, string target)
-        {
-            var initials = new List<char>();
-            bool newWord = true;
-            for (int i = 0; i < target.Length; i++)
-            {
-                char c = target[i];
-                if (c == ' ' || c == '_' || c == '-' || c == '/')
-                {
-                    newWord = true;
-                    continue;
-                }
-                if (newWord || (i > 0 && char.IsLower(target[i - 1]) && char.IsUpper(c)))
-                {
-                    initials.Add(char.ToLowerInvariant(c));
-                    newWord = false;
-                }
-                else
-                {
-                    newWord = false;
-                }
-            }
-
-            if (initials.Count == 0) return 0;
-
-            int qi = 0;
-            for (int ii = 0; ii < initials.Count && qi < query.Length; ii++)
-            {
-                if (query[qi] == initials[ii])
-                    qi++;
-            }
-
-            if (qi == query.Length)
-                return (double)query.Length / initials.Count;
-
-            return 0;
-        }
-
-        private static double SubsequenceScore(string query, string target)
-        {
-            if (query.Length > target.Length) return 0;
-            if (query.Length == 0) return 0;
-
-            int[] matchPositions = new int[query.Length];
-            int qi = 0;
-
-            for (int ti = 0; ti < target.Length && qi < query.Length; ti++)
-            {
-                if (query[qi] == target[ti])
-                {
-                    matchPositions[qi] = ti;
-                    qi++;
-                }
-            }
-
-            if (qi < query.Length) return 0;
-
-            int span = matchPositions[query.Length - 1] - matchPositions[0] + 1;
-            double compactness = (double)query.Length / span;
-            double coverage = (double)query.Length / target.Length;
-            double positionBonus = 1.0 - (double)matchPositions[0] / target.Length * 0.5;
-
-            int consecutive = 0;
-            for (int i = 1; i < matchPositions.Length; i++)
-            {
-                if (matchPositions[i] == matchPositions[i - 1] + 1)
-                    consecutive++;
-            }
-            double continuityBonus = query.Length > 1
-                ? (double)consecutive / (query.Length - 1)
-                : 1.0;
-
-            return compactness * 0.4
-                 + coverage * 0.2
-                 + positionBonus * 0.2
-                 + continuityBonus * 0.2;
-        }
-
-        private static double EditDistanceScore(string query, string target)
-        {
-            if (query.Length <= 1) return 0;
-
-            int bestDist = int.MaxValue;
-            int windowLen = query.Length;
-            int maxAllowed = query.Length <= 3 ? 1 : (query.Length <= 6 ? 2 : 3);
-
-            for (int start = 0; start <= target.Length - windowLen; start++)
-            {
-                string window = target.Substring(start, windowLen);
-                int dist = LevenshteinDistance(query, window);
-                if (dist < bestDist)
-                    bestDist = dist;
-                if (bestDist == 0) break;
-            }
-
-            if (Math.Abs(target.Length - query.Length) <= maxAllowed)
-            {
-                int fullDist = LevenshteinDistance(query, target);
-                if (fullDist < bestDist)
-                    bestDist = fullDist;
-            }
-
-            if (bestDist > maxAllowed) return 0;
-
-            return 1.0 - (double)bestDist / Math.Max(query.Length, 1);
-        }
-
-        private static int LevenshteinDistance(string s, string t)
-        {
-            int n = s.Length, m = t.Length;
-            if (n == 0) return m;
-            if (m == 0) return n;
-
-            var prev = new int[m + 1];
-            var curr = new int[m + 1];
-
-            for (int j = 0; j <= m; j++)
-                prev[j] = j;
-
-            for (int i = 1; i <= n; i++)
-            {
-                curr[0] = i;
-                for (int j = 1; j <= m; j++)
-                {
-                    int cost = s[i - 1] == t[j - 1] ? 0 : 1;
-                    curr[j] = Math.Min(
-                        Math.Min(curr[j - 1] + 1, prev[j] + 1),
-                        prev[j - 1] + cost);
-                }
-                var temp = prev;
-                prev = curr;
-                curr = temp;
-            }
-
-            return prev[m];
-        }
-    }
-
-    public static class SimplePinyin
-    {
-        private static readonly (int Start, char Initial)[] PinyinTable = new[]
-        {
-            (0xB0A1, 'a'), (0xB0C5, 'b'), (0xB2C1, 'c'), (0xB4EE, 'd'),
-            (0xB6EA, 'e'), (0xB7A2, 'f'), (0xB8C1, 'g'), (0xB9FE, 'h'),
-            (0xBBF7, 'j'), (0xBFA6, 'k'), (0xC0AC, 'l'), (0xC2E8, 'm'),
-            (0xC4C3, 'n'), (0xC5B6, 'o'), (0xC5BE, 'p'), (0xC6DA, 'q'),
-            (0xC8BB, 'r'), (0xC8F6, 's'), (0xCBFA, 't'), (0xCDDA, 'w'),
-            (0xCEF4, 'x'), (0xD1B9, 'y'), (0xD4D1, 'z'),
-        };
-
-        public static string GetInitials(string text)
-        {
-            if (string.IsNullOrEmpty(text)) return "";
-            var sb = new System.Text.StringBuilder(text.Length);
-            foreach (char c in text)
-            {
-                if (c >= 'A' && c <= 'Z') sb.Append(char.ToLower(c));
-                else if (c >= 'a' && c <= 'z') sb.Append(c);
-                else if (c >= 0x4E00 && c <= 0x9FFF) sb.Append(GetChineseInitial(c));
-            }
-            return sb.ToString();
-        }
-
-        public static string GetPinyin(string text)
-        {
-            return GetInitials(text);
-        }
-
-        private static char GetChineseInitial(char c)
-        {
-            try
-            {
-                byte[] bytes = System.Text.Encoding.GetEncoding("GB2312").GetBytes(c.ToString());
-                if (bytes.Length < 2) return char.ToLower(c);
-                int code = bytes[0] * 256 + bytes[1];
-
-                char result = 'z';
-                for (int i = PinyinTable.Length - 1; i >= 0; i--)
-                {
-                    if (code >= PinyinTable[i].Start)
-                    {
-                        result = PinyinTable[i].Initial;
-                        break;
-                    }
-                }
-                return result;
-            }
-            catch
-            {
-                return '?';
-            }
-        }
     }
 }

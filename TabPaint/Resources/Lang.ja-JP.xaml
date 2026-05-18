@@ -877,6 +877,8 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Drag_Insert_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">現在の位置に画像を挿入</sys:String>
     <sys:String x:Key="L_Drag_InsertText_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">テキストを挿入</sys:String>
     <sys:String x:Key="L_Drag_InsertText_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">離してテキストボックスを作成</sys:String>
+    <sys:String x:Key="L_Drag_InsertNetImage_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">ネット画像を挿入</sys:String>
+    <sys:String x:Key="L_Drag_InsertNetImage_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">URLから画像をダウンロードして挿入</sys:String>
 
 
     <sys:String x:Key="L_Menu_Recent_None" xmlns:sys="clr-namespace:System;assembly=mscorlib">(最近使ったファイルはありません)</sys:String>

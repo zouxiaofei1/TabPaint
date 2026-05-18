@@ -856,6 +856,8 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Drag_Insert_Desc">在目前位置插入圖片</sys:String>
     <sys:String x:Key="L_Drag_InsertText_Title">插入文字</sys:String>
     <sys:String x:Key="L_Drag_InsertText_Desc">放開滑鼠以建立文字框</sys:String>
+    <sys:String x:Key="L_Drag_InsertNetImage_Title">插入網路圖片</sys:String>
+    <sys:String x:Key="L_Drag_InsertNetImage_Desc">從連結下載圖片並插入</sys:String>
 
     <sys:String x:Key="L_Mode_Switch_ToPaint">切換到繪圖模式</sys:String>
     <sys:String x:Key="L_Mode_Switch_ToView">切換到檢視模式</sys:String>

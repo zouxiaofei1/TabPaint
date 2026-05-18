@@ -19,7 +19,7 @@
         <TextBlock Text="{DynamicResource L_Settings_Paint_Title}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
         <TextBlock Text="{DynamicResource L_Settings_Paint_Habits_Header}" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
-        <Grid Margin="0,5">
+        <Grid x:Name="AutoPopupClipboardSetting" Margin="0,5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
@@ -38,7 +38,7 @@
         </Grid>
 
         <!-- 选区清除模式 -->
-        <Grid Margin="0,5">
+        <Grid x:Name="SelectionClearSetting" Margin="0,5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="220"/>
                 <ColumnDefinition Width="200"/>
@@ -62,7 +62,7 @@
         </Grid>
 
         <!-- OCR 结果行为 -->
-        <Grid Margin="0,5">
+        <Grid x:Name="OcrResultActionSetting" Margin="0,5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="220"/>
                 <ColumnDefinition Width="200"/>
@@ -85,7 +85,7 @@
         </Grid>
 
         <!-- 启用画图模式下的文件删除 -->
-        <Grid Margin="0,5">
+        <Grid x:Name="EnableFileDeleteSetting" Margin="0,5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
@@ -104,7 +104,7 @@
         </Grid>
 
         <!-- 专业模式 (通用) -->
-        <Grid Margin="0,5">
+        <Grid x:Name="ProfessionalModeSetting" Margin="0,5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
@@ -123,7 +123,7 @@
         </Grid>
 
         <!-- 看图模式鸟瞰图开关 -->
-        <Grid Margin="0,5">
+        <Grid x:Name="BirdEyeSetting" Margin="0,5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>

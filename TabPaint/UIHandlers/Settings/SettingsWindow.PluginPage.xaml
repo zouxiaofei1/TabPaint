@@ -254,7 +254,7 @@
                     </Grid>
                 </Border>
 
-                <Grid Margin="0,5,0,10">
+                <Grid x:Name="RmbgModelSetting" Margin="0,5,0,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="220"/>
                         <ColumnDefinition Width="213"/>
@@ -283,7 +283,7 @@
                            TextWrapping="Wrap"
                            Visibility="Collapsed"/>
 
-                <Grid Margin="0,5,0,10">
+                <Grid x:Name="ModelDirSetting" Margin="0,5,0,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="220"/>
                         <ColumnDefinition Width="153"/>
@@ -333,7 +333,7 @@
                            Margin="0,10,0,10"
                            Foreground="{DynamicResource TextPrimaryBrush}"/>
 
-                <Grid Margin="0,5,0,10">
+                <Grid x:Name="AiImageApiBaseUrlSetting" Margin="0,5,0,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="220"/>
                         <ColumnDefinition Width="213"/>
@@ -352,7 +352,7 @@
                              Text="{Binding Path=Current.AiImageApiBaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Source={x:Static local:SettingsManager.Instance}}"/>
                 </Grid>
 
-                <Grid Margin="0,5,0,10">
+                <Grid x:Name="AiImageApiKeySetting" Margin="0,5,0,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="220"/>
                         <ColumnDefinition Width="213"/>
@@ -371,7 +371,7 @@
                              Text="{Binding Path=Current.AiImageApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Source={x:Static local:SettingsManager.Instance}}"/>
                 </Grid>
 
-                <Grid Margin="0,5,0,10">
+                <Grid x:Name="AiImageModelSetting" Margin="0,5,0,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="220"/>
                         <ColumnDefinition Width="213"/>

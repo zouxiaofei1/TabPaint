@@ -887,6 +887,8 @@ SOFTWARE.</sys:String>
     <sys:String x:Key="L_Drag_Insert_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">Insert image at current position</sys:String>
     <sys:String x:Key="L_Drag_InsertText_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Insert Text</sys:String>
     <sys:String x:Key="L_Drag_InsertText_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">Release to create text box</sys:String>
+    <sys:String x:Key="L_Drag_InsertNetImage_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Insert Net Image</sys:String>
+    <sys:String x:Key="L_Drag_InsertNetImage_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">Download image from URL and insert</sys:String>
 
 
     <sys:String x:Key="L_Menu_Recent_None" xmlns:sys="clr-namespace:System;assembly=mscorlib">(No recent files)</sys:String>
