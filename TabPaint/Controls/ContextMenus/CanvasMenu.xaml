@@ -49,6 +49,15 @@ IsChecked="{Binding ShowRulers, Mode=TwoWay}">
                 <Path Data="{DynamicResource Ruler_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
             </MenuItem.Icon>
             </MenuItem>
+            <Separator Style="{StaticResource Win11MenuSeparatorStyle}"/>
+            <MenuItem Header="{DynamicResource L_Main_Ctx_EdgeSnap}"
+                                IsCheckable="True"
+                                Style="{StaticResource Win11MenuItemStyle}"
+                                Tag="EdgeSnap">
+                <MenuItem.Icon>
+                    <Path Data="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                </MenuItem.Icon>
+            </MenuItem>
         <Separator Style="{StaticResource Win11MenuSeparatorStyle}"/>
         <!-- 二级菜单：小工具 -->
             <controls:DelayedMenuItem x:Name="miniTools" 

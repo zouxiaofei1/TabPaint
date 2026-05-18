@@ -790,6 +790,23 @@ namespace TabPaint
         }
 
 
+        private void OnEdgeSnapToggle(object sender, RoutedEventArgs e)
+        {
+            if (_edgeSnapService == null) return;
+            if (sender is MenuItem mi)
+            {
+                _edgeSnapService.IsEnabled = mi.IsChecked;
+                if (_edgeSnapService.IsEnabled)
+                {
+                    ShowToast("L_Main_Ctx_EdgeSnap_Enabled");
+                }
+                else
+                {
+                    ShowToast("L_Main_Ctx_EdgeSnap_Disabled");
+                }
+            }
+        }
+
         private void ApplyAiResult(byte[] newPixels)
         {
             _undo.PushFullImageUndo();

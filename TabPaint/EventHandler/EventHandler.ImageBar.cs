@@ -107,6 +107,8 @@ namespace TabPaint
                 _dragStartPoint = e.GetPosition(null);
                 var button = sender as System.Windows.Controls.Button;
                 _mouseDownTabItem = button?.DataContext as FileTabItem;
+                _tabDragSourceButton = button;
+                _tabDragFallbackRequested = false;
             }
         }
         private string PrepareDragFilePath(FileTabItem tab)
@@ -181,6 +183,13 @@ namespace TabPaint
         }
         private void OnFileTabPreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
+            if (_isTabBarDragging)
+            {
+                UpdateTabBarDrag(e);
+                e.Handled = true;
+                return;
+            }
+
             if (e.LeftButton != MouseButtonState.Pressed) return;
             if (_mouseDownTabItem == null) return;
 
@@ -189,64 +198,335 @@ namespace TabPaint
             if (Math.Abs(diff.X) < _dragThreshold && Math.Abs(diff.Y) < _dragThreshold) return;
             try
             {
-                // 确定参与拖拽的标签集合
-                var draggingTabs = new List<FileTabItem>();
-                if (_mouseDownTabItem.IsMultiSelected)
+                BeginTabBarDrag(e);
+                e.Handled = true;
+            }
+            catch (Exception ex)
+            {
+                CancelTabBarDrag();
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_DragStartFailed_Prefix"), ex.Message), ex);
+            }
+        }
+
+        private void BeginTabBarDrag(MouseEventArgs e)
+        {
+            _draggingTabItems = GetDraggingTabs();
+            if (_draggingTabItems.Count == 0 || _mouseDownTabItem == null || _tabDragSourceButton == null) return;
+
+            SyncDraggingTabState(_draggingTabItems);
+
+            _isTabBarDragging = true;
+            _tabDragSourceItem = _mouseDownTabItem;
+            _tabDragInsertIndex = FileTabs.IndexOf(_mouseDownTabItem);
+            _tabDragPointerOffset = e.GetPosition(_tabDragSourceButton);
+
+            foreach (var tab in _draggingTabItems)
+            {
+                tab.IsDragSourceHidden = true;
+            }
+
+            if (_tabDragGhostWindow == null)
+            {
+                _tabDragGhostWindow = new UIHandlers.TabDragGhostWindow();
+            }
+
+            _tabDragGhostWindow.UpdateCompactMode(MainImageBar?.IsCompactMode == true);
+            _tabDragGhostWindow.UpdateContent(_tabDragSourceItem.Thumbnail, _tabDragSourceItem.DisplayName, _draggingTabItems.Count);
+            _tabDragGhostWindow.UpdatePosition(PointToScreen(e.GetPosition(this)), _tabDragPointerOffset);
+            if (!_tabDragGhostWindow.IsVisible)
+            {
+                _tabDragGhostWindow.Show();
+            }
+
+            Mouse.Capture(this);
+            PreviewMouseMove -= OnTabBarDragWindowMouseMove;
+            PreviewMouseMove += OnTabBarDragWindowMouseMove;
+            PreviewMouseLeftButtonUp -= OnTabBarDragWindowMouseLeftButtonUp;
+            PreviewMouseLeftButtonUp += OnTabBarDragWindowMouseLeftButtonUp;
+            LostMouseCapture -= OnTabBarDragLostMouseCapture;
+            LostMouseCapture += OnTabBarDragLostMouseCapture;
+
+            UpdateTabBarDrag(e);
+        }
+
+        private void OnTabBarDragWindowMouseMove(object sender, MouseEventArgs e)
+        {
+            if (!_isTabBarDragging) return;
+            if (e.LeftButton != MouseButtonState.Pressed)
+            {
+                CompleteTabBarDrag();
+                return;
+            }
+
+            UpdateTabBarDrag(e);
+            e.Handled = true;
+        }
+
+        private void OnTabBarDragWindowMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (!_isTabBarDragging) return;
+            CompleteTabBarDrag();
+            e.Handled = true;
+        }
+
+        private void OnTabBarDragLostMouseCapture(object sender, MouseEventArgs e)
+        {
+            if (!_isTabBarDragging) return;
+            if (_tabDragFallbackRequested) return;
+            CancelTabBarDrag();
+        }
+
+        private void UpdateTabBarDrag(MouseEventArgs e)
+        {
+            if (!_isTabBarDragging || MainImageBar == null) return;
+
+            Point windowPoint = e.GetPosition(this);
+            _tabDragGhostWindow?.UpdatePosition(PointToScreen(windowPoint), _tabDragPointerOffset);
+
+            bool insideImageBar = IsPointInsideImageBar(windowPoint);
+            if (insideImageBar)
+            {
+                _tabDragInsertIndex = GetTabInsertIndex(windowPoint);
+                UpdateInsertLineVisual(_tabDragInsertIndex);
+                return;
+            }
+
+            ClearAllTabDragFeedback();
+            if (ShouldFallbackToSystemDrag(windowPoint))
+            {
+                StartSystemTabDragFallback();
+            }
+        }
+
+        private bool IsPointInsideImageBar(Point windowPoint)
+        {
+            if (MainImageBar == null || !MainImageBar.IsLoaded) return false;
+            Point topLeft = MainImageBar.TranslatePoint(new Point(0, 0), this);
+            Rect bounds = new Rect(topLeft.X, topLeft.Y, MainImageBar.ActualWidth, MainImageBar.ActualHeight);
+            return bounds.Contains(windowPoint);
+        }
+
+        private bool ShouldFallbackToSystemDrag(Point windowPoint)
+        {
+            if (MainImageBar == null) return false;
+            Point topLeft = MainImageBar.TranslatePoint(new Point(0, 0), this);
+            Rect bounds = new Rect(topLeft.X - 24, topLeft.Y - 24, MainImageBar.ActualWidth + 48, MainImageBar.ActualHeight + 48);
+            return !bounds.Contains(windowPoint);
+        }
+
+        private int GetTabInsertIndex(Point pointRelativeToWindow)
+        {
+            if (MainImageBar?.TabList == null) return FileTabs.Count;
+
+            int fallbackIndex = FileTabs.Count;
+            for (int i = 0; i < MainImageBar.TabList.Items.Count; i++)
+            {
+                var container = MainImageBar.TabList.ItemContainerGenerator.ContainerFromIndex(i) as FrameworkElement;
+                if (container == null) continue;
+                Point itemTopLeft = container.TranslatePoint(new Point(0, 0), this);
+                Rect itemBounds = new Rect(itemTopLeft.X, itemTopLeft.Y, container.ActualWidth, container.ActualHeight);
+                fallbackIndex = i + 1;
+
+                if (pointRelativeToWindow.X < itemBounds.Left + (itemBounds.Width / 2))
                 {
-                    draggingTabs.AddRange(FileTabs.Where(t => t.IsMultiSelected));
-                }
-                if (!draggingTabs.Contains(_mouseDownTabItem))
-                {
-                    draggingTabs.Add(_mouseDownTabItem);
+                    return i;
                 }
 
-                foreach (var tab in draggingTabs)
+                if (itemBounds.Contains(pointRelativeToWindow))
                 {
-                    // 如果拖拽的是当前活跃标签，同步最新的状态到对象中 (包含像素和撤销栈)
-                    if (tab == _currentTabItem && _undo != null)
+                    return pointRelativeToWindow.X < itemBounds.Left + (itemBounds.Width / 2) ? i : i + 1;
+                }
+            }
+
+            return fallbackIndex;
+        }
+
+        private void UpdateInsertLineVisual(int insertIndex)
+        {
+            if (MainImageBar?.TabList == null) return;
+
+            ClearAllTabDragFeedback();
+
+            int targetContainerIndex = Math.Min(Math.Max(insertIndex, 0), MainImageBar.TabList.Items.Count - 1);
+            if (targetContainerIndex < 0 || MainImageBar.TabList.Items.Count == 0) return;
+
+            var container = MainImageBar.TabList.ItemContainerGenerator.ContainerFromIndex(targetContainerIndex) as FrameworkElement;
+            if (container == null) return;
+
+            var grid = container as Grid ?? GetAncestor<Grid>(container);
+            var insertLine = grid != null ? FindVisualChild<Border>(grid, "InsertLine") : null;
+            if (insertLine == null) return;
+
+            insertLine.HorizontalAlignment = insertIndex >= MainImageBar.TabList.Items.Count ? HorizontalAlignment.Right : HorizontalAlignment.Left;
+            insertLine.Visibility = Visibility.Visible;
+        }
+
+        private void ClearAllTabDragFeedback()
+        {
+            if (MainImageBar?.TabList == null) return;
+            for (int i = 0; i < MainImageBar.TabList.Items.Count; i++)
+            {
+                if (MainImageBar.TabList.ItemContainerGenerator.ContainerFromIndex(i) is FrameworkElement container)
+                {
+                    var grid = container as Grid ?? GetAncestor<Grid>(container);
+                    if (grid != null)
                     {
-                        // 1. 同步撤销栈
-                        tab.UndoStack = new List<UndoAction>(_undo.GetUndoStack());
-                        tab.RedoStack = new List<UndoAction>(_undo.GetRedoStack());
-                        tab.SavedUndoPoint = _savedUndoPoint;
-                        tab.CanvasVersion = _currentCanvasVersion;
-                        tab.LastBackedUpVersion = _lastBackedUpVersion;
-
-                        // 2. 如果有改动，同步当前画布快照
-                        if (tab.IsDirty || tab.IsNew)
-                        {
-                            var bmp = GetCurrentCanvasSnapshotSafe();
-                            if (bmp != null)
-                            {
-                                // 优先存入内存快照，用于跨窗口瞬间传递
-                                tab.MemorySnapshot = bmp;
-
-                                if (string.IsNullOrEmpty(tab.BackupPath))
-                                {
-                                    string cacheFileName = $"{tab.Id}.png";
-                                    tab.BackupPath = System.IO.Path.Combine(_cacheDir, cacheFileName);
-                                }
-                                _ = Task.Run(() =>
-                                {
-                                    try { SaveBitmapToPng(bmp, tab.BackupPath); } catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
-                                });
-
-                                tab.LastBackupTime = DateTime.Now;
-                                _lastBackedUpVersion = _currentCanvasVersion; // 标记已同步
-                            }
-                        }
+                        var insertLine = FindVisualChild<Border>(grid, "InsertLine");
+                        if (insertLine != null) insertLine.Visibility = Visibility.Collapsed;
                     }
                 }
+            }
+        }
 
+        private static T GetAncestor<T>(DependencyObject d) where T : DependencyObject
+        {
+            while (d != null)
+            {
+                if (d is T t) return t;
+                d = VisualTreeHelper.GetParent(d);
+            }
+
+            return null;
+        }
+
+        private List<FileTabItem> GetDraggingTabs()
+        {
+            var draggingTabs = new List<FileTabItem>();
+            if (_mouseDownTabItem == null) return draggingTabs;
+
+            if (_mouseDownTabItem.IsMultiSelected)
+            {
+                draggingTabs.AddRange(FileTabs.Where(t => t.IsMultiSelected));
+            }
+
+            if (!draggingTabs.Contains(_mouseDownTabItem))
+            {
+                draggingTabs.Add(_mouseDownTabItem);
+            }
+
+            return draggingTabs.Where(FileTabs.Contains).OrderBy(t => FileTabs.IndexOf(t)).ToList();
+        }
+
+        private void SyncDraggingTabState(List<FileTabItem> draggingTabs)
+        {
+            foreach (var tab in draggingTabs)
+            {
+                if (tab != _currentTabItem || _undo == null) continue;
+
+                tab.UndoStack = new List<UndoAction>(_undo.GetUndoStack());
+                tab.RedoStack = new List<UndoAction>(_undo.GetRedoStack());
+                tab.SavedUndoPoint = _savedUndoPoint;
+                tab.CanvasVersion = _currentCanvasVersion;
+                tab.LastBackedUpVersion = _lastBackedUpVersion;
+
+                if (!tab.IsDirty && !tab.IsNew) continue;
+
+                var bmp = GetCurrentCanvasSnapshotSafe();
+                if (bmp == null) continue;
+
+                tab.MemorySnapshot = bmp;
+                if (string.IsNullOrEmpty(tab.BackupPath))
+                {
+                    string cacheFileName = $"{tab.Id}.png";
+                    tab.BackupPath = System.IO.Path.Combine(_cacheDir, cacheFileName);
+                }
+
+                _ = Task.Run(() =>
+                {
+                    try { SaveBitmapToPng(bmp, tab.BackupPath); } catch (global::System.Exception ex) { global::System.Diagnostics.Debug.WriteLine(ex); }
+                });
+
+                tab.LastBackupTime = DateTime.Now;
+                _lastBackedUpVersion = _currentCanvasVersion;
+            }
+        }
+
+        private void CompleteTabBarDrag()
+        {
+            if (!_isTabBarDragging)
+            {
+                _mouseDownTabItem = null;
+                _tabDragSourceButton = null;
+                return;
+            }
+
+            int insertIndex = _tabDragInsertIndex;
+            var tabsToMove = _draggingTabItems.Where(t => FileTabs.Contains(t)).OrderBy(t => FileTabs.IndexOf(t)).ToList();
+
+            CancelTabBarDragCore(clearMouseDown: true, keepGhostWindow: true);
+
+            if (_tabDragFallbackRequested || tabsToMove.Count == 0) return;
+
+            ReorderTabsWithinWindow(tabsToMove, insertIndex);
+        }
+
+        private void CancelTabBarDrag()
+        {
+            CancelTabBarDragCore(clearMouseDown: true, keepGhostWindow: true);
+        }
+
+        private void CancelTabBarDragCore(bool clearMouseDown, bool keepGhostWindow)
+        {
+            ClearAllTabDragFeedback();
+
+            foreach (var tab in _draggingTabItems)
+            {
+                tab.IsDragSourceHidden = false;
+            }
+
+            PreviewMouseMove -= OnTabBarDragWindowMouseMove;
+            PreviewMouseLeftButtonUp -= OnTabBarDragWindowMouseLeftButtonUp;
+            LostMouseCapture -= OnTabBarDragLostMouseCapture;
+
+            if (Mouse.Captured == this)
+            {
+                Mouse.Capture(null);
+            }
+
+            if (_tabDragGhostWindow != null)
+            {
+                _tabDragGhostWindow.Hide();
+                if (!keepGhostWindow)
+                {
+                    _tabDragGhostWindow.Close();
+                    _tabDragGhostWindow = null;
+                }
+            }
+
+            _isTabBarDragging = false;
+            _draggingTabItems.Clear();
+            _tabDragSourceItem = null;
+            _tabDragInsertIndex = -1;
+            _tabDragPointerOffset = default;
+            _tabDragSourceButton = null;
+
+            if (clearMouseDown)
+            {
+                _mouseDownTabItem = null;
+            }
+        }
+
+        private void StartSystemTabDragFallback()
+        {
+            if (_tabDragFallbackRequested || _tabDragSourceItem == null) return;
+
+            var tabsToDrag = _draggingTabItems.Where(t => FileTabs.Contains(t)).OrderBy(t => FileTabs.IndexOf(t)).ToList();
+            if (tabsToDrag.Count == 0) return;
+
+            _tabDragFallbackRequested = true;
+            var sourceElement = _tabDragSourceButton as DependencyObject ?? this;
+            CancelTabBarDragCore(clearMouseDown: false, keepGhostWindow: true);
+
+            try
+            {
                 var dataObject = new System.Windows.DataObject();
-
-                dataObject.SetData("TabPaintReorderItem", _mouseDownTabItem);
-                dataObject.SetData("TabPaintReorderItems", draggingTabs);
+                dataObject.SetData("TabPaintReorderItem", _tabDragSourceItem);
+                dataObject.SetData("TabPaintReorderItems", tabsToDrag);
                 dataObject.SetData("TabPaintInternalDrag", true);
                 dataObject.SetData("TabPaintSourceWindow", this);
 
                 var fileList = new System.Collections.Specialized.StringCollection();
-                foreach (var tab in draggingTabs)
+                foreach (var tab in tabsToDrag)
                 {
                     string path = PrepareDragFilePath(tab);
                     if (!string.IsNullOrEmpty(path) && System.IO.File.Exists(path))
@@ -260,26 +540,21 @@ namespace TabPaint
                     dataObject.SetFileDropList(fileList);
                 }
 
-                // 初始化悬浮窗
                 if (_dropZone == null)
                 {
                     _dropZone = new UIHandlers.DropZoneWindow();
                     _dropZone.TabDropped += OnDropZoneTabDropped;
                 }
+
                 _dropZone.ShowAtBottom();
-
-                DragDrop.DoDragDrop((DependencyObject)sender, dataObject, DragDropEffects.Copy | DragDropEffects.Move);
-
-                // 拖拽结束，隐藏悬浮窗
-                if (_dropZone != null) _dropZone.Hide();
-
-                e.Handled = true;
-                _mouseDownTabItem = null;
+                DragDrop.DoDragDrop(sourceElement, dataObject, DragDropEffects.Copy | DragDropEffects.Move);
             }
-            catch (Exception ex)
+            finally
             {
-                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_DragStartFailed_Prefix"), ex.Message),ex);
                 if (_dropZone != null) _dropZone.Hide();
+                _mouseDownTabItem = null;
+                _tabDragSourceItem = null;
+                _tabDragFallbackRequested = false;
             }
         }
 
@@ -427,6 +702,45 @@ namespace TabPaint
                 var leftLine = FindVisualChild<Border>(grid, "InsertLine");
                 if (leftLine != null) leftLine.Visibility = Visibility.Collapsed;
             }
+        }
+
+        private void ReorderTabsWithinWindow(List<FileTabItem> sourceTabs, int targetUIIndex)
+        {
+            FileTabItem targetItemAtPosition = targetUIIndex < FileTabs.Count ? FileTabs[targetUIIndex] : null;
+            var tabsToMove = sourceTabs.Where(t => FileTabs.Contains(t)).OrderBy(t => FileTabs.IndexOf(t)).ToList();
+            if (tabsToMove.Count == 0) return;
+
+            foreach (var t in tabsToMove)
+            {
+                FileTabs.Remove(t);
+                if (!string.IsNullOrEmpty(t.FilePath)) _imageFiles.Remove(t.FilePath);
+            }
+
+            int finalInsertIdx = targetItemAtPosition != null ? FileTabs.IndexOf(targetItemAtPosition) : FileTabs.Count;
+            if (finalInsertIdx < 0) finalInsertIdx = FileTabs.Count;
+
+            for (int i = 0; i < tabsToMove.Count; i++)
+            {
+                var t = tabsToMove[i];
+                FileTabs.Insert(finalInsertIdx + i, t);
+
+                if (!string.IsNullOrEmpty(t.FilePath))
+                {
+                    int fileInsertIdx = 0;
+                    if (finalInsertIdx + i > 0)
+                    {
+                        var prevTab = FileTabs[finalInsertIdx + i - 1];
+                        fileInsertIdx = _imageFiles.FindIndex(f => string.Equals(f, prevTab.FilePath, StringComparison.OrdinalIgnoreCase)) + 1;
+                    }
+                    if (fileInsertIdx < 0) fileInsertIdx = _imageFiles.Count;
+                    _imageFiles.Insert(fileInsertIdx, t.FilePath);
+                }
+            }
+
+            ImageFilesCount = _imageFiles.Count;
+            if (_currentTabItem != null) _currentImageIndex = _imageFiles.FindIndex(f => string.Equals(f, _currentTabItem.FilePath, StringComparison.OrdinalIgnoreCase));
+            UpdateWindowTitle();
+            UpdateImageBarSliderState();
         }
         private async void OnFileTabDrop(object sender, System.Windows.DragEventArgs e)
         {

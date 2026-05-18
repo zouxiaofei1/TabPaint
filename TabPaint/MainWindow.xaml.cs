@@ -227,6 +227,8 @@ namespace TabPaint
             };
 
             QuickFormatPopup.FormatSelected += OnQuickFormatSelected;
+
+            _edgeSnapService = new EdgeSnapService(this);
         }
 
         private void OnTitleBarRightClick(object sender, RoutedEventArgs e)
@@ -1509,6 +1511,7 @@ namespace TabPaint
                             case "AddBorder": menuItem.Click += OnAddBorderClick; break;
                             case "AiUpscale": menuItem.Click += OnAiUpscaleClick; break;
                             case "AiOcr": menuItem.Click += OnAiOcrClick; break;
+                            case "EdgeSnap": menuItem.Click += OnEdgeSnapToggle; break;
                         }
                     }
                 }
@@ -1817,6 +1820,14 @@ namespace TabPaint
                 Point rootPos = CanvasWrapper.TranslatePoint(p1, (UIElement)this.Content);
                 Point rootPosEnd = CanvasWrapper.TranslatePoint(p2, (UIElement)this.Content);
 
+                // 计算 ScrollViewer 视口在 content 坐标系中的边界
+                Point svTL = ScrollContainer.TranslatePoint(new Point(0, 0), (UIElement)this.Content);
+                Point svBR = ScrollContainer.TranslatePoint(new Point(ScrollContainer.ViewportWidth, ScrollContainer.ViewportHeight), (UIElement)this.Content);
+                double svLeft = svTL.X;
+                double svTop = svTL.Y;
+                double svRight = svBR.X;
+                double svBottom = svBR.Y;
+
                 double selTop = rootPos.Y;
                 double selLeft = rootPos.X;
                 double selWidth = rootPosEnd.X - rootPos.X;
@@ -1826,13 +1837,26 @@ namespace TabPaint
                 double top = selTop - toolbarHeight - 10;
                 double left = selLeft + (selWidth - toolbarWidth) / 2;
 
-                if (top < 40) top = rootPosEnd.Y + 10;
-                if (top + toolbarHeight > this.ActualHeight - 20) top = this.ActualHeight - toolbarHeight - 20;
-
-                if (left < 10) left = 10;
-                if (left + toolbarWidth > this.ActualWidth - 10) left = this.ActualWidth - toolbarWidth - 10;
+                // 限制在 ScrollViewer 视口内
+                if (top < svTop + 5) top = rootPosEnd.Y + 10;
+                if (top + toolbarHeight > svBottom - 5) top = svBottom - toolbarHeight - 5;
+                if (left < svLeft + 5) left = svLeft + 5;
+                if (left + toolbarWidth > svRight - 5) left = svRight - toolbarWidth - 5;
                 holder.Margin = new Thickness(left, top, 0, 0);
-                holder.Visibility = Visibility.Visible;
+                // 裁切超出视口的部分
+                double toolClipX = Math.Max(0, svLeft - left);
+                double toolClipY = Math.Max(0, svTop - top);
+                double toolClipW = Math.Min(left + toolbarWidth, svRight) - Math.Max(left, svLeft);
+                double toolClipH = Math.Min(top + toolbarHeight, svBottom) - Math.Max(top, svTop);
+                if (toolClipW > 0 && toolClipH > 0)
+                {
+                    holder.Clip = new RectangleGeometry(new Rect(toolClipX, toolClipY, toolClipW, toolClipH));
+                    holder.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    holder.Visibility = Visibility.Collapsed;
+                }
 
                 // 旋转控制面板跟随
                 if (rotateHolder != null && _selectionRotatePopup != null && _selectionRotatePopup.Visibility == Visibility.Visible)
@@ -1848,7 +1872,9 @@ namespace TabPaint
                     }
 
                     double rLeft = selLeft + (selWidth - rotateWidth) / 2;
-                    if (rTop + rotateHeight > this.ActualHeight - 20)
+
+                    // 限制在 ScrollViewer 视口内
+                    if (rTop + rotateHeight > svBottom - 5)
                     {
                         if (top < selTop) // 工具栏在上方
                         {
@@ -1859,12 +1885,26 @@ namespace TabPaint
                             rTop = selTop - rotateHeight - 10; // 放在选区上方
                         }
                     }
+                    if (rTop < svTop + 5) rTop = svTop + 5;
 
-                    if (rLeft < 10) rLeft = 10;
-                    if (rLeft + rotateWidth > this.ActualWidth - 10) rLeft = this.ActualWidth - rotateWidth - 10;
+                    if (rLeft < svLeft + 5) rLeft = svLeft + 5;
+                    if (rLeft + rotateWidth > svRight - 5) rLeft = svRight - rotateWidth - 5;
 
                     rotateHolder.Margin = new Thickness(rLeft, rTop, 0, 0);
-                    rotateHolder.Visibility = Visibility.Visible;
+                    // 裁切超出视口的部分
+                    double rotClipX = Math.Max(0, svLeft - rLeft);
+                    double rotClipY = Math.Max(0, svTop - rTop);
+                    double rotClipW = Math.Min(rLeft + rotateWidth, svRight) - Math.Max(rLeft, svLeft);
+                    double rotClipH = Math.Min(rTop + rotateHeight, svBottom) - Math.Max(rTop, svTop);
+                    if (rotClipW > 0 && rotClipH > 0)
+                    {
+                        rotateHolder.Clip = new RectangleGeometry(new Rect(rotClipX, rotClipY, rotClipW, rotClipH));
+                        rotateHolder.Visibility = Visibility.Visible;
+                    }
+                    else
+                    {
+                        rotateHolder.Visibility = Visibility.Collapsed;
+                    }
                 }
                 else if (rotateHolder != null)
                 {

@@ -25,6 +25,8 @@
     <sys:String x:Key="L_Settings_DevTools_Title">開發者工具</sys:String>
     <sys:String x:Key="L_Settings_DevTools_UseWin10StyleOnWin11_Title">在 Windows 11 上使用 Windows 10 樣式</sys:String>
     <sys:String x:Key="L_Settings_DevTools_UseWin10StyleOnWin11_Desc">禁用 Mica/Acrylic 效果，改用桌面背景採樣和噪點疊加（Win10 視覺體驗）。</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_AnimationSpeed_Title">動畫時長倍數</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_AnimationSpeed_Desc">將動畫時長乘以該倍數（0x-4x）。重啟後生效。</sys:String>
     <!-- 插件面板 -->
     <sys:String x:Key="L_Settings_Plugins_Title">外掛與 AI 模型</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Desc">管理 AI 模型和選用元件。</sys:String>
@@ -271,6 +273,9 @@
     <sys:String x:Key="L_Main_Ctx_Rotate">自由旋轉</sys:String>
     <sys:String x:Key="L_Main_Ctx_AddBorder">一鍵加邊框</sys:String>
     <sys:String x:Key="L_Main_Ctx_AI_SuperRes">4x 超解析度</sys:String>
+    <sys:String x:Key="L_Main_Ctx_EdgeSnap">視窗磁吸至邊緣</sys:String>
+    <sys:String x:Key="L_Main_Ctx_EdgeSnap_Enabled">視窗磁吸已開啟，拖曳到螢幕邊緣自動吸附</sys:String>
+    <sys:String x:Key="L_Main_Ctx_EdgeSnap_Disabled">視窗磁吸已關閉</sys:String>
     <sys:String x:Key="L_BirdEye_Ctx_Hide">關閉鳥瞰圖</sys:String>
 
     <sys:String x:Key="L_Main_Unit_Pixel">像素</sys:String>

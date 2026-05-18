@@ -212,6 +212,7 @@ namespace TabPaint
                 double scrollAmount = -e.Delta * AppConsts.WheelScrollFactor;
                 ScrollContainer.ScrollToVerticalOffset(ScrollContainer.VerticalOffset + scrollAmount);
             }
+
         }
 
         private void OnManipulationStarting(object sender, ManipulationStartingEventArgs e)

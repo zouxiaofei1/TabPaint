@@ -17,7 +17,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using static TabPaint.MainWindow;
-
+using TabPaint.Services;
 
 namespace TabPaint
 {
@@ -70,6 +70,7 @@ namespace TabPaint
         public ToolContext _ctx;
         public InputRouter _router;
         public ToolRegistry _tools;
+        public EdgeSnapService _edgeSnapService;
         public double zoomscale = 1;
         private byte[]? _preDrawSnapshot = null;
 
@@ -272,6 +273,14 @@ namespace TabPaint
         private Rect _restoreBounds;
         private string _currentFilePath = string.Empty;
         private Point _dragStartPoint;
+        private bool _isTabBarDragging = false;
+        private Point _tabDragPointerOffset;
+        private FileTabItem _tabDragSourceItem;
+        private List<FileTabItem> _draggingTabItems = new List<FileTabItem>();
+        private Button _tabDragSourceButton;
+        private UIHandlers.TabDragGhostWindow _tabDragGhostWindow;
+        private int _tabDragInsertIndex = -1;
+        private bool _tabDragFallbackRequested = false;
         private bool _draggingFromMaximized = false;
         private bool _isWindowViewDragging = false;
         private Point _viewDragMouseStartScreen;

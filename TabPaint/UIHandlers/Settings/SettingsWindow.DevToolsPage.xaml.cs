@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -280,6 +281,29 @@ namespace TabPaint.Pages
                 unitIndex++;
             }
             return $"{size:F2} {units[unitIndex]} ({bytes} bytes)";
+        }
+
+        private void NumberValidationTextBox(object sender, System.Windows.Input.TextCompositionEventArgs e)
+        {
+            Regex regex = new Regex("[^0-9.]+");
+            e.Handled = regex.IsMatch(e.Text);
+        }
+
+        private void TextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is TextBox textBox)
+            {
+                if (double.TryParse(textBox.Text, out double value))
+                {
+                    if (value < 0) value = 0;
+                    if (value > 4) value = 4;
+                    textBox.Text = value.ToString("0.0");
+                }
+                else
+                {
+                    textBox.Text = "1.0";
+                }
+            }
         }
     }
 }

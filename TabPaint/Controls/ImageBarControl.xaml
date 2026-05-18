@@ -380,10 +380,16 @@
                                                 <Setter Property="Width" Value="{Binding CurrentTabWidth, ElementName=RootControl}"/>
                                                 <Setter Property="Height" Value="80"/>
                                                 <Setter Property="ToolTip" Value="{Binding FileName}"/>
+                                                <Setter Property="Opacity" Value="1"/>
+                                                <Setter Property="IsHitTestVisible" Value="True"/>
                                                 <Style.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter Property="Background" Value="{DynamicResource ListItemHoverBrush}"/>
                                                     </Trigger>
+                                                    <DataTrigger Binding="{Binding IsDragSourceHidden}" Value="True">
+                                                        <Setter Property="Opacity" Value="0"/>
+                                                        <Setter Property="IsHitTestVisible" Value="False"/>
+                                                    </DataTrigger>
                                                     <DataTrigger Binding="{Binding IsMultiSelected}" Value="True">
                                                         <Setter Property="Background" Value="{DynamicResource ListItemSelectedBackgroundBrush}"/>
                                                     </DataTrigger>
@@ -400,8 +406,8 @@
                                             </Style>
                                         </Button.Style>
                                     </Button>
-                                    <Border x:Name="InsertLine" Width="1" HorizontalAlignment="Left" VerticalAlignment="Stretch" 
-                                            Background="{DynamicResource BorderBrush}" Visibility="Collapsed" IsHitTestVisible="False" Margin="0,5,0,5" Padding="0,0,2,0" CornerRadius="2"/>
+                                    <Border x:Name="InsertLine" Width="3" HorizontalAlignment="Left" VerticalAlignment="Stretch" 
+                                            Background="{DynamicResource ToolAccentBrush}" Visibility="Collapsed" IsHitTestVisible="False" Margin="0,6,0,6" Padding="0,0,2,0" CornerRadius="2" Opacity="0.95"/>
 
                                 </Grid>
 

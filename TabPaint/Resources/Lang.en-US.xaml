@@ -242,6 +242,8 @@
     <sys:String x:Key="L_Settings_DevTools_Title">Developer Tools</sys:String>
     <sys:String x:Key="L_Settings_DevTools_UseWin10StyleOnWin11_Title">Use Windows 10 Style on Windows 11</sys:String>
     <sys:String x:Key="L_Settings_DevTools_UseWin10StyleOnWin11_Desc">Disable Mica/Acrylic effects and use desktop backdrop sampling with noise overlay instead (Windows 10 visual experience).</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_AnimationSpeed_Title">Animation Speed Multiplier</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_AnimationSpeed_Desc">Multiply animation durations by this factor (0x-4x). Only effective after restart.</sys:String>
     <sys:String x:Key="L_Settings_DevTools_Hash_Title">File Hash / MD5</sys:String>
     <sys:String x:Key="L_Settings_DevTools_Hash_Desc">Drag and drop files here to view MD5 and SHA256 hashes.</sys:String>
     <sys:String x:Key="L_Settings_ResetShortcuts">Reset shortcuts to default</sys:String>
@@ -336,6 +338,9 @@
     <sys:String x:Key="L_Main_Ctx_ScreenPicker">Screen color picker</sys:String>
     <sys:String x:Key="L_Main_Ctx_CopyHex">Copy color code (#HEX)</sys:String>
     <sys:String x:Key="L_Main_Ctx_AutoCrop">Auto crop blank edges</sys:String>
+    <sys:String x:Key="L_Main_Ctx_EdgeSnap">Snap to edge</sys:String>
+    <sys:String x:Key="L_Main_Ctx_EdgeSnap_Enabled">Edge snap enabled. Drag to screen edge to snap</sys:String>
+    <sys:String x:Key="L_Main_Ctx_EdgeSnap_Disabled">Edge snap disabled</sys:String>
 
     <sys:String x:Key="L_Main_Unit_Pixel">px</sys:String>
     <sys:String x:Key="L_Main_Toast_Info">Info</sys:String>

@@ -133,6 +133,13 @@ namespace TabPaint
                 set { _isLoading = value; OnPropertyChanged(nameof(IsLoading)); }
             }
 
+            private bool _isDragSourceHidden;
+            public bool IsDragSourceHidden
+            {
+                get => _isDragSourceHidden;
+                set { _isDragSourceHidden = value; OnPropertyChanged(nameof(IsDragSourceHidden)); }
+            }
+
             private bool _isDirty;
             public bool IsDirty
             {

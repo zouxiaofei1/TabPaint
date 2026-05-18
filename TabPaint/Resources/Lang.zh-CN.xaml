@@ -29,6 +29,8 @@
     <sys:String x:Key="L_Settings_DevTools_Title">开发者工具</sys:String>
     <sys:String x:Key="L_Settings_DevTools_UseWin10StyleOnWin11_Title">使用 Windows 10 样式</sys:String>
     <sys:String x:Key="L_Settings_DevTools_UseWin10StyleOnWin11_Desc">改用桌面背景采样和噪点叠加</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_AnimationSpeed_Title">动画时长倍数</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_AnimationSpeed_Desc">将动画时长乘以该倍数（0x-4x）。重启后生效。</sys:String>
     <!-- 插件面板 -->
     <sys:String x:Key="L_Settings_Plugins_Title">插件与 AI 模型</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Desc">管理 AI 模型和可选组件。</sys:String>
@@ -276,6 +278,9 @@
     <sys:String x:Key="L_Main_Ctx_Rotate">自由旋转</sys:String>
     <sys:String x:Key="L_Main_Ctx_AddBorder">一键加边框</sys:String>
     <sys:String x:Key="L_Main_Ctx_AI_SuperRes">4x超分辨率</sys:String>
+    <sys:String x:Key="L_Main_Ctx_EdgeSnap">窗口磁吸至边缘</sys:String>
+    <sys:String x:Key="L_Main_Ctx_EdgeSnap_Enabled">窗口磁吸已开启，拖拽到屏幕边缘自动吸附</sys:String>
+    <sys:String x:Key="L_Main_Ctx_EdgeSnap_Disabled">窗口磁吸已关闭</sys:String>
     <sys:String x:Key="L_BirdEye_Ctx_Hide">关闭鸟瞰图</sys:String>
 
     <sys:String x:Key="L_Main_Unit_Pixel">像素</sys:String>

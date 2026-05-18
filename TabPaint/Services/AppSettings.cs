@@ -256,9 +256,14 @@ namespace TabPaint
                     this.Left = settings.WindowLeft;
                     this.Top = settings.WindowTop;
                     
-                    // 额外检查：确保恢复的位置在当前可见区域内（防止多显示器断开后的问题）
-                    if (this.Left + 100 > workArea.Right || this.Top + 100 > workArea.Bottom ||
-                        this.Left + this.Width < workArea.Left || this.Top < workArea.Top)
+                    // 检查窗口是否超过50%在屏幕外（防止多显示器断开后窗口显示在不可见区域）
+                    double interLeft = Math.Max(this.Left, workArea.Left);
+                    double interTop = Math.Max(this.Top, workArea.Top);
+                    double interRight = Math.Min(this.Left + this.Width, workArea.Right);
+                    double interBottom = Math.Min(this.Top + this.Height, workArea.Bottom);
+                    double visibleArea = Math.Max(0, interRight - interLeft) * Math.Max(0, interBottom - interTop);
+                    double windowArea = this.Width * this.Height;
+                    if (windowArea > 0 && visibleArea / windowArea < 0.5)
                     {
                         this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
                     }

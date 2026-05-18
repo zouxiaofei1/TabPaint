@@ -62,6 +62,7 @@ namespace TabPaint
         {
             _router.CurrentTool?.StopAction(_ctx);
             MainImageBar?.ClosePopupAndReset();
+            QuickFormatPopup.Visibility = Visibility.Collapsed;
         }
 
         private void BackgroundMouseDown_Handler(object sender, RoutedEventArgs e)

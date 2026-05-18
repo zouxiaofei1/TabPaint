@@ -105,6 +105,31 @@
                       Margin="0,0,0,10"
                       Visibility="Collapsed"/>
             </Grid>
+
+            <!-- 动画时长倍数 -->
+            <Grid Margin="0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="60"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="{DynamicResource L_Settings_DevTools_AnimationSpeed_Title}"/>
+                    <TextBlock Text="{DynamicResource L_Settings_DevTools_AnimationSpeed_Desc}" 
+                               Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+                </StackPanel>
+                <Slider Grid.Column="1" Margin="10,0,10,0" Style="{StaticResource Win11HorizontalSliderStyle}"
+                        Minimum="0" Maximum="4" SmallChange="0.1" LargeChange="0.5"
+                        VerticalAlignment="Center"
+                        Value="{Binding Path=Current.AnimationSpeedMultiplier, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"/>
+                <TextBox Grid.Column="2" 
+                         Text="{Binding Path=Current.AnimationSpeedMultiplier, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:0.0}, Source={x:Static local:SettingsManager.Instance}}"
+                         LostFocus="TextBox_LostFocus"
+                         PreviewTextInput="NumberValidationTextBox"
+                         HorizontalContentAlignment="Right" 
+                         VerticalAlignment="Center"
+                         Height="24" Padding="0,2,4,0"/>
+            </Grid>
         </StackPanel>
 
         <StackPanel Grid.Row="4">

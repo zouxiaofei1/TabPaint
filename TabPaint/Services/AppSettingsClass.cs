@@ -439,6 +439,21 @@ namespace TabPaint
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+        private double _animationSpeedMultiplier = 1.0;
+        [JsonPropertyName("animation_speed_multiplier")]
+        public double AnimationSpeedMultiplier
+        {
+            get => _animationSpeedMultiplier;
+            set
+            {
+                if (Math.Abs(_animationSpeedMultiplier - value) > 0.01)
+                {
+                    _animationSpeedMultiplier = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private int _maxRecentFiles = 10;
         [JsonPropertyName("max_recent_files")]
         public int MaxRecentFiles

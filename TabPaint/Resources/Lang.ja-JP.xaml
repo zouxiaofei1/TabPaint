@@ -244,6 +244,8 @@
     <sys:String x:Key="L_Settings_DevTools_Title">開発者ツール</sys:String>
     <sys:String x:Key="L_Settings_DevTools_UseWin10StyleOnWin11_Title">Windows 11でWindows 10スタイルを使用する</sys:String>
     <sys:String x:Key="L_Settings_DevTools_UseWin10StyleOnWin11_Desc">Windows 11でWindows 10スタイルを使用する</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_AnimationSpeed_Title">アニメーション速度倍率</sys:String>
+    <sys:String x:Key="L_Settings_DevTools_AnimationSpeed_Desc">アニメーション時間をこの倍率で乗算します（0x-4x）。再起動後に有効。</sys:String>
  
     <!-- Common Strings -->
     <sys:String x:Key="L_Common_OpenLogFolder">フォルダーを開く</sys:String>
@@ -327,6 +329,9 @@
     <sys:String x:Key="L_Main_Ctx_ScreenPicker">スクリーンカラーピッカー</sys:String>
     <sys:String x:Key="L_Main_Ctx_CopyHex">カラーコードをコピー (#HEX)</sys:String>
     <sys:String x:Key="L_Main_Ctx_AutoCrop">余白を自動切り抜き</sys:String>
+    <sys:String x:Key="L_Main_Ctx_EdgeSnap">エッジにスナップ</sys:String>
+    <sys:String x:Key="L_Main_Ctx_EdgeSnap_Enabled">エッジスナップ有効。画面端にドラッグすると吸着します</sys:String>
+    <sys:String x:Key="L_Main_Ctx_EdgeSnap_Disabled">エッジスナップ無効</sys:String>
 
     <sys:String x:Key="L_Main_Unit_Pixel">px</sys:String>
     <sys:String x:Key="L_Main_Toast_Info">情報</sys:String>

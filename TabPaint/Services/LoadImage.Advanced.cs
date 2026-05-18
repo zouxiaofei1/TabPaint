@@ -53,7 +53,7 @@ namespace TabPaint
 
         public static bool IsWebpFileOrStream(string? filePath, Stream stream)
         {
-            return IsWebpPath(filePath) || IsWebpStream(stream);
+            return IsWebpStream(stream);
         }
 
         public static bool IsPsdPath(string? filePath)

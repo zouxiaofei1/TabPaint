@@ -629,8 +629,8 @@
                 <!-- 浮动层 (必须与 DockPanel 平级) -->
                 <ContentControl x:Name="TextToolHolder" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,80,0,0" Panel.ZIndex="200" IsTabStop="False"/>
                 <ContentControl x:Name="TaskProgressHolder" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,60" Panel.ZIndex="150" IsTabStop="False" Focusable="False"/>
-                <ContentControl x:Name="SelectionToolHolder" Visibility="Collapsed" HorizontalAlignment="Left" VerticalAlignment="Top" Panel.ZIndex="300" IsTabStop="False" Focusable="False" IsHitTestVisible="True"/>
-                <ContentControl x:Name="SelectionRotateHolder" HorizontalAlignment="Left" VerticalAlignment="Top" Panel.ZIndex="300" IsTabStop="False" Focusable="False"/>
+                <ContentControl x:Name="SelectionToolHolder" Visibility="Collapsed" HorizontalAlignment="Left" VerticalAlignment="Top" Panel.ZIndex="300" IsTabStop="False" Focusable="False" IsHitTestVisible="True" ClipToBounds="True"/>
+                <ContentControl x:Name="SelectionRotateHolder" HorizontalAlignment="Left" VerticalAlignment="Top" Panel.ZIndex="300" IsTabStop="False" Focusable="False" ClipToBounds="True"/>
                 <ContentControl x:Name="OcrFloatBarHolder" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,80,0,0" Panel.ZIndex="260" IsTabStop="False" Focusable="False"/>
                 <controls:WandToleranceFloat x:Name="WandTolerancePopup" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,80,0,0" Panel.ZIndex="250" IsTabStop="False" Focusable="False"/>
                 <controls:QuickFormatPanel x:Name="QuickFormatPopup" Visibility="Collapsed" Panel.ZIndex="500" IsTabStop="False" Focusable="True"/>
