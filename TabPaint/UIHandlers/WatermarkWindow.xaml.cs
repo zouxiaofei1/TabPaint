@@ -42,6 +42,44 @@ namespace TabPaint
         private WriteableBitmap _originalBitmap; 
         private WriteableBitmap _targetBitmap;   
         private BitmapImage _watermarkImageSource;
+
+        public void ReloadTarget(WriteableBitmap newBitmap)
+        {
+            _targetBitmap = newBitmap;
+            _originalBitmap = newBitmap.Clone();
+            if (_previewLayer != null)
+            {
+                _previewLayer.Source = null;
+                _previewLayer.Width = _originalBitmap.PixelWidth;
+                _previewLayer.Height = _originalBitmap.PixelHeight;
+            }
+            InitializeBackgroundPreview();
+            UpdatePreview();
+        }
+
+        public void RefreshDialogBackground(WriteableBitmap currentBitmap)
+        {
+            if (currentBitmap == null) return;
+            double maxPreviewDim = 1200;
+            double w = currentBitmap.PixelWidth;
+            double h = currentBitmap.PixelHeight;
+            double scale = Math.Min(maxPreviewDim / w, maxPreviewDim / h);
+            int scaledW = (int)(w * scale);
+            int scaledH = (int)(h * scale);
+            if (scaledW < 1) scaledW = 1;
+            if (scaledH < 1) scaledH = 1;
+            var rtb = new RenderTargetBitmap(scaledW, scaledH, 96, 96, PixelFormats.Pbgra32);
+            var dv = new DrawingVisual();
+            using (var dc = dv.RenderOpen())
+            {
+                dc.DrawImage(currentBitmap, new Rect(0, 0, scaledW, scaledH));
+            }
+            rtb.Render(dv);
+            rtb.Freeze();
+            var imgBG = this.FindName("ImgWindowBackground") as Image;
+            if (imgBG != null) imgBG.Source = rtb;
+        }
+
         private class ColorItem
         {
             public string Name { get; set; }

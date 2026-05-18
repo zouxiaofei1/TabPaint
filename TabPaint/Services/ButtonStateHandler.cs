@@ -87,6 +87,10 @@ namespace TabPaint
             {
                 shapeTool.RefreshPreview(_ctx);
             }
+            if (_router?.CurrentTool is TextTool textTool)
+            {
+                textTool.UpdateCurrentTextBoxAttributes();
+            }
         }
         private bool _isProcessingMaximizeWindow = false;
         public async void MaximizeWindowHandler()

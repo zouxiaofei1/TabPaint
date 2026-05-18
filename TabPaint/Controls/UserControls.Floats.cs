@@ -55,6 +55,14 @@ namespace TabPaint
                     _selectionToolBar.AiRemoveBgClick += SelectionToolBar_AiRemoveBgClick;
                     _selectionToolBar.OcrClick += SelectionToolBar_OcrClick;
                     _selectionToolBar.RotateClick += SelectionToolBar_RotateClick;
+                    _selectionToolBar.RotateWheelDelta += delta =>
+                    {
+                        if (_selectionRotatePopup != null)
+                        {
+                            a.s("_selectionRotatePopup.AddAngle(delta);");
+                            _selectionRotatePopup.AddAngle(delta);
+                        }
+                    };
                     SelectionToolHolder.Content = _selectionToolBar;
                 }
                 return _selectionToolBar;

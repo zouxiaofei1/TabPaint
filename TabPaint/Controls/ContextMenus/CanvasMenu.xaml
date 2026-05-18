@@ -113,7 +113,7 @@ services:ShortcutService.ShortcutKey="Tool.AiOcr"  Tag ="AiOcr">
             </MenuItem>-->
             </controls:DelayedMenuItem>
 
-        <controls:DelayedMenuItem Header="{DynamicResource L_Menu_Effect_Filter}" Style="{StaticResource Win11MenuItemStyle}" CloseDelay="300">
+        <!--<controls:DelayedMenuItem Header="{DynamicResource L_Menu_Effect_Filter}" Style="{StaticResource Win11MenuItemStyle}" CloseDelay="300">
             <MenuItem.Icon>
                 <Path Data="{DynamicResource Filter_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
             </MenuItem.Icon>
@@ -184,6 +184,6 @@ services:ShortcutService.ShortcutKey="Tool.AiOcr"  Tag ="AiOcr">
                     <Path Data="{DynamicResource FitToWindow_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="14" Height="14"/>
                 </MenuItem.Icon>
             </MenuItem>
-        </controls:DelayedMenuItem>
+        </controls:DelayedMenuItem>-->
         </ContextMenu>
 </ResourceDictionary>

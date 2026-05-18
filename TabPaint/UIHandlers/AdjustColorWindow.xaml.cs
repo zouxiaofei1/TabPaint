@@ -32,6 +32,32 @@ namespace TabPaint
         private DispatcherTimer _updateTimer;
         private bool _isUpdatingFromTextBox = false;
         public bool? Result { get; private set; }
+
+        public void ReloadTarget(WriteableBitmap newBitmap)
+        {
+            _originalFullBitmap = newBitmap;
+            CreatePreviewBitmaps(newBitmap);
+            PreviewImage.Source = _previewTarget;
+            _isUpdatingFromTextBox = true;
+            BrightnessSlider.Value = 0;
+            ContrastSlider.Value = 0;
+            ExposureSlider.Value = 0;
+            TemperatureSlider.Value = 0;
+            TintSlider.Value = 0;
+            SaturationSlider.Value = 0;
+            _isUpdatingFromTextBox = false;
+            UpdateTextBoxes();
+            ThrottleUpdate();
+        }
+
+        public void RefreshPreviewFromCanvas(WriteableBitmap currentBitmap)
+        {
+            _originalFullBitmap = currentBitmap;
+            CreatePreviewBitmaps(currentBitmap);
+            PreviewImage.Source = _previewTarget;
+            ThrottleUpdate();
+        }
+
         public AdjustColorWindow(WriteableBitmap fullBitmap, int initialTabIndex = 0)
         {
             InitializeComponent();

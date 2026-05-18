@@ -97,6 +97,7 @@ namespace TabPaint.Controls
 
         private void UpdateAngle(double angle, bool raiseEvent)
         {
+            //MessageBox.Show("updateangle");
             angle = ClampAngle(angle);
             
             // Shift 键吸附
@@ -162,6 +163,18 @@ namespace TabPaint.Controls
                 _isDragging = false;
                 RotateBarBorder.ReleaseMouseCapture();
             }
+        }
+
+        private void RotateBar_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            double step = e.Delta > 0 ? 3 : -3;
+            UpdateAngle(_currentAngle + step, true);
+            e.Handled = true;
+        }
+
+        public void AddAngle(double delta)
+        {
+            UpdateAngle(_currentAngle + delta, true);
         }
 
         private void RotateBar_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)

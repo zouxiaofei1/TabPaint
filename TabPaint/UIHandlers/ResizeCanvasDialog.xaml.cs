@@ -18,9 +18,9 @@ namespace TabPaint
         public bool IsConfirmed { get; private set; }
 
         // 原始尺寸
-        private readonly int _originalWidth;
-        private readonly int _originalHeight;
-        private readonly double _originalRatio;
+        private int _originalWidth;
+        private int _originalHeight;
+        private double _originalRatio;
         public bool ApplyToAll => ApplyToAllCheckBox.IsChecked == true;
         public bool IsAspectRatioLocked => AspectRatioToggle.IsChecked == true;
 
@@ -37,6 +37,22 @@ namespace TabPaint
 
             ImageWidth = currentWidth;
             ImageHeight = currentHeight;
+        }
+
+        public void ReloadDimensions(int width, int height)
+        {
+            _originalWidth = width;
+            _originalHeight = height;
+            _originalRatio = (double)width / height;
+            ImageWidth = width;
+            ImageHeight = height;
+            _isUpdating = true;
+            WidthTextBox.Text = width.ToString();
+            HeightTextBox.Text = height.ToString();
+            WidthSlider.Value = 0;
+            HeightSlider.Value = 0;
+            _isUpdating = false;
+            UpdateInfoText();
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)

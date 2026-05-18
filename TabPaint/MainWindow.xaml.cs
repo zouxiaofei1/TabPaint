@@ -182,11 +182,8 @@ namespace TabPaint
             {
                 FileTabs.Add(initialTab);
                 _currentTabItem = initialTab;
-                _imageFiles.Add(initialTab.FilePath);
-                ImageFilesCount = _imageFiles.Count;
                 _currentFilePath = initialTab.FilePath;
                 _currentFileName = initialTab.FileName;
-                _currentImageIndex = 0;
             }
             InitializeLazyControls();
             StartupPerformanceTracer.Point("MainWindow.BeforeInitializeComponent");
@@ -1180,7 +1177,7 @@ namespace TabPaint
         {
             CheckBirdEyeVisibility();
             UpdateBirdEyeView();
-            UpdateRulerPositions(); ClampScrollBarThumbSize();
+            UpdateRulerPositions(); ClampScrollBarThumbSize(); UpdateSelectionToolBarPosition();
         }
         private void ClampScrollBarThumbSize()
         {
@@ -1327,6 +1324,10 @@ namespace TabPaint
                 ScrollContainer.ScrollToVerticalOffset(ScrollContainer.VerticalOffset + deltaY);
                 _lastMousePosition = currentPos;
             }
+            if (_isMiddlePanMode)
+            {
+                _middlePanCurrentPos = e.GetPosition(ScrollContainer);
+            }
             if (SettingsManager.Instance.Current.ShowRulers)
             {
                 Point pos = e.GetPosition(ScrollContainer);
@@ -1365,6 +1366,14 @@ namespace TabPaint
                 _isPanning = false;
                 ScrollContainer.ReleaseMouseCapture();
                 SetViewCursor(false);
+            }
+            if (_isMiddlePanMode && e.ChangedButton == MouseButton.Middle)
+            {
+                _isMiddlePanMode = false;
+                _middlePanTimer?.Stop();
+                ScrollContainer.ReleaseMouseCapture();
+                Mouse.OverrideCursor = null;
+                e.Handled = true;
             }
 
             if (_isLoadingImage) return;
@@ -1712,7 +1721,7 @@ namespace TabPaint
 
             if (settings.IsSelectionRotateEnabled)
             {
-                SelectionRotatePopup.SetValue(0);
+                //SelectionRotatePopup.SetValue(0);
                 SelectionRotatePopup.Visibility = Visibility.Visible;
                 if (_router?.CurrentTool is SelectTool st)  st.PrepareRotation(_ctx);
             }
@@ -1726,10 +1735,16 @@ namespace TabPaint
 
         private void SelectionRotatePopup_AngleChanged(object sender, RoutedEventArgs e)
         {
-            if (SelectionRotatePopup != null)
+               if (SelectionRotatePopup != null)
             {
                 double angle = SelectionRotatePopup.CurrentAngle;
-                if (_router?.CurrentTool is SelectTool st)   st.UpdateRotation(_ctx, angle, false);
+                if (_router?.CurrentTool is SelectTool st)
+                {
+                
+                        st.PrepareRotation(_ctx); 
+                        st.UpdateRotation(_ctx, angle, false); 
+
+                }
             }
         }
 

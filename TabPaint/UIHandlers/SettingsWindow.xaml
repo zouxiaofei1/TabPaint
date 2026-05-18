@@ -13,7 +13,15 @@
         WindowStyle="None" ResizeMode="CanResize"
         WindowStartupLocation="CenterOwner"
         Background="Transparent"
-        Foreground="{DynamicResource TextPrimaryBrush}">
+         Foreground="{DynamicResource TextPrimaryBrush}">
+
+    <Window.CommandBindings>
+        <CommandBinding Command="{x:Static local:SettingsWindow.OpenSearchCommand}" Executed="OpenSearchCommand_Executed"/>
+    </Window.CommandBindings>
+
+    <Window.InputBindings>
+        <KeyBinding Key="F" Modifiers="Control" Command="{x:Static local:SettingsWindow.OpenSearchCommand}"/>
+    </Window.InputBindings>
 
     <WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="40" 
@@ -104,6 +112,90 @@
                     </Setter.Value>
                 </Setter>
             </Style>
+            <Style x:Key="SearchBoxStyle" TargetType="TextBox">
+                <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Height" Value="28"/>
+                <Setter Property="CaretBrush" Value="{DynamicResource TextPrimaryBrush}"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TextBox">
+                            <Border x:Name="border" CornerRadius="8" 
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}" 
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    SnapsToDevicePixels="True">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Path Grid.Column="0" Data="{DynamicResource Search_Image}" 
+                                          Fill="{DynamicResource TextSecondaryBrush}" 
+                                          Width="14" Height="14" Margin="8,0,0,0" 
+                                          VerticalAlignment="Center" Stretch="Uniform"/>
+                                    <Grid Grid.Column="1">
+                                        <Grid x:Name="PlaceholderGrid" IsHitTestVisible="False">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" 
+                                                       Text="{DynamicResource L_Settings_SearchPlaceholder}" 
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" 
+                                                       VerticalAlignment="Center" 
+                                                       FontSize="12" Margin="6,0,0,0"/>
+                                            <Border Grid.Column="1" Background="#22000000" 
+                                                    CornerRadius="3" Padding="6,1" 
+                                                    Margin="0,0,6,0" Height="18" 
+                                                    VerticalAlignment="Center"
+                                                    BorderBrush="{DynamicResource BorderBrush}"
+                                                    BorderThickness="1">
+                                                <TextBlock Text="Ctrl+F" 
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" 
+                                                           FontSize="10" 
+                                                           VerticalAlignment="Center"/>
+                                            </Border>
+                                        </Grid>
+                                        <ScrollViewer x:Name="PART_ContentHost"
+                                                      Margin="6,0,6,0"
+                                                      VerticalAlignment="Center"
+                                                      Focusable="false"
+                                                      HorizontalScrollBarVisibility="Hidden"
+                                                      VerticalScrollBarVisibility="Hidden"/>
+                                        <Border x:Name="FocusBorder" 
+                                                BorderBrush="{DynamicResource SystemAccentBrush}" 
+                                                BorderThickness="0,0,0,2" 
+                                                CornerRadius="4"
+                                                Visibility="Collapsed" 
+                                                VerticalAlignment="Bottom"
+                                                Height="2" Margin="0,0,0,-1"/>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="true">
+                                    <Setter TargetName="border" Property="Background" Value="{DynamicResource ControlMouseOverBackgroundBrush}"/>
+                                    <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource BorderFocusBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="true">
+                                    <Setter TargetName="border" Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+                                    <Setter TargetName="FocusBorder" Property="Visibility" Value="Visible"/>
+                                    <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="false">
+                                    <Setter TargetName="border" Property="Opacity" Value="0.56"/>
+                                    <Setter TargetName="border" Property="Background" Value="{DynamicResource ControlDisabledBackgroundBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
@@ -114,7 +206,7 @@
         </Grid.RowDefinitions>
 
         <!-- 1. 自定义标题栏 -->
-        <Grid Grid.Row="0" Background="{DynamicResource GlassBackgroundMediumBrush}" Height="32">
+        <Grid Grid.Row="0" Background="{DynamicResource GlassBackgroundMediumBrush}" Height="40">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
@@ -127,19 +219,29 @@
                            FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}"/>
             </StackPanel>
 
+            <!-- 搜索栏 -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,25,0">
+                <TextBox x:Name="SearchBox" Width="280" Height="28" Style="{StaticResource SearchBoxStyle}"
+                         TextChanged="SearchBox_TextChanged"
+                         GotFocus="SearchBox_GotFocus"
+                         WindowChrome.IsHitTestVisibleInChrome="True"
+                         LostFocus="SearchBox_LostFocus"
+                         PreviewKeyDown="SearchBox_PreviewKeyDown"/>
+            </StackPanel>
+
             <!-- 右侧：窗口控制按钮 -->
             <StackPanel Orientation="Horizontal" Grid.Column="2" HorizontalAlignment="Right">
-                <Button Width="40"  x:Name="BtnMinimize" ToolTip="{DynamicResource L_TitleBar_Minimize}" Style="{StaticResource TitleBarButtonStyle}" Click="BtnMinimize_Click">
+                <Button Width="40"  Height="28" Margin="0,0,0,8" x:Name="BtnMinimize" ToolTip="{DynamicResource L_TitleBar_Minimize}" Style="{StaticResource TitleBarButtonStyle}" Click="BtnMinimize_Click">
                     <Viewbox Width="10" Height="10">
                         <Path Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1" Data="M0,2 L12,2"/>
                     </Viewbox>
                 </Button>
-                <Button Width="40" x:Name="BtnMaximize" ToolTip="{DynamicResource L_TitleBar_Maximize}" Style="{StaticResource TitleBarButtonStyle}" Click="BtnMaximize_Click">
+                <Button Width="40"  Height="28"  Margin="0,0,0,8" x:Name="BtnMaximize" ToolTip="{DynamicResource L_TitleBar_Maximize}" Style="{StaticResource TitleBarButtonStyle}" Click="BtnMaximize_Click">
                     <Viewbox Width="10" Height="10">
                         <Rectangle Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1" Width="12" Height="12" RadiusX="2" RadiusY="2"/>
                     </Viewbox>
                 </Button>
-                <Button Width="40" x:Name="BtnClose" ToolTip="{DynamicResource L_TitleBar_Close}" Style="{StaticResource TitleBarCloseButtonStyle}" Click="BtnClose_Click">
+                <Button Width="40"  Height="28"  Margin="0,0,0,8" x:Name="BtnClose" ToolTip="{DynamicResource L_TitleBar_Close}" Style="{StaticResource TitleBarCloseButtonStyle}" Click="BtnClose_Click">
                     <Viewbox Width="10" Height="10">
                         <Path Stroke="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" 
                               StrokeThickness="1" 
@@ -381,6 +483,51 @@
                     </StackPanel>
                 </Grid>
             </Border>
+            <!-- 搜索弹出列表 -->
+            <Popup x:Name="SearchPopup" PlacementTarget="{Binding ElementName=SearchBox}"
+                   Placement="Bottom" StaysOpen="True" AllowsTransparency="True"
+                   PopupAnimation="Slide" MinWidth="260" MaxWidth="320"
+                   HorizontalOffset="8" VerticalOffset="4">
+                <Border CornerRadius="6" Background="{DynamicResource ChromeMediumBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                        MaxHeight="250">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="12" ShadowDepth="3" Opacity="0.3"/>
+                    </Border.Effect>
+                    <ListBox x:Name="SearchResultList" Background="Transparent" BorderThickness="0"
+                             ItemContainerStyle="{StaticResource NavListBoxItemStyle}"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             SelectionChanged="SearchResultList_SelectionChanged"
+                             PreviewMouseLeftButtonUp="SearchResultList_PreviewMouseLeftButtonUp">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Height="36" Width="280">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="36"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Path Grid.Column="0" Data="{Binding IconPath}" Stretch="Uniform" 
+                                          Fill="{DynamicResource IconFillBrush}" Width="14" Height="14"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding DisplayName}" 
+                                               Foreground="{DynamicResource TextPrimaryBrush}" 
+                                               FontSize="12" VerticalAlignment="Center"/>
+                                    <Border Grid.Column="2" 
+                                            Background="{DynamicResource SubtleHoverBrush}" 
+                                            CornerRadius="3" Padding="6,1" 
+                                            Margin="4,0,8,0" Height="18"
+                                            VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding ParentTag}" 
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" 
+                                                   FontSize="10" VerticalAlignment="Center"/>
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Border>
+            </Popup>
         </Grid>
     </Grid>
 </Window>

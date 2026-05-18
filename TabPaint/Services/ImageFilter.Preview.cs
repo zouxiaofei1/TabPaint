@@ -10,6 +10,7 @@ namespace TabPaint
     {
         public async Task<BitmapSource?> GetFilterPreviewAsync(string filterTag, CancellationToken token)
         {
+
             if (_bitmap == null) return null;
 
             // 1. 获取一个缩小的位图，用于快速处理
@@ -23,7 +24,8 @@ namespace TabPaint
                 }
                 else
                 {
-                    thumbnail = new TransformedBitmap(_bitmap, new System.Windows.Media.ScaleTransform(scale, scale));
+                    var clone = _bitmap.Clone();
+                    thumbnail = new TransformedBitmap(clone, new System.Windows.Media.ScaleTransform(scale, scale));
                 }
                 thumbnail.Freeze();
             });

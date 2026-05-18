@@ -11,6 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Forms;
+using System.Windows.Threading;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -119,6 +120,25 @@ namespace TabPaint
         {
             if (IsVisualAncestorOf<ScrollBar>(e.OriginalSource as DependencyObject)) return;
             if (e.ClickCount == 2) return;
+
+            if (e.ChangedButton == MouseButton.Middle)
+            {
+                _isMiddlePanMode = true;
+                _middlePanAnchor = e.GetPosition(ScrollContainer);
+                _middlePanCurrentPos = _middlePanAnchor;
+                ScrollContainer.CaptureMouse();
+                Mouse.OverrideCursor = Cursors.ScrollAll;
+                if (_middlePanTimer == null)
+                {
+                    _middlePanTimer = new DispatcherTimer();
+                    _middlePanTimer.Interval = TimeSpan.FromMilliseconds(16);
+                    _middlePanTimer.Tick += OnMiddlePanTimerTick;
+                }
+                _middlePanTimer.Start();
+                e.Handled = true;
+                return;
+            }
+
             if (e.ChangedButton != MouseButton.Left) return;
             if (Keyboard.IsKeyDown(Key.Space) && e.ChangedButton == MouseButton.Left || IsViewMode)
             {
@@ -180,6 +200,29 @@ namespace TabPaint
                     selTool.ClearSelections(_ctx);
                     selTool.lag = 0;
                 }
+            }
+        }
+
+        private void OnMiddlePanTimerTick(object sender, EventArgs e)
+        {
+            if (!_isMiddlePanMode) return;
+
+            double dx = _middlePanCurrentPos.X - _middlePanAnchor.X;
+            double dy = _middlePanCurrentPos.Y - _middlePanAnchor.Y;
+            double distance = Math.Sqrt(dx * dx + dy * dy);
+
+            if (distance > MiddlePanDeadZone)
+            {
+                double speed = (distance - MiddlePanDeadZone) * MiddlePanAcceleration;
+                double dirX = dx / distance;
+                double dirY = dy / distance;
+
+                double dt = _middlePanTimer.Interval.TotalSeconds;
+                double scrollX = dirX * speed * dt;
+                double scrollY = dirY * speed * dt;
+
+                ScrollContainer.ScrollToHorizontalOffset(ScrollContainer.HorizontalOffset + scrollX);
+                ScrollContainer.ScrollToVerticalOffset(ScrollContainer.VerticalOffset + scrollY);
             }
         }
     

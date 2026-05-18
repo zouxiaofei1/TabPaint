@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using TabPaint.Windows;
 
 namespace TabPaint
@@ -160,6 +161,11 @@ namespace TabPaint
      
 
         private AdjustColorWindow _adjustColorWindow;
+        private WatermarkWindow _watermarkWindow;
+        private ResizeCanvasDialog _resizeCanvasDialog;
+        private WriteableBitmap _adjustColorUndoState;
+        private byte[] _watermarkUndoPixels;
+        private Int32Rect _watermarkUndoRect;
 
         private void OpenAdjustColorWindowSafe(int initialTabIndex)
         {
@@ -172,7 +178,7 @@ namespace TabPaint
             }
 
             _router.CleanUpSelectionandShape();
-            var oldBitmapState = _surface.Bitmap.Clone();
+            _adjustColorUndoState = _surface.Bitmap.Clone();
 
             _adjustColorWindow = new AdjustColorWindow(_surface.Bitmap, initialTabIndex)
             {
@@ -183,7 +189,7 @@ namespace TabPaint
             {
                 if (_adjustColorWindow.Result == true)
                 {
-                    _undo.PushExplicitImageUndo(oldBitmapState);
+                    _undo.PushExplicitImageUndo(_adjustColorUndoState);
                     NotifyCanvasChanged();
                     CheckDirtyState();
                     SetUndoRedoButtonState();
@@ -223,7 +229,8 @@ namespace TabPaint
 
             var oldScalingMode = RenderOptions.GetBitmapScalingMode(BackgroundImage);
             _canvasResizer.SetHandleVisibility(false);
-            var dialog = new ResizeCanvasDialog(originalW, originalH) { Owner = this };
+            _resizeCanvasDialog = new ResizeCanvasDialog(originalW, originalH) { Owner = this };
+            var dialog = _resizeCanvasDialog;
 
             dialog.PreviewChanged += (w, h, isCanvasMode) =>
             {
@@ -268,6 +275,7 @@ namespace TabPaint
                         await BatchResizeImages(targetWidth, targetHeight, scaleX, scaleY, isCanvasMode, keepRatio);
                     }
                 }
+                _resizeCanvasDialog = null;
             };
             dialog.Show();
         }
@@ -281,32 +289,84 @@ namespace TabPaint
             _canvasResizer.UpdateUI();
         }
 
-  
+        private void ClearResizePreview()
+        {
+            BackgroundImage.RenderTransform = Transform.Identity;
+            _canvasResizer?.HidePreviewRect();
+            _canvasResizer?.SetHandleVisibility(true);
+            _canvasResizer?.UpdateUI();
+        }
+
+        private void UpdateEffectPanelTargets()
+        {
+            var bmp = _surface?.Bitmap;
+            if (bmp == null) return;
+
+            if (_adjustColorWindow != null && _adjustColorWindow.IsLoaded)
+            {
+                _adjustColorUndoState = bmp.Clone();
+                _adjustColorWindow.ReloadTarget(bmp);
+            }
+
+            if (_watermarkWindow != null && _watermarkWindow.IsLoaded)
+            {
+                _watermarkUndoRect = new Int32Rect(0, 0, bmp.PixelWidth, bmp.PixelHeight);
+                _watermarkUndoPixels = new byte[_watermarkUndoRect.Height * bmp.BackBufferStride];
+                bmp.CopyPixels(_watermarkUndoRect, _watermarkUndoPixels, bmp.BackBufferStride, 0);
+                _watermarkWindow.ReloadTarget(bmp);
+            }
+
+            if (_resizeCanvasDialog != null && _resizeCanvasDialog.IsLoaded)
+            {
+                ClearResizePreview();
+                _resizeCanvasDialog.ReloadDimensions(bmp.PixelWidth, bmp.PixelHeight);
+            }
+        }
+
+        private void RefreshEffectWindowPreviews()
+        {
+            if (PerformanceScore <= 6) return;
+
+            var bmp = _surface?.Bitmap;
+            if (bmp == null) return;
+
+            if (_adjustColorWindow != null && _adjustColorWindow.IsLoaded)
+            {
+                _adjustColorWindow.RefreshPreviewFromCanvas(bmp);
+            }
+
+            if (_watermarkWindow != null && _watermarkWindow.IsLoaded)
+            {
+                _watermarkWindow.RefreshDialogBackground(bmp);
+            }
+        }
 
         private void OnWatermarkClick(object sender, RoutedEventArgs e)
         {
             var oldBitmap = _surface.Bitmap;
-            var undoRect = new Int32Rect(0, 0, oldBitmap.PixelWidth, oldBitmap.PixelHeight);
+            _watermarkUndoRect = new Int32Rect(0, 0, oldBitmap.PixelWidth, oldBitmap.PixelHeight);
 
-            byte[] undoPixels = new byte[undoRect.Height * oldBitmap.BackBufferStride];
-            oldBitmap.CopyPixels(undoRect, undoPixels, oldBitmap.BackBufferStride, 0);
-            var dlg = new WatermarkWindow(_surface.Bitmap, WatermarkPreviewLayer) { Owner = this };
+            _watermarkUndoPixels = new byte[_watermarkUndoRect.Height * oldBitmap.BackBufferStride];
+            oldBitmap.CopyPixels(_watermarkUndoRect, _watermarkUndoPixels, oldBitmap.BackBufferStride, 0);
+            _watermarkWindow = new WatermarkWindow(_surface.Bitmap, WatermarkPreviewLayer) { Owner = this };
+            var dlg = _watermarkWindow;
 
             dlg.Closed += async (s, args) =>
             {
                 if (dlg.CurrentSettings != null)
                 {
                     var newBitmap = _surface.Bitmap;
-                    var redoPixels = new byte[undoRect.Height * newBitmap.BackBufferStride];
-                    newBitmap.CopyPixels(undoRect, redoPixels, newBitmap.BackBufferStride, 0);
+                    var redoPixels = new byte[_watermarkUndoRect.Height * newBitmap.BackBufferStride];
+                    newBitmap.CopyPixels(_watermarkUndoRect, redoPixels, newBitmap.BackBufferStride, 0);
 
-                    _undo.PushTransformAction(undoRect, undoPixels, undoRect, redoPixels);
+                    _undo.PushTransformAction(_watermarkUndoRect, _watermarkUndoPixels, _watermarkUndoRect, redoPixels);
                     NotifyCanvasChanged();
                     SetUndoRedoButtonState();
 
                     if (dlg.ApplyToAll) await ApplyWatermarkToAllTabs(dlg.CurrentSettings);
                 }
                 else { NotifyCanvasChanged(); }
+                _watermarkWindow = null;
             };
             dlg.Show();
         }

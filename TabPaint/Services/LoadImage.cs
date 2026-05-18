@@ -43,7 +43,7 @@ namespace TabPaint
                     using var __perfScanFolder = StartupPerformanceTracer.Measure("MainWindow.OpenImageAndTabs.ScanFolderImagesAsync");
                     await ScanFolderImagesAsync(filePath);
                 }
-                else if (!autoLoad && _currentImageIndex == -1 && !IsVirtualPath(filePath))
+                else if (!autoLoad && _currentImageIndex == -1 && !IsVirtualPath(filePath) && _imageFiles.Count == 0)
                 {
                     _imageFiles = new List<string> { filePath };
                     ImageFilesCount = _imageFiles.Count;

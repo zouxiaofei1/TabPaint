@@ -3,6 +3,7 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <!-- SettingsWindow -->
     <sys:String x:Key="L_Settings_Title">設定</sys:String>
+    <sys:String x:Key="L_Settings_SearchPlaceholder">搜尋設定</sys:String>
     <sys:String x:Key="L_Ctx_CloseOtherTabs">關閉其他分頁</sys:String>
     <sys:String x:Key="L_Settings_Nav_General">一般</sys:String>
     <sys:String x:Key="L_Settings_Nav_Paint">繪圖設定</sys:String>

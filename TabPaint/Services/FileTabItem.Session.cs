@@ -249,6 +249,7 @@ namespace TabPaint
             _autoSaveTimer.Interval = TimeSpan.FromMilliseconds(delayMs);
             _autoSaveTimer.Start();
             CheckDirtyState();
+            RefreshEffectWindowPreviews();
         }
 
         private BitmapSource GenerateBlankThumbnail()
@@ -402,6 +403,10 @@ namespace TabPaint
                 if (SettingsManager.Instance.Current.DiscardAllOnExit)
                 {
                     await DiscardAllInternalAsync(skipConfirmation: true);
+                }
+                else
+                {
+                    _router?.CleanUpSelectionandShape();
                 }
 
                 SaveAppState();
@@ -864,6 +869,7 @@ namespace TabPaint
                 }
 
                 UpdateImageBarVisibilityState(); UpdateImageBarSliderState();
+                UpdateWindowTitle();
             }
             catch (Exception ex)
             {
@@ -945,7 +951,7 @@ namespace TabPaint
             }
 
             CancelRunningImageTasksSilently();
-
+            if (!IsTransferringSelection) _router.CleanUpSelectionandShape();
             if (_currentTabItem != null)
             {
                 _autoSaveTimer.Stop();
@@ -974,7 +980,7 @@ namespace TabPaint
 
             tab.LastAccessTime = DateTime.Now;
 
-            if (!IsTransferringSelection) _router.CleanUpSelectionandShape();
+       
 
             foreach (var t in FileTabs)
             {
@@ -1013,7 +1019,9 @@ namespace TabPaint
             {
                 await Task.Delay(50);
                 RestoreTransferredSelection();
-            } 
+            }
+
+            UpdateEffectPanelTargets();
         }
 
         private void ResetCanvasView()

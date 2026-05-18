@@ -51,6 +51,7 @@
     <sys:String x:Key="L_Settings_Shortcuts_File_Print">Print</sys:String>
     <!-- SettingsWindow Navigation -->
     <sys:String x:Key="L_Settings_Title">Settings</sys:String>
+    <sys:String x:Key="L_Settings_SearchPlaceholder">Search settings</sys:String>
     <sys:String x:Key="L_Settings_Nav_General">General</sys:String>
     <sys:String x:Key="L_Settings_Nav_Paint">Paint</sys:String>
     <sys:String x:Key="L_Settings_Nav_View">View</sys:String>

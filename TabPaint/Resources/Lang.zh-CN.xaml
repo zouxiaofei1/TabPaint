@@ -3,6 +3,7 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <!-- SettingsWindow -->
     <sys:String x:Key="L_Settings_Title">设置</sys:String>
+    <sys:String x:Key="L_Settings_SearchPlaceholder">搜索设置</sys:String>
     <sys:String x:Key="L_Ctx_CloseOtherTabs">关闭其他标签页</sys:String>
     <sys:String x:Key="L_Menu_Tab_MoveToNewWindow">移动到新窗口</sys:String>
     <sys:String x:Key="L_Menu_Tab_NewTabRight">右侧新建标签页</sys:String>

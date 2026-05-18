@@ -93,6 +93,12 @@ namespace TabPaint
         }
         private bool _isPanning = false;
         private Point _lastMousePosition;
+        private bool _isMiddlePanMode = false;
+        private Point _middlePanAnchor;
+        private Point _middlePanCurrentPos;
+        private DispatcherTimer _middlePanTimer;
+        private const double MiddlePanAcceleration = 5.0;
+        private const double MiddlePanDeadZone = 20;
         private string _imageSize = "0×0" + LocalizationManager.GetString("L_Main_Unit_Pixel");
         public string ImageSize
         {

@@ -774,6 +774,13 @@ namespace TabPaint
                           //  Cleanup(ctx);
                             e.Handled = true;
                             break;
+                        case Key.Enter:
+                            if (_selectionData != null)
+                            {
+                                CommitSelection(ctx);
+                                e.Handled = true;
+                            }
+                            break;
                     }
                 }
             }

@@ -479,6 +479,7 @@ namespace TabPaint
 
                 mw.UpdateSelectionToolBarPosition();
                 mw.SetCropButtonState();
+                mw.UpdateRulerSelection();
                 mw._canvasResizer.UpdateUI(); lag = 0;
             }
 

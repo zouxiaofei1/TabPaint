@@ -118,6 +118,36 @@ namespace TabPaint
                 Bitmap.Unlock();
                 return data;
             }
+//            public byte[] ExtractRegion(Int32Rect rect)
+//{
+//    byte[] data = new byte[rect.Width * rect.Height * 4];
+
+//    if (Bitmap.IsFrozen)
+//    {
+//        // Frozen bitmap: use CopyPixels (safe, read-only access)
+//        Bitmap.CopyPixels(rect, data, rect.Width * 4, 0);
+//    }
+//    else
+//    {
+//        // Mutable bitmap: use BackBuffer for potentially faster access
+//        int stride = Bitmap.BackBufferStride;
+//        Bitmap.Lock();
+//        try
+//        {
+//            for (int row = 0; row < rect.Height; row++)
+//            {
+//                IntPtr src = Bitmap.BackBuffer + (rect.Y + row) * stride + rect.X * 4;
+//                System.Runtime.InteropServices.Marshal.Copy(src, data, row * rect.Width * 4, rect.Width * 4);
+//            }
+//        }
+//        finally
+//        {
+//            Bitmap.Unlock();
+//        }
+//    }
+
+//    return data;
+//}
 
             public void FillRectangle(Int32Rect rect, Color color)
             {
