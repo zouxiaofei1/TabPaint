@@ -402,6 +402,10 @@ namespace TabPaint
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool GetCursorPos(out POINT lpPoint);
 
+        [DllImport("user32.dll")]
+        private static extern short GetAsyncKeyState(int vKey);
+        private const int VK_LBUTTON = 0x01;
+
         [StructLayout(LayoutKind.Sequential)]
         public struct POINT
         {
@@ -419,6 +423,12 @@ namespace TabPaint
             if (!_isDragOverlayVisible || this.WindowState == WindowState.Minimized)
             {
                 _dragWatchdog.Stop();
+                return;
+            }
+
+            if ((GetAsyncKeyState(VK_LBUTTON) & 0x8000) == 0)
+            {
+                HideDragOverlay();
                 return;
             }
 

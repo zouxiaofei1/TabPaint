@@ -38,7 +38,8 @@ namespace TabPaint
                 _preRotationDataWidth = 0;
                 _preRotationDataHeight = 0;
                 _isWandAdjusting = false;   // 添加
-                lag = 0; 
+                lag = 0;
+                StopArrowKeyMove();
                 ctx.ParentWindow.UpdateSelectionToolBarPosition(); 
                 ctx.ParentWindow.ClearRulerSelection();
                 if (ctx.ParentWindow.SelectionRotatePopup != null)

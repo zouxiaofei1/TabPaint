@@ -56,6 +56,9 @@ namespace TabPaint
 
             if (isNext || isPrev)
             {
+                // 形状编辑中或选区激活时，不触发图片切换，留给工具处理箭头键移动
+                if (_router.CurrentTool is ShapeTool shapeTool && shapeTool.IsEditing) return false;
+                if (_router.CurrentTool is SelectTool selectTool && selectTool.HasActiveSelection) return false;
 
                 if (_router.CurrentTool is TextTool tx && tx._richTextBox != null) return false;
                 if (!_isNavigating)

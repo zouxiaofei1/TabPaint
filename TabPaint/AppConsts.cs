@@ -315,7 +315,7 @@ namespace TabPaint
         public const double ProgressLimitPercent = 99.0;
         public const int ProgressIntervalMs = 50;
         public const int ProgressMinDurationMs = 300;
-        public const int DragMoveThreshold = 50;
+        public const int DragMoveThreshold = 10;
 
         // --- 转换器与缩放参数 ---
         public const double ConverterMaxDataValue = 5000.0;

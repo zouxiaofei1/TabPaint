@@ -312,6 +312,7 @@ namespace TabPaint
             void OnPointerMove(ToolContext ctx, Point viewPos, float pressure = 1.0f);
             void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f);
             void OnKeyDown(ToolContext ctx, System.Windows.Input.KeyEventArgs e);
+            void OnKeyUp(ToolContext ctx, System.Windows.Input.KeyEventArgs e);
             void SetCursor(ToolContext ctx);
         }
 
@@ -323,6 +324,7 @@ namespace TabPaint
             public virtual void OnPointerMove(ToolContext ctx, Point viewPos, float pressure = 1.0f) { }
             public virtual void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f) { }
             public virtual void OnKeyDown(ToolContext ctx, System.Windows.Input.KeyEventArgs e) { }
+            public virtual void OnKeyUp(ToolContext ctx, System.Windows.Input.KeyEventArgs e) { }
             public virtual void OnMouseLeave(ToolContext ctx) { }
             public virtual void Cleanup(ToolContext ctx) { }
             public virtual void StopAction(ToolContext ctx) { }
@@ -541,6 +543,10 @@ namespace TabPaint
             public void OnPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
             {//快捷键
                 CurrentTool.OnKeyDown(_ctx, e);
+            }
+            public void OnPreviewKeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+            {
+                CurrentTool.OnKeyUp(_ctx, e);
             }
         }
 

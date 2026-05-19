@@ -339,7 +339,7 @@
     <sys:String x:Key="L_Main_Ctx_CopyHex">Copy color code (#HEX)</sys:String>
     <sys:String x:Key="L_Main_Ctx_AutoCrop">Auto crop blank edges</sys:String>
     <sys:String x:Key="L_Main_Ctx_EdgeSnap">Snap to edge</sys:String>
-    <sys:String x:Key="L_Main_Ctx_EdgeSnap_Enabled">Edge snap enabled. Drag to screen edge to snap</sys:String>
+    <sys:String x:Key="L_Main_Ctx_EdgeSnap_Enabled">Edge snap enabled.</sys:String>
     <sys:String x:Key="L_Main_Ctx_EdgeSnap_Disabled">Edge snap disabled</sys:String>
 
     <sys:String x:Key="L_Main_Unit_Pixel">px</sys:String>

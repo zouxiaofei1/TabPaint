@@ -455,6 +455,10 @@ namespace TabPaint
                     MainWindow_PreviewKeyDown(s, e);
                     _router.OnPreviewKeyDown(s, e);
                 };
+                this.PreviewKeyUp += (s, e) =>
+                {
+                    _router.OnPreviewKeyUp(s, e);
+                };
 
                 _ = Task.Delay(TimeSpan.FromSeconds(AppConsts.DragTempCleanupDelaySeconds)).ContinueWith(async _ =>
                     {

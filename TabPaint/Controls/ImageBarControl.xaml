@@ -208,10 +208,13 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Grid Background="Transparent" AllowDrop="True" Margin="0,0,0,0" ClipToBounds="False"
-                                      Drop="Internal_OnFileTabDrop" 
-                                      DragOver="Internal_OnFileTabReorderDragOver"
-                                      DragLeave="Internal_OnFileTabDragLeave">
+                            <Grid Background="Transparent" AllowDrop="True" Margin="0,0,0,0" ClipToBounds="False"
+                                  Drop="Internal_OnFileTabDrop" 
+                                  DragOver="Internal_OnFileTabReorderDragOver"
+                                  DragLeave="Internal_OnFileTabDragLeave">
+                                    <Grid.RenderTransform>
+                                        <TranslateTransform X="0" Y="0"/>
+                                    </Grid.RenderTransform>
 
                                     <Button x:Name="TabButton" Margin="2" Padding="4" 
                                             Click="Internal_OnFileTabClick" 
@@ -406,10 +409,7 @@
                                             </Style>
                                         </Button.Style>
                                     </Button>
-                                    <Border x:Name="InsertLine" Width="3" HorizontalAlignment="Left" VerticalAlignment="Stretch" 
-                                            Background="{DynamicResource ToolAccentBrush}" Visibility="Collapsed" IsHitTestVisible="False" Margin="0,6,0,6" Padding="0,0,2,0" CornerRadius="2" Opacity="0.95"/>
-
-                                </Grid>
+                            </Grid>
 
                                 <DataTemplate.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">

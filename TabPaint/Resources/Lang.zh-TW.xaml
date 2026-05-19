@@ -273,9 +273,9 @@
     <sys:String x:Key="L_Main_Ctx_Rotate">自由旋轉</sys:String>
     <sys:String x:Key="L_Main_Ctx_AddBorder">一鍵加邊框</sys:String>
     <sys:String x:Key="L_Main_Ctx_AI_SuperRes">4x 超解析度</sys:String>
-    <sys:String x:Key="L_Main_Ctx_EdgeSnap">視窗磁吸至邊緣</sys:String>
-    <sys:String x:Key="L_Main_Ctx_EdgeSnap_Enabled">視窗磁吸已開啟，拖曳到螢幕邊緣自動吸附</sys:String>
-    <sys:String x:Key="L_Main_Ctx_EdgeSnap_Disabled">視窗磁吸已關閉</sys:String>
+    <sys:String x:Key="L_Main_Ctx_EdgeSnap">視窗磁吸</sys:String>
+    <sys:String x:Key="L_Main_Ctx_EdgeSnap_Enabled">視窗磁吸開啟</sys:String>
+    <sys:String x:Key="L_Main_Ctx_EdgeSnap_Disabled">視窗磁吸關閉</sys:String>
     <sys:String x:Key="L_BirdEye_Ctx_Hide">關閉鳥瞰圖</sys:String>
 
     <sys:String x:Key="L_Main_Unit_Pixel">像素</sys:String>

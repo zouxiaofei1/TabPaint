@@ -280,6 +280,8 @@ namespace TabPaint
         private Button _tabDragSourceButton;
         private UIHandlers.TabDragGhostWindow _tabDragGhostWindow;
         private int _tabDragInsertIndex = -1;
+        private int _previousTabInsertIndex = -1;
+        private bool _isTabReorderAnimating = false;
         private bool _tabDragFallbackRequested = false;
         private bool _draggingFromMaximized = false;
         private bool _isWindowViewDragging = false;

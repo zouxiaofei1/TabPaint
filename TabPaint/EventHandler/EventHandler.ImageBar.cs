@@ -14,6 +14,7 @@ using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using TabPaint.Services;
 using TabPaint.Windows;
@@ -149,6 +150,7 @@ namespace TabPaint
                     bool isJpeg = fileName.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
                                   fileName.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase);
                     if (isJpeg) bitmapToSave = ConvertToWhiteBackground(bitmapToSave);
+                    a.s(fileName);
 
                     using (var fs = new FileStream(tempFilePath, FileMode.Create))
                     {
@@ -218,6 +220,7 @@ namespace TabPaint
             _isTabBarDragging = true;
             _tabDragSourceItem = _mouseDownTabItem;
             _tabDragInsertIndex = FileTabs.IndexOf(_mouseDownTabItem);
+            _previousTabInsertIndex = _tabDragInsertIndex;
             _tabDragPointerOffset = e.GetPosition(_tabDragSourceButton);
 
             foreach (var tab in _draggingTabItems)
@@ -228,9 +231,10 @@ namespace TabPaint
             if (_tabDragGhostWindow == null)
             {
                 _tabDragGhostWindow = new UIHandlers.TabDragGhostWindow();
+                _tabDragGhostWindow.SetDpiFromVisual(this);
             }
 
-            _tabDragGhostWindow.UpdateCompactMode(MainImageBar?.IsCompactMode == true);
+            _tabDragGhostWindow.UpdateCompactMode(MainImageBar?.IsCompactMode == true, MainImageBar?.CurrentTabWidth ?? 120);
             _tabDragGhostWindow.UpdateContent(_tabDragSourceItem.Thumbnail, _tabDragSourceItem.DisplayName, _draggingTabItems.Count);
             _tabDragGhostWindow.UpdatePosition(PointToScreen(e.GetPosition(this)), _tabDragPointerOffset);
             if (!_tabDragGhostWindow.IsVisible)
@@ -287,11 +291,15 @@ namespace TabPaint
             if (insideImageBar)
             {
                 _tabDragInsertIndex = GetTabInsertIndex(windowPoint);
-                UpdateInsertLineVisual(_tabDragInsertIndex);
+                if (_tabDragInsertIndex != _previousTabInsertIndex)
+                {
+                    PerformLiveReorder(_previousTabInsertIndex, _tabDragInsertIndex);
+                    _previousTabInsertIndex = _tabDragInsertIndex;
+                }
                 return;
             }
 
-            ClearAllTabDragFeedback();
+            ClearTabReorderAnimations();
             if (ShouldFallbackToSystemDrag(windowPoint))
             {
                 StartSystemTabDragFallback();
@@ -341,53 +349,6 @@ namespace TabPaint
             return fallbackIndex;
         }
 
-        private void UpdateInsertLineVisual(int insertIndex)
-        {
-            if (MainImageBar?.TabList == null) return;
-
-            ClearAllTabDragFeedback();
-
-            int targetContainerIndex = Math.Min(Math.Max(insertIndex, 0), MainImageBar.TabList.Items.Count - 1);
-            if (targetContainerIndex < 0 || MainImageBar.TabList.Items.Count == 0) return;
-
-            var container = MainImageBar.TabList.ItemContainerGenerator.ContainerFromIndex(targetContainerIndex) as FrameworkElement;
-            if (container == null) return;
-
-            var grid = container as Grid ?? GetAncestor<Grid>(container);
-            var insertLine = grid != null ? FindVisualChild<Border>(grid, "InsertLine") : null;
-            if (insertLine == null) return;
-
-            insertLine.HorizontalAlignment = insertIndex >= MainImageBar.TabList.Items.Count ? HorizontalAlignment.Right : HorizontalAlignment.Left;
-            insertLine.Visibility = Visibility.Visible;
-        }
-
-        private void ClearAllTabDragFeedback()
-        {
-            if (MainImageBar?.TabList == null) return;
-            for (int i = 0; i < MainImageBar.TabList.Items.Count; i++)
-            {
-                if (MainImageBar.TabList.ItemContainerGenerator.ContainerFromIndex(i) is FrameworkElement container)
-                {
-                    var grid = container as Grid ?? GetAncestor<Grid>(container);
-                    if (grid != null)
-                    {
-                        var insertLine = FindVisualChild<Border>(grid, "InsertLine");
-                        if (insertLine != null) insertLine.Visibility = Visibility.Collapsed;
-                    }
-                }
-            }
-        }
-
-        private static T GetAncestor<T>(DependencyObject d) where T : DependencyObject
-        {
-            while (d != null)
-            {
-                if (d is T t) return t;
-                d = VisualTreeHelper.GetParent(d);
-            }
-
-            return null;
-        }
 
         private List<FileTabItem> GetDraggingTabs()
         {
@@ -457,7 +418,155 @@ namespace TabPaint
 
             if (_tabDragFallbackRequested || tabsToMove.Count == 0) return;
 
-            ReorderTabsWithinWindow(tabsToMove, insertIndex);
+            // PerformLiveReorder already moved tabs to the target position during drag.
+            // Only call ReorderTabsWithinWindow if no live reorder occurred.
+            bool alreadyPositioned = false;
+            if (insertIndex >= 0 && tabsToMove.Count > 0)
+            {
+                alreadyPositioned = true;
+                for (int i = 0; i < tabsToMove.Count; i++)
+                {
+                    int idx = FileTabs.IndexOf(tabsToMove[i]);
+                    if (idx < 0 || idx != insertIndex + i)
+                    {
+                        alreadyPositioned = false;
+                        break;
+                    }
+                }
+            }
+
+            if (!alreadyPositioned)
+            {
+                ReorderTabsWithinWindow(tabsToMove, insertIndex);
+            }
+            else
+            {
+                UpdateWindowTitle();
+                UpdateImageBarSliderState();
+                if (_currentTabItem != null)
+                    _currentImageIndex = _imageFiles.FindIndex(f => string.Equals(f, _currentTabItem.FilePath, StringComparison.OrdinalIgnoreCase));
+            }
+        }
+
+        private Dictionary<FileTabItem, double> SnapshotTabPositions()
+        {
+            var positions = new Dictionary<FileTabItem, double>();
+            if (MainImageBar?.TabList == null) return positions;
+
+            for (int i = 0; i < MainImageBar.TabList.Items.Count; i++)
+            {
+                var container = MainImageBar.TabList.ItemContainerGenerator.ContainerFromIndex(i) as FrameworkElement;
+                if (container == null) continue;
+                var item = MainImageBar.TabList.Items[i] as FileTabItem;
+                if (item == null) continue;
+
+                Point pos = container.TranslatePoint(new Point(0, 0), this);
+                positions[item] = pos.X;
+            }
+            return positions;
+        }
+
+        private void AnimateTabTransitions(Dictionary<FileTabItem, double> oldPositions)
+        {
+            if (MainImageBar?.TabList == null) return;
+
+            var duration = TimeSpan.FromMilliseconds(200);
+            var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+
+            for (int i = 0; i < MainImageBar.TabList.Items.Count; i++)
+            {
+                var container = MainImageBar.TabList.ItemContainerGenerator.ContainerFromIndex(i) as FrameworkElement;
+                if (container == null) continue;
+                var item = MainImageBar.TabList.Items[i] as FileTabItem;
+                if (item == null || !oldPositions.TryGetValue(item, out double oldX)) continue;
+
+                Point newPos = container.TranslatePoint(new Point(0, 0), this);
+                double deltaX = oldX - newPos.X;
+
+                if (Math.Abs(deltaX) < 0.5) continue;
+                if (_draggingTabItems.Contains(item)) continue;
+
+                var transform = container.RenderTransform as TranslateTransform;
+                if (transform != null)
+                {
+                    transform.BeginAnimation(TranslateTransform.XProperty, null);
+                }
+                else
+                {
+                    transform = new TranslateTransform();
+                    container.RenderTransform = transform;
+                }
+
+                transform.X = deltaX;
+                var anim = new DoubleAnimation(0, duration) { EasingFunction = ease };
+                transform.BeginAnimation(TranslateTransform.XProperty, anim);
+            }
+        }
+
+        private void PerformLiveReorder(int fromIdx, int toIdx)
+        {
+            if (fromIdx == toIdx) return;
+            if (fromIdx < 0 || toIdx < 0) return;
+            if (_draggingTabItems.Count == 0 || MainImageBar?.TabList == null) return;
+
+            var tabsToMove = _draggingTabItems.Where(t => FileTabs.Contains(t)).OrderBy(t => FileTabs.IndexOf(t)).ToList();
+            if (tabsToMove.Count == 0) return;
+
+            ClearTabReorderAnimations();
+
+            var oldPositions = SnapshotTabPositions();
+
+            foreach (var t in tabsToMove)
+            {
+                FileTabs.Remove(t);
+                if (!string.IsNullOrEmpty(t.FilePath)) _imageFiles.Remove(t.FilePath);
+            }
+
+            int adjustedIdx = Math.Min(Math.Max(toIdx, 0), FileTabs.Count);
+            for (int i = 0; i < tabsToMove.Count; i++)
+            {
+                var t = tabsToMove[i];
+                FileTabs.Insert(adjustedIdx + i, t);
+
+                if (!string.IsNullOrEmpty(t.FilePath))
+                {
+                    int fileInsertIdx = 0;
+                    if (adjustedIdx + i > 0)
+                    {
+                        var prevTab = FileTabs[adjustedIdx + i - 1];
+                        fileInsertIdx = _imageFiles.FindIndex(f => string.Equals(f, prevTab.FilePath, StringComparison.OrdinalIgnoreCase)) + 1;
+                    }
+                    if (fileInsertIdx < 0) fileInsertIdx = _imageFiles.Count;
+                    _imageFiles.Insert(fileInsertIdx, t.FilePath);
+                }
+            }
+
+            ImageFilesCount = _imageFiles.Count;
+            UpdateImageBarSliderState();
+
+            _isTabReorderAnimating = true;
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (!_isTabBarDragging) { _isTabReorderAnimating = false; return; }
+                AnimateTabTransitions(oldPositions);
+                _isTabReorderAnimating = false;
+            }), System.Windows.Threading.DispatcherPriority.Loaded);
+        }
+
+        private void ClearTabReorderAnimations()
+        {
+            if (MainImageBar?.TabList == null) return;
+            for (int i = 0; i < MainImageBar.TabList.Items.Count; i++)
+            {
+                var container = MainImageBar.TabList.ItemContainerGenerator.ContainerFromIndex(i) as FrameworkElement;
+                if (container == null) continue;
+                var transform = container.RenderTransform as TranslateTransform;
+                if (transform != null)
+                {
+                    transform.BeginAnimation(TranslateTransform.XProperty, null);
+                    transform.X = 0;
+                }
+            }
         }
 
         private void CancelTabBarDrag()
@@ -467,7 +576,7 @@ namespace TabPaint
 
         private void CancelTabBarDragCore(bool clearMouseDown, bool keepGhostWindow)
         {
-            ClearAllTabDragFeedback();
+            ClearTabReorderAnimations();
 
             foreach (var tab in _draggingTabItems)
             {
@@ -497,6 +606,7 @@ namespace TabPaint
             _draggingTabItems.Clear();
             _tabDragSourceItem = null;
             _tabDragInsertIndex = -1;
+            _previousTabInsertIndex = -1;
             _tabDragPointerOffset = default;
             _tabDragSourceButton = null;
 
@@ -514,13 +624,13 @@ namespace TabPaint
             if (tabsToDrag.Count == 0) return;
 
             _tabDragFallbackRequested = true;
-            var sourceElement = _tabDragSourceButton as DependencyObject ?? this;
+            var sourceItem = _tabDragSourceItem;
             CancelTabBarDragCore(clearMouseDown: false, keepGhostWindow: true);
 
             try
             {
                 var dataObject = new System.Windows.DataObject();
-                dataObject.SetData("TabPaintReorderItem", _tabDragSourceItem);
+                dataObject.SetData("TabPaintReorderItem", sourceItem);
                 dataObject.SetData("TabPaintReorderItems", tabsToDrag);
                 dataObject.SetData("TabPaintInternalDrag", true);
                 dataObject.SetData("TabPaintSourceWindow", this);
@@ -547,7 +657,7 @@ namespace TabPaint
                 }
 
                 _dropZone.ShowAtBottom();
-                DragDrop.DoDragDrop(sourceElement, dataObject, DragDropEffects.Copy | DragDropEffects.Move);
+                DragDrop.DoDragDrop(this, dataObject, DragDropEffects.Copy | DragDropEffects.Move);
             }
             finally
             {
@@ -651,7 +761,6 @@ namespace TabPaint
         }
         private void OnFileTabLeave(object sender, DragEventArgs e)
         {
-            ClearDragFeedback(sender);
         }
         private void OnFileTabReorderDragOver(object sender, System.Windows.DragEventArgs e)
         {
@@ -659,48 +768,10 @@ namespace TabPaint
             {
                 e.Effects = DragDropEffects.Move;
                 e.Handled = true;
-
-                if (sender is Grid grid)
-                {
-                    // 获取鼠标在当前 Item 内的相对坐标
-                    Point p = e.GetPosition(grid);
-                    double width = grid.ActualWidth;
-
-                    var insLine = FindVisualChild<Border>(grid, "InsertLine");
-
-                    if (insLine == null) return;
-                    insLine.Visibility = Visibility.Visible;
-                }
             }
             else
             {
                 e.Effects = DragDropEffects.None;
-            }
-        }
-        private T FindVisualChild<T>(DependencyObject parent, string childName) where T : FrameworkElement
-        {
-            if (parent == null) return null;
-
-            int childrenCount = VisualTreeHelper.GetChildrenCount(parent);
-            for (int i = 0; i < childrenCount; i++)
-            {
-                var child = VisualTreeHelper.GetChild(parent, i);
-                // 如果是要找的类型且名字匹配 (如果传了名字)
-                if (child is T tChild && (string.IsNullOrEmpty(childName) || tChild.Name == childName))
-                {
-                    return tChild;
-                }
-                var result = FindVisualChild<T>(child, childName);
-                if (result != null) return result;
-            }
-            return null;
-        }
-        private void ClearDragFeedback(object sender)
-        {
-            if (sender is Grid grid)
-            {
-                var leftLine = FindVisualChild<Border>(grid, "InsertLine");
-                if (leftLine != null) leftLine.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -744,7 +815,6 @@ namespace TabPaint
         }
         private async void OnFileTabDrop(object sender, System.Windows.DragEventArgs e)
         {
-            ClearDragFeedback(sender);
 
             bool hasMulti = e.Data.GetDataPresent("TabPaintReorderItems");
             bool hasSingle = e.Data.GetDataPresent("TabPaintReorderItem");

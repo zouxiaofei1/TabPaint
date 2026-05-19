@@ -6,6 +6,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using TabPaint;
 using static TabPaint.MainWindow;
 
@@ -18,6 +19,7 @@ public partial class ShapeTool : ToolBase
     public ShapeType _currentShapeType = ShapeType.Rectangle;
     public ShapeType CurrentShapeType => _currentShapeType;
     public bool HasRulerHighlight => _isDrawing || _isEditing;
+    public bool IsEditing => _isEditing;
     public double RotationAngle => _rotationAngle;
     public Int32Rect SelectionRect
     {
@@ -66,6 +68,14 @@ public partial class ShapeTool : ToolBase
     private const double HandleSize = 8;
     private const double HitRange = 12;
     private const double RotateHandleOffset = 30;
+
+    // 键盘移动
+    private DispatcherTimer _keyMoveTimer;
+    private readonly HashSet<Key> _pressedArrowKeys = new HashSet<Key>();
+    private DateTime _arrowKeyPressTime;
+    private const double KeyMoveBaseStep = 1.0;
+    private const double KeyMoveAccelFactor = 0.005;
+    private const double KeyMoveMaxStep = 10;
 
     public override void SetCursor(ToolContext ctx)
     {
@@ -704,6 +714,7 @@ public partial class ShapeTool : ToolBase
         _rotationAngle = 0;
         _hasArrowEndpoints = false;
         _lineUsesNegativeDiagonal = false;
+        StopArrowKeyMove();
         if (ctx.ViewElement != null) ctx.ViewElement.Cursor = this.Cursor;
         ctx.ParentWindow.UpdateRulerSelection();
     }
@@ -771,6 +782,20 @@ public partial class ShapeTool : ToolBase
 
     public override void OnKeyDown(ToolContext ctx, KeyEventArgs e)
     {
+        if (_isEditing && Keyboard.Modifiers == ModifierKeys.None)
+        {
+            switch (e.Key)
+            {
+                case Key.Left:
+                case Key.Right:
+                case Key.Up:
+                case Key.Down:
+                    if (!e.IsRepeat) StartArrowKeyMove(ctx, e.Key);
+                    e.Handled = true;
+                    return;
+            }
+        }
+
         if (e.IsRepeat) return;
 
         if (e.Key == Key.Z && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
@@ -942,5 +967,77 @@ public partial class ShapeTool : ToolBase
     private double Gethandlength(Point start, Point end)
     {
         return Math.Pow(Math.Pow(start.X - end.X, 2) + Math.Pow(start.Y - end.Y, 2), 0.5) * AppConsts.ArrowHeadRatio;
+    }
+
+    private void StartArrowKeyMove(ToolContext ctx, Key key)
+    {
+        bool wasEmpty = _pressedArrowKeys.Count == 0;
+        _pressedArrowKeys.Add(key);
+
+        if (!wasEmpty) return;
+
+        _arrowKeyPressTime = DateTime.Now;
+
+        if (_keyMoveTimer == null)
+        {
+            _keyMoveTimer = new DispatcherTimer();
+            _keyMoveTimer.Interval = TimeSpan.FromMilliseconds(16);
+            _keyMoveTimer.Tick += ArrowKeyMoveTick;
+        }
+
+        _keyMoveTimer.Tag = ctx;
+        _keyMoveTimer.Start();
+
+        NudgeShape(ctx, KeyMoveBaseStep);
+    }
+
+    private void ArrowKeyMoveTick(object sender, EventArgs e)
+    {
+        var ctx = _keyMoveTimer.Tag as ToolContext;
+        if (ctx == null) return;
+
+        double elapsedMs = (DateTime.Now - _arrowKeyPressTime).TotalMilliseconds;
+        double step = Math.Min(KeyMoveMaxStep, KeyMoveBaseStep + elapsedMs * KeyMoveAccelFactor);
+        NudgeShape(ctx, step);
+    }
+
+    private void NudgeShape(ToolContext ctx, double step)
+    {
+        double dx = 0, dy = 0;
+        if (_pressedArrowKeys.Contains(Key.Left))  dx -= step;
+        if (_pressedArrowKeys.Contains(Key.Right)) dx += step;
+        if (_pressedArrowKeys.Contains(Key.Up))    dy -= step;
+        if (_pressedArrowKeys.Contains(Key.Down))  dy += step;
+
+        _editingRect.X += dx;
+        _editingRect.Y += dy;
+
+        ctx.ParentWindow.Dispatcher.Invoke(() =>
+        {
+            UpdatePreviewFromRect(ctx);
+            RefreshHandles(ctx);
+            ctx.ParentWindow.UpdateRulerSelection();
+        });
+    }
+
+    private void StopArrowKeyMove()
+    {
+        if (_keyMoveTimer != null)
+        {
+            _keyMoveTimer.Stop();
+            _keyMoveTimer.Tag = null;
+        }
+        _pressedArrowKeys.Clear();
+    }
+
+    public override void OnKeyUp(ToolContext ctx, KeyEventArgs e)
+    {
+        if (_isEditing && _pressedArrowKeys.Contains(e.Key))
+        {
+            _pressedArrowKeys.Remove(e.Key);
+            if (_pressedArrowKeys.Count == 0) StopArrowKeyMove();
+            e.Handled = true;
+        }
+        base.OnKeyUp(ctx, e);
     }
 }

@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 
 //
 //SelectTool类键鼠操作相关方法
@@ -44,6 +45,7 @@ namespace TabPaint
                 _transformStep = 0;
                 _draggingSelection = false;
                 _resizing = false;
+                StopArrowKeyMove();
                 Mouse.OverrideCursor = null;
                 var mw = ctx.ParentWindow;
                 mw.SetCropButtonState();
@@ -746,6 +748,21 @@ namespace TabPaint
             public override void OnKeyDown(ToolContext ctx, System.Windows.Input.KeyEventArgs e)
             {
                 if (ctx.ParentWindow.IsViewMode) return;
+
+                if (_selectionData != null && Keyboard.Modifiers == ModifierKeys.None)
+                {
+                    switch (e.Key)
+                    {
+                        case Key.Left:
+                        case Key.Right:
+                        case Key.Up:
+                        case Key.Down:
+                            if (!e.IsRepeat) StartArrowKeyMove(ctx, e.Key);
+                            e.Handled = true;
+                            return;
+                    }
+                }
+
                 if (Keyboard.Modifiers == ModifierKeys.Control)
                 {
                     switch (e.Key)
@@ -1123,6 +1140,88 @@ namespace TabPaint
                 }
                 mw.SetCropButtonState(); mw.UpdateRulerSelection();
 
+            }
+
+            private void StartArrowKeyMove(ToolContext ctx, Key key)
+            {
+                if (!_hasLifted) LiftSelectionFromCanvas(ctx);
+
+                bool wasEmpty = _pressedArrowKeys.Count == 0;
+                _pressedArrowKeys.Add(key);
+
+                if (!wasEmpty) return;
+
+                _arrowKeyPressTime = DateTime.Now;
+
+                if (_keyMoveTimer == null)
+                {
+                    _keyMoveTimer = new DispatcherTimer();
+                    _keyMoveTimer.Interval = TimeSpan.FromMilliseconds(16);
+                    _keyMoveTimer.Tick += ArrowKeyMoveTick;
+                }
+
+                _keyMoveTimer.Tag = ctx;
+                _keyMoveTimer.Start();
+
+                NudgeSelection(ctx, KeyMoveBaseStep);
+            }
+
+            private void ArrowKeyMoveTick(object sender, EventArgs e)
+            {
+                var ctx = _keyMoveTimer.Tag as ToolContext;
+                if (ctx == null) return;
+
+                double elapsedMs = (DateTime.Now - _arrowKeyPressTime).TotalMilliseconds;
+                double step = Math.Min(KeyMoveMaxStep, KeyMoveBaseStep + elapsedMs * KeyMoveAccelFactor);
+                NudgeSelection(ctx, step);
+            }
+
+            private void NudgeSelection(ToolContext ctx, double step)
+            {
+                int dx = 0, dy = 0;
+                if (_pressedArrowKeys.Contains(Key.Left))  dx -= (int)step;
+                if (_pressedArrowKeys.Contains(Key.Right)) dx += (int)step;
+                if (_pressedArrowKeys.Contains(Key.Up))    dy -= (int)step;
+                if (_pressedArrowKeys.Contains(Key.Down))  dy += (int)step;
+
+                var mw = ctx.ParentWindow;
+                _selectionRect.X += dx;
+                _selectionRect.Y += dy;
+
+                if (_preRotationSelectionData != null)
+                {
+                    _preRotationRect.X += dx;
+                    _preRotationRect.Y += dy;
+                }
+
+                mw.Dispatcher.Invoke(() =>
+                {
+                    UpdatePreviewTransform(ctx);
+                    DrawOverlay(ctx, _selectionRect);
+                    mw.UpdateSelectionToolBarPosition();
+                    mw.UpdateRulerSelection();
+                });
+            }
+
+            private void StopArrowKeyMove()
+            {
+                if (_keyMoveTimer != null)
+                {
+                    _keyMoveTimer.Stop();
+                    _keyMoveTimer.Tag = null;
+                }
+                _pressedArrowKeys.Clear();
+            }
+
+            public override void OnKeyUp(ToolContext ctx, System.Windows.Input.KeyEventArgs e)
+            {
+                if (_selectionData != null && _pressedArrowKeys.Contains(e.Key))
+                {
+                    _pressedArrowKeys.Remove(e.Key);
+                    if (_pressedArrowKeys.Count == 0) StopArrowKeyMove();
+                    e.Handled = true;
+                }
+                base.OnKeyUp(ctx, e);
             }
 
         }

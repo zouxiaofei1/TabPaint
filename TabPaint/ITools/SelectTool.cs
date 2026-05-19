@@ -74,6 +74,13 @@ namespace TabPaint
             private bool[] _wandMaskBuffer; // 用于缓存全图的选中状态(bool)，避免重复申请内存
             private byte[] _wandAlphaBuffer; // 用于缓存选区的 AlphaMap
             private byte[] _wandPreviewBuffer; // 用于缓存预览遮罩的像素
+            // 键盘移动
+            private DispatcherTimer _keyMoveTimer;
+            private readonly HashSet<Key> _pressedArrowKeys = new HashSet<Key>();
+            private DateTime _arrowKeyPressTime;
+            private const double KeyMoveBaseStep = 1.0;
+            private const double KeyMoveAccelFactor = 0.005;
+            private const double KeyMoveMaxStep = 10;
             public enum ResizeAnchor
             {
                 None,
