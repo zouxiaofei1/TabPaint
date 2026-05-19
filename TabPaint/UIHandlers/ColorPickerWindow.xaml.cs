@@ -73,7 +73,7 @@ namespace TabPaint
                 if (_magnifierScale != null)
                 {
                     // 弹出的缩放动画保留，增加高级感
-                    DoubleAnimation scaleAnim = new DoubleAnimation(0.5, 1.0, TimeSpan.FromMilliseconds(150))
+                    DoubleAnimation scaleAnim = new DoubleAnimation(0.5, 1.0, AnimationHelper.GetScaledTimeSpan(150))
                     {
                         EasingFunction = new BackEase { Amplitude = 0.5, EasingMode = EasingMode.EaseOut }
                     };

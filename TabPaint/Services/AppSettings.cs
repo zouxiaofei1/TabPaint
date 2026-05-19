@@ -172,6 +172,7 @@ namespace TabPaint
 
                 if (_router?.CurrentTool != null) settings.LastToolName = _router.CurrentTool.GetType().Name;
                 if (_ctx != null) settings.LastBrushStyle = _ctx.PenStyle;
+                settings.EdgeSnapEnabled = this.EdgeSnapEnabled;
             }
 
             if (this.WindowState == System.Windows.WindowState.Maximized)
@@ -315,6 +316,7 @@ namespace TabPaint
                             k => k.Key, v => v.Value.Clone());
                         this.CurrentToolKey = refWindow.CurrentToolKey;
                     }
+                    this.EdgeSnapEnabled = refWindow.EdgeSnapEnabled;
 
                     // 2. 继承源窗口当前的工具和样式
                     if (refWindow._router?.CurrentTool != null)
@@ -335,6 +337,7 @@ namespace TabPaint
                             k => k.Key, v => v.Value.Clone());
                     }
                     this.CurrentToolKey = settings.CurrentToolKey;
+                    this.EdgeSnapEnabled = settings.EdgeSnapEnabled;
                 }
 
                 // 同步笔刷大小和透明度到当前上下文

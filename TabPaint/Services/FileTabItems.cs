@@ -221,7 +221,15 @@ namespace TabPaint
             if (FileTabs.Count == 0)
             {
                 _imageFiles.Clear();
-                ResetToNewCanvas(); // ResetToNewCanvas 内部通常会调用 CreateNewTab 确保至少有一个页
+                if (isMoving)
+                {
+                    Dispatcher.BeginInvoke(new Action(() => Close()),
+                        System.Windows.Threading.DispatcherPriority.Normal);
+                }
+                else
+                {
+                    ResetToNewCanvas();
+                }
                 UpdateImageBarSliderState();
                 return;
             }

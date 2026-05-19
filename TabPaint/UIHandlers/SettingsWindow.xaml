@@ -129,8 +129,8 @@
             </StackPanel>
 
             <controls:SearchBarControl x:Name="SettingsSearchBar" Grid.Column="1"
-                                       HorizontalAlignment="Right" VerticalAlignment="Center"
-                                       Margin="0,0,25,0"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Margin="0"
                                        WindowChrome.IsHitTestVisibleInChrome="True"/>
 
             <!-- 右侧：窗口控制按钮 -->

@@ -470,7 +470,7 @@ namespace TabPaint
         {
             if (MainImageBar?.TabList == null) return;
 
-            var duration = TimeSpan.FromMilliseconds(200);
+            var duration = AnimationHelper.GetScaledTimeSpan(200);
             var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
 
             for (int i = 0; i < MainImageBar.TabList.Items.Count; i++)
@@ -845,7 +845,7 @@ namespace TabPaint
                 {
                     foreach (var sourceTab in sourceTabs)
                     {
-                        sourceWindow.CloseTab(sourceTab, true);
+                        sourceWindow.CloseTab(sourceTab, slient: true, isMoving: true);
                         var existingTab = FileTabs.FirstOrDefault(t => t.Id == sourceTab.Id);
                         if (existingTab != null)
                         {

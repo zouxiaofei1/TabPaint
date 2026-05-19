@@ -454,7 +454,7 @@ namespace TabPaint.Controls
                 var scaleXAnim = new System.Windows.Media.Animation.DoubleAnimation
                 {
                     To = 0,
-                    Duration = TimeSpan.FromMilliseconds(200),
+                    Duration = AnimationHelper.GetScaledTimeSpan(200),
                     EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseIn }
                 };
                 System.Windows.Media.Animation.Storyboard.SetTarget(scaleXAnim, grid);
@@ -464,7 +464,7 @@ namespace TabPaint.Controls
                 var scaleYAnim = new System.Windows.Media.Animation.DoubleAnimation
                 {
                     To = 0,
-                    Duration = TimeSpan.FromMilliseconds(200),
+                    Duration = AnimationHelper.GetScaledTimeSpan(200),
                     EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseIn }
                 };
                 System.Windows.Media.Animation.Storyboard.SetTarget(scaleYAnim, grid);
@@ -474,7 +474,7 @@ namespace TabPaint.Controls
                 var opacityAnim = new System.Windows.Media.Animation.DoubleAnimation
                 {
                     To = 0,
-                    Duration = TimeSpan.FromMilliseconds(200)
+                    Duration = AnimationHelper.GetScaledTimeSpan(200)
                 };
                 System.Windows.Media.Animation.Storyboard.SetTarget(opacityAnim, grid);
                 System.Windows.Media.Animation.Storyboard.SetTargetProperty(opacityAnim,

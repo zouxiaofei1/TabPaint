@@ -1163,5 +1163,21 @@ namespace TabPaint
             Shortcuts = defaults;
             OnPropertyChanged(nameof(Shortcuts));
         }
+
+        private bool _edgeSnapEnabled = false;
+
+        [JsonPropertyName("edge_snap_enabled")]
+        public bool EdgeSnapEnabled
+        {
+            get => _edgeSnapEnabled;
+            set
+            {
+                if (_edgeSnapEnabled != value)
+                {
+                    _edgeSnapEnabled = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
     }
 }

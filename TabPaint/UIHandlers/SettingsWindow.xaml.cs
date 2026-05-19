@@ -243,7 +243,7 @@ namespace TabPaint
             element.Opacity = 0;
 
             // 1. 透明度淡入
-            var fadeIn = new DoubleAnimation(1, TimeSpan.FromMilliseconds(250))
+            var fadeIn = new DoubleAnimation(1, AnimationHelper.GetScaledTimeSpan(250))
             {
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
             };
@@ -251,7 +251,7 @@ namespace TabPaint
             if (element is FrameworkElement fe && fe.RenderTransform is TranslateTransform trans)
             {
                 trans.X = 50; // 初始位置在右侧
-                var slideIn = new DoubleAnimation(0, TimeSpan.FromMilliseconds(250))
+                var slideIn = new DoubleAnimation(0, AnimationHelper.GetScaledTimeSpan(250))
                 {
                     EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
                 };
@@ -263,11 +263,11 @@ namespace TabPaint
         private void AnimateHide(UIElement element)
         {
             if (element.Visibility == Visibility.Collapsed) return;
-            var fadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(200));
+            var fadeOut = new DoubleAnimation(0, AnimationHelper.GetScaledTimeSpan(200));
             element.BeginAnimation(UIElement.OpacityProperty, fadeOut);
             if (element is FrameworkElement fe && fe.RenderTransform is TranslateTransform trans)
             {
-                var slideOut = new DoubleAnimation(50, TimeSpan.FromMilliseconds(200));
+                var slideOut = new DoubleAnimation(50, AnimationHelper.GetScaledTimeSpan(200));
                 slideOut.Completed += (s, e) =>
                 {
                     element.Visibility = Visibility.Collapsed;
@@ -306,7 +306,7 @@ namespace TabPaint
             DoubleAnimation anim = new DoubleAnimation();
             anim.From = SidebarBorder.ActualWidth;
             anim.To = targetWidth;
-            anim.Duration = TimeSpan.FromMilliseconds(200);
+            anim.Duration = AnimationHelper.GetScaledTimeSpan(200);
             anim.EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut };
             SidebarBorder.BeginAnimation(Border.WidthProperty, anim);
             Visibility textVis = expand ? Visibility.Visible : Visibility.Collapsed;
@@ -557,7 +557,7 @@ namespace TabPaint
             var colorAnim = new ColorAnimation
             {
                 To = Colors.Transparent,
-                Duration = TimeSpan.FromMilliseconds(800),
+                Duration = AnimationHelper.GetScaledTimeSpan(800),
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
             };
             colorAnim.Completed += (_, __) =>
@@ -695,7 +695,7 @@ namespace TabPaint
             MainContent.Content = newPage;
 
             const int durationMs = 70;
-            var duration = TimeSpan.FromMilliseconds(durationMs);
+            var duration = AnimationHelper.GetScaledTimeSpan(durationMs);
             var easeOut = new CubicEase { EasingMode = EasingMode.EaseOut };
 
             // 新页面进入动画：从右侧滑入，淡入，缩放
@@ -866,7 +866,7 @@ namespace TabPaint
         private void AnimateSpecialNavItemVisibility(ListBoxItem item, bool show)
         {
             const double itemHeight = 40;
-            var duration = TimeSpan.FromMilliseconds(140);
+            var duration = AnimationHelper.GetScaledTimeSpan(140);
 
             item.BeginAnimation(OpacityProperty, null);
             item.BeginAnimation(FrameworkElement.MaxHeightProperty, null);

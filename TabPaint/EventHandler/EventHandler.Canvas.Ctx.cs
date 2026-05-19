@@ -795,7 +795,7 @@ namespace TabPaint
             if (_edgeSnapService == null) return;
             if (sender is MenuItem mi)
             {
-                _edgeSnapService.IsEnabled = mi.IsChecked;
+                this.EdgeSnapEnabled = mi.IsChecked;
                 if (_edgeSnapService.IsEnabled)
                 {
                     ShowToast("L_Main_Ctx_EdgeSnap_Enabled");

@@ -469,7 +469,7 @@ namespace TabPaint.Windows
 
             closeButton.Visibility = Visibility.Visible;
             closeButton.BeginAnimation(OpacityProperty, null);
-            closeButton.BeginAnimation(OpacityProperty, new DoubleAnimation(1, TimeSpan.FromMilliseconds(120)));
+            closeButton.BeginAnimation(OpacityProperty, new DoubleAnimation(1, AnimationHelper.GetScaledTimeSpan(120)));
         }
 
         private void HideHoverCloseButton()
@@ -477,7 +477,7 @@ namespace TabPaint.Windows
             var closeButton = this.FindName("HoverCloseButton") as Button;
             if (closeButton == null) return;
 
-            var fadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(120));
+            var fadeOut = new DoubleAnimation(0, AnimationHelper.GetScaledTimeSpan(120));
             fadeOut.Completed += (_, __) =>
             {
                 if (!closeButton.IsMouseOver)

@@ -212,6 +212,7 @@ namespace TabPaint
                     writer.Write(Current.SvgDecodeSize);
                     writer.Write(Current.EnablePdfSavePage);
                     writer.Write(Current.AnimationSpeedMultiplier);
+                    writer.Write(Current.EdgeSnapEnabled);
 
                     // PinnedSettingsTags
                     var pinnedTags = Current.PinnedSettingsTags ?? new List<string>();
@@ -351,6 +352,10 @@ namespace TabPaint
                     if (dataVersion >= 26)
                     {
                         settings.AnimationSpeedMultiplier = reader.ReadDouble();
+                    }
+                    if (dataVersion >= 27)
+                    {
+                        settings.EdgeSnapEnabled = reader.ReadBoolean();
                     }
                     if (dataVersion >= 23)
                     {

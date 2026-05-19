@@ -5,9 +5,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:TabPaint.Controls"
              mc:Ignorable="d" 
-             d:DesignHeight="28" d:DesignWidth="280"
-             x:Name="SearchControlRoot"
-             Width="280" Height="28">
+             d:DesignHeight="28" d:DesignWidth="150"
+              x:Name="SearchControlRoot"
+              Height="28">
 
     <UserControl.Resources>
         <ResourceDictionary>

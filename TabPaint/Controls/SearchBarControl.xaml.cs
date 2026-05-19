@@ -4,6 +4,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using TabPaint.Services;
 
@@ -11,6 +12,10 @@ namespace TabPaint.Controls
 {
     public partial class SearchBarControl : UserControl
     {
+        private const double DefaultWidth = 150;
+        private const double ExpandedWidth = 240;
+        private const double AnimationDurationMs = 200;
+
         private DispatcherTimer _searchFocusTimer;
 
         public static readonly DependencyProperty SearchItemsProperty =
@@ -41,6 +46,8 @@ namespace TabPaint.Controls
         {
             InitializeComponent();
 
+            Width = DefaultWidth;
+
             _searchFocusTimer = new DispatcherTimer();
             _searchFocusTimer.Interval = TimeSpan.FromMilliseconds(150);
             _searchFocusTimer.Tick += SearchFocusTimer_Tick;
@@ -70,6 +77,7 @@ namespace TabPaint.Controls
 
         public void FocusSearch()
         {
+            AnimateWidth(ExpandedWidth);
             SearchTextBox?.Focus();
             if (!string.IsNullOrEmpty(SearchTextBox?.Text))
             {
@@ -94,6 +102,7 @@ namespace TabPaint.Controls
             FocusBorder.Visibility = Visibility.Visible;
             SearchBorder.BorderBrush = TryFindResource("SystemAccentBrush") as System.Windows.Media.Brush
                                        ?? SearchBorder.BorderBrush;
+            AnimateWidth(ExpandedWidth);
         }
 
         private void OnSearchLostFocus(object sender, RoutedEventArgs e)
@@ -103,6 +112,10 @@ namespace TabPaint.Controls
             FocusBorder.Visibility = Visibility.Collapsed;
             SearchBorder.BorderBrush = TryFindResource("BorderBrush") as System.Windows.Media.Brush
                                        ?? SearchBorder.BorderBrush;
+            if (string.IsNullOrEmpty(SearchTextBox.Text))
+            {
+                AnimateWidth(DefaultWidth);
+            }
         }
 
         private void SearchFocusTimer_Tick(object sender, EventArgs e)
@@ -119,7 +132,15 @@ namespace TabPaint.Controls
                 {
                     SearchPopup.IsOpen = false;
                 }
-                Keyboard.ClearFocus();
+                else
+                {
+                    SearchTextBox.Text = "";
+                    FocusBorder.Visibility = Visibility.Collapsed;
+                    SearchBorder.BorderBrush = TryFindResource("BorderBrush") as System.Windows.Media.Brush
+                                               ?? SearchBorder.BorderBrush;
+                    AnimateWidth(DefaultWidth);
+                    Keyboard.ClearFocus();
+                }
                 e.Handled = true;
             }
             else if (e.Key == Key.Enter)
@@ -231,6 +252,17 @@ namespace TabPaint.Controls
             SearchResultList.ItemsSource = filtered;
             SearchResultList.SelectedIndex = -1;
             SearchPopup.IsOpen = filtered.Count > 0;
+        }
+
+        private void AnimateWidth(double targetWidth)
+        {
+            var animation = new DoubleAnimation
+            {
+                To = targetWidth,
+                Duration = TimeSpan.FromMilliseconds(AnimationDurationMs),
+                EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+            };
+            BeginAnimation(WidthProperty, animation);
         }
     }
 }

@@ -1403,6 +1403,7 @@ namespace TabPaint
                     // 确保资源字典被加入到菜单的资源中，这样 DynamicResource 才能在语言切换时正常工作
                     menu.Resources.MergedDictionaries.Add(dictionary);
 
+                    menu.Opened += (s, e) => SyncEdgeSnapMenuCheck(menu);
                     foreach (var item in menu.Items)
                     {
                         BindCanvasMenuEvents(item);
@@ -1530,6 +1531,19 @@ namespace TabPaint
             }
         }
         private void OnCanvasMenuClickDispatcher(object sender, RoutedEventArgs e){ }
+        private void SyncEdgeSnapMenuCheck(ItemsControl menu)
+        {
+            foreach (var item in menu.Items)
+            {
+                if (item is MenuItem mi && mi.Tag?.ToString() == "EdgeSnap")
+                {
+                    mi.IsChecked = this.EdgeSnapEnabled;
+                    return;
+                }
+                if (item is ItemsControl ic && ic.Items.Count > 0)
+                    SyncEdgeSnapMenuCheck(ic);
+            }
+        }
         private bool _isDragOverlayVisible = false;
 
         public void UpdateSelectionScalingMode()

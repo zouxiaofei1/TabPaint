@@ -45,7 +45,7 @@ namespace TabPaint.Controls
             if (this.Visibility != Visibility.Visible)
             {
                 this.Visibility = Visibility.Visible;
-                var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300));
+                var fadeIn = new DoubleAnimation(0, 1, AnimationHelper.GetScaledTimeSpan(300));
                 this.BeginAnimation(OpacityProperty, fadeIn);
             }
             double p = Math.Max(0, Math.Min(100, status.Percentage));
@@ -60,7 +60,7 @@ namespace TabPaint.Controls
             if (progressBarFill != null)
             {
                 double targetWidth = (p / 100.0) * totalWidth;
-                var anim = new DoubleAnimation(targetWidth, TimeSpan.FromMilliseconds(450))
+                var anim = new DoubleAnimation(targetWidth, AnimationHelper.GetScaledTimeSpan(450))
                 {
                     EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseInOut }
                 };
@@ -95,7 +95,7 @@ namespace TabPaint.Controls
             if (this.Visibility != Visibility.Visible)
             {
                 this.Visibility = Visibility.Visible;
-                var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300));
+                var fadeIn = new DoubleAnimation(0, 1, AnimationHelper.GetScaledTimeSpan(300));
                 this.BeginAnimation(OpacityProperty, fadeIn);
             }
 
@@ -111,7 +111,7 @@ namespace TabPaint.Controls
             if (progressBarFill != null)
             {
                 double targetWidth = (p / 100.0) * totalWidth;
-                var anim = new DoubleAnimation(targetWidth, TimeSpan.FromMilliseconds(450))
+                var anim = new DoubleAnimation(targetWidth, AnimationHelper.GetScaledTimeSpan(450))
                 {
                     EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseInOut }
                 };
@@ -148,7 +148,7 @@ namespace TabPaint.Controls
         }
         public void Finish()
         {
-            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(500));
+            var fadeOut = new DoubleAnimation(1, 0, AnimationHelper.GetScaledTimeSpan(500));
             fadeOut.Completed += (s, e) => { this.Visibility = Visibility.Collapsed; };
             this.BeginAnimation(OpacityProperty, fadeOut);
         }

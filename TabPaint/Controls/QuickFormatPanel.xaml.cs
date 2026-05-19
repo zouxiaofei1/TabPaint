@@ -130,7 +130,7 @@ namespace TabPaint.Controls
                     UpdateHighlight();
 
                     // 切换时的轻微脉冲反馈
-                    var pulse = new DoubleAnimation(1.0, 1.02, new Duration(TimeSpan.FromSeconds(0.05))) { AutoReverse = true };
+                    var pulse = new DoubleAnimation(1.0, 1.02, new Duration(AnimationHelper.GetScaledTimeSpan(50))) { AutoReverse = true };
                     PanelScale.BeginAnimation(ScaleTransform.ScaleXProperty, pulse);
                     PanelScale.BeginAnimation(ScaleTransform.ScaleYProperty, pulse);
                 }

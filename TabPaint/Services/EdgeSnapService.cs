@@ -17,10 +17,10 @@ namespace TabPaint.Services
         private const double AnimationDurationMs = 200;
         private const double MonitorIntervalMs = 50;
 
-        // === ËÀÇøÏà¹Ø³£Á¿ ===
+        // === ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø³ï¿½ï¿½ï¿½ ===
         private const double UnsnapDeadZone = 32.0;
 
-        // ´°¿ÚÏûÏ¢³£Á¿
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½
         private const int WM_ENTERSIZEMOVE = 0x0231;
         private const int WM_EXITSIZEMOVE = 0x0232;
         private const int WM_MOVING = 0x0216;
@@ -72,16 +72,16 @@ namespace TabPaint.Services
         private double _preSnapLeft;
         private double _preSnapTop;
 
-        // === ËÀÇø×´Ì¬×Ö¶Î ===
-        /// <summary>ÍÏ×§¿ªÊ¼Ê±ÊÇ·ñ´¦ÓÚÎü¸½×´Ì¬£¨ÐèÒªËÀÇøÂß¼­£©</summary>
+        // === ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½Ö¶ï¿½ ===
+        /// <summary>ï¿½ï¿½×§ï¿½ï¿½Ê¼Ê±ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ß¼ï¿½ï¿½ï¿½</summary>
         private bool _wasSnappedOnDragStart;
-        /// <summary>ËÀÇøÊÇ·ñÒÑ¾­±»Í»ÆÆ</summary>
+        /// <summary>ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½Ñ¾ï¿½ï¿½ï¿½Í»ï¿½ï¿½</summary>
         private bool _deadZoneBreached;
-        /// <summary>ÍÏ×§¿ªÊ¼Ê±Êó±êµÄÎïÀíÆÁÄ»×ø±ê£¨ÏñËØ£©</summary>
+        /// <summary>ï¿½ï¿½×§ï¿½ï¿½Ê¼Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä»ï¿½ï¿½ï¿½ê£¨ï¿½ï¿½ï¿½Ø£ï¿½</summary>
         private POINT _dragStartCursorRaw;
-        /// <summary>ÍÏ×§¿ªÊ¼Ê±´°¿ÚµÄÎïÀíÆÁÄ»RECT£¨ÏñËØ£©</summary>
+        /// <summary>ï¿½ï¿½×§ï¿½ï¿½Ê¼Ê±ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä»RECTï¿½ï¿½ï¿½ï¿½ï¿½Ø£ï¿½</summary>
         private RECT _dragStartWindowRect;
-        /// <summary>ËÀÇøÍ»ÆÆË²¼äÊó±êµÄÎïÀíÆÁÄ»×ø±ê£¨ÏñËØ£©</summary>
+        /// <summary>ï¿½ï¿½ï¿½ï¿½Í»ï¿½ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä»ï¿½ï¿½ï¿½ê£¨ï¿½ï¿½ï¿½Ø£ï¿½</summary>
         private POINT _breachCursorRaw;
 
         private readonly DispatcherTimer _monitorTimer;
@@ -171,39 +171,39 @@ namespace TabPaint.Services
         }
 
         /// <summary>
-        /// ÔÚËÀÇøÄÚÀ¹½ØWM_MOVING£¬Ç¿ÖÆ´°¿Ú²»¶¯£»
-        /// Í»ÆÆËÀÇøºó£¬ÐÞÕý×ø±êÏû³ýÀÛ»ýÆ«ÒÆ¡£
+        /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½WM_MOVINGï¿½ï¿½Ç¿ï¿½Æ´ï¿½ï¿½Ú²ï¿½ï¿½ï¿½ï¿½ï¿½
+        /// Í»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Û»ï¿½Æ«ï¿½Æ¡ï¿½
         /// </summary>
         private bool HandleMovingInDeadZone(IntPtr lParam)
         {
-            // lParam Ö¸Ïò RECT£¨´°¿Ú¼´½«ÒÆ¶¯µ½µÄÎ»ÖÃ£¬ÎïÀíÏñËØ£©
+            // lParam Ö¸ï¿½ï¿½ RECTï¿½ï¿½ï¿½ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½ï¿½Æ¶ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø£ï¿½
             RECT proposedRect = Marshal.PtrToStructure<RECT>(lParam);
 
             GetCursorPos(out POINT currentCursor);
 
             if (!_deadZoneBreached)
             {
-                // ¼ÆËãÊó±ê´ÓÍÏ×§¿ªÊ¼µ½ÏÖÔÚµÄÎïÀíÏñËØÎ»ÒÆ
+                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×§ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
                 double dx = currentCursor.X - _dragStartCursorRaw.X;
                 double dy = currentCursor.Y - _dragStartCursorRaw.Y;
                 double distance = Math.Sqrt(dx * dx + dy * dy);
 
                 if (distance < UnsnapDeadZone)
                 {
-                    // »¹ÔÚËÀÇøÄÚ ¡ú Ç¿ÖÆ´°¿Ú±£³ÖÔ­Î»
+                    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ Ç¿ï¿½Æ´ï¿½ï¿½Ú±ï¿½ï¿½ï¿½Ô­Î»
                     Marshal.StructureToPtr(_dragStartWindowRect, lParam, false);
-                    return true; // handled = true£¬×èÖ¹ÏµÍ³ÒÆ¶¯´°¿Ú
+                    return true; // handled = trueï¿½ï¿½ï¿½ï¿½Ö¹ÏµÍ³ï¿½Æ¶ï¿½ï¿½ï¿½ï¿½ï¿½
                 }
                 else
                 {
-                    // Í»ÆÆËÀÇø£¡¼ÇÂ¼Í»ÆÆË²¼äµÄÊó±êÎ»ÖÃ
+                    // Í»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â¼Í»ï¿½ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
                     _deadZoneBreached = true;
                     _breachCursorRaw = currentCursor;
                 }
             }
 
-            // ËÀÇøÒÑÍ»ÆÆ ¡ú ÐÞÕý×ø±ê£º´°¿ÚÎ»ÖÃ = Ô­Ê¼Î»ÖÃ + (µ±Ç°Êó±ê - Í»ÆÆË²¼äÊó±ê)
-            // ÕâÑù´°¿Ú´ÓÔ­Î»¿ªÊ¼Æ½»¬¸úËæ£¬Ã»ÓÐÌøÔ¾
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í»ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ê£ºï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ = Ô­Ê¼Î»ï¿½ï¿½ + (ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ - Í»ï¿½ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½)
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½Ô­Î»ï¿½ï¿½Ê¼Æ½ï¿½ï¿½ï¿½ï¿½ï¿½æ£¬Ã»ï¿½ï¿½ï¿½ï¿½Ô¾
             int offsetX = currentCursor.X - _breachCursorRaw.X;
             int offsetY = currentCursor.Y - _breachCursorRaw.Y;
 
@@ -219,7 +219,7 @@ namespace TabPaint.Services
             };
 
             Marshal.StructureToPtr(correctedRect, lParam, false);
-            return true; // Ê¼ÖÕ½Ó¹ÜÒÆ¶¯
+            return true; // Ê¼ï¿½Õ½Ó¹ï¿½ï¿½Æ¶ï¿½
         }
 
         [DllImport("user32.dll")]
@@ -231,32 +231,32 @@ namespace TabPaint.Services
             _isDragging = true;
             _isAnimating = false;
 
-            // ÅÐ¶ÏÍÏ×§¿ªÊ¼Ê±ÊÇ·ñ´¦ÓÚÎü¸½×´Ì¬
+            // ï¿½Ð¶ï¿½ï¿½ï¿½×§ï¿½ï¿½Ê¼Ê±ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬
             _wasSnappedOnDragStart = _isSnapped;
             _deadZoneBreached = false;
 
             if (_wasSnappedOnDragStart)
             {
-                // ¼ÇÂ¼ÍÏ×§ÆðÊ¼Ê±µÄÊó±êÎïÀíÎ»ÖÃ
+                // ï¿½ï¿½Â¼ï¿½ï¿½×§ï¿½ï¿½Ê¼Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
                 GetCursorPos(out _dragStartCursorRaw);
 
-                // ¼ÇÂ¼ÍÏ×§ÆðÊ¼Ê±´°¿ÚµÄÎïÀíÎ»ÖÃ£¨ÏñËØRECT£©
+                // ï¿½ï¿½Â¼ï¿½ï¿½×§ï¿½ï¿½Ê¼Ê±ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã£ï¿½ï¿½ï¿½ï¿½ï¿½RECTï¿½ï¿½
                 GetWindowRect(_hwnd, out _dragStartWindowRect);
             }
 
-            // 1. »ñÈ¡µ±Ç°ÊÓ¾õ×ø±ê
+            // 1. ï¿½ï¿½È¡ï¿½ï¿½Ç°ï¿½Ó¾ï¿½ï¿½ï¿½ï¿½ï¿½
             double currentLeft = _window.Left;
             double currentTop = _window.Top;
 
-            // 2. Çå³ýËùÓÐ¶¯»­Ëø
+            // 2. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½ï¿½
             _window.BeginAnimation(Window.LeftProperty, null);
             _window.BeginAnimation(Window.TopProperty, null);
 
-            // 3. ½«±¾µØÖµÉèÎªµ±Ç°Î»ÖÃ
+            // 3. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½Îªï¿½ï¿½Ç°Î»ï¿½ï¿½
             _window.Left = currentLeft;
             _window.Top = currentTop;
 
-            // Í£Ö¹ÕÛµþµ¹¼ÆÊ±²¢ÖØÖÃ×´Ì¬
+            // Í£Ö¹ï¿½Ûµï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬
             _collapseTimer.Stop();
             _isSnapped = false;
             _isExpanded = false;
@@ -497,7 +497,7 @@ namespace TabPaint.Services
                 return;
             }
 
-            var duration = TimeSpan.FromMilliseconds(AnimationDurationMs);
+            var duration = AnimationHelper.GetScaledTimeSpan(AnimationDurationMs);
             var easing = new QuadraticEase { EasingMode = EasingMode.EaseOut };
 
             DoubleAnimation animLeft = null;

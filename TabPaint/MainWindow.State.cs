@@ -71,6 +71,21 @@ namespace TabPaint
         public InputRouter _router;
         public ToolRegistry _tools;
         public EdgeSnapService _edgeSnapService;
+        private bool _edgeSnapEnabled = false;
+        public bool EdgeSnapEnabled
+        {
+            get => _edgeSnapEnabled;
+            set
+            {
+                if (_edgeSnapEnabled != value)
+                {
+                    _edgeSnapEnabled = value;
+                    if (_edgeSnapService != null)
+                        _edgeSnapService.IsEnabled = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
         public double zoomscale = 1;
         private byte[]? _preDrawSnapshot = null;
 

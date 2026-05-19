@@ -114,21 +114,21 @@ namespace TabPaint.UIHandlers
         {
             var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
 
-            var fade = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200))
+            var fade = new DoubleAnimation(0, 1, AnimationHelper.GetScaledTimeSpan(200))
             {
                 EasingFunction = ease
             };
             MenuCardElement?.BeginAnimation(OpacityProperty, fade);
 
-            var scaleX = new DoubleAnimation(0.94, 1.0, TimeSpan.FromMilliseconds(220))
+            var scaleX = new DoubleAnimation(0.94, 1.0, AnimationHelper.GetScaledTimeSpan(220))
             {
                 EasingFunction = ease
             };
-            var scaleY = new DoubleAnimation(0.94, 1.0, TimeSpan.FromMilliseconds(220))
+            var scaleY = new DoubleAnimation(0.94, 1.0, AnimationHelper.GetScaledTimeSpan(220))
             {
                 EasingFunction = ease
             };
-            var slide = new DoubleAnimation(8, 0, TimeSpan.FromMilliseconds(220))
+            var slide = new DoubleAnimation(8, 0, AnimationHelper.GetScaledTimeSpan(220))
             {
                 EasingFunction = ease
             };
@@ -142,13 +142,13 @@ namespace TabPaint.UIHandlers
         {
             _iconBreathingStoryboard?.Stop();
 
-            var breatheX = new DoubleAnimation(1.0, 1.04, TimeSpan.FromMilliseconds(1500))
+            var breatheX = new DoubleAnimation(1.0, 1.04, AnimationHelper.GetScaledTimeSpan(1500))
             {
                 AutoReverse = true,
                 RepeatBehavior = RepeatBehavior.Forever,
                 EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
             };
-            var breatheY = new DoubleAnimation(1.0, 1.04, TimeSpan.FromMilliseconds(1500))
+            var breatheY = new DoubleAnimation(1.0, 1.04, AnimationHelper.GetScaledTimeSpan(1500))
             {
                 AutoReverse = true,
                 RepeatBehavior = RepeatBehavior.Forever,
@@ -175,17 +175,17 @@ namespace TabPaint.UIHandlers
             if (IconScaleTransform == null || IconRotateTransform == null) return;
 
             var ease = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.5 };
-            IconScaleTransform.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty, new DoubleAnimation(1.08, TimeSpan.FromMilliseconds(140)) { EasingFunction = ease });
-            IconScaleTransform.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty, new DoubleAnimation(1.08, TimeSpan.FromMilliseconds(140)) { EasingFunction = ease });
-            IconRotateTransform.BeginAnimation(System.Windows.Media.RotateTransform.AngleProperty, new DoubleAnimation(6, TimeSpan.FromMilliseconds(140)) { EasingFunction = ease });
+            IconScaleTransform.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty, new DoubleAnimation(1.08, AnimationHelper.GetScaledTimeSpan(140)) { EasingFunction = ease });
+            IconScaleTransform.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty, new DoubleAnimation(1.08, AnimationHelper.GetScaledTimeSpan(140)) { EasingFunction = ease });
+            IconRotateTransform.BeginAnimation(System.Windows.Media.RotateTransform.AngleProperty, new DoubleAnimation(6, AnimationHelper.GetScaledTimeSpan(140)) { EasingFunction = ease });
         }
 
         private void TopIconImage_MouseLeave(object sender, MouseEventArgs e)
         {
             var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
-            IconRotateTransform?.BeginAnimation(System.Windows.Media.RotateTransform.AngleProperty, new DoubleAnimation(0, TimeSpan.FromMilliseconds(150)) { EasingFunction = ease });
-            IconScaleTransform?.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty, new DoubleAnimation(1.0, TimeSpan.FromMilliseconds(180)) { EasingFunction = ease });
-            IconScaleTransform?.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty, new DoubleAnimation(1.0, TimeSpan.FromMilliseconds(180)) { EasingFunction = ease });
+            IconRotateTransform?.BeginAnimation(System.Windows.Media.RotateTransform.AngleProperty, new DoubleAnimation(0, AnimationHelper.GetScaledTimeSpan(150)) { EasingFunction = ease });
+            IconScaleTransform?.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty, new DoubleAnimation(1.0, AnimationHelper.GetScaledTimeSpan(180)) { EasingFunction = ease });
+            IconScaleTransform?.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty, new DoubleAnimation(1.0, AnimationHelper.GetScaledTimeSpan(180)) { EasingFunction = ease });
             StartIconBreathingAnimation();
         }
 
@@ -232,11 +232,11 @@ namespace TabPaint.UIHandlers
             _iconBreathingStoryboard?.Stop();
 
             var currentOpacity = MenuCardElement?.Opacity ?? 1.0;
-            var fade = new DoubleAnimation(currentOpacity, 0, TimeSpan.FromMilliseconds(110));
+            var fade = new DoubleAnimation(currentOpacity, 0, AnimationHelper.GetScaledTimeSpan(110));
             MenuCardElement?.BeginAnimation(OpacityProperty, fade);
 
             var currentY = MenuTranslateTransform?.Y ?? 0;
-            var down = new DoubleAnimation(currentY, 6, TimeSpan.FromMilliseconds(110));
+            var down = new DoubleAnimation(currentY, 6, AnimationHelper.GetScaledTimeSpan(110));
             MenuTranslateTransform?.BeginAnimation(System.Windows.Media.TranslateTransform.YProperty, down);
 
             fade.Completed += (_, _) =>

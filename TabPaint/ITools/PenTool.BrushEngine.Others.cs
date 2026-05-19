@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System.Buffers;
+using System.Collections.Concurrent;
 
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -13,7 +14,7 @@ using static TabPaint.MainWindow;
 public partial class PenTool : ToolBase
 {
     private unsafe void DrawBlurStrokeUnsafeParallel(
-    ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
+     ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
     {
         int size = (int)ctx.PenThickness;
         int r = size / 2;
@@ -22,142 +23,213 @@ public partial class PenTool : ToolBase
         float opacity = (float)ctx.PenOpacity;
         int kernelRadius = 1 + (int)(opacity * r * 0.2);
 
+        // ★ 关键改动：用3次迭代的小核 box blur 代替1次大核
+        // 3次 box blur ≈ 高斯模糊，消除方块纹理
+        const int BlurPasses = 2;
+
+        // 为3次迭代分配合适的核半径（总效果等价于原来的kernelRadius）
+        // 3次 box blur 等效标准差 σ = sqrt(n * (2r+1)^2 - 1) / 12)
+        // 简化处理：每次迭代用 kernelRadius / sqrt(3) 的核
+        int passRadius = Math.Max(1, (int)Math.Round(kernelRadius / Math.Sqrt(BlurPasses)));
+
         int cx = (int)p.X;
         int cy = (int)p.Y;
-        int roiX = Math.Max(0, cx - r - kernelRadius);
-        int roiY = Math.Max(0, cy - r - kernelRadius);
-        int roiR = Math.Min(w, cx + r + kernelRadius);
-        int roiB = Math.Min(h, cy + r + kernelRadius);
+
+        // ROI 需要包含所有迭代的扩展区域
+        int totalKernelExtent = passRadius * BlurPasses;
+        int roiX = Math.Max(0, cx - r - totalKernelExtent);
+        int roiY = Math.Max(0, cy - r - totalKernelExtent);
+        int roiR = Math.Min(w, cx + r + totalKernelExtent);
+        int roiB = Math.Min(h, cy + r + totalKernelExtent);
         int roiW = roiR - roiX;
         int roiH = roiB - roiY;
         if (roiW <= 0 || roiH <= 0) return;
 
-        int satW = roiW + 1;
-        int satH = roiH + 1;
-        int satStride4 = satW * 4;
-        int totalNeeded = satH * satStride4;
+        // 分配临时缓冲区用于多次迭代
+        int pixelCount = roiW * roiH;
+        byte[] tempBuffer = ArrayPool<byte>.Shared.Rent(pixelCount * 4);
 
-        if (_satBufferInt == null || _satIntCapacity < totalNeeded)
-        {
-            _satIntCapacity = totalNeeded;
-            _satBufferInt = new int[_satIntCapacity];
-        }
-        else Array.Clear(_satBufferInt, 0, totalNeeded);
-
-        int[] localSatBuffer = _satBufferInt;
-
-        var snapHandle = System.Runtime.InteropServices.GCHandle.Alloc(
-            _blurSourceSnapshot, System.Runtime.InteropServices.GCHandleType.Pinned);
         try
         {
-            byte* snapBase = (byte*)snapHandle.AddrOfPinnedObject();
-            int snapStride = _blurSnapshotStride;
-
-            var parallelOptions = ctx.ParentWindow.CreatePerformanceParallelOptions();
-
-            // 第一步：并行计算行前缀和（从快照读取）
-            Parallel.For(0, roiH, parallelOptions, (iy) =>
+            var snapHandle = System.Runtime.InteropServices.GCHandle.Alloc(
+                _blurSourceSnapshot, System.Runtime.InteropServices.GCHandleType.Pinned);
+            try
             {
-                byte* srcRow = snapBase + (long)(roiY + iy) * snapStride + roiX * 4;
-                fixed (int* sat = localSatBuffer)
-                {
-                    int* curRow = sat + (iy + 1) * satStride4;
-                    int prefB = 0, prefG = 0, prefR = 0, prefA = 0;
+                byte* snapBase = (byte*)snapHandle.AddrOfPinnedObject();
+                int snapStride = _blurSnapshotStride;
 
-                    for (int ix = 0; ix < roiW; ix++)
+                // 第一次迭代从快照读取，后续从临时缓冲区读取
+                for (int pass = 0; pass < BlurPasses; pass++)
+                {
+                    int satW = roiW + 1;
+                    int satH = roiH + 1;
+                    int satStride4 = satW * 4;
+                    int totalNeeded = satH * satStride4;
+
+                    if (_satBufferInt == null || _satIntCapacity < totalNeeded)
                     {
-                        byte* px = srcRow + ix * 4;
-                        prefB += px[0]; prefG += px[1]; prefR += px[2]; prefA += px[3];
-                        int idx = (ix + 1) * 4;
-                        curRow[idx + 0] = prefB;
-                        curRow[idx + 1] = prefG;
-                        curRow[idx + 2] = prefR;
-                        curRow[idx + 3] = prefA;
+                        _satIntCapacity = totalNeeded;
+                        _satBufferInt = new int[_satIntCapacity];
+                    }
+                    else Array.Clear(_satBufferInt, 0, totalNeeded);
+
+                    int[] localSatBuffer = _satBufferInt;
+                    var parallelOptions = ctx.ParentWindow.CreatePerformanceParallelOptions();
+
+                    // 构建积分图
+                    if (pass == 0)
+                    {
+                        // 首次从快照读取
+                        Parallel.For(0, roiH, parallelOptions, (iy) =>
+                        {
+                            byte* srcRow = snapBase + (long)(roiY + iy) * snapStride + roiX * 4;
+                            fixed (int* sat = localSatBuffer)
+                            {
+                                int* curRow = sat + (iy + 1) * satStride4;
+                                int prefB = 0, prefG = 0, prefR = 0, prefA = 0;
+                                for (int ix = 0; ix < roiW; ix++)
+                                {
+                                    byte* px = srcRow + ix * 4;
+                                    prefB += px[0]; prefG += px[1];
+                                    prefR += px[2]; prefA += px[3];
+                                    int idx = (ix + 1) * 4;
+                                    curRow[idx] = prefB; curRow[idx + 1] = prefG;
+                                    curRow[idx + 2] = prefR; curRow[idx + 3] = prefA;
+                                }
+                            }
+                        });
+                    }
+                    else
+                    {
+                        // 后续迭代从临时缓冲区读取
+                        fixed (byte* tempPtr = tempBuffer)
+                        {
+                            byte* temps = tempPtr;
+                            Parallel.For(0, roiH, parallelOptions, (iy) =>
+                            {
+                             
+                                byte* srcRow = temps + iy * roiW * 4;
+                                fixed (int* sat = localSatBuffer)
+                                {
+                                    int* curRow = sat + (iy + 1) * satStride4;
+                                    int prefB = 0, prefG = 0, prefR = 0, prefA = 0;
+                                    for (int ix = 0; ix < roiW; ix++)
+                                    {
+                                        byte* px = srcRow + ix * 4;
+                                        prefB += px[0]; prefG += px[1];
+                                        prefR += px[2]; prefA += px[3];
+                                        int idx = (ix + 1) * 4;
+                                        curRow[idx] = prefB; curRow[idx + 1] = prefG;
+                                        curRow[idx + 2] = prefR; curRow[idx + 3] = prefA;
+                                    }
+                                }
+                            });
+                        }
+                    }
+
+                    // 列前缀和
+                    Parallel.For(1, roiW + 1, parallelOptions, (ix) =>
+                    {
+                        int idx4 = ix * 4;
+                        fixed (int* sat = localSatBuffer)
+                        {
+                            for (int iy = 1; iy < roiH; iy++)
+                            {
+                                int* curRow = sat + (iy + 1) * satStride4 + idx4;
+                                int* prevRow = sat + iy * satStride4 + idx4;
+                                curRow[0] += prevRow[0]; curRow[1] += prevRow[1];
+                                curRow[2] += prevRow[2]; curRow[3] += prevRow[3];
+                            }
+                        }
+                    });
+
+                    // 应用 box blur 到临时缓冲区（最后一次写入目标）
+                    fixed (int* sat = localSatBuffer)
+                    fixed (byte* tempPtr = tempBuffer)
+                    {
+                        // ★ 将 fixed 指针复制到普通局部变量
+                        int* satPtr = sat;
+                        byte* tmpPtr = tempPtr;
+                        int localPassRadius = passRadius;
+                        int localRoiW = roiW;
+                        int localRoiH = roiH;
+                        int localSatStride4 = satStride4;
+
+                        Parallel.For(0, roiH, parallelOptions, (iy) =>
+                        {
+                            for (int ix = 0; ix < localRoiW; ix++)
+                            {
+                                int boxX1 = Math.Max(0, ix - localPassRadius);
+                                int boxY1 = Math.Max(0, iy - localPassRadius);
+                                int boxX2 = Math.Min(localRoiW, ix + localPassRadius + 1);
+                                int boxY2 = Math.Min(localRoiH, iy + localPassRadius + 1);
+                                int area = (boxX2 - boxX1) * (boxY2 - boxY1);
+
+                                int i22 = boxY2 * localSatStride4 + boxX2 * 4;
+                                int i12 = boxY1 * localSatStride4 + boxX2 * 4;
+                                int i21 = boxY2 * localSatStride4 + boxX1 * 4;
+                                int i11 = boxY1 * localSatStride4 + boxX1 * 4;
+
+                                byte* dst = tmpPtr + (iy * localRoiW + ix) * 4;
+                                dst[0] = (byte)((satPtr[i22] - satPtr[i12] - satPtr[i21] + satPtr[i11]) / area);
+                                dst[1] = (byte)((satPtr[i22 + 1] - satPtr[i12 + 1] - satPtr[i21 + 1] + satPtr[i11 + 1]) / area);
+                                dst[2] = (byte)((satPtr[i22 + 2] - satPtr[i12 + 2] - satPtr[i21 + 2] + satPtr[i11 + 2]) / area);
+                                dst[3] = (byte)((satPtr[i22 + 3] - satPtr[i12 + 3] - satPtr[i21 + 3] + satPtr[i11 + 3]) / area);
+                            }
+                        });
+                    }
+
+                }
+
+                // 最后将临时缓冲区中的结果写入目标（仅圆形区域内）
+                int paintXMin = Math.Max(0, cx - r);
+                int paintYMin = Math.Max(0, cy - r);
+                int paintXMax = Math.Min(w, cx + r);
+                int paintYMax = Math.Min(h, cy + r);
+                int rSq = r * r;
+                byte[] maskRef = _currentStrokeMask;
+
+                fixed (byte* tempPtr = tempBuffer)
+                {
+                    for (int py = paintYMin; py < paintYMax; py++)
+                    {
+                        int dy = py - cy;
+                        int dySq = dy * dy;
+                        int maxDx = (int)Math.Sqrt(rSq - dySq);
+                        int rowXMin = Math.Max(paintXMin, cx - maxDx);
+                        int rowXMax = Math.Min(paintXMax, cx + maxDx + 1);
+                        byte* dstRow = basePtr + (long)py * stride;
+                        int rowIdx = py * w;
+
+                        for (int px = rowXMin; px < rowXMax; px++)
+                        {
+                            int pixelIndex = rowIdx + px;
+                            if (maskRef[pixelIndex] >= 255) continue;
+                            int dx2 = px - cx;
+                            if (dx2 * dx2 + dySq > rSq) continue;
+                            maskRef[pixelIndex] = 255;
+
+                            int localX = px - roiX;
+                            int localY = py - roiY;
+                            byte* src = tempPtr + (localY * roiW + localX) * 4;
+                            byte* dst = dstRow + px * 4;
+                            dst[0] = src[0]; dst[1] = src[1];
+                            dst[2] = src[2]; dst[3] = src[3];
+                        }
                     }
                 }
-            });
-
-            // 第二步：并行计算列前缀和
-            Parallel.For(1, roiW + 1, parallelOptions, (ix) =>
+            }
+            finally
             {
-                int idx4 = ix * 4;
-                fixed (int* sat = localSatBuffer)
-                {
-                    for (int iy = 1; iy < roiH; iy++)
-                    {
-                        int* curRow = sat + (iy + 1) * satStride4 + idx4;
-                        int* prevRow = sat + iy * satStride4 + idx4;
-                        curRow[0] += prevRow[0];
-                        curRow[1] += prevRow[1];
-                        curRow[2] += prevRow[2];
-                        curRow[3] += prevRow[3];
-                    }
-                }
-            });
+                snapHandle.Free();
+            }
         }
         finally
         {
-            snapHandle.Free();
-        }
-
-        // 第三步：应用模糊（写入 basePtr，与之前相同）
-        fixed (int* sat = localSatBuffer)
-        {
-            int paintXMin = Math.Max(0, cx - r);
-            int paintYMin = Math.Max(0, cy - r);
-            int paintXMax = Math.Min(w, cx + r);
-            int paintYMax = Math.Min(h, cy + r);
-            int rSq = r * r;
-
-            int localRoiX = roiX;
-            int localRoiY = roiY;
-            int localRoiW = roiW;
-            int localRoiH = roiH;
-            int localKernelRadius = kernelRadius;
-            int localW = w;
-            int localStride = stride;
-            int localSatStride4 = satStride4;
-            int localCx = cx;
-            int localCy = cy;
-            int localRSq = rSq;
-            int* satPtr = sat;
-            byte* bufPtr = basePtr;
-            byte[] maskRef = _currentStrokeMask;
-
-            int rowCount = paintYMax - paintYMin;
-            if (rowCount <= 0) return;
-
-            if (rowCount >= AppConsts.BlurParallelThreshold)
-            {
-                Parallel.For(paintYMin, paintYMax, ctx.ParentWindow.CreatePerformanceParallelOptions(),
-                (int py) =>
-                {
-                    BlurApplyRow(
-                        satPtr, localSatStride4,
-                        bufPtr, localStride, localW,
-                        maskRef,
-                        py, paintXMin, paintXMax,
-                        localCx, localCy, localRSq,
-                        localRoiX, localRoiY, localRoiW, localRoiH,
-                        localKernelRadius);
-                });
-            }
-            else
-            {
-                for (int py = paintYMin; py < paintYMax; py++)
-                {
-                    BlurApplyRow(
-                        satPtr, localSatStride4,
-                        bufPtr, localStride, localW,
-                        maskRef,
-                        py, paintXMin, paintXMax,
-                        localCx, localCy, localRSq,
-                        localRoiX, localRoiY, localRoiW, localRoiH,
-                        localKernelRadius);
-                }
-            }
+            ArrayPool<byte>.Shared.Return(tempBuffer);
         }
     }
+
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
